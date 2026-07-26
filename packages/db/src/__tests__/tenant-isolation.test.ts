@@ -84,17 +84,59 @@ describe('la conexion de la aplicacion no puede saltarse RLS', () => {
     expect(result.rows[0]?.bypasses_rls).toBe(false);
   });
 
-  it('RLS esta habilitado en las tablas de tenant', async () => {
+  it('la jerarquia del tenant tiene RLS', async () => {
+    // gyms y organizations no llevan gym_id: son el tenant en si, y sus
+    // politicas comparan contra `id`. Por eso van comprobadas por nombre.
     const result = await app.execute<{ relname: string; relrowsecurity: boolean }>(sql`
       SELECT relname, relrowsecurity
       FROM pg_class
-      WHERE relname IN ('gyms', 'organizations', 'memberships')
+      WHERE relname IN ('gyms', 'organizations')
     `);
 
+    expect(result.rows).toHaveLength(2);
     for (const row of result.rows) {
       expect(row.relrowsecurity, `RLS desactivado en ${row.relname}`).toBe(true);
     }
-    expect(result.rows).toHaveLength(3);
+  });
+
+  it('TODA tabla con gym_id tiene RLS y al menos una politica', async () => {
+    // Guardarrail para el futuro, y el motivo por el que este test no enumera
+    // tablas a mano: la lista crecera con members, subscriptions, routines,
+    // body_metrics, access_events... Si alguien anade una tabla con gym_id y
+    // olvida su bloque en sql/01-rls.sql, esto se pone en rojo en el PR en
+    // lugar de descubrirse en produccion con datos de clientes reales.
+    const result = await owner.execute<{
+      tabla: string;
+      rls: boolean;
+      politicas: number;
+    }>(sql`
+      SELECT c.relname AS tabla,
+             c.relrowsecurity AS rls,
+             (SELECT count(*) FROM pg_policies p
+               WHERE p.schemaname = n.nspname AND p.tablename = c.relname)::int AS politicas
+      FROM pg_class c
+      JOIN pg_namespace n ON n.oid = c.relnamespace
+      WHERE n.nspname = 'public'
+        AND c.relkind = 'r'
+        AND EXISTS (
+          SELECT 1 FROM information_schema.columns col
+          WHERE col.table_schema = n.nspname
+            AND col.table_name = c.relname
+            AND col.column_name = 'gym_id'
+        )
+      ORDER BY c.relname
+    `);
+
+    // Si esto falla, el propio test se ha quedado sin objeto: nadie tiene gym_id.
+    expect(result.rows.length).toBeGreaterThan(0);
+
+    for (const row of result.rows) {
+      expect(row.rls, `${row.tabla} tiene gym_id pero RLS esta desactivado`).toBe(true);
+      expect(
+        row.politicas,
+        `${row.tabla} tiene RLS pero ninguna politica: no filtra nada`,
+      ).toBeGreaterThan(0);
+    }
   });
 });
 
