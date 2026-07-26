@@ -1,0 +1,23 @@
+{
+  "name": "@gymlab/config",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Configuracion compartida: tsconfig y eslint",
+  "files": [
+    "tsconfig",
+    "eslint"
+  ],
+  "exports": {
+    "./tsconfig/*": "./tsconfig/*",
+    "./eslint/*": "./eslint/*"
+  },
+  "scripts": {
+    "lint": "echo \"@gymlab/config: sin codigo que lintar\" && exit 0",
+    "clean": "echo \"@gymlab/config: nada que limpiar\" && exit 0"
+  },
+  "dependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint-config-prettier": "^10.1.8",
+    "typescript-eslint": "^8.65.0"
+  }
+}

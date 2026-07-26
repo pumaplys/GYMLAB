@@ -1,0 +1,18 @@
+{
+  "expo": {
+    "name": "GYMLAB",
+    "slug": "gymlab",
+    "version": "0.0.0",
+    "orientation": "portrait",
+    "scheme": "gymlab",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.gymlab.app"
+    },
+    "android": {
+      "package": "com.gymlab.app"
+    }
+  }
+}

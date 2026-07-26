@@ -1,0 +1,36 @@
+{
+  "name": "gymlab",
+  "version": "0.0.0",
+  "private": true,
+  "description": "GYMLAB — SaaS de gestión para gimnasios",
+  "engines": {
+    "node": ">=20.11.0"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "clean": "turbo run clean",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,yaml,yml}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,yaml,yml}\"",
+    "db:generate": "pnpm --filter @gymlab/db run generate",
+    "db:migrate": "pnpm --filter @gymlab/db run migrate",
+    "db:studio": "pnpm --filter @gymlab/db run studio"
+  },
+  "devDependencies": {
+    "eslint": "^10.8.0",
+    "prettier": "^3.9.6",
+    "rimraf": "^6.1.3",
+    "turbo": "^2.10.7",
+    "typescript": "^7.0.2"
+  },
+  "prettier": {
+    "semi": true,
+    "singleQuote": true,
+    "trailingComma": "all",
+    "printWidth": 100
+  },
+  "packageManager": "pnpm@11.17.0+sha512.cca3cea332ad254bb84145f966d19f4879615210346fc92c79a047f23a0d7b3cca3c3792f0076ba1f1831d277efbcf0a9119b31a9a60eca7fb3d6231f331ef72"
+}

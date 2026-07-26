@@ -1,0 +1,12 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+
+# pnpm bloquea por defecto los scripts de instalacion de las dependencias, que
+# son el vector habitual de los ataques de cadena de suministro. Aqui se
+# autorizan uno a uno, y solo los que de verdad necesitan compilar o colocar un
+# binario nativo. Anadir algo a esta lista es una decision consciente, no un
+# tramite para silenciar un aviso.
+allowBuilds:
+  esbuild: true # binario nativo del bundler que usa tsup
+  sharp: true # binario nativo de optimizacion de imagenes de Next.js

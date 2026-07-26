@@ -1,0 +1,46 @@
+# Dependencias
+node_modules/
+.pnpm-store/
+
+# Builds
+dist/
+build/
+.next/
+out/
+*.tsbuildinfo
+
+# Cache
+.turbo/
+.cache/
+.eslintcache
+
+# Expo
+.expo/
+.expo-shared/
+*.jks
+*.p12
+*.key
+*.mobileprovision
+
+# Entorno — NUNCA subir secretos
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Tests
+coverage/
+
+# Editor / SO
+.vscode/*
+!.vscode/extensions.json
+# Ajustes locales de Claude Code: rutas absolutas de cada maquina.
+# .claude/settings.json (sin "local") si es compartido y debe versionarse.
+.claude/settings.local.json
+.idea/
+.DS_Store
+Thumbs.db
