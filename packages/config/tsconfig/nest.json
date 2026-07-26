@@ -3,8 +3,16 @@
   "display": "GYMLAB — API (NestJS)",
   "extends": "./base.json",
   "compilerOptions": {
-    "module": "CommonJS",
-    "moduleResolution": "Node",
+    // node16 en lugar de CommonJS + Node (node10), que TypeScript 6 marca como
+    // deprecado. Con node16, el formato de salida lo decide el campo "type" del
+    // package.json: apps/api no lo declara, asi que emite CommonJS, que es lo
+    // que NestJS necesita.
+    //
+    // Ademas es lo que permite resolver correctamente @gymlab/db y
+    // @gymlab/contracts, que son ESM y exponen sus dos formatos mediante
+    // "exports": desde CommonJS se elige la variante `require`.
+    "module": "node16",
+    "moduleResolution": "node16",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "isolatedModules": false,

@@ -10,3 +10,19 @@ packages:
 allowBuilds:
   esbuild: true # binario nativo del bundler que usa tsup
   sharp: true # binario nativo de optimizacion de imagenes de Next.js
+
+# Version unica para las dependencias compartidas por varios workspaces. Se
+# referencian con "catalog:" en cada package.json, de modo que el numero de
+# version vive en un solo sitio y no puede derivar entre paquetes.
+catalog:
+  # TypeScript 6, no 7, y es deliberado:
+  #   - La 7.0 es el compilador reescrito en Go y entrega solo el ejecutable
+  #     `tsc`. No expone la API programatica hasta la 7.1, y el CLI de NestJS
+  #     la necesita para compilar.
+  #   - Por el mismo motivo, rollup-plugin-dts (que usa tsup) falla al emitir
+  #     los .d.ts, lo que dejaria a @gymlab/contracts sin tipos: justo su unica
+  #     razon de existir (ADR-003).
+  #   - Es ademas la version que Expo SDK 57 exige en apps/mobile, asi que el
+  #     monorepo queda con una sola version en lugar de dos.
+  # Revisar cuando salga TypeScript 7.1.
+  typescript: ~6.0.3

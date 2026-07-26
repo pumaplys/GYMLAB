@@ -8,6 +8,8 @@ build/
 .next/
 out/
 *.tsbuildinfo
+# Lo regenera Next.js en cada build; no debe editarse a mano.
+next-env.d.ts
 
 # Cache
 .turbo/

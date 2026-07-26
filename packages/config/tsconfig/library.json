@@ -5,6 +5,16 @@
   "compilerOptions": {
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "types": ["node"]
+    "types": ["node"],
+
+    // DEUDA TEMPORAL, con fecha de caducidad.
+    // tsup inyecta `baseUrl` por su cuenta al generar los .d.ts, y TypeScript 6
+    // lo marca como deprecado (TS5101), lo que aborta el build. No es una
+    // opcion nuestra: no aparece en ningun tsconfig de este repo — ya se
+    // eliminaron los `baseUrl` propios de api, web y mobile.
+    // Quitar esta linea al actualizar tsup, y comprobar que el build sigue en
+    // verde. Si TypeScript 7 llega antes, esto dejara de funcionar y habra que
+    // cambiar de generador de .d.ts.
+    "ignoreDeprecations": "6.0"
   }
 }

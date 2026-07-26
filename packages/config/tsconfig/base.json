@@ -16,7 +16,6 @@
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    "incremental": true,
     "moduleDetection": "force"
   },
   "exclude": ["node_modules", "dist", ".turbo", ".next"]
