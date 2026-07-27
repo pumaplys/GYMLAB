@@ -1,24 +1,45 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, type NestModule } from '@nestjs/common';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { AuthModule } from './auth/auth.module';
+import { AuthGuard } from './common/guards/auth.guard';
+import { RolesGuard } from './common/guards/roles.guard';
+import { TenantInterceptor } from './common/interceptors/tenant.interceptor';
+import { RequestContextMiddleware } from './common/middleware/request-context.middleware';
+import { DatabaseModule } from './database/database.module';
 import { HealthController } from './health.controller';
 
 /**
  * Modulo raiz del monolito modular.
  *
- * Fase 0: solo el arranque y el healthcheck.
+ * Las cuatro barreras de ADR-0007 se registran aqui, y el orden importa:
  *
- * En Fase 1 aqui se importan los modulos de dominio, cada uno en
- * src/modules/<nombre>/ con su propio module, controller, service y repositorio:
+ *   middleware  RequestContextMiddleware  abre el AsyncLocalStorage
+ *   guard [1]   AuthGuard                 ¿sesion valida?   -> 401
+ *   guard [2]   RolesGuard                ¿rol suficiente?  -> 403
+ *   interceptor TenantInterceptor         withTenant(gymId)
+ *   ...handler...
+ *   [4]         PostgreSQL + RLS          ultima barrera, ajena a este codigo
  *
- *   identity · organization · members · staff · billing
- *   training · progress · access · analytics · platform
+ * Guards e interceptor son GLOBALES a proposito: lo seguro es el defecto.
+ * Abrir una ruta exige `@Public()` explicito. Si algun dia se olvida el
+ * decorador, el resultado es un 401 de mas, nunca una ruta desprotegida.
  *
- * REGLA DE ORO: un modulo NUNCA importa el repositorio de otro. Se comunica
- * con el servicio de aplicacion del otro modulo. Es la unica disciplina que
- * mantiene viva la opcion de extraer un modulo mas adelante.
+ * REGLA DE ORO al anadir modulos de dominio: un modulo nunca importa el
+ * repositorio de otro; pide a su servicio de aplicacion.
  */
 @Module({
-  imports: [],
+  imports: [DatabaseModule, AuthModule],
   controllers: [HealthController],
-  providers: [],
+  providers: [
+    { provide: APP_GUARD, useClass: AuthGuard },
+    { provide: APP_GUARD, useClass: RolesGuard },
+    { provide: APP_INTERCEPTOR, useClass: TenantInterceptor },
+  ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer): void {
+    // '{*path}' y no '*': NestJS 11 usa path-to-regexp v8, donde el comodin
+    // suelto esta obsoleto y solo funciona por conversion automatica heredada.
+    consumer.apply(RequestContextMiddleware).forRoutes('{*path}');
+  }
+}

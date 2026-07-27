@@ -1,4 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
+import { Public } from './common/decorators/public.decorator';
 
 /**
  * Healthcheck. No es funcionalidad de producto: es infraestructura.
@@ -7,6 +8,7 @@ import { Controller, Get } from '@nestjs/common';
  */
 @Controller('health')
 export class HealthController {
+  @Public()
   @Get()
   check() {
     return {
