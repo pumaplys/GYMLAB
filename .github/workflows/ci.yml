@@ -1,0 +1,104 @@
+name: CI
+
+# Se ejecuta en cada pull request y en cada push a main.
+#
+# El objetivo declarado de este workflow es que ningun cambio pueda entrar en
+# main sin que el aislamiento entre gimnasios siga demostrado. Es la mitigacion
+# del riesgo numero 1 de docs/01-arquitectura.md: una fuga de datos entre
+# clientes no es un bug, es el final del producto.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# Un push nuevo sobre la misma rama cancela la ejecucion anterior: no tiene
+# sentido gastar minutos verificando un commit ya superado.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Verificacion
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    # PostgreSQL real, no un mock ni una base en memoria.
+    #
+    # Los tests de aislamiento comprueban politicas RLS, roles de base de datos
+    # y permisos: nada de eso existe fuera de Postgres. Un mock solo probaria
+    # que el mock funciona.
+    #
+    # La configuracion replica docker-compose.yml a proposito, incluido que
+    # `gymlab` sea superusuario: es lo que hace que la comprobacion "la conexion
+    # de la aplicacion NO puede saltarse RLS" tenga sentido.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: gymlab
+          POSTGRES_PASSWORD: gymlab
+          POSTGRES_DB: gymlab
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U gymlab -d gymlab"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+
+    env:
+      # Dos conexiones, y no son intercambiables (ADR-002).
+      #   propietario -> migraciones, politicas y colas. Ignora RLS.
+      #   aplicacion  -> API y tests. Sujeto a RLS.
+      DATABASE_URL: postgresql://gymlab:gymlab@localhost:5432/gymlab
+      DATABASE_URL_APP: postgresql://gymlab_app:gymlab_app@localhost:5432/gymlab
+      APP_DB_PASSWORD: gymlab_app
+
+      # Valores de usar y tirar: esta base de datos vive lo que dura el job.
+      # Los secretos de verdad nunca pasan por aqui.
+      AUTH_SECRET: ci-secret-de-usar-y-tirar-mas-de-32-caracteres
+      PLATFORM_INVITE_CODE: ci-platform-code
+      API_URL: http://localhost:3001
+      API_PORT: '3001'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # La misma version con la que se desarrolla. TypeScript 6 y pg-boss 12
+          # exigen Node >= 22.12.
+          node-version: '24'
+
+      # La version de pnpm sale del campo `packageManager` del package.json, con
+      # su hash. No hay forma de que CI use una distinta de la local.
+      - name: Habilitar pnpm
+        run: corepack enable pnpm
+
+      - name: Instalar dependencias
+        # --frozen-lockfile: si el lockfile no cuadra con los package.json, el
+        # job falla en lugar de resolver versiones distintas en silencio.
+        run: pnpm install --frozen-lockfile
+
+      - name: Migraciones, politicas RLS y colas
+        # Un solo comando encadena los tres pasos, en el unico orden que
+        # funciona: las tablas antes que sus politicas, y pg-boss al final
+        # porque hace DDL que el rol de la aplicacion no puede ejecutar.
+        run: pnpm db:migrate
+
+      - name: Build
+        run: pnpm build
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Tests
+        # Incluye los dos que sostienen el producto:
+        #   - aislamiento entre gimnasios (RLS)
+        #   - abuso de autenticacion: tokens reutilizados, caducados,
+        #     revocados, manipulados y escalada de privilegios
+        run: pnpm test

@@ -11,7 +11,8 @@
     "dev": {
       "dependsOn": ["^build"],
       "cache": false,
-      "persistent": true
+      "persistent": true,
+      "env": ["DATABASE_URL", "DATABASE_URL_APP", "AUTH_SECRET", "PLATFORM_INVITE_CODE", "API_URL", "API_PORT"]
     },
     "typecheck": {
       "dependsOn": ["^build"],
@@ -22,7 +23,15 @@
     },
     "test": {
       "dependsOn": ["^build"],
-      "outputs": []
+      "outputs": [],
+      // Turborepo 2 usa modo de entorno estricto: una variable no declarada
+      // aqui NO llega a la tarea. En local no se nota, porque los tests leen el
+      // .env con dotenv; pero en CI no hay .env y los tests de aislamiento se
+      // saltarian en silencio, que es peor que fallar.
+      //
+      // Van en la tarea y no en globalEnv para no meter la URL de la base de
+      // datos en el hash de cache del build.
+      "env": ["DATABASE_URL", "DATABASE_URL_APP", "AUTH_SECRET", "PLATFORM_INVITE_CODE", "API_URL", "API_PORT"]
     },
     "clean": {
       "cache": false

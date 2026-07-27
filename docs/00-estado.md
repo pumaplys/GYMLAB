@@ -121,6 +121,7 @@ Todo es idempotente y debe reaplicarse en cada despliegue.
 | Aislamiento multi-tenant (RLS) | ✅ verificado, con prueba inversa |
 | Auth: modelo, guards, 11 endpoints | ✅ 29 tests de abuso |
 | Jobs: pg-boss y outbox transaccional | ✅ verificado, con prueba inversa |
+| CI (GitHub Actions) | ✅ workflow escrito y verificado en local |
 
 Sin proveedor de correo todavía: el consumidor registra el contenido fuera de
 producción y **falla en producción**, para que los correos queden en la cola y
@@ -130,12 +131,26 @@ se reintenten solos el día que se conecte Resend.
 
 ## Siguiente paso
 
-1. **CI con GitHub Actions**: lint, typecheck, build, migraciones y los tests de
-   aislamiento y de abuso **bloqueando el merge**. Es lo último que queda de la
-   Fase 0 y la mitigación del riesgo nº 1 de la tabla de riesgos.
+1. **Publicar el repositorio y activar la protección de rama.** El workflow está
+   escrito y verificado, pero todavía no se ha ejecutado nunca: no hay remoto
+   configurado. Y que los checks sean *obligatorios* para hacer merge no es algo
+   que se declare en el repositorio — es un ajuste de GitHub. Ver más abajo.
 2. Extraer los seis ADR de `01-arquitectura.md` a `docs/adr/`.
 
 Después, Fase 1: los módulos de negocio del MVP.
+
+### Cómo dejar CI realmente obligatorio
+
+El fichero `.github/workflows/ci.yml` hace que los checks se **ejecuten**. Que
+además **bloqueen** el merge se configura en GitHub, una sola vez:
+
+```bash
+gh repo create gymlab --private --source=. --push
+```
+
+Y después, en *Settings → Branches → Add rule* sobre `main`: activar *Require a
+pull request before merging* y *Require status checks to pass*, marcando el
+check `Verificacion`. Sin ese paso, CI avisa pero no impide nada.
 
 ---
 
