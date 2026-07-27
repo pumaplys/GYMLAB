@@ -12,9 +12,11 @@
  *   - `users`: es el limite de autenticacion, anterior al contexto de tenant.
  *
  * Modulos pendientes (Fase 1): members, staff, billing, training, progress,
- * access, audit.
+ * access.
  */
 
 export * from './_helpers';
 export * from './organization';
 export * from './identity';
+export * from './compliance';
+export * from './audit';

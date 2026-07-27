@@ -8,6 +8,20 @@
       "when": 1785089516555,
       "tag": "0000_premium_legion",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1785191842689,
+      "tag": "0001_auth_expand",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1785191861901,
+      "tag": "0002_auth_contract",
+      "breakpoints": true
     }
   ]
 }

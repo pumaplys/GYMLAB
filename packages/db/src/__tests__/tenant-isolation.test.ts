@@ -18,7 +18,7 @@ import { randomUUID } from 'node:crypto';
 import { sql } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createDatabase, type Database } from '../client';
-import { gyms, memberships, organizations, users } from '../schema';
+import { auditLog, authEvents, gyms, invitations, memberships, organizations, users } from '../schema';
 import { withTenant, withoutTenant } from '../tenant';
 
 /** Conexion propietaria: siembra los datos saltandose RLS. Solo para el test. */
@@ -208,6 +208,80 @@ describe('escritura', () => {
     expect(enB).toHaveLength(1);
 
     await owner.insert(memberships).values({ gymId: gymA, userId: userA, role: 'owner' });
+  });
+});
+
+describe('tablas del modulo auth', () => {
+  it('las invitaciones estan aisladas por gimnasio', async () => {
+    const idA = randomUUID();
+    const idB = randomUUID();
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+    await owner.insert(invitations).values([
+      {
+        id: idA,
+        gymId: gymA,
+        email: 'invitado@a.test',
+        role: 'member',
+        tokenHash: `hash-${idA}`,
+        invitedByUserId: userA,
+        expiresAt,
+      },
+      {
+        id: idB,
+        gymId: gymB,
+        email: 'invitado@b.test',
+        role: 'member',
+        tokenHash: `hash-${idB}`,
+        invitedByUserId: userB,
+        expiresAt,
+      },
+    ]);
+
+    const enA = await withTenant(app, gymA, (tx) => tx.select().from(invitations));
+    expect(enA).toHaveLength(1);
+    expect(enA[0]?.gymId).toBe(gymA);
+
+    await owner.delete(invitations).where(sql`id in (${idA}, ${idB})`);
+  });
+
+  it('audit_log es append-only: la aplicacion no puede modificarlo ni borrarlo', async () => {
+    // Un registro de auditoria que la propia aplicacion puede reescribir no
+    // sirve como registro de auditoria. Aqui lo impide Postgres, no el codigo.
+    const id = randomUUID();
+    await withTenant(app, gymA, (tx) =>
+      tx.insert(auditLog).values({ id, gymId: gymA, actorUserId: userA, action: 'test.accion' }),
+    );
+
+    await expect(
+      withTenant(app, gymA, (tx) => tx.update(auditLog).set({ action: 'manipulada' })),
+    ).rejects.toThrow();
+
+    await expect(withTenant(app, gymA, (tx) => tx.delete(auditLog))).rejects.toThrow();
+
+    const filas = await withTenant(app, gymA, (tx) => tx.select().from(auditLog));
+    expect(filas).toHaveLength(1);
+    expect(filas[0]?.action).toBe('test.accion');
+
+    await owner.delete(auditLog).where(sql`id = ${id}`);
+  });
+
+  it('auth_events es global: se lee sin contexto de tenant', async () => {
+    // Un login fallido no tiene gimnasio. Si esta tabla llevara RLS, seria
+    // invisible justo para el dueno que quiere ver si le estan atacando.
+    const id = randomUUID();
+    await owner.insert(authEvents).values({
+      id,
+      emailAttempted: 'desconocido@test.local',
+      eventType: 'login_failure',
+    });
+
+    const filas = await withoutTenant(app, (tx) =>
+      tx.select().from(authEvents).where(sql`id = ${id}`),
+    );
+    expect(filas).toHaveLength(1);
+
+    await owner.delete(authEvents).where(sql`id = ${id}`);
   });
 });
 

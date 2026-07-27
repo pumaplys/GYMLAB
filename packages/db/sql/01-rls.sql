@@ -73,6 +73,69 @@ CREATE POLICY tenant_isolation ON memberships
 
 
 -- -----------------------------------------------------------------------------
+-- invitations — patron estandar.
+-- -----------------------------------------------------------------------------
+ALTER TABLE invitations ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS tenant_isolation ON invitations;
+CREATE POLICY tenant_isolation ON invitations
+  FOR ALL
+  TO gymlab_app
+  USING (gym_id = app_current_gym_id())
+  WITH CHECK (gym_id = app_current_gym_id());
+
+
+-- -----------------------------------------------------------------------------
+-- consents — patron estandar.
+-- -----------------------------------------------------------------------------
+ALTER TABLE consents ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS tenant_isolation ON consents;
+CREATE POLICY tenant_isolation ON consents
+  FOR ALL
+  TO gymlab_app
+  USING (gym_id = app_current_gym_id())
+  WITH CHECK (gym_id = app_current_gym_id());
+
+
+-- -----------------------------------------------------------------------------
+-- audit_log — aislado por tenant Y ademas append-only.
+-- -----------------------------------------------------------------------------
+-- Un registro de auditoria que la propia aplicacion puede reescribir no sirve
+-- como registro de auditoria. Aqui el caracter append-only no se deja al codigo:
+-- se imponen dos politicas que solo cubren SELECT e INSERT, y se le retiran al
+-- rol de la aplicacion los permisos de UPDATE y DELETE.
+--
+-- El REVOKE va despues del GRANT de 00-roles.sql, que concede permisos sobre
+-- todas las tablas. El orden de los dos archivos importa.
+ALTER TABLE audit_log ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS tenant_isolation_select ON audit_log;
+CREATE POLICY tenant_isolation_select ON audit_log
+  FOR SELECT
+  TO gymlab_app
+  USING (gym_id = app_current_gym_id());
+
+DROP POLICY IF EXISTS tenant_isolation_insert ON audit_log;
+CREATE POLICY tenant_isolation_insert ON audit_log
+  FOR INSERT
+  TO gymlab_app
+  WITH CHECK (gym_id = app_current_gym_id());
+
+REVOKE UPDATE, DELETE ON audit_log FROM gymlab_app;
+
+
+-- -----------------------------------------------------------------------------
+-- auth_events — GLOBAL, sin RLS, decision consciente.
+-- -----------------------------------------------------------------------------
+-- Un intento de login fallido no tiene gimnasio: todavia no se sabe quien lo
+-- intenta. Con RLS, esos registros serian invisibles justo para el dueno que
+-- quiere comprobar si le estan atacando la cuenta.
+COMMENT ON TABLE auth_events IS
+  'Eventos de autenticacion. Global y sin RLS a proposito: un login fallido no tiene gimnasio asociado. Retencion 90 dias (RGPD art. 5.1.e).';
+
+
+-- -----------------------------------------------------------------------------
 -- users — SIN RLS de tenant, decision consciente.
 -- -----------------------------------------------------------------------------
 -- El login necesita buscar por email antes de saber a que gimnasio pertenece la
