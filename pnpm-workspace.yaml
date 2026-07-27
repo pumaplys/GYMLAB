@@ -8,6 +8,7 @@ packages:
 # binario nativo. Anadir algo a esta lista es una decision consciente, no un
 # tramite para silenciar un aviso.
 allowBuilds:
+  '@swc/core': true # compilador nativo; vitest lo necesita para emitDecoratorMetadata
   esbuild: true # binario nativo del bundler que usa tsup
   sharp: true # binario nativo de optimizacion de imagenes de Next.js
 

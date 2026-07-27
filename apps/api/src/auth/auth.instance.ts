@@ -1,4 +1,5 @@
 import { accounts, sessions, users, verifications, type Database } from '@gymlab/db';
+import { recordPendingEmail } from '../common/pending-email';
 import { env } from '../config/env';
 
 /**
@@ -26,8 +27,17 @@ export async function createAuth(db: Database) {
   // con una importacion dinamica, que en CommonJS si esta permitida.
   const { betterAuth } = await import('better-auth');
   const { drizzleAdapter } = await import('better-auth/adapters/drizzle');
+  const { bearer } = await import('better-auth/plugins/bearer');
 
   return betterAuth({
+    // Better Auth solo acepta cookies por defecto. El plugin `bearer` habilita
+    // `Authorization: Bearer <token>`, que es el transporte de la app movil:
+    // React Native no tiene cookies (ADR-0007).
+    //
+    // El panel web seguira usando cookie httpOnly, que es inmune al robo por
+    // XSS. Dos transportes, una sola sesion detras.
+    plugins: [bearer()],
+
     appName: 'GYMLAB',
     secret: env.AUTH_SECRET,
     baseURL: env.API_URL,
@@ -55,6 +65,21 @@ export async function createAuth(db: Database) {
       minPasswordLength: 10,
       // Se activara cuando exista el envio de emails por pg-boss (ADR-0008).
       requireEmailVerification: false,
+
+      // AQUI SE ENGANCHARA PG-BOSS. Hoy solo se anota el token; manana esta
+      // linea sera `enqueue('email.reset-password', {...}, tx)` dentro de la
+      // transaccion de la peticion, y el correo solo existira si los datos
+      // llegaron a commitear (transactional outbox, ADR-0008).
+      sendResetPassword: async ({ user, url, token }) => {
+        recordPendingEmail({ kind: 'reset-password', token, url, userId: user.id });
+      },
+    },
+
+    emailVerification: {
+      // Mismo caso que arriba.
+      sendVerificationEmail: async ({ user, url, token }) => {
+        recordPendingEmail({ kind: 'verify-email', token, url, userId: user.id });
+      },
     },
 
     user: {

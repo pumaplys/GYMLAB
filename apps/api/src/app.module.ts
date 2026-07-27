@@ -7,6 +7,7 @@ import { TenantInterceptor } from './common/interceptors/tenant.interceptor';
 import { RequestContextMiddleware } from './common/middleware/request-context.middleware';
 import { DatabaseModule } from './database/database.module';
 import { HealthController } from './health.controller';
+import { InvitationsModule } from './invitations/invitations.module';
 
 /**
  * Modulo raiz del monolito modular.
@@ -28,7 +29,7 @@ import { HealthController } from './health.controller';
  * repositorio de otro; pide a su servicio de aplicacion.
  */
 @Module({
-  imports: [DatabaseModule, AuthModule],
+  imports: [DatabaseModule, AuthModule, InvitationsModule],
   controllers: [HealthController],
   providers: [
     { provide: APP_GUARD, useClass: AuthGuard },
