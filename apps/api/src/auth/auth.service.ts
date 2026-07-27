@@ -30,8 +30,7 @@ import type {
   SessionResponse,
   VerifyEmailInput,
 } from '@gymlab/contracts';
-import { captureEmails, takePendingEmail } from '../common/pending-email';
-import { env, EXPOSE_DEV_TOKENS } from '../config/env';
+import { env } from '../config/env';
 import { DATABASE } from '../database/database.module';
 import type { Auth } from './auth.instance';
 import { AUTH } from './auth.tokens';
@@ -177,20 +176,19 @@ export class AuthService {
    * comprobar quien esta dado de alta en la plataforma.
    */
   async forgotPassword(input: ForgotPasswordInput, headers: Headers): Promise<EmailFlowResponse> {
-    const pendiente = await captureEmails(async () => {
-      try {
-        await this.auth.api.requestPasswordReset({
-          body: { email: input.email, redirectTo: `${env.API_URL}/reset-password` },
-          headers,
-        });
-      } catch {
-        // Silencio deliberado: ver el comentario de arriba.
-      }
-      return takePendingEmail();
-    });
+    try {
+      // El callback `sendResetPassword` encola el correo. Si el email no
+      // existe, Better Auth no lo invoca y no se encola nada.
+      await this.auth.api.requestPasswordReset({
+        body: { email: input.email, redirectTo: `${env.API_URL}/reset-password` },
+        headers,
+      });
+    } catch {
+      // Silencio deliberado: ver el comentario de arriba.
+    }
 
     await this.recordAuthEvent('password_reset_requested', null, input.email, headers);
-    return this.emailFlowResponse(pendiente?.token);
+    return { ok: true };
   }
 
   async resetPassword(input: ResetPasswordInput, headers: Headers): Promise<{ ok: true }> {
@@ -268,16 +266,6 @@ export class AuthService {
         userAgent: headers.get('user-agent') ?? null,
       }),
     );
-  }
-
-  /**
-   * El token solo sale en desarrollo. En produccion, devolverlo equivaldria a
-   * entregar a quien pregunte el enlace de restablecer la contrasena de otra
-   * persona — el flujo entero dejaria de tener sentido.
-   */
-  private emailFlowResponse(token: string | undefined): EmailFlowResponse {
-    if (EXPOSE_DEV_TOKENS && token) return { ok: true, devToken: token };
-    return { ok: true };
   }
 
   /** Comprueba que existe una pertenencia concreta. Lo usa el guard de gimnasio. */

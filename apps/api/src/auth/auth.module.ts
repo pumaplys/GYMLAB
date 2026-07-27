@@ -1,6 +1,7 @@
 import { Global, Module } from '@nestjs/common';
 import type { Database } from '@gymlab/db';
 import { DATABASE } from '../database/database.module';
+import { JobsService } from '../jobs/jobs.service';
 import { AuthController } from './auth.controller';
 import { createAuth } from './auth.instance';
 import { AuthService } from './auth.service';
@@ -18,8 +19,8 @@ import { AUTH } from './auth.tokens';
   providers: [
     {
       provide: AUTH,
-      inject: [DATABASE],
-      useFactory: (db: Database) => createAuth(db),
+      inject: [DATABASE, JobsService],
+      useFactory: (db: Database, jobs: JobsService) => createAuth(db, jobs),
     },
     AuthService,
   ],

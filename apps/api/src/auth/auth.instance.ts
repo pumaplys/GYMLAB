@@ -1,6 +1,7 @@
 import { accounts, sessions, users, verifications, type Database } from '@gymlab/db';
-import { recordPendingEmail } from '../common/pending-email';
+import { EMAIL_QUEUES } from '@gymlab/contracts';
 import { env } from '../config/env';
+import type { JobsService } from '../jobs/jobs.service';
 
 /**
  * Instancia de Better Auth.
@@ -18,7 +19,7 @@ import { env } from '../config/env';
  */
 export type Auth = Awaited<ReturnType<typeof createAuth>>;
 
-export async function createAuth(db: Database) {
+export async function createAuth(db: Database, jobs: JobsService) {
   // better-auth se publica solo como ESM, y esta API compila a CommonJS.
   //
   // Se podria convertir apps/api entera a ESM, pero NestJS con ESM y
@@ -66,19 +67,17 @@ export async function createAuth(db: Database) {
       // Se activara cuando exista el envio de emails por pg-boss (ADR-0008).
       requireEmailVerification: false,
 
-      // AQUI SE ENGANCHARA PG-BOSS. Hoy solo se anota el token; manana esta
-      // linea sera `enqueue('email.reset-password', {...}, tx)` dentro de la
-      // transaccion de la peticion, y el correo solo existira si los datos
-      // llegaron a commitear (transactional outbox, ADR-0008).
+      // No se envia nada aqui: se encola. Si hay transaccion de peticion, el
+      // trabajo entra en ella y solo existira si los datos commitean
+      // (transactional outbox, ADR-0008).
       sendResetPassword: async ({ user, url, token }) => {
-        recordPendingEmail({ kind: 'reset-password', token, url, userId: user.id });
+        await jobs.enqueue(EMAIL_QUEUES.resetPassword, { to: user.email, url, token });
       },
     },
 
     emailVerification: {
-      // Mismo caso que arriba.
       sendVerificationEmail: async ({ user, url, token }) => {
-        recordPendingEmail({ kind: 'verify-email', token, url, userId: user.id });
+        await jobs.enqueue(EMAIL_QUEUES.verifyEmail, { to: user.email, url, token });
       },
     },
 

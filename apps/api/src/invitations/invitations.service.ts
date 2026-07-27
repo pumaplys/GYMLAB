@@ -20,12 +20,13 @@ import {
   type Database,
 } from '@gymlab/db';
 import type { AcceptInvitationInput, Invitation, Role } from '@gymlab/contracts';
-import { canInvite } from '@gymlab/contracts';
-import { EXPOSE_DEV_TOKENS } from '../config/env';
+import { canInvite, EMAIL_QUEUES } from '@gymlab/contracts';
+import { env } from '../config/env';
 import { DATABASE } from '../database/database.module';
 import type { Auth } from '../auth/auth.instance';
 import { AUTH } from '../auth/auth.tokens';
 import { requireTransaction } from '../common/request-context';
+import { JobsService } from '../jobs/jobs.service';
 
 /** Duracion de una invitacion. Una semana es tiempo de sobra y limita la ventana. */
 const TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -35,6 +36,7 @@ export class InvitationsService {
   constructor(
     @Inject(DATABASE) private readonly db: Database,
     @Inject(AUTH) private readonly auth: Auth,
+    private readonly jobs: JobsService,
   ) {}
 
   /**
@@ -100,7 +102,16 @@ export class InvitationsService {
       metadata: { email, role },
     });
 
-    return this.toDto(fila!, token);
+    // Va dentro de la MISMA transaccion que la invitacion y su auditoria: si
+    // algo falla despues, no queda un correo prometiendo una invitacion que no
+    // existe. Es el caso que justifica ADR-0008.
+    await this.jobs.enqueue(EMAIL_QUEUES.invitation, {
+      to: email,
+      token,
+      url: `${env.API_URL}/accept-invitation?token=${encodeURIComponent(token)}`,
+    });
+
+    return this.toDto(fila!);
   }
 
   async list(gymId: string): Promise<Invitation[]> {
@@ -231,7 +242,7 @@ export class InvitationsService {
     return { token, activeGymId: gymId };
   }
 
-  private toDto(fila: typeof invitations.$inferSelect, token?: string): Invitation {
+  private toDto(fila: typeof invitations.$inferSelect): Invitation {
     return {
       id: fila.id,
       email: fila.email,
@@ -239,8 +250,6 @@ export class InvitationsService {
       expiresAt: fila.expiresAt.toISOString(),
       acceptedAt: fila.acceptedAt?.toISOString() ?? null,
       revokedAt: fila.revokedAt?.toISOString() ?? null,
-      // Andamio hasta que exista pg-boss: en produccion el token no sale nunca.
-      ...(EXPOSE_DEV_TOKENS && token ? { devToken: token } : {}),
     };
   }
 }

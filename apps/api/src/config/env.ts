@@ -56,16 +56,3 @@ if (!parsed.success) {
 
 export const env = parsed.data;
 export type Env = typeof env;
-
-/**
- * Si se puede devolver el token de invitacion o de reset en la respuesta.
- *
- * La condicion es "NO es produccion" y no "es development" a proposito: asi los
- * tests automatizados, que corren con NODE_ENV=test, pueden recorrer el flujo
- * completo. Lo unico que importa de verdad es que en produccion no salga nunca:
- * seria entregar a quien pregunte el enlace para restablecer la contrasena de
- * otra persona.
- *
- * Andamio hasta que exista pg-boss y el envio real por correo (ADR-0008).
- */
-export const EXPOSE_DEV_TOKENS = parsed.data.NODE_ENV !== 'production';

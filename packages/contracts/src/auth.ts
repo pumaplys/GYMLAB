@@ -95,13 +95,11 @@ export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>;
 /**
  * Respuesta de los flujos que envian un correo.
  *
- * `devToken` SOLO aparece con NODE_ENV=development, para poder recorrer el flujo
- * sin proveedor de correo. En produccion nunca se incluye: seria entregar a
- * quien pregunta el token de restablecer la contrasena de otra persona.
+ * No devuelve el token en ningun entorno: el correo se encola en pg-boss y el
+ * token viaja en el, nunca en la respuesta HTTP.
  */
 export const emailFlowResponseSchema = z.object({
   ok: z.literal(true),
-  devToken: z.string().optional(),
 });
 export type EmailFlowResponse = z.infer<typeof emailFlowResponseSchema>;
 
@@ -120,8 +118,6 @@ export const invitationSchema = z.object({
   expiresAt: z.string(),
   acceptedAt: z.string().nullable(),
   revokedAt: z.string().nullable(),
-  /** Solo en desarrollo, mientras no exista el envio de correo. */
-  devToken: z.string().optional(),
 });
 export type Invitation = z.infer<typeof invitationSchema>;
 

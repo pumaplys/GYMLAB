@@ -8,6 +8,7 @@ import { RequestContextMiddleware } from './common/middleware/request-context.mi
 import { DatabaseModule } from './database/database.module';
 import { HealthController } from './health.controller';
 import { InvitationsModule } from './invitations/invitations.module';
+import { JobsModule } from './jobs/jobs.module';
 
 /**
  * Modulo raiz del monolito modular.
@@ -29,7 +30,7 @@ import { InvitationsModule } from './invitations/invitations.module';
  * repositorio de otro; pide a su servicio de aplicacion.
  */
 @Module({
-  imports: [DatabaseModule, AuthModule, InvitationsModule],
+  imports: [DatabaseModule, JobsModule, AuthModule, InvitationsModule],
   controllers: [HealthController],
   providers: [
     { provide: APP_GUARD, useClass: AuthGuard },

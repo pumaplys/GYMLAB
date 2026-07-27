@@ -23,10 +23,14 @@ import {
   withTenant,
   type Database,
 } from '@gymlab/db';
+import { EMAIL_QUEUES } from '@gymlab/contracts';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { AppModule } from '../app.module';
+import { patchRequestContext, runWithRequestContext } from '../common/request-context';
 import { env } from '../config/env';
+import { DATABASE } from '../database/database.module';
+import { JobsService } from '../jobs/jobs.service';
 
 let app: INestApplication;
 let owner: Database; // conexion propietaria, solo para sembrar y limpiar
@@ -133,9 +137,37 @@ afterAll(async () => {
     sql`DELETE FROM auth_events WHERE email_attempted LIKE ${patron} OR created_at >= ${inicio}`,
   );
   await owner.execute(sql`DELETE FROM users WHERE email LIKE ${patron}`);
+  await owner.execute(sql`DELETE FROM pgboss.job WHERE data->>'to' LIKE ${patron}`);
 });
 
 const conSesion = (token: string) => ({ Authorization: `Bearer ${token}` });
+
+/**
+ * Recupera el token de un correo encolado.
+ *
+ * El token ya no viaja en la respuesta HTTP: viaja en el trabajo de pg-boss.
+ * Leerlo desde la cola prueba dos cosas a la vez: que el flujo funciona, y que
+ * el trabajo quedo realmente encolado, que es lo que garantiza el outbox.
+ *
+ * Se consulta con la conexion propietaria porque `pgboss` es otro esquema.
+ */
+async function tokenEncolado(cola: string, destinatario: string): Promise<string> {
+  const res = await owner.execute<{ data: { token: string } }>(
+    sql`SELECT data FROM pgboss.job
+        WHERE name = ${cola} AND data->>'to' = ${destinatario}
+        ORDER BY created_on DESC LIMIT 1`,
+  );
+  const token = res.rows[0]?.data?.token;
+  if (!token) throw new Error(`No hay ningun trabajo "${cola}" encolado para ${destinatario}`);
+  return token;
+}
+
+async function contarTrabajos(cola: string): Promise<number> {
+  const res = await owner.execute<{ n: number }>(
+    sql`SELECT count(*)::int AS n FROM pgboss.job WHERE name = ${cola}`,
+  );
+  return res.rows[0]!.n;
+}
 
 describe('alta de gimnasio', () => {
   it('rechaza un codigo de plataforma incorrecto', async () => {
@@ -215,13 +247,14 @@ describe('invitaciones: permisos', () => {
       .send({ email: email('socio-1'), role: 'member' })
       .expect(201);
 
-    expect(res.body.devToken).toBeTruthy();
     expect(res.body.role).toBe('member');
+    // El token no viene en la respuesta: se comprueba que quedo encolado.
+    expect(await tokenEncolado(EMAIL_QUEUES.invitation, email('socio-1'))).toBeTruthy();
   });
 
   it('un recepcionista NO puede invitar a un dueno', async () => {
     // Se crea un recepcionista aceptando una invitacion, y se intenta escalar.
-    const inv = await http()
+    await http()
       .post(`/v1/gyms/${gymA}/invitations`)
       .set(conSesion(tokenOwnerA))
       .send({ email: email('recepcion'), role: 'receptionist' })
@@ -229,7 +262,11 @@ describe('invitaciones: permisos', () => {
 
     const alta = await http()
       .post('/v1/auth/accept-invitation')
-      .send({ token: inv.body.devToken, name: 'Rita', password: PASSWORD })
+      .send({
+        token: await tokenEncolado(EMAIL_QUEUES.invitation, email('recepcion')),
+        name: 'Rita',
+        password: PASSWORD,
+      })
       .expect(201);
 
     // Esto es la escalada de privilegios que la matriz debe impedir.
@@ -248,7 +285,7 @@ describe('invitaciones: permisos', () => {
   });
 
   it('un socio no puede invitar a nadie', async () => {
-    const inv = await http()
+    await http()
       .post(`/v1/gyms/${gymA}/invitations`)
       .set(conSesion(tokenOwnerA))
       .send({ email: email('socio-2'), role: 'member' })
@@ -256,7 +293,11 @@ describe('invitaciones: permisos', () => {
 
     const alta = await http()
       .post('/v1/auth/accept-invitation')
-      .send({ token: inv.body.devToken, name: 'Sonia', password: PASSWORD })
+      .send({
+        token: await tokenEncolado(EMAIL_QUEUES.invitation, email('socio-2')),
+        name: 'Sonia',
+        password: PASSWORD,
+      })
       .expect(201);
 
     await http()
@@ -291,12 +332,15 @@ describe('invitaciones: seguridad del token', () => {
       .set(conSesion(tokenOwnerA))
       .send({ email: email(quien), role: 'member' })
       .expect(201);
-    return res.body as { id: string; devToken: string };
+    return {
+      id: res.body.id as string,
+      token: await tokenEncolado(EMAIL_QUEUES.invitation, email(quien)),
+    };
   }
 
   it('un token manipulado no sirve', async () => {
     const inv = await nuevaInvitacion('manipulado');
-    const roto = `${inv.devToken.slice(0, -4)}XXXX`;
+    const roto = `${inv.token.slice(0, -4)}XXXX`;
 
     await http()
       .post('/v1/auth/accept-invitation')
@@ -309,13 +353,13 @@ describe('invitaciones: seguridad del token', () => {
 
     await http()
       .post('/v1/auth/accept-invitation')
-      .send({ token: inv.devToken, name: 'Uno', password: PASSWORD })
+      .send({ token: inv.token, name: 'Uno', password: PASSWORD })
       .expect(201);
 
     // El segundo intento debe fallar aunque el token siga siendo valido en forma.
     await http()
       .post('/v1/auth/accept-invitation')
-      .send({ token: inv.devToken, name: 'Dos', password: PASSWORD })
+      .send({ token: inv.token, name: 'Dos', password: PASSWORD })
       .expect(400);
   });
 
@@ -329,7 +373,7 @@ describe('invitaciones: seguridad del token', () => {
 
     await http()
       .post('/v1/auth/accept-invitation')
-      .send({ token: inv.devToken, name: 'Tarde', password: PASSWORD })
+      .send({ token: inv.token, name: 'Tarde', password: PASSWORD })
       .expect(400);
   });
 
@@ -360,7 +404,7 @@ describe('invitaciones: seguridad del token', () => {
 
     await http()
       .post('/v1/auth/accept-invitation')
-      .send({ token: inv.devToken, name: 'Tarde', password: PASSWORD })
+      .send({ token: inv.token, name: 'Tarde', password: PASSWORD })
       .expect(400);
   });
 
@@ -371,8 +415,64 @@ describe('invitaciones: seguridad del token', () => {
       tx.select().from(invitations).where(eq(invitations.id, inv.id)),
     );
 
-    expect(filas[0]?.tokenHash).not.toBe(inv.devToken);
+    expect(filas[0]?.tokenHash).not.toBe(inv.token);
     expect(filas[0]?.tokenHash).toMatch(/^[0-9a-f]{64}$/);
+  });
+});
+
+describe('outbox transaccional', () => {
+  it('el correo de invitacion se encola en la MISMA transaccion que la invitacion', async () => {
+    const antes = await contarTrabajos(EMAIL_QUEUES.invitation);
+
+    await http()
+      .post(`/v1/gyms/${gymA}/invitations`)
+      .set(conSesion(tokenOwnerA))
+      .send({ email: email('outbox-ok'), role: 'member' })
+      .expect(201);
+
+    expect(await contarTrabajos(EMAIL_QUEUES.invitation)).toBe(antes + 1);
+  });
+
+  it('si la transaccion revierte, el trabajo encolado desaparece con ella', async () => {
+    // ESTE ES EL TEST QUE JUSTIFICA ADR-0008, y tiene que provocar el fallo
+    // DESPUES de encolar. Hacerlo a traves de un endpoint no serviria: en todos
+    // ellos la validacion falla antes de llegar al encolado, asi que probarian
+    // que no se encola algo que nunca se intento encolar.
+    //
+    // Si `enqueue` usara una conexion propia en lugar de la transaccion de la
+    // peticion, el trabajo sobreviviria al rollback y alguien recibiria un
+    // correo sobre datos que no existen.
+    const jobs = app.get(JobsService);
+    const db = app.get<Database>(DATABASE);
+    const antes = await contarTrabajos(EMAIL_QUEUES.invitation);
+
+    await expect(
+      runWithRequestContext(async () =>
+        withTenant(db, gymA, async (tx) => {
+          patchRequestContext({ tx });
+          await jobs.enqueue(EMAIL_QUEUES.invitation, {
+            to: email('rollback'),
+            token: 'no-deberia-sobrevivir',
+            url: 'x',
+          });
+          throw new Error('fallo simulado despues de encolar');
+        }),
+      ),
+    ).rejects.toThrow('fallo simulado');
+
+    expect(await contarTrabajos(EMAIL_QUEUES.invitation)).toBe(antes);
+    await expect(tokenEncolado(EMAIL_QUEUES.invitation, email('rollback'))).rejects.toThrow();
+  });
+
+  it('sin transaccion, el trabajo se encola igualmente contra el pool', async () => {
+    // Las rutas publicas sin gimnasio activo no abren transaccion. Ahi no hay
+    // nada con lo que ser atomico —la fila del token la escribe Better Auth por
+    // su cuenta— pero el correo tiene que encolarse de todos modos.
+    const antes = await contarTrabajos(EMAIL_QUEUES.resetPassword);
+
+    await http().post('/v1/auth/forgot-password').send({ email: email('owner-a') }).expect(201);
+
+    expect(await contarTrabajos(EMAIL_QUEUES.resetPassword)).toBe(antes + 1);
   });
 });
 
@@ -384,16 +484,17 @@ describe('restablecer contrasena', () => {
       .expect(201);
 
     expect(res.body.ok).toBe(true);
-    expect(res.body.devToken).toBeUndefined();
+    // Y no se encola ningun correo para un destinatario que no existe.
+    await expect(
+      tokenEncolado(EMAIL_QUEUES.resetPassword, `no-existe-${sufijo}@test.local`),
+    ).rejects.toThrow();
   });
 
   it('el token permite cambiar la contrasena una sola vez', async () => {
-    const solicitud = await http()
-      .post('/v1/auth/forgot-password')
-      .send({ email: email('owner-b') })
-      .expect(201);
+    await http().post('/v1/auth/forgot-password').send({ email: email('owner-b') }).expect(201);
 
-    const token = solicitud.body.devToken as string;
+    // El token llega por la cola, no por la respuesta.
+    const token = await tokenEncolado(EMAIL_QUEUES.resetPassword, email('owner-b'));
     expect(token).toBeTruthy();
 
     await http()
