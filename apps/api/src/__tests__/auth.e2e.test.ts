@@ -31,6 +31,7 @@ import { patchRequestContext, runWithRequestContext } from '../common/request-co
 import { env } from '../config/env';
 import { DATABASE } from '../database/database.module';
 import { JobsService } from '../jobs/jobs.service';
+import { RetentionWorker } from '../jobs/retention.worker';
 
 let app: INestApplication;
 let owner: Database; // conexion propietaria, solo para sembrar y limpiar
@@ -650,6 +651,38 @@ describe('registro de auditoria', () => {
       tx.execute(sql`SELECT count(*)::int AS n FROM audit_log WHERE action = 'invitation.created'`),
     );
     expect((filas.rows[0] as { n: number }).n).toBeGreaterThan(0);
+  });
+});
+
+describe('retencion de datos (RGPD art. 5.1.e)', () => {
+  it('la purga borra los eventos de mas de 90 dias y respeta los recientes', async () => {
+    const viejo = randomUUID();
+    const reciente = randomUUID();
+
+    await owner.execute(
+      sql`INSERT INTO auth_events (id, email_attempted, event_type, created_at) VALUES
+          (${viejo}::uuid,    ${email('purga-vieja')},    'login_failure', now() - interval '91 days'),
+          (${reciente}::uuid, ${email('purga-reciente')}, 'login_failure', now() - interval '89 days')`,
+    );
+
+    const borrados = await app.get(RetentionWorker).purgar();
+    expect(borrados).toBeGreaterThan(0);
+
+    const quedan = await owner.execute<{ id: string }>(
+      sql`SELECT id FROM auth_events WHERE id IN (${viejo}::uuid, ${reciente}::uuid)`,
+    );
+    // El de 89 dias sobrevive; el de 91 no.
+    expect(quedan.rows).toHaveLength(1);
+    expect(quedan.rows[0]!.id).toBe(reciente);
+
+    await owner.execute(sql`DELETE FROM auth_events WHERE id = ${reciente}::uuid`);
+  });
+});
+
+describe('salud del servicio', () => {
+  it('/health comprueba de verdad la base de datos', async () => {
+    const res = await http().get('/health').expect(200);
+    expect(res.body.status).toBe('ok');
   });
 });
 

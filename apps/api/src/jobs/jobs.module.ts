@@ -6,6 +6,7 @@ import type { PgBoss } from 'pg-boss' with { 'resolution-mode': 'import' };
 import { env } from '../config/env';
 import { EmailWorker } from './email.worker';
 import { JobsService } from './jobs.service';
+import { RetentionWorker } from './retention.worker';
 import { BOSS } from './jobs.tokens';
 
 /**
@@ -46,6 +47,7 @@ class BossLifecycle implements OnApplicationShutdown {
     },
     JobsService,
     EmailWorker,
+    RetentionWorker,
     BossLifecycle,
   ],
   exports: [BOSS, JobsService],

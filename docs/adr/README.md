@@ -30,15 +30,17 @@ No para nombrar variables ni elegir una librería de fechas.
 
 ## Índice
 
-Los ADR de la propuesta inicial están consolidados en
-[`../01-arquitectura.md`](../01-arquitectura.md) y deben extraerse a documentos
-individuales:
-
 | ADR | Título | Estado |
 |---|---|---|
-| 0001 | Monolito modular en lugar de microservicios | Pendiente de extraer |
-| 0002 | Multi-tenancy: schema compartido + `gym_id` + RLS | Pendiente de extraer |
-| 0003 | TypeScript de extremo a extremo | Pendiente de extraer |
-| 0004 | Stack concreto (NestJS, Drizzle, Next.js, Expo) | Pendiente de extraer |
-| 0005 | Monorepo con pnpm + Turborepo | Pendiente de extraer |
-| 0006 | REST versionado en lugar de tRPC | Pendiente de extraer |
+| [0001](0001-monolito-modular.md) | Monolito modular, no microservicios | Aceptado |
+| [0002](0002-multi-tenancy-rls.md) | Multi-tenancy: schema compartido, `gym_id` y RLS | Aceptado |
+| [0003](0003-typescript-extremo-a-extremo.md) | TypeScript de extremo a extremo | Aceptado |
+| [0004](0004-stack-tecnologico.md) | Stack tecnológico (incluye REST frente a tRPC) | Aceptado |
+| [0005](0005-monorepo.md) | Monorepo con pnpm y Turborepo | Aceptado |
+| [0006](0006-modulos-del-dominio.md) | Módulos del dominio y su frontera | Aceptado |
+| [0007](0007-autenticacion-y-sesiones.md) | Autenticación, sesiones y contexto de tenant | Aceptado |
+| [0008](0008-alcance-de-la-transaccion.md) | Una transacción por petición, sin I/O externo dentro | Aceptado |
+| [0009](0009-no-montar-el-router-de-better-auth.md) | No montar el router HTTP de Better Auth | Aceptado |
+
+[`../01-arquitectura.md`](../01-arquitectura.md) sigue siendo la vista de
+conjunto; los ADR 0001–0006 desarrollan sus decisiones una por una.

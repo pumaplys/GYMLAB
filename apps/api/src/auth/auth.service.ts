@@ -10,7 +10,6 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import {
-  and,
   authEvents,
   eq,
   gyms,
@@ -343,19 +342,4 @@ export class AuthService {
     );
   }
 
-  /** Comprueba que existe una pertenencia concreta. Lo usa el guard de gimnasio. */
-  async assertMembership(userId: string, gymId: string): Promise<void> {
-    const filas = await withTenant(
-      this.db,
-      gymId,
-      (tx) =>
-        tx
-          .select({ id: memberships.id })
-          .from(memberships)
-          .where(and(eq(memberships.gymId, gymId), eq(memberships.userId, userId)))
-          .limit(1),
-      { userId },
-    );
-    if (!filas[0]) throw new ForbiddenException('No perteneces a ese gimnasio.');
-  }
 }

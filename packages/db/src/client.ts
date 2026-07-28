@@ -8,9 +8,6 @@ export type Database = ReturnType<typeof createDatabase>;
 /** Transaccion de Drizzle. Es lo que reciben los repositorios dentro de `withTenant`. */
 export type Transaction = Parameters<Parameters<Database['transaction']>[0]>[0];
 
-/** Cualquiera de los dos: permite escribir un repositorio que funcione dentro y fuera de transaccion. */
-export type Executor = Database | Transaction;
-
 export interface CreateDatabaseOptions {
   connectionString: string;
   /** Maximo de conexiones del pool. */

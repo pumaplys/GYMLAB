@@ -1,0 +1,23 @@
+# Normaliza los finales de linea.
+#
+# Sin esto dependen de la maquina: se desarrolla en Windows (CRLF) y CI corre en
+# Linux (LF). Antes o despues aparecen diffs fantasma en los que un archivo
+# figura como modificado entero sin haber cambiado nada.
+#
+# `text=auto` guarda siempre LF en el repositorio y deja que cada checkout use
+# lo que le corresponda.
+* text=auto eol=lf
+
+# Binarios: nunca tocar.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+
+# El lockfile lo genera pnpm: marcarlo evita que las revisiones se llenen de el.
+pnpm-lock.yaml linguist-generated=true -diff
