@@ -2,13 +2,14 @@ import { randomUUID } from 'node:crypto';
 import {
   BadRequestException,
   ForbiddenException,
+  HttpException,
+  HttpStatus,
   Inject,
   Injectable,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import {
-  and,
   authEvents,
   eq,
   gyms,
@@ -19,6 +20,7 @@ import {
   withTenant,
   withoutTenant,
   type Database,
+  type MembershipRole,
 } from '@gymlab/db';
 import type {
   EmailFlowResponse,
@@ -30,16 +32,36 @@ import type {
   SessionResponse,
   VerifyEmailInput,
 } from '@gymlab/contracts';
+import { ipDe } from '../common/http';
 import { env } from '../config/env';
 import { DATABASE } from '../database/database.module';
 import type { Auth } from './auth.instance';
 import { AUTH } from './auth.tokens';
+import { AuthThrottle } from './auth.throttle';
+
+/**
+ * Resultado de los flujos que abren o cierran sesion.
+ *
+ * Ademas del cuerpo, devuelve las cabeceras de Better Auth para que el
+ * controlador traslade sus cookies a la respuesta. El token sigue en el cuerpo
+ * para la app movil, que no tiene cookies.
+ */
+export interface AuthResult {
+  session: SessionResponse;
+  authHeaders: Headers;
+}
+
+/** Personal: la sesion muere dentro de la misma jornada (ADR-0007, decision 8). */
+const SESION_PERSONAL_MS = 12 * 60 * 60 * 1000;
+/** Socio: su movil personal; espera no volver a entrar en meses. */
+const SESION_SOCIO_MS = 90 * 24 * 60 * 60 * 1000;
 
 @Injectable()
 export class AuthService {
   constructor(
     @Inject(AUTH) private readonly auth: Auth,
     @Inject(DATABASE) private readonly db: Database,
+    private readonly throttle: AuthThrottle,
   ) {}
 
   /**
@@ -60,7 +82,7 @@ export class AuthService {
    *     sin gimnasio. Es recuperable —puede volver a intentarlo— y no expone
    *     datos de nadie.
    */
-  async registerGym(input: RegisterGymInput, headers: Headers): Promise<SessionResponse> {
+  async registerGym(input: RegisterGymInput, headers: Headers): Promise<AuthResult> {
     if (input.platformCode !== env.PLATFORM_INVITE_CODE) {
       throw new ForbiddenException('Codigo de plataforma no valido.');
     }
@@ -87,10 +109,13 @@ export class AuthService {
     );
 
     // El gimnasio recien creado pasa a ser el activo de esta sesion.
-    await this.setActiveGym(signUp.response.token ?? '', gymId);
+    await this.applySessionPolicy({ token: signUp.response.token ?? '' }, gymId, 'owner');
     await this.recordAuthEvent('login_success', userId, input.email, headers);
 
-    return { token: signUp.response.token ?? '', activeGymId: gymId };
+    return {
+      session: { token: signUp.response.token ?? '', activeGymId: gymId },
+      authHeaders: signUp.headers,
+    };
   }
 
   /**
@@ -100,7 +125,18 @@ export class AuthService {
    * varios queda en null y el cliente elige con /switch-gym: adivinar cual
    * quiere seria peor que preguntar.
    */
-  async login(input: LoginInput, headers: Headers): Promise<SessionResponse> {
+  async login(input: LoginInput, headers: Headers): Promise<AuthResult> {
+    // El intento se registra ANTES de verificar la contrasena, en una sentencia
+    // atomica. Contar despues dejaria una ventana de ~100 ms —lo que tarda
+    // scrypt— por la que pasarian todas las peticiones simultaneas.
+    const ip = ipDe(headers);
+    if (await this.throttle.registrarIntentoYComprobar(input.email, ip)) {
+      throw new HttpException(
+        'Demasiados intentos fallidos. Prueba de nuevo en unos minutos.',
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
+
     let resultado;
     try {
       resultado = await this.auth.api.signInEmail({
@@ -120,16 +156,21 @@ export class AuthService {
     const propias = await this.listMemberships(userId);
     const activeGymId = propias.length === 1 ? propias[0]!.gymId : null;
 
-    if (activeGymId) await this.setActiveGym(token, activeGymId);
+    if (activeGymId) await this.applySessionPolicy({ token }, activeGymId, propias[0]!.role);
+    // Acertar la contrasena limpia el contador: a nadie se le penaliza por
+    // haberse equivocado antes de entrar bien.
+    await this.throttle.limpiar(input.email, ip);
     await this.recordAuthEvent('login_success', userId, input.email, headers);
 
-    return { token, activeGymId };
+    return { session: { token, activeGymId }, authHeaders: resultado.headers };
   }
 
-  async logout(headers: Headers, userId: string): Promise<{ ok: true }> {
-    await this.auth.api.signOut({ headers });
+  async logout(headers: Headers, userId: string): Promise<{ ok: true; authHeaders: Headers }> {
+    // `returnHeaders` para poder trasladar la cookie de borrado: sin ella, el
+    // navegador conservaria una cookie que ya no vale para nada.
+    const salida = await this.auth.api.signOut({ headers, returnHeaders: true });
     await this.recordAuthEvent('logout', userId, null, headers);
-    return { ok: true };
+    return { ok: true, authHeaders: salida.headers };
   }
 
   async me(userId: string, activeGymId: string | null): Promise<Me> {
@@ -159,14 +200,22 @@ export class AuthService {
    * el valor que despues alimenta `withTenant()`. Es exactamente el punto donde
    * un fallo se convertiria en acceso a otro gimnasio.
    */
-  async switchGym(userId: string, sessionToken: string, gymId: string): Promise<SessionResponse> {
+  async switchGym(userId: string, sessionId: string, gymId: string): Promise<SessionResponse> {
     const propias = await this.listMemberships(userId);
-    if (!propias.some((m) => m.gymId === gymId)) {
+    const destino = propias.find((m) => m.gymId === gymId);
+    if (!destino) {
       throw new ForbiddenException('No perteneces a ese gimnasio.');
     }
 
-    await this.setActiveGym(sessionToken, gymId);
-    return { token: sessionToken, activeGymId: gymId };
+    // Se identifica la sesion por su id, que AuthGuard ya resolvio a partir de
+    // la peticion. Antes se leia el token de la cabecera o de una cookie, lo
+    // que obligaba a conocer el nombre de la cookie de Better Auth — un detalle
+    // interno suyo que no debemos replicar.
+    //
+    // El rol se recalcula: cambiar a un gimnasio donde eres socio debe acortar
+    // o alargar la sesion segun corresponda.
+    await this.applySessionPolicy({ id: sessionId }, gymId, destino.role);
+    return { token: '', activeGymId: gymId };
   }
 
   /**
@@ -239,11 +288,41 @@ export class AuthService {
     return filas.map((f) => ({ gymId: f.gymId, role: f.role, gymName: f.gymName ?? '' }));
   }
 
-  /** `sessions` no tiene RLS: es anterior al contexto de tenant. */
-  private async setActiveGym(sessionToken: string, gymId: string): Promise<void> {
-    if (!sessionToken) return;
+  /**
+   * Fija el gimnasio activo y la caducidad de la sesion segun el rol.
+   *
+   * ADR-0007, decision 8: el personal trabaja en un ordenador compartido de
+   * mostrador y su sesion debe morir al acabar el turno; el socio usa su movil
+   * personal y espera no tener que volver a entrar.
+   *
+   * La caducidad es ABSOLUTA desde el login, no por inactividad. El ADR hablaba
+   * de 8 h de inactividad y 12 h de maximo para el personal; Better Auth modela
+   * el refresco de forma global, no por rol, asi que implementar ambas cosas
+   * exigiria llevar la cuenta de la actividad a mano. Se implementa el maximo,
+   * que es el que de verdad acota el riesgo: la sesion de recepcion caduca
+   * dentro de la misma jornada pase lo que pase.
+   *
+   * `sessions` no tiene RLS: es anterior al contexto de tenant.
+   */
+  private async applySessionPolicy(
+    selector: { token?: string; id?: string },
+    gymId: string,
+    role: MembershipRole,
+  ): Promise<void> {
+    const condicion = selector.token
+      ? eq(sessions.token, selector.token)
+      : selector.id
+        ? eq(sessions.id, selector.id)
+        : null;
+    if (!condicion) return;
+
+    const duracionMs = role === 'member' ? SESION_SOCIO_MS : SESION_PERSONAL_MS;
+
     await withoutTenant(this.db, (tx) =>
-      tx.update(sessions).set({ activeGymId: gymId }).where(eq(sessions.token, sessionToken)),
+      tx
+        .update(sessions)
+        .set({ activeGymId: gymId, expiresAt: new Date(Date.now() + duracionMs) })
+        .where(condicion),
     );
   }
 
@@ -262,25 +341,10 @@ export class AuthService {
         userId,
         emailAttempted: email,
         eventType,
-        ipAddress: headers.get('x-forwarded-for') ?? null,
+        ipAddress: ipDe(headers),
         userAgent: headers.get('user-agent') ?? null,
       }),
     );
   }
 
-  /** Comprueba que existe una pertenencia concreta. Lo usa el guard de gimnasio. */
-  async assertMembership(userId: string, gymId: string): Promise<void> {
-    const filas = await withTenant(
-      this.db,
-      gymId,
-      (tx) =>
-        tx
-          .select({ id: memberships.id })
-          .from(memberships)
-          .where(and(eq(memberships.gymId, gymId), eq(memberships.userId, userId)))
-          .limit(1),
-      { userId },
-    );
-    if (!filas[0]) throw new ForbiddenException('No perteneces a ese gimnasio.');
-  }
 }

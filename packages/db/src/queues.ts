@@ -27,7 +27,21 @@ export const EMAIL_QUEUES = {
 
 export type EmailQueue = (typeof EMAIL_QUEUES)[keyof typeof EMAIL_QUEUES];
 
-export const ALL_QUEUES: readonly string[] = Object.values(EMAIL_QUEUES);
+/**
+ * Colas de mantenimiento.
+ *
+ * `retention.auth-events` purga los eventos de autenticacion pasados 90 dias.
+ * No es limpieza opcional: `auth_events` guarda IP y user-agent, y el RGPD
+ * exige limitar el plazo de conservacion (art. 5.1.e).
+ */
+export const MAINTENANCE_QUEUES = {
+  retentionAuthEvents: 'retention.auth-events',
+} as const;
+
+export const ALL_QUEUES: readonly string[] = [
+  ...Object.values(EMAIL_QUEUES),
+  ...Object.values(MAINTENANCE_QUEUES),
+];
 
 export interface EmailJob {
   to: string;

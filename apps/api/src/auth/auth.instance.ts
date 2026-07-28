@@ -1,9 +1,11 @@
 import {
   accounts,
   EMAIL_QUEUES,
+  eq,
   sessions,
   users,
   verifications,
+  withoutTenant,
   type Database,
 } from '@gymlab/db';
 import { env } from '../config/env';
@@ -79,6 +81,21 @@ export async function createAuth(db: Database, jobs: JobsService) {
       sendResetPassword: async ({ user, url, token }) => {
         await jobs.enqueue(EMAIL_QUEUES.resetPassword, { to: user.email, url, token });
       },
+
+      /**
+       * Cambiar la contrasena cierra TODAS las sesiones abiertas.
+       *
+       * Sin esto, restablecerla no echa a quien te haya robado la sesion — y
+       * ese es justo el gesto que hace alguien cuando sospecha que le han
+       * entrado. Un reset que no expulsa al intruso da una falsa sensacion de
+       * haber recuperado el control.
+       *
+       * Se borran todas, incluida la de quien lo pide: tendra que entrar con la
+       * contrasena nueva, que es lo esperable.
+       */
+      onPasswordReset: async ({ user }) => {
+        await withoutTenant(db, (tx) => tx.delete(sessions).where(eq(sessions.userId, user.id)));
+      },
     },
 
     emailVerification: {
@@ -101,6 +118,19 @@ export async function createAuth(db: Database, jobs: JobsService) {
     },
 
     session: {
+      // Techo global. La duracion real de cada sesion la fija AuthService segun
+      // el rol (ADR-0007, decision 8): 12 h para el personal, 90 dias para el
+      // socio. Este valor es el mayor de los dos porque solo puede acortarse
+      // despues, nunca alargarse.
+      expiresIn: 90 * 24 * 60 * 60,
+
+      // Imprescindible para que lo anterior se sostenga: con el refresco
+      // deslizante activo, Better Auth devolveria la caducidad de una sesion de
+      // recepcion a los 90 dias en la primera peticion, anulando el limite de
+      // 12 h. A cambio, nadie renueva por uso: la caducidad es absoluta desde
+      // el login, que ademas es mas predecible.
+      disableSessionRefresh: true,
+
       additionalFields: {
         activeGymId: {
           type: 'string',

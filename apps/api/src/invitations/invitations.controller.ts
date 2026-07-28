@@ -1,14 +1,24 @@
-import { Body, Controller, Delete, ForbiddenException, Get, Param, Post, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  ForbiddenException,
+  Get,
+  Param,
+  Post,
+  Req,
+  Res,
+} from '@nestjs/common';
 import {
   acceptInvitationSchema,
   createInvitationSchema,
   type AcceptInvitationInput,
   type CreateInvitationInput,
 } from '@gymlab/contracts';
-import type { Request } from 'express';
+import type { Request, Response } from 'express';
 import { Public } from '../common/decorators/public.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
-import { toHeaders } from '../common/http';
+import { forwardAuthCookies, toHeaders } from '../common/http';
 import { requireRequestContext } from '../common/request-context';
 import { ZodBody } from '../common/zod.pipe';
 import { InvitationsService } from './invitations.service';
@@ -54,11 +64,14 @@ export class InvitationsController {
   /** Publico: quien acepta todavia no tiene sesion. */
   @Public()
   @Post('auth/accept-invitation')
-  accept(
+  async accept(
     @Body(new ZodBody(acceptInvitationSchema)) body: AcceptInvitationInput,
     @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
   ) {
-    return this.invitations.accept(body, toHeaders(req));
+    const { session, authHeaders } = await this.invitations.accept(body, toHeaders(req));
+    forwardAuthCookies(authHeaders, res);
+    return session;
   }
 
   private assertGymMatches(gymId: string) {

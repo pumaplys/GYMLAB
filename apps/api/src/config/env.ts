@@ -43,6 +43,17 @@ const schema = z.object({
    * Se sustituira por el flujo de pago cuando entre Stripe (ADR-0007, decision 6).
    */
   PLATFORM_INVITE_CODE: z.string().min(8),
+
+  /**
+   * Origenes permitidos por CORS, separados por comas.
+   *
+   * Lista blanca y nunca `*`: el transporte por cookie exige
+   * `credentials: true`, y el navegador rechaza esa combinacion con comodin.
+   */
+  CORS_ORIGINS: z
+    .string()
+    .default('http://localhost:3000')
+    .transform((v) => v.split(',').map((o) => o.trim()).filter(Boolean)),
 });
 
 const parsed = schema.safeParse(process.env);

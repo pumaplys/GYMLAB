@@ -31,6 +31,7 @@ import { patchRequestContext, runWithRequestContext } from '../common/request-co
 import { env } from '../config/env';
 import { DATABASE } from '../database/database.module';
 import { JobsService } from '../jobs/jobs.service';
+import { RetentionWorker } from '../jobs/retention.worker';
 
 let app: INestApplication;
 let owner: Database; // conexion propietaria, solo para sembrar y limpiar
@@ -138,6 +139,7 @@ afterAll(async () => {
   );
   await owner.execute(sql`DELETE FROM users WHERE email LIKE ${patron}`);
   await owner.execute(sql`DELETE FROM pgboss.job WHERE data->>'to' LIKE ${patron}`);
+  await owner.execute(sql`DELETE FROM auth_throttle WHERE key LIKE ${'login:%' + sufijo + '%'}`);
 });
 
 const conSesion = (token: string) => ({ Authorization: `Bearer ${token}` });
@@ -420,6 +422,153 @@ describe('invitaciones: seguridad del token', () => {
   });
 });
 
+describe('endurecimiento de la sesion', () => {
+  it('el login devuelve tambien una cookie de sesion, no solo el token', async () => {
+    // ADR-0007 promete dos transportes: cookie httpOnly para el panel web y
+    // Bearer para la app movil. Antes solo existia el segundo.
+    const res = await http()
+      .post('/v1/auth/login')
+      .send({ email: email('owner-a'), password: PASSWORD })
+      .expect(201);
+
+    const cookies = res.headers['set-cookie'] as unknown as string[] | undefined;
+    expect(cookies?.length ?? 0).toBeGreaterThan(0);
+    expect(cookies!.join(';')).toContain('HttpOnly');
+    expect(res.body.token).toBeTruthy();
+  });
+
+  it('la sesion del personal caduca dentro de la jornada, no en 90 dias', async () => {
+    const res = await http()
+      .post('/v1/auth/login')
+      .send({ email: email('owner-a'), password: PASSWORD })
+      .expect(201);
+
+    const filas = await owner.execute<{ expires_at: Date }>(
+      sql`SELECT expires_at FROM sessions WHERE token = ${res.body.token}`,
+    );
+    const horas = (new Date(filas.rows[0]!.expires_at).getTime() - Date.now()) / 3_600_000;
+
+    // 12 h para el personal (ADR-0007, decision 8).
+    expect(horas).toBeGreaterThan(11);
+    expect(horas).toBeLessThan(13);
+  });
+
+  it('la sesion de un socio dura mucho mas que la del personal', async () => {
+    await http()
+      .post(`/v1/gyms/${gymA}/invitations`)
+      .set(conSesion(tokenOwnerA))
+      .send({ email: email('socio-sesion'), role: 'member' })
+      .expect(201);
+
+    const alta = await http()
+      .post('/v1/auth/accept-invitation')
+      .send({
+        token: await tokenEncolado(EMAIL_QUEUES.invitation, email('socio-sesion')),
+        name: 'Sara',
+        password: PASSWORD,
+      })
+      .expect(201);
+
+    const filas = await owner.execute<{ expires_at: Date }>(
+      sql`SELECT expires_at FROM sessions WHERE token = ${alta.body.token}`,
+    );
+    const dias = (new Date(filas.rows[0]!.expires_at).getTime() - Date.now()) / 86_400_000;
+
+    expect(dias).toBeGreaterThan(80);
+  });
+
+  it('restablecer la contrasena cierra las sesiones abiertas', async () => {
+    // Es el gesto de quien sospecha que le han robado la sesion. Si no expulsa
+    // al intruso, da una falsa sensacion de haber recuperado el control.
+    const antes = await http()
+      .post('/v1/auth/login')
+      .send({ email: email('owner-b'), password: PASSWORD })
+      .expect(201);
+
+    await http().get('/v1/auth/me').set(conSesion(antes.body.token)).expect(200);
+
+    await http().post('/v1/auth/forgot-password').send({ email: email('owner-b') }).expect(201);
+    const token = await tokenEncolado(EMAIL_QUEUES.resetPassword, email('owner-b'));
+    await http()
+      .post('/v1/auth/reset-password')
+      .send({ token, newPassword: 'contrasena-tercera-1' })
+      .expect(201);
+
+    // La sesion anterior ya no vale.
+    await http().get('/v1/auth/me').set(conSesion(antes.body.token)).expect(401);
+  });
+
+  it('bloquea tras varios intentos fallidos seguidos', async () => {
+    const victima = email('fuerza-bruta');
+
+    // Better Auth aplica su rate limiting en el router HTTP, que no montamos
+    // (ADR-0009), asi que el limite es nuestro.
+    for (let i = 0; i < 5; i++) {
+      await http()
+        .post('/v1/auth/login')
+        .send({ email: victima, password: `intento-fallido-${i}` })
+        .expect(401);
+    }
+
+    await http()
+      .post('/v1/auth/login')
+      .send({ email: victima, password: 'intento-fallido-6' })
+      .expect(429);
+  });
+
+  it('el limite resiste 30 intentos SIMULTANEOS, no solo seguidos', async () => {
+    // ESTE ES EL TEST DE CONCURRENCIA.
+    //
+    // La primera version contaba fallos en auth_events y decidia despues. Entre
+    // la lectura y el registro del fallo pasa la verificacion de la contrasena,
+    // ~100 ms: treinta peticiones a la vez leian todas cero y pasaban todas.
+    //
+    // Con el contador atomico, cada peticion recibe un numero distinto porque
+    // Postgres bloquea la fila durante el UPSERT. Solo las 5 primeras llegan a
+    // verificar la contrasena; el resto se rechaza.
+    //
+    // Con la implementacion anterior este test falla: pasarian las 30.
+    const victima = email('carrera');
+
+    const respuestas = await Promise.all(
+      Array.from({ length: 30 }, (_, i) =>
+        http()
+          .post('/v1/auth/login')
+          .send({ email: victima, password: `simultaneo-${i}` })
+          .then((r) => r.status),
+      ),
+    );
+
+    const rechazados = respuestas.filter((s) => s === 429).length;
+    const intentados = respuestas.filter((s) => s === 401).length;
+
+    expect(intentados).toBe(5);
+    expect(rechazados).toBe(25);
+  });
+
+  it('acertar la contrasena limpia el contador', async () => {
+    // Equivocarse un par de veces antes de entrar bien no debe dejar a nadie
+    // penalizado durante el resto de la ventana.
+    for (let i = 0; i < 3; i++) {
+      await http()
+        .post('/v1/auth/login')
+        .send({ email: email('owner-a'), password: `mal-${i}-largo` })
+        .expect(401);
+    }
+
+    await http()
+      .post('/v1/auth/login')
+      .send({ email: email('owner-a'), password: PASSWORD })
+      .expect(201);
+
+    // Tras el acierto, el contador vuelve a cero y se puede seguir usando.
+    await http()
+      .post('/v1/auth/login')
+      .send({ email: email('owner-a'), password: PASSWORD })
+      .expect(201);
+  });
+});
+
 describe('outbox transaccional', () => {
   it('el correo de invitacion se encola en la MISMA transaccion que la invitacion', async () => {
     const antes = await contarTrabajos(EMAIL_QUEUES.invitation);
@@ -555,6 +704,38 @@ describe('registro de auditoria', () => {
       tx.execute(sql`SELECT count(*)::int AS n FROM audit_log WHERE action = 'invitation.created'`),
     );
     expect((filas.rows[0] as { n: number }).n).toBeGreaterThan(0);
+  });
+});
+
+describe('retencion de datos (RGPD art. 5.1.e)', () => {
+  it('la purga borra los eventos de mas de 90 dias y respeta los recientes', async () => {
+    const viejo = randomUUID();
+    const reciente = randomUUID();
+
+    await owner.execute(
+      sql`INSERT INTO auth_events (id, email_attempted, event_type, created_at) VALUES
+          (${viejo}::uuid,    ${email('purga-vieja')},    'login_failure', now() - interval '91 days'),
+          (${reciente}::uuid, ${email('purga-reciente')}, 'login_failure', now() - interval '89 days')`,
+    );
+
+    const borrados = await app.get(RetentionWorker).purgar();
+    expect(borrados).toBeGreaterThan(0);
+
+    const quedan = await owner.execute<{ id: string }>(
+      sql`SELECT id FROM auth_events WHERE id IN (${viejo}::uuid, ${reciente}::uuid)`,
+    );
+    // El de 89 dias sobrevive; el de 91 no.
+    expect(quedan.rows).toHaveLength(1);
+    expect(quedan.rows[0]!.id).toBe(reciente);
+
+    await owner.execute(sql`DELETE FROM auth_events WHERE id = ${reciente}::uuid`);
+  });
+});
+
+describe('salud del servicio', () => {
+  it('/health comprueba de verdad la base de datos', async () => {
+    const res = await http().get('/health').expect(200);
+    expect(res.body.status).toBe('ok');
   });
 });
 

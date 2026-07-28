@@ -6,6 +6,7 @@ import { AuthController } from './auth.controller';
 import { createAuth } from './auth.instance';
 import { AuthService } from './auth.service';
 import { AUTH } from './auth.tokens';
+import { AuthThrottle } from './auth.throttle';
 
 /**
  * Provee la instancia de Better Auth.
@@ -23,6 +24,7 @@ import { AUTH } from './auth.tokens';
       useFactory: (db: Database, jobs: JobsService) => createAuth(db, jobs),
     },
     AuthService,
+    AuthThrottle,
   ],
   exports: [AUTH, AuthService],
 })
