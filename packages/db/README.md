@@ -1,6 +1,12 @@
 # @gymlab/db
 
-Esquema, migraciones y **aislamiento multi-tenant**. Lo consume únicamente `@gymlab/api`.
+Esquema, migraciones, **aislamiento multi-tenant** y las colas de pg-boss. Lo
+consume únicamente `@gymlab/api`.
+
+Las colas viven aquí y no en `@gymlab/contracts` por dos motivos: el panel y la
+app nunca ven un nombre de cola —no forman parte del contrato con los clientes—
+y `db:migrate` no debe depender de haber compilado ningún paquete. Ver
+`src/queues.ts` y [ADR-0005](../../docs/adr/0005-monorepo.md).
 
 ---
 
@@ -43,12 +49,12 @@ const user = await withoutTenant(db, (tx) =>
 
 ```bash
 pnpm db:generate   # genera migración a partir del esquema Drizzle
-pnpm db:migrate    # aplica migraciones + roles + políticas RLS
+pnpm db:migrate    # migraciones + roles + políticas RLS + colas de pg-boss
 pnpm db:studio     # explorador de datos
 pnpm --filter @gymlab/db test
 ```
 
-`migrate` encadena `drizzle-kit migrate` y `pnpm rls`. El orden importa: las tablas deben existir antes de habilitarles RLS. `sql/*.sql` es idempotente y debe reaplicarse en cada despliegue.
+`migrate` encadena `drizzle-kit migrate`, `pnpm rls` y `pnpm boss:install`, los tres con el **rol propietario**. El orden importa: las tablas deben existir antes de habilitarles RLS, y pg-boss va al final porque hace DDL —crea su esquema y una partición por cola— que `gymlab_app` no puede ejecutar. Todo es idempotente y debe reaplicarse en cada despliegue.
 
 ---
 

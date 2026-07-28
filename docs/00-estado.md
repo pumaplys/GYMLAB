@@ -1,100 +1,91 @@
 # Estado del proyecto
 
-> Última actualización: **2026-07-26** · Fase actual: **0 — Cimientos**
+> Última actualización: **2026-07-28** · **Fase 0 COMPLETADA** · Siguiente: Fase 1
 
 Documento de continuidad: qué está hecho, qué está a medias y cuál es el
 siguiente paso. Se actualiza al final de cada sesión de trabajo.
 
 ---
 
-## Dónde estamos
+## Fase 0 — cerrada
 
 | | Estado |
 |---|---|
-| Definición de producto y alcance del MVP | ✅ Cerrado |
-| Arquitectura | ✅ Aprobada — [`01-arquitectura.md`](01-arquitectura.md) |
-| Estructura del monorepo | ✅ Creada |
-| Instalación y toolchain | ✅ `build`, `typecheck`, `lint`, `test` en verde |
-| Esquema base, RLS, `withTenant()` | ✅ **Aplicado y verificado contra PostgreSQL real** |
-| Test de aislamiento entre tenants | ✅ **13 casos, verde — y verificado que sabe fallar** |
-| Conexión de `@gymlab/db` con la API | ⬜ Siguiente paso |
-| Auth y roles (Better Auth) | ⬜ Pendiente |
-| CI (GitHub Actions) | ⬜ Pendiente |
-| Funcionalidad de producto | ⬜ Fase 1 |
+| Definición de producto y alcance del MVP | ✅ |
+| Arquitectura y nueve ADR | ✅ [`adr/`](adr/) |
+| Monorepo, toolchain y catálogo de versiones | ✅ |
+| Aislamiento multi-tenant (RLS) | ✅ verificado por falsificación |
+| Autenticación, sesiones e invitaciones | ✅ 38 tests de abuso |
+| Trabajos en segundo plano y outbox transaccional | ✅ verificado por falsificación |
+| CI en GitHub Actions con protección de rama | ✅ en verde sobre `main` |
+| Revisión arquitectónica y corrección de hallazgos | ✅ |
+
+**54 tests** (16 de aislamiento + 38 de auth). `build`, `typecheck`, `lint` y
+`test` en verde en los 6 workspaces, en local y en CI.
 
 ---
 
-## El aislamiento multi-tenant está verificado
+## Qué hay construido
 
-Tres capas que se refuerzan, ya no sobre el papel:
+### Aislamiento entre gimnasios
 
-| Pieza | Qué garantiza |
-|---|---|
-| `sql/01-rls.sql` | Políticas por tabla acotadas al rol `gymlab_app`. Sin contexto, cero filas: **falla en cerrado** |
-| `src/tenant.ts` | `withTenant()` fija `app.gym_id` **local a la transacción**, requisito detrás de un pooler |
-| `src/client.ts` | `assertRlsIsEnforced()` aborta el arranque si la conexión puede ignorar las políticas |
+Tres capas que se refuerzan: políticas RLS por tabla, `withTenant()` fijando
+`app.gym_id` local a la transacción, y `assertRlsIsEnforced()` abortando el
+arranque si la conexión pudiera saltárselas.
 
-Estado real comprobado en la base de datos:
+**Dos roles de base de datos**, porque en Postgres un superusuario y el
+propietario ignoran RLS: `gymlab` para migraciones, `gymlab_app` para la
+aplicación.
 
-```
-tabla         | rls_activo | politicas      rolname    | super | bypassrls
---------------+------------+-----------     -----------+-------+----------
-gyms          | t          | 1              gymlab     | t     | t
-memberships   | t          | 1              gymlab_app | f     | f
-organizations | t          | 1
-users         | f          | 0   <- excepción deliberada y documentada
-```
+**Verificado por falsificación**, no solo por tests en verde: apuntando la
+aplicación al rol propietario, 8 de 13 casos fallan — incluido un `DELETE` sin
+filtro que sí borra filas del otro gimnasio. Un test de RLS en verde pasaría
+igual si las políticas no existieran; solo la prueba inversa demuestra algo.
 
-### La prueba que de verdad cierra la Fase 0
+**Guardarraíl para el futuro:** un test consulta el catálogo de Postgres y exige
+que *toda* tabla con `gym_id` tenga RLS y al menos una política. Olvidarla en una
+tabla nueva pone el PR en rojo.
 
-Un test de RLS en verde es sospechoso por naturaleza: pasaría igual si las
-políticas no existieran y las tablas estuvieran vacías. Por eso se hizo la
-comprobación inversa — apuntar `DATABASE_URL_APP` al rol propietario, que ignora
-RLS, y ejecutar la batería:
+### Autenticación
 
-```
-Tests  8 failed | 5 passed (13)
-```
+11 endpoints propios, sin montar el router de Better Auth (ADR-0009), de modo que
+la superficie expuesta es exactamente la que hemos escrito.
 
-Ocho casos en rojo, incluido un `DELETE` sin filtro que **sí borró** filas del
-otro gimnasio. Es la demostración de que lo que protege es RLS y no una
-casualidad del montaje de datos.
+Cuatro barreras por petición: sesión válida → rol suficiente → contexto de tenant
+→ RLS. Las tres primeras son código nuestro y pueden fallar; la cuarta no depende
+de nosotros.
+
+Invitaciones con token hasheado y de un solo uso a prueba de carreras, matriz de
+permisos contra escalada, sesiones de 12 h para el personal y 90 días para el
+socio, y límite de intentos con contador atómico.
+
+### Trabajos en segundo plano
+
+pg-boss sobre Postgres. Encolar dentro de la transacción de la petición da el
+patrón **transactional outbox** sin construir nada: el correo de invitación solo
+existe si la invitación se guardó.
+
+También verificado por falsificación: forzando a `enqueue` a ignorar la
+transacción, el test de rollback y solo ese se pone en rojo.
 
 ---
 
-## Trabajo realizado
+## Deuda conocida, con su motivo
 
-### Cimientos
+| Qué | Por qué sigue ahí | Cuándo se resuelve |
+|---|---|---|
+| **No hay proveedor de correo** | Nunca se integró Resend. El consumidor **falla a propósito en producción** para que los correos queden en la cola y se reintenten solos | Primer paso de la Fase 1 |
+| **`consents` sin usar** | La tabla existe con RLS y justificación legal, pero nadie escribe en ella. Requiere decisiones de producto sobre textos y versionado | Con el módulo de socios |
+| **`slug` es el UUID del gimnasio** | La columna existe para URLs legibles y hoy no aporta nada | Cuando haya URLs públicas |
+| **Sesión: solo el máximo absoluto** | ADR-0007 mencionaba además 8 h de inactividad. Better Auth modela el refresco de forma global, no por rol. El máximo es el que acota el riesgo real | Si aparece la necesidad |
+| **`trust proxy` sin configurar** | Detrás del proxy del hosting, `x-forwarded-for` no será fiable y el límite de intentos perderá precisión | Antes de producción |
+| **`ignoreDeprecations: "6.0"`** | `tsup` inyecta un `baseUrl` propio al generar los `.d.ts` | Al actualizar `tsup` |
 
-Monorepo pnpm + Turborepo, esquema inicial (`organizations`, `gyms`, `users`,
-`memberships`), migración `0000` aplicada, rol `gymlab_app` creado y políticas
-RLS en su sitio.
+### Consecuencia que conviene tener presente
 
-### Hallazgo: dos roles de base de datos
-
-En Postgres, un superusuario y el propietario de una tabla **ignoran las
-políticas RLS**. El `docker-compose` crea `gymlab` como superusuario: si la API
-se conectara con ese rol, RLS estaría habilitado, las políticas escritas, los
-tests en verde... y el aislamiento sería inexistente.
-
-```
-DATABASE_URL      → gymlab      (propietario)      migraciones y seed
-DATABASE_URL_APP  → gymlab_app  (sin privilegios)  API y tests
-```
-
-### Guardarraíl para el futuro
-
-El test **no enumera tablas a mano**. Consulta el catálogo de Postgres y exige
-que *toda* tabla con columna `gym_id` tenga RLS activo y al menos una política.
-Cuando lleguen `members`, `subscriptions`, `routines`, `body_metrics` o
-`access_events`, olvidar su bloque en `sql/01-rls.sql` pone el PR en rojo en vez
-de descubrirse en producción con datos de clientes reales.
-
-### Toolchain
-
-TypeScript 6 fijado con catálogo de pnpm; `incremental`, `baseUrl` y
-`moduleResolution: node10` corregidos de forma compatible con TS 7; ESLint flat
-config por workspace; `--passWithNoTests` en la API.
+**Hoy, en producción, un socio no podría recuperar su contraseña**: el flujo está
+completo y probado salvo el envío. El correo queda encolado en lugar de perderse,
+pero nadie lo recibe hasta que exista el proveedor.
 
 ---
 
@@ -104,71 +95,38 @@ config por workspace; `--passWithNoTests` en la API.
 docker compose up -d
 cp .env.example .env      # solo la primera vez
 pnpm install
-pnpm db:migrate           # migraciones + roles + RLS + colas de pg-boss
+pnpm db:migrate           # migraciones + roles + RLS + colas
 pnpm test
 ```
 
-`db:migrate` encadena tres pasos, todos con el rol propietario y en este orden:
-`drizzle-kit migrate`, la aplicación de roles y políticas, y la instalación del
-esquema y las colas de pg-boss. El orden importa: las tablas deben existir antes
-de habilitarles RLS, y pg-boss hace DDL que `gymlab_app` no puede ejecutar.
-Todo es idempotente y debe reaplicarse en cada despliegue.
-
-## Módulos terminados
-
-| Módulo | Estado |
-|---|---|
-| Aislamiento multi-tenant (RLS) | ✅ verificado, con prueba inversa |
-| Auth: modelo, guards, 11 endpoints | ✅ 29 tests de abuso |
-| Jobs: pg-boss y outbox transaccional | ✅ verificado, con prueba inversa |
-| CI (GitHub Actions) | ✅ workflow escrito y verificado en local |
-
-Sin proveedor de correo todavía: el consumidor registra el contenido fuera de
-producción y **falla en producción**, para que los correos queden en la cola y
-se reintenten solos el día que se conecte Resend.
-
 ---
 
-## Siguiente paso
+## Fase 1 — el MVP
 
-1. **Publicar el repositorio y activar la protección de rama.** El workflow está
-   escrito y verificado, pero todavía no se ha ejecutado nunca: no hay remoto
-   configurado. Y que los checks sean *obligatorios* para hacer merge no es algo
-   que se declare en el repositorio — es un ajuste de GitHub. Ver más abajo.
-2. Extraer los seis ADR de `01-arquitectura.md` a `docs/adr/`.
+Alcance cerrado: clientes, entrenadores, suscripciones, rutinas, peso, QR de
+acceso y dashboard del dueño.
 
-Después, Fase 1: los módulos de negocio del MVP.
+### Orden recomendado
 
-### Cómo dejar CI realmente obligatorio
+**0. Proveedor de correo (Resend).** No es un módulo, pero va primero: el alta de
+un socio es una invitación por email, y hoy eso no llega a nadie. El worker y las
+colas ya existen, así que es pequeño y desbloquea todo lo demás.
 
-El fichero `.github/workflows/ci.yml` hace que los checks se **ejecuten**. Que
-además **bloqueen** el merge se configura en GitHub, una sola vez:
+| # | Módulo | Depende de | Por qué en esa posición |
+|---|---|---|---|
+| 1 | Socios | 0 | Todo cuelga de un socio. Aquí entra `consents` |
+| 2 | Entrenadores y asignaciones | 1 | Quien asigna una rutina es un entrenador con socios asignados |
+| 3 | Planes y suscripciones | 1 | Determina si un socio está *activo*, dato que el QR necesita |
+| 4 | Acceso por QR | 1, 3 | La funcionalidad más visible; ya diseñada en detalle |
+| 5 | Rutinas | 1, 2 | |
+| 6 | Progreso y peso | 1 | Datos de salud (art. 9): exige que `consents` funcione |
+| 7 | Dashboard | todos | Lee de los anteriores; por definición va al final |
 
-```bash
-gh repo create gymlab --private --source=. --push
-```
+### Dos decisiones pendientes
 
-Y después, en *Settings → Branches → Add rule* sobre `main`: activar *Require a
-pull request before merging* y *Require status checks to pass*, marcando el
-check `Verificacion`. Sin ese paso, CI avisa pero no impide nada.
+**Asunción A1 — ¿mueve GYMLAB el dinero de las cuotas?** Hay que cerrarla **antes
+del punto 3**. Si la respuesta es sí, entran Stripe Connect y KYC por gimnasio, y
+eso cambia el módulo entero.
 
----
-
-## Deuda técnica registrada
-
-| Qué | Dónde | Cuándo se retira |
-|---|---|---|
-| `ignoreDeprecations: "6.0"` | `packages/config/tsconfig/library.json` | Al actualizar `tsup`, que inyecta un `baseUrl` propio al generar los `.d.ts` |
-| Sin `.gitattributes` | raíz | Antes de que haya un segundo entorno (CI), o los finales de línea dependerán de la máquina |
-
-## Puntos abiertos
-
-**Asunción A1 sin confirmar:** que GYMLAB *no* mueve el dinero de las cuotas de
-los socios en el MVP, solo lo registra. Si tuviera que moverlo, entran Stripe
-Connect, KYC por gimnasio y liquidaciones — un producto entero por sí solo. No
-bloquea, pero hay que cerrarlo antes del módulo `billing`.
-
-**Acceso del rol `superadmin`.** La arquitectura preveía un rol de BD separado
-con `BYPASSRLS`, pero no siempre se puede conceder en Postgres gestionado
-(Neon, Supabase). Se decide al construir el módulo `platform`. No hace falta
-para el MVP y no conviene improvisarlo.
+**El `slug`**, cuando aparezcan URLs públicas: generarlo a partir del nombre o
+eliminar la columna.
