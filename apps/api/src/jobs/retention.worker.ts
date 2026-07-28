@@ -45,7 +45,7 @@ export class RetentionWorker implements OnModuleInit {
     });
   }
 
-  /** Devuelve cuantas filas se han borrado. */
+  /** Devuelve cuantas filas de `auth_events` se han borrado. */
   async purgar(): Promise<number> {
     const resultado = await withoutTenant(this.db, (tx) =>
       tx.execute(
@@ -53,6 +53,14 @@ export class RetentionWorker implements OnModuleInit {
             WHERE created_at < now() - ${`${DIAS_DE_RETENCION} days`}::interval`,
       ),
     );
+
+    // De paso, los contadores de intentos cuya ventana caduco hace mucho. No es
+    // RGPD —no identifican a nadie por si solos— sino evitar que la tabla crezca
+    // sin limite con claves que ya nadie consulta.
+    await withoutTenant(this.db, (tx) =>
+      tx.execute(sql`DELETE FROM auth_throttle WHERE window_start < now() - interval '1 day'`),
+    );
+
     return resultado.rowCount ?? 0;
   }
 }

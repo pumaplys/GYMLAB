@@ -126,9 +126,11 @@ export class AuthService {
    * quiere seria peor que preguntar.
    */
   async login(input: LoginInput, headers: Headers): Promise<AuthResult> {
-    // Antes de gastar un hash de contrasena: si esta pareja email/IP ya acumula
-    // fallos recientes, se rechaza sin comprobar nada.
-    if (await this.throttle.estaBloqueado(input.email, ipDe(headers))) {
+    // El intento se registra ANTES de verificar la contrasena, en una sentencia
+    // atomica. Contar despues dejaria una ventana de ~100 ms —lo que tarda
+    // scrypt— por la que pasarian todas las peticiones simultaneas.
+    const ip = ipDe(headers);
+    if (await this.throttle.registrarIntentoYComprobar(input.email, ip)) {
       throw new HttpException(
         'Demasiados intentos fallidos. Prueba de nuevo en unos minutos.',
         HttpStatus.TOO_MANY_REQUESTS,
@@ -155,6 +157,9 @@ export class AuthService {
     const activeGymId = propias.length === 1 ? propias[0]!.gymId : null;
 
     if (activeGymId) await this.applySessionPolicy({ token }, activeGymId, propias[0]!.role);
+    // Acertar la contrasena limpia el contador: a nadie se le penaliza por
+    // haberse equivocado antes de entrar bien.
+    await this.throttle.limpiar(input.email, ip);
     await this.recordAuthEvent('login_success', userId, input.email, headers);
 
     return { session: { token, activeGymId }, authHeaders: resultado.headers };

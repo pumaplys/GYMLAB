@@ -1,4 +1,13 @@
-import { index, jsonb, pgEnum, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import {
+  index,
+  integer,
+  jsonb,
+  pgEnum,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+} from 'drizzle-orm/pg-core';
 import { primaryId, tenantId } from './_helpers';
 import { users } from './identity';
 import { gyms } from './organization';
@@ -82,6 +91,33 @@ export const auditLog = pgTable(
     index('audit_log_actor_idx').on(t.actorUserId),
   ],
 );
+
+/**
+ * Contador de intentos de autenticacion. GLOBAL, sin RLS.
+ *
+ * POR QUE UNA TABLA Y NO CONTAR SOBRE `auth_events`
+ *
+ * Contar eventos y despues decidir es *comprobar y luego actuar*: entre la
+ * lectura y la escritura del fallo pasa la verificacion de la contrasena, unos
+ * 100 ms. Cincuenta peticiones en paralelo leen todas cero y pasan todas. El
+ * limite se saltaba con solo abrir conexiones a la vez.
+ *
+ * Aqui cada intento hace un UPSERT que incrementa y devuelve el valor **en una
+ * sola sentencia**. Postgres bloquea la fila, asi que dos peticiones simultaneas
+ * obtienen numeros distintos: no hay ventana entre comprobar y actuar.
+ *
+ * Se cuentan INTENTOS, no fallos: es lo que significa limitar la tasa, y ademas
+ * evita depender de cuando se registra el resultado. Un login correcto borra su
+ * contador, asi que a quien acierta no le afecta.
+ */
+export const authThrottle = pgTable('auth_throttle', {
+  /** `login:<email>:<ip>` o `login:<ip>`. */
+  key: text('key').primaryKey(),
+  windowStart: timestamp('window_start', { withTimezone: true }).notNull().defaultNow(),
+  attempts: integer('attempts').notNull().default(1),
+});
+
+export type AuthThrottleRow = typeof authThrottle.$inferSelect;
 
 export type AuthEvent = typeof authEvents.$inferSelect;
 export type NewAuthEvent = typeof authEvents.$inferInsert;

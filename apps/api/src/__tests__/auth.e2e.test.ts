@@ -139,6 +139,7 @@ afterAll(async () => {
   );
   await owner.execute(sql`DELETE FROM users WHERE email LIKE ${patron}`);
   await owner.execute(sql`DELETE FROM pgboss.job WHERE data->>'to' LIKE ${patron}`);
+  await owner.execute(sql`DELETE FROM auth_throttle WHERE key LIKE ${'login:%' + sufijo + '%'}`);
 });
 
 const conSesion = (token: string) => ({ Authorization: `Bearer ${token}` });
@@ -501,7 +502,7 @@ describe('endurecimiento de la sesion', () => {
     const victima = email('fuerza-bruta');
 
     // Better Auth aplica su rate limiting en el router HTTP, que no montamos
-    // (ADR-0009), asi que el limite es nuestro y se apoya en auth_events.
+    // (ADR-0009), asi que el limite es nuestro.
     for (let i = 0; i < 5; i++) {
       await http()
         .post('/v1/auth/login')
@@ -513,6 +514,58 @@ describe('endurecimiento de la sesion', () => {
       .post('/v1/auth/login')
       .send({ email: victima, password: 'intento-fallido-6' })
       .expect(429);
+  });
+
+  it('el limite resiste 30 intentos SIMULTANEOS, no solo seguidos', async () => {
+    // ESTE ES EL TEST DE CONCURRENCIA.
+    //
+    // La primera version contaba fallos en auth_events y decidia despues. Entre
+    // la lectura y el registro del fallo pasa la verificacion de la contrasena,
+    // ~100 ms: treinta peticiones a la vez leian todas cero y pasaban todas.
+    //
+    // Con el contador atomico, cada peticion recibe un numero distinto porque
+    // Postgres bloquea la fila durante el UPSERT. Solo las 5 primeras llegan a
+    // verificar la contrasena; el resto se rechaza.
+    //
+    // Con la implementacion anterior este test falla: pasarian las 30.
+    const victima = email('carrera');
+
+    const respuestas = await Promise.all(
+      Array.from({ length: 30 }, (_, i) =>
+        http()
+          .post('/v1/auth/login')
+          .send({ email: victima, password: `simultaneo-${i}` })
+          .then((r) => r.status),
+      ),
+    );
+
+    const rechazados = respuestas.filter((s) => s === 429).length;
+    const intentados = respuestas.filter((s) => s === 401).length;
+
+    expect(intentados).toBe(5);
+    expect(rechazados).toBe(25);
+  });
+
+  it('acertar la contrasena limpia el contador', async () => {
+    // Equivocarse un par de veces antes de entrar bien no debe dejar a nadie
+    // penalizado durante el resto de la ventana.
+    for (let i = 0; i < 3; i++) {
+      await http()
+        .post('/v1/auth/login')
+        .send({ email: email('owner-a'), password: `mal-${i}-largo` })
+        .expect(401);
+    }
+
+    await http()
+      .post('/v1/auth/login')
+      .send({ email: email('owner-a'), password: PASSWORD })
+      .expect(201);
+
+    // Tras el acierto, el contador vuelve a cero y se puede seguir usando.
+    await http()
+      .post('/v1/auth/login')
+      .send({ email: email('owner-a'), password: PASSWORD })
+      .expect(201);
   });
 });
 
