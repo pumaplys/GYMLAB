@@ -314,6 +314,9 @@ vale mucho más que 40 €/mes. Reconsiderar solo por encima de ~300 €/mes de 
 
 ## 8. Hoja de ruta
 
+> Este documento describe el plan. El avance real vive en
+> [`00-estado.md`](00-estado.md) — **la Fase 0 está completada**.
+
 **Fase 0 — Cimientos (semanas 1-2).** Monorepo, esquema con `gym_id`, RLS y sus tests,
 auth, roles, CI. *No hay funcionalidad visible y es la fase que más deuda evita.*
 
