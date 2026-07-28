@@ -235,12 +235,20 @@ export class InvitationsService {
     // 403 cualquier operacion dentro de su propio gimnasio.
     const token = signUp.response.token ?? '';
     if (token) {
+      // Gimnasio activo y caducidad segun el rol, igual que en el login
+      // (ADR-0007, decision 8). Sin fijar el gimnasio, quien acaba de aceptar
+      // tendria sesion pero sin tenant, y recibiria 403 en su propio gimnasio.
+      const duracionMs =
+        pendiente.role === 'member' ? 90 * 24 * 60 * 60 * 1000 : 12 * 60 * 60 * 1000;
       await withoutTenant(this.db, (tx) =>
-        tx.update(sessions).set({ activeGymId: gymId }).where(eq(sessions.token, token)),
+        tx
+          .update(sessions)
+          .set({ activeGymId: gymId, expiresAt: new Date(Date.now() + duracionMs) })
+          .where(eq(sessions.token, token)),
       );
     }
 
-    return { token, activeGymId: gymId };
+    return { session: { token, activeGymId: gymId }, authHeaders: signUp.headers };
   }
 
   private toDto(fila: typeof invitations.$inferSelect): Invitation {

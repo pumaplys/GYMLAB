@@ -420,6 +420,101 @@ describe('invitaciones: seguridad del token', () => {
   });
 });
 
+describe('endurecimiento de la sesion', () => {
+  it('el login devuelve tambien una cookie de sesion, no solo el token', async () => {
+    // ADR-0007 promete dos transportes: cookie httpOnly para el panel web y
+    // Bearer para la app movil. Antes solo existia el segundo.
+    const res = await http()
+      .post('/v1/auth/login')
+      .send({ email: email('owner-a'), password: PASSWORD })
+      .expect(201);
+
+    const cookies = res.headers['set-cookie'] as unknown as string[] | undefined;
+    expect(cookies?.length ?? 0).toBeGreaterThan(0);
+    expect(cookies!.join(';')).toContain('HttpOnly');
+    expect(res.body.token).toBeTruthy();
+  });
+
+  it('la sesion del personal caduca dentro de la jornada, no en 90 dias', async () => {
+    const res = await http()
+      .post('/v1/auth/login')
+      .send({ email: email('owner-a'), password: PASSWORD })
+      .expect(201);
+
+    const filas = await owner.execute<{ expires_at: Date }>(
+      sql`SELECT expires_at FROM sessions WHERE token = ${res.body.token}`,
+    );
+    const horas = (new Date(filas.rows[0]!.expires_at).getTime() - Date.now()) / 3_600_000;
+
+    // 12 h para el personal (ADR-0007, decision 8).
+    expect(horas).toBeGreaterThan(11);
+    expect(horas).toBeLessThan(13);
+  });
+
+  it('la sesion de un socio dura mucho mas que la del personal', async () => {
+    await http()
+      .post(`/v1/gyms/${gymA}/invitations`)
+      .set(conSesion(tokenOwnerA))
+      .send({ email: email('socio-sesion'), role: 'member' })
+      .expect(201);
+
+    const alta = await http()
+      .post('/v1/auth/accept-invitation')
+      .send({
+        token: await tokenEncolado(EMAIL_QUEUES.invitation, email('socio-sesion')),
+        name: 'Sara',
+        password: PASSWORD,
+      })
+      .expect(201);
+
+    const filas = await owner.execute<{ expires_at: Date }>(
+      sql`SELECT expires_at FROM sessions WHERE token = ${alta.body.token}`,
+    );
+    const dias = (new Date(filas.rows[0]!.expires_at).getTime() - Date.now()) / 86_400_000;
+
+    expect(dias).toBeGreaterThan(80);
+  });
+
+  it('restablecer la contrasena cierra las sesiones abiertas', async () => {
+    // Es el gesto de quien sospecha que le han robado la sesion. Si no expulsa
+    // al intruso, da una falsa sensacion de haber recuperado el control.
+    const antes = await http()
+      .post('/v1/auth/login')
+      .send({ email: email('owner-b'), password: PASSWORD })
+      .expect(201);
+
+    await http().get('/v1/auth/me').set(conSesion(antes.body.token)).expect(200);
+
+    await http().post('/v1/auth/forgot-password').send({ email: email('owner-b') }).expect(201);
+    const token = await tokenEncolado(EMAIL_QUEUES.resetPassword, email('owner-b'));
+    await http()
+      .post('/v1/auth/reset-password')
+      .send({ token, newPassword: 'contrasena-tercera-1' })
+      .expect(201);
+
+    // La sesion anterior ya no vale.
+    await http().get('/v1/auth/me').set(conSesion(antes.body.token)).expect(401);
+  });
+
+  it('bloquea tras varios intentos fallidos seguidos', async () => {
+    const victima = email('fuerza-bruta');
+
+    // Better Auth aplica su rate limiting en el router HTTP, que no montamos
+    // (ADR-0009), asi que el limite es nuestro y se apoya en auth_events.
+    for (let i = 0; i < 5; i++) {
+      await http()
+        .post('/v1/auth/login')
+        .send({ email: victima, password: `intento-fallido-${i}` })
+        .expect(401);
+    }
+
+    await http()
+      .post('/v1/auth/login')
+      .send({ email: victima, password: 'intento-fallido-6' })
+      .expect(429);
+  });
+});
+
 describe('outbox transaccional', () => {
   it('el correo de invitacion se encola en la MISMA transaccion que la invitacion', async () => {
     const antes = await contarTrabajos(EMAIL_QUEUES.invitation);

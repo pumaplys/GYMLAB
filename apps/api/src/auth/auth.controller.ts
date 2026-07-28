@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Req } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, Res } from '@nestjs/common';
 import {
   forgotPasswordSchema,
   loginSchema,
@@ -13,9 +13,9 @@ import {
   type SwitchGymInput,
   type VerifyEmailInput,
 } from '@gymlab/contracts';
-import type { Request } from 'express';
+import type { Request, Response } from 'express';
 import { Public } from '../common/decorators/public.decorator';
-import { extractSessionToken, toHeaders } from '../common/http';
+import { forwardAuthCookies, toHeaders } from '../common/http';
 import { requireRequestContext } from '../common/request-context';
 import { ZodBody } from '../common/zod.pipe';
 import { AuthService } from './auth.service';
@@ -26,6 +26,11 @@ import { AuthService } from './auth.service';
  * Escritos a mano en lugar de montar el router de Better Auth (ADR-0009): asi
  * la superficie expuesta es exactamente esta lista, y una actualizacion de la
  * libreria no puede anadir rutas sin que nos enteremos.
+ *
+ * Los flujos que abren o cierran sesion trasladan las cookies de Better Auth a
+ * la respuesta (transporte del panel web) y ademas devuelven el token en el
+ * cuerpo (transporte de la app movil, que no tiene cookies). Una sola sesion
+ * detras de los dos.
  */
 @Controller('auth')
 export class AuthController {
@@ -33,19 +38,33 @@ export class AuthController {
 
   @Public()
   @Post('register-gym')
-  registerGym(@Body(new ZodBody(registerGymSchema)) body: RegisterGymInput, @Req() req: Request) {
-    return this.auth.registerGym(body, toHeaders(req));
+  async registerGym(
+    @Body(new ZodBody(registerGymSchema)) body: RegisterGymInput,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const { session, authHeaders } = await this.auth.registerGym(body, toHeaders(req));
+    forwardAuthCookies(authHeaders, res);
+    return session;
   }
 
   @Public()
   @Post('login')
-  login(@Body(new ZodBody(loginSchema)) body: LoginInput, @Req() req: Request) {
-    return this.auth.login(body, toHeaders(req));
+  async login(
+    @Body(new ZodBody(loginSchema)) body: LoginInput,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const { session, authHeaders } = await this.auth.login(body, toHeaders(req));
+    forwardAuthCookies(authHeaders, res);
+    return session;
   }
 
   @Post('logout')
-  logout(@Req() req: Request) {
-    return this.auth.logout(toHeaders(req), requireRequestContext().userId);
+  async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    const { authHeaders } = await this.auth.logout(toHeaders(req), requireRequestContext().userId);
+    forwardAuthCookies(authHeaders, res);
+    return { ok: true };
   }
 
   @Get('me')
@@ -55,9 +74,11 @@ export class AuthController {
   }
 
   @Post('switch-gym')
-  switchGym(@Body(new ZodBody(switchGymSchema)) body: SwitchGymInput, @Req() req: Request) {
+  switchGym(@Body(new ZodBody(switchGymSchema)) body: SwitchGymInput) {
+    // La sesion se identifica por el id que AuthGuard ya resolvio, no leyendo
+    // el token de la peticion: el cliente no elige sobre que sesion se opera.
     const ctx = requireRequestContext();
-    return this.auth.switchGym(ctx.userId, extractSessionToken(req), body.gymId);
+    return this.auth.switchGym(ctx.userId, ctx.sessionId, body.gymId);
   }
 
   @Public()
