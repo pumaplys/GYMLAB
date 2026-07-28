@@ -16,6 +16,7 @@ import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import {
   createDatabase,
+  EMAIL_QUEUES,
   eq,
   invitations,
   sql,
@@ -23,7 +24,6 @@ import {
   withTenant,
   type Database,
 } from '@gymlab/db';
-import { EMAIL_QUEUES } from '@gymlab/contracts';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { AppModule } from '../app.module';

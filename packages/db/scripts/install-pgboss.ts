@@ -13,10 +13,12 @@
  * Idempotente: se puede reejecutar en cada despliegue.
  */
 import { fileURLToPath } from 'node:url';
-import { ALL_QUEUES } from '@gymlab/contracts';
 import { config } from 'dotenv';
 import { PgBoss } from 'pg-boss';
 import { Client } from 'pg';
+// Codigo fuente del propio paquete, no un `dist`: este script corre dentro de
+// `pnpm db:migrate`, y una migracion no debe depender de haber compilado nada.
+import { ALL_QUEUES } from '../src/queues.js';
 
 config({ path: fileURLToPath(new URL('../../../.env', import.meta.url)) });
 

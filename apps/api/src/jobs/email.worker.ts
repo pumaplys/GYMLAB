@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger, type OnModuleInit } from '@nestjs/common';
-import { ALL_QUEUES, type EmailJob } from '@gymlab/contracts';
+import { ALL_QUEUES, type EmailJob } from '@gymlab/db';
 import type { PgBoss } from 'pg-boss' with { 'resolution-mode': 'import' };
 import { env } from '../config/env';
 import { BOSS } from './jobs.tokens';

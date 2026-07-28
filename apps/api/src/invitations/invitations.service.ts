@@ -9,6 +9,7 @@ import {
 import {
   and,
   auditLog,
+  EMAIL_QUEUES,
   eq,
   invitations,
   isNull,
@@ -20,7 +21,7 @@ import {
   type Database,
 } from '@gymlab/db';
 import type { AcceptInvitationInput, Invitation, Role } from '@gymlab/contracts';
-import { canInvite, EMAIL_QUEUES } from '@gymlab/contracts';
+import { canInvite } from '@gymlab/contracts';
 import { env } from '../config/env';
 import { DATABASE } from '../database/database.module';
 import type { Auth } from '../auth/auth.instance';

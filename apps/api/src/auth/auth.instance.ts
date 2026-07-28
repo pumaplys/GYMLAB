@@ -1,5 +1,11 @@
-import { accounts, sessions, users, verifications, type Database } from '@gymlab/db';
-import { EMAIL_QUEUES } from '@gymlab/contracts';
+import {
+  accounts,
+  EMAIL_QUEUES,
+  sessions,
+  users,
+  verifications,
+  type Database,
+} from '@gymlab/db';
 import { env } from '../config/env';
 import type { JobsService } from '../jobs/jobs.service';
 

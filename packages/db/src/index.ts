@@ -13,6 +13,7 @@
 export * from './schema';
 export * from './client';
 export * from './tenant';
+export * from './queues';
 
 /**
  * Operadores de consulta, re-exportados a proposito.

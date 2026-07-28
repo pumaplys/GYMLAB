@@ -223,9 +223,6 @@ importers:
       '@gymlab/config':
         specifier: workspace:*
         version: link:../config
-      '@gymlab/contracts':
-        specifier: workspace:*
-        version: link:../contracts
       '@types/node':
         specifier: ^26.1.1
         version: 26.1.1
