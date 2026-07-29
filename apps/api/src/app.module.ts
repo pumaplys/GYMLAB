@@ -9,6 +9,7 @@ import { DatabaseModule } from './database/database.module';
 import { HealthController } from './health.controller';
 import { InvitationsModule } from './invitations/invitations.module';
 import { JobsModule } from './jobs/jobs.module';
+import { MailModule } from './mail/mail.module';
 import { MembersModule } from './members/members.module';
 
 /**
@@ -31,7 +32,16 @@ import { MembersModule } from './members/members.module';
  * repositorio de otro; pide a su servicio de aplicacion.
  */
 @Module({
-  imports: [DatabaseModule, JobsModule, AuthModule, InvitationsModule, MembersModule],
+  // Uno por linea: es la lista que crece con cada modulo de dominio, y en una
+  // sola linea es donde se produjo el conflicto al integrar dos ramas.
+  imports: [
+    DatabaseModule,
+    MailModule,
+    JobsModule,
+    AuthModule,
+    InvitationsModule,
+    MembersModule,
+  ],
   controllers: [HealthController],
   providers: [
     { provide: APP_GUARD, useClass: AuthGuard },

@@ -54,6 +54,33 @@ const schema = z.object({
     .string()
     .default('http://localhost:3000')
     .transform((v) => v.split(',').map((o) => o.trim()).filter(Boolean)),
+
+  /**
+   * URL del panel web. Es la BASE DE LOS ENLACES DE LOS CORREOS.
+   *
+   * Antes se usaba `API_URL`, que apuntaba a la API: los enlaces de invitacion y
+   * de restablecer contrasena llevaban a un sitio sin interfaz. Nadie lo noto
+   * porque los correos nunca se enviaban.
+   */
+  WEB_APP_URL: z.string().url().default('http://localhost:3000'),
+
+  /**
+   * Clave de Resend. OPCIONAL a proposito.
+   *
+   * Sin ella, el envio usa el transporte de consola: en desarrollo se registra
+   * el contenido y se puede recorrer el flujo sin cuenta de Resend. En
+   * produccion, arrancar sin clave es un error de configuracion y el proceso lo
+   * dice al arrancar (ver MailModule).
+   */
+  RESEND_API_KEY: z.string().min(1).optional(),
+
+  /**
+   * Remitente. Debe ser un dominio verificado en Resend.
+   *
+   * Obligatorio junto con la clave: enviar desde un dominio sin verificar acaba
+   * en la carpeta de spam, que es peor que no enviar — nadie se enteraria.
+   */
+  EMAIL_FROM: z.string().min(1).default('GYMLAB <no-reply@localhost>'),
 });
 
 const parsed = schema.safeParse(process.env);

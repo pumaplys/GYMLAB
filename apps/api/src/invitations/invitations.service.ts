@@ -109,7 +109,9 @@ export class InvitationsService {
     await this.jobs.enqueue(EMAIL_QUEUES.invitation, {
       to: email,
       token,
-      url: `${env.API_URL}/accept-invitation?token=${encodeURIComponent(token)}`,
+      // Al PANEL WEB, no a la API: quien acepta necesita un formulario donde
+      // elegir su contrasena.
+      url: `${env.WEB_APP_URL}/accept-invitation?token=${encodeURIComponent(token)}`,
     });
 
     return this.toDto(fila!);

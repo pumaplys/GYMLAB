@@ -33,7 +33,31 @@ async function main() {
   console.log('  esquema de pg-boss instalado o actualizado');
 
   for (const cola of ALL_QUEUES) {
-    await boss.createQueue(cola);
+    // Politica de reintentos a nivel de COLA, no de trabajo: asi la heredan
+    // todos los trabajos y no depende de que quien encola se acuerde.
+    //
+    // Espera creciente porque el fallo tipico de un proveedor de correo es
+    // transitorio —limite de peticiones o caida puntual—: insistir de inmediato
+    // empeora las cosas. Con 60 s iniciales y backoff, los cinco intentos se
+    // reparten a lo largo de horas, tiempo de sobra para que se recupere.
+    //
+    // Agotados los reintentos, el trabajo queda en estado `failed` en
+    // `pgboss.job`, que es consultable. No se pierde en silencio.
+    const politica = {
+      retryLimit: 5,
+      retryDelay: 60,
+      retryBackoff: true,
+      // Un correo que lleva 12 h sin enviarse ya no sirve de nada: los tokens de
+      // invitacion y de recuperacion caducan antes o poco despues.
+      expireInSeconds: 12 * 60 * 60,
+    };
+
+    await boss.createQueue(cola, politica);
+    // `createQueue` no cambia la politica de una cola que ya existia, asi que
+    // sin este `updateQueue` las colas creadas antes se quedarian con los
+    // valores por defecto. Este script debe poder reaplicarse y dejar el mismo
+    // estado siempre, no solo la primera vez.
+    await boss.updateQueue(cola, politica);
     console.log(`  cola lista: ${cola}`);
   }
 
