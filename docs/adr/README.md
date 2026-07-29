@@ -41,6 +41,7 @@ No para nombrar variables ni elegir una librería de fechas.
 | [0007](0007-autenticacion-y-sesiones.md) | Autenticación, sesiones y contexto de tenant | Aceptado |
 | [0008](0008-alcance-de-la-transaccion.md) | Una transacción por petición, sin I/O externo dentro | Aceptado |
 | [0009](0009-no-montar-el-router-de-better-auth.md) | No montar el router HTTP de Better Auth | Aceptado |
+| [0010](0010-dos-endpoints-para-aceptar-invitaciones.md) | Dos endpoints para aceptar invitaciones | Aceptado |
 
 [`../01-arquitectura.md`](../01-arquitectura.md) sigue siendo la vista de
 conjunto; los ADR 0001–0006 desarrollan sus decisiones una por una.
