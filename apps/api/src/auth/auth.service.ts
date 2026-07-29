@@ -229,7 +229,10 @@ export class AuthService {
       // El callback `sendResetPassword` encola el correo. Si el email no
       // existe, Better Auth no lo invoca y no se encola nada.
       await this.auth.api.requestPasswordReset({
-        body: { email: input.email, redirectTo: `${env.API_URL}/reset-password` },
+        // Al PANEL WEB, no a la API: es donde hay un formulario para escribir la
+        // contrasena nueva. Antes apuntaba a la API y llevaba a una URL sin
+        // interfaz; no se noto porque los correos nunca se enviaban.
+        body: { email: input.email, redirectTo: `${env.WEB_APP_URL}/reset-password` },
         headers,
       });
     } catch {
