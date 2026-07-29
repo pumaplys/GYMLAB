@@ -11,12 +11,12 @@
  *   - `organizations` y `gyms`: son la jerarquia del tenant, no cuelgan de el.
  *   - `users`: es el limite de autenticacion, anterior al contexto de tenant.
  *
- * Modulos pendientes (Fase 1): members, staff, billing, training, progress,
- * access.
+ * Modulos pendientes (Fase 1): staff, billing, training, progress, access.
  */
 
 export * from './_helpers';
 export * from './organization';
 export * from './identity';
+export * from './members';
 export * from './compliance';
 export * from './audit';
