@@ -78,8 +78,20 @@ export async function createAuth(db: Database, jobs: JobsService) {
       // No se envia nada aqui: se encola. Si hay transaccion de peticion, el
       // trabajo entra en ella y solo existira si los datos commitean
       // (transactional outbox, ADR-0008).
-      sendResetPassword: async ({ user, url, token }) => {
-        await jobs.enqueue(EMAIL_QUEUES.resetPassword, { to: user.email, url, token });
+      sendResetPassword: async ({ user, token }) => {
+        // Se IGNORA la `url` que construye Better Auth, y no es un descuido.
+        //
+        // Better Auth genera `{baseURL}/reset-password/{token}`, que es una ruta
+        // de SU router HTTP — y ADR-0009 decidio no montarlo. Ese enlace estaria
+        // muerto. Solo se noto al empezar a enviar correos de verdad.
+        //
+        // El enlace se arma aqui, apuntando al panel web, que es donde hay un
+        // formulario para escribir la contrasena nueva.
+        await jobs.enqueue(EMAIL_QUEUES.resetPassword, {
+          to: user.email,
+          token,
+          url: `${env.WEB_APP_URL}/reset-password?token=${encodeURIComponent(token)}`,
+        });
       },
 
       /**
@@ -99,8 +111,13 @@ export async function createAuth(db: Database, jobs: JobsService) {
     },
 
     emailVerification: {
-      sendVerificationEmail: async ({ user, url, token }) => {
-        await jobs.enqueue(EMAIL_QUEUES.verifyEmail, { to: user.email, url, token });
+      sendVerificationEmail: async ({ user, token }) => {
+        // Mismo motivo que arriba: su `url` apunta a un router que no montamos.
+        await jobs.enqueue(EMAIL_QUEUES.verifyEmail, {
+          to: user.email,
+          token,
+          url: `${env.WEB_APP_URL}/verify-email?token=${encodeURIComponent(token)}`,
+        });
       },
     },
 
