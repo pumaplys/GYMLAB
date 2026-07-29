@@ -12,11 +12,21 @@
 import { randomUUID } from 'node:crypto';
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { createDatabase, EMAIL_QUEUES, sql, type Database } from '@gymlab/db';
+import {
+  closeDatabase,
+  createDatabase,
+  EMAIL_QUEUES,
+  sql,
+  withTenant,
+  type Database,
+} from '@gymlab/db';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { AppModule } from '../app.module';
+import { patchRequestContext, runWithRequestContext } from '../common/request-context';
 import { env } from '../config/env';
+import { DATABASE } from '../database/database.module';
+import { MembersService } from '../members/members.service';
 
 let app: INestApplication;
 let owner: Database;
@@ -33,6 +43,8 @@ let tokenRecepcionA: string;
 let tokenEntrenadorA: string;
 let gymB: string;
 let tokenOwnerB: string;
+/** Id del dueño de A: lo necesita el test que llama al servicio directamente. */
+let usuarioOwnerA: string;
 
 const gimnasiosCreados: string[] = [];
 const conSesion = (token: string) => ({ Authorization: `Bearer ${token}` });
@@ -101,6 +113,11 @@ beforeAll(async () => {
 
   tokenRecepcionA = await altaPersonal(gymA, tokenOwnerA, 'receptionist', 'recepcion-a');
   tokenEntrenadorA = await altaPersonal(gymA, tokenOwnerA, 'trainer', 'entrenador-a');
+
+  const fila = await owner.execute<{ id: string }>(
+    sql`SELECT id FROM users WHERE email = ${email('owner-a')}`,
+  );
+  usuarioOwnerA = fila.rows[0]!.id;
 });
 
 afterAll(async () => {
@@ -128,6 +145,9 @@ afterAll(async () => {
   await owner.execute(sql`DELETE FROM users WHERE email LIKE ${patron}`);
   await owner.execute(sql`DELETE FROM pgboss.job WHERE data->>'to' LIKE ${patron}`);
   await owner.execute(sql`DELETE FROM auth_throttle WHERE key LIKE ${'login:%' + sufijo + '%'}`);
+  // Cerrar el pool: cada fichero de test abre el suyo, y sin esto las conexiones
+  // se acumulan durante toda la bateria contra la misma base de datos.
+  await closeDatabase(owner);
 });
 
 /** Da de alta un socio y devuelve su cuerpo. */
@@ -165,19 +185,67 @@ describe('alta de socios', () => {
   it('20 altas SIMULTANEAS producen 20 numeros distintos', async () => {
     // ESTE ES EL TEST DE CONCURRENCIA. Dos personas en el mostrador dando de
     // alta a la vez: con `SELECT max()+1` obtendrian el mismo numero.
-    const respuestas = await Promise.all(
+    //
+    // Se ejerce el SERVICIO, no el endpoint, y a proposito. La atomicidad del
+    // contador es una propiedad de la base de datos; hacerla pasar por toda la
+    // pila HTTP mezclaba lo que se quiere medir con el comportamiento del
+    // servidor bajo 20 conexiones simultaneas — que en un runner lento produce
+    // sockets reseteados y un fallo que no tiene nada que ver con el contador.
+    //
+    // El camino HTTP ya lo cubre el test de arriba; aqui se mide solo el
+    // contador, y con mas presion de la que aguantaria el transporte.
+    const service = app.get(MembersService);
+    const db = app.get<Database>(DATABASE);
+
+    const numeros = await Promise.all(
       Array.from({ length: 20 }, (_, i) =>
+        runWithRequestContext(async () =>
+          withTenant(
+            db,
+            gymA,
+            async (tx) => {
+              // `sessionId` incluido porque `requireRequestContext()` lo exige:
+              // es su forma de distinguir una ruta autenticada de una llamada
+              // fuera del ciclo HTTP. Aqui simulamos la primera.
+              patchRequestContext({
+                tx,
+                userId: usuarioOwnerA,
+                gymId: gymA,
+                sessionId: randomUUID(),
+                role: 'owner',
+                isPlatformAdmin: false,
+              });
+              const socio = await service.create(gymA, {
+                firstName: 'Simultaneo',
+                lastName: `N${i}`,
+              });
+              return socio.memberNumber;
+            },
+            { userId: usuarioOwnerA },
+          ),
+        ),
+      ),
+    );
+
+    expect(numeros).toHaveLength(20);
+    // Lo que de verdad se comprueba: ni un numero repetido.
+    expect(new Set(numeros).size).toBe(20);
+  });
+
+  it('altas simultaneas por HTTP tambien reciben numeros distintos', async () => {
+    // El camino completo, con paralelismo moderado: suficiente para cubrir el
+    // endpoint sin convertir el transporte en la variable dominante.
+    const respuestas = await Promise.all(
+      Array.from({ length: 5 }, (_, i) =>
         http()
           .post(`/v1/gyms/${gymA}/members`)
           .set(conSesion(tokenRecepcionA))
-          .send({ firstName: 'Simultaneo', lastName: `N${i}` })
+          .send({ firstName: 'HttpSimultaneo', lastName: `N${i}` })
           .then((r) => r.body.memberNumber as number),
       ),
     );
 
-    const validos = respuestas.filter((n) => typeof n === 'number');
-    expect(validos).toHaveLength(20);
-    expect(new Set(validos).size).toBe(20);
+    expect(new Set(respuestas).size).toBe(5);
   });
 
   it('cada gimnasio numera desde su propio 1', async () => {

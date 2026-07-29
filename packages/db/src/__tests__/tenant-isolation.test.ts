@@ -19,7 +19,7 @@ import { randomUUID } from 'node:crypto';
 // re-exportacion desde `@gymlab/db` es para los consumidores.
 import { eq, sql } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { createDatabase, type Database } from '../client';
+import { closeDatabase, createDatabase, type Database } from '../client';
 import {
   auditLog,
   authEvents,
@@ -82,6 +82,10 @@ afterAll(async () => {
   await owner.delete(gyms).where(sql`id in (${gymA}, ${gymB})`);
   await owner.delete(organizations).where(sql`id in (${orgA}, ${orgB})`);
   await owner.delete(users).where(sql`id in (${userA}, ${userB})`);
+  // Cerrar los dos pools: sin esto las conexiones quedan abiertas hasta que
+  // muere el proceso, y se acumulan con las de los demas ficheros de test.
+  await closeDatabase(owner);
+  await closeDatabase(app);
 });
 
 describe('la conexion de la aplicacion no puede saltarse RLS', () => {
