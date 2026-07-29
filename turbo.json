@@ -12,7 +12,18 @@
       "dependsOn": ["^build"],
       "cache": false,
       "persistent": true,
-      "env": ["DATABASE_URL", "DATABASE_URL_APP", "AUTH_SECRET", "PLATFORM_INVITE_CODE", "API_URL", "API_PORT"]
+      "env": [
+        "DATABASE_URL",
+        "DATABASE_URL_APP",
+        "AUTH_SECRET",
+        "PLATFORM_INVITE_CODE",
+        "API_URL",
+        "API_PORT",
+        "WEB_APP_URL",
+        "CORS_ORIGINS",
+        "RESEND_API_KEY",
+        "EMAIL_FROM"
+      ]
     },
     "typecheck": {
       "dependsOn": ["^build"],
@@ -31,7 +42,22 @@
       //
       // Van en la tarea y no en globalEnv para no meter la URL de la base de
       // datos en el hash de cache del build.
-      "env": ["DATABASE_URL", "DATABASE_URL_APP", "AUTH_SECRET", "PLATFORM_INVITE_CODE", "API_URL", "API_PORT"]
+      //
+      // AL ANADIR UNA VARIABLE A config/env.ts, anadela tambien aqui. Las que
+      // tienen valor por defecto no rompen los tests, pero se ignoraria en
+      // silencio lo que se configure en CI.
+      "env": [
+        "DATABASE_URL",
+        "DATABASE_URL_APP",
+        "AUTH_SECRET",
+        "PLATFORM_INVITE_CODE",
+        "API_URL",
+        "API_PORT",
+        "WEB_APP_URL",
+        "CORS_ORIGINS",
+        "RESEND_API_KEY",
+        "EMAIL_FROM"
+      ]
     },
     "clean": {
       "cache": false

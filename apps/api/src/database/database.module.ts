@@ -1,6 +1,6 @@
-import { Global, Module, type OnModuleInit } from '@nestjs/common';
+import { Global, Module, type OnApplicationShutdown, type OnModuleInit } from '@nestjs/common';
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { assertRlsIsEnforced, createDatabase, type Database } from '@gymlab/db';
+import { assertRlsIsEnforced, closeDatabase, createDatabase, type Database } from '@gymlab/db';
 import { env } from '../config/env';
 
 export const DATABASE = Symbol('DATABASE');
@@ -27,6 +27,22 @@ class RlsStartupCheck implements OnModuleInit {
   }
 }
 
+/**
+ * Cierra el pool al apagar el proceso.
+ *
+ * Sin esto, un `SIGTERM` durante un despliegue deja las conexiones abiertas
+ * hasta que Postgres las expira. Y en los tests, donde cada fichero levanta su
+ * propia aplicacion, las conexiones se acumulan a lo largo de la bateria.
+ */
+@Injectable()
+class DatabaseLifecycle implements OnApplicationShutdown {
+  constructor(@Inject(DATABASE) private readonly db: Database) {}
+
+  async onApplicationShutdown(): Promise<void> {
+    await closeDatabase(this.db);
+  }
+}
+
 @Global()
 @Module({
   providers: [
@@ -36,6 +52,7 @@ class RlsStartupCheck implements OnModuleInit {
         createDatabase({ connectionString: env.DATABASE_URL_APP, max: 10 }),
     },
     RlsStartupCheck,
+    DatabaseLifecycle,
   ],
   exports: [DATABASE],
 })

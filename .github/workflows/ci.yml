@@ -101,4 +101,23 @@ jobs:
         #   - aislamiento entre gimnasios (RLS)
         #   - abuso de autenticacion: tokens reutilizados, caducados,
         #     revocados, manipulados y escalada de privilegios
+        #
+        # `--concurrency=1` (en el script raiz): las baterias de db y api
+        # comparten una sola base de datos, asi que ejecutarlas en paralelo es
+        # una carrera latente. Los builds ya son acierto de cache aqui, asi que
+        # serializar no cuesta tiempo.
         run: pnpm test
+
+      # Diagnostico para cuando un fallo no se reproduce en local. Un
+      # ECONNRESET desde el cliente no dice nada; el log del servidor sí:
+      # reinicios, cortes de conexion o limites alcanzados.
+      - name: Log de PostgreSQL si algo falla
+        if: failure()
+        run: docker logs "$(docker ps -aqf ancestor=postgres:16-alpine | head -1)" 2>&1 | tail -100
+
+      - name: Estado de las conexiones si algo falla
+        if: failure()
+        run: |
+          PGPASSWORD=gymlab psql -h localhost -U gymlab -d gymlab -c \
+            "SELECT count(*) AS conexiones, (SELECT setting FROM pg_settings WHERE name='max_connections') AS maximo FROM pg_stat_activity WHERE datname='gymlab';" \
+            || echo "no se pudo consultar"

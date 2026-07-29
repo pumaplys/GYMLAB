@@ -39,6 +39,11 @@ class BossLifecycle implements OnApplicationShutdown {
           // propietario: pg-boss hace DDL y `gymlab_app` no puede —ni debe—
           // crear nada. Mismo reparto que con las migraciones.
           migrate: false,
+          // En los tests no se consumen colas ni hace falta mantenimiento, y su
+          // trafico de fondo solo anade ruido y conexiones a una base de datos
+          // que ya esta compartida por varios ficheros de test.
+          supervise: env.NODE_ENV !== 'test',
+          schedule: env.NODE_ENV !== 'test',
         });
 
         await boss.start();

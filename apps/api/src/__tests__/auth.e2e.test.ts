@@ -15,6 +15,7 @@ import { randomUUID } from 'node:crypto';
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import {
+  closeDatabase,
   createDatabase,
   EMAIL_QUEUES,
   eq,
@@ -140,6 +141,7 @@ afterAll(async () => {
   await owner.execute(sql`DELETE FROM users WHERE email LIKE ${patron}`);
   await owner.execute(sql`DELETE FROM pgboss.job WHERE data->>'to' LIKE ${patron}`);
   await owner.execute(sql`DELETE FROM auth_throttle WHERE key LIKE ${'login:%' + sufijo + '%'}`);
+  await closeDatabase(owner);
 });
 
 const conSesion = (token: string) => ({ Authorization: `Bearer ${token}` });

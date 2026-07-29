@@ -10,6 +10,7 @@ import { HealthController } from './health.controller';
 import { InvitationsModule } from './invitations/invitations.module';
 import { JobsModule } from './jobs/jobs.module';
 import { MailModule } from './mail/mail.module';
+import { MembersModule } from './members/members.module';
 
 /**
  * Modulo raiz del monolito modular.
@@ -31,7 +32,16 @@ import { MailModule } from './mail/mail.module';
  * repositorio de otro; pide a su servicio de aplicacion.
  */
 @Module({
-  imports: [DatabaseModule, MailModule, JobsModule, AuthModule, InvitationsModule],
+  // Uno por linea: es la lista que crece con cada modulo de dominio, y en una
+  // sola linea es donde se produjo el conflicto al integrar dos ramas.
+  imports: [
+    DatabaseModule,
+    MailModule,
+    JobsModule,
+    AuthModule,
+    InvitationsModule,
+    MembersModule,
+  ],
   controllers: [HealthController],
   providers: [
     { provide: APP_GUARD, useClass: AuthGuard },

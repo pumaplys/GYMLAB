@@ -210,6 +210,50 @@ CREATE POLICY tenant_isolation ON consents
 
 
 -- -----------------------------------------------------------------------------
+-- members — patron estandar.
+-- -----------------------------------------------------------------------------
+ALTER TABLE members ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS tenant_isolation ON members;
+CREATE POLICY tenant_isolation ON members
+  FOR ALL
+  TO gymlab_app
+  USING (gym_id = app_current_gym_id())
+  WITH CHECK (gym_id = app_current_gym_id());
+
+
+-- -----------------------------------------------------------------------------
+-- member_counters — patron estandar.
+-- -----------------------------------------------------------------------------
+-- Aqui `gym_id` es ademas la clave primaria: un contador por gimnasio.
+ALTER TABLE member_counters ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS tenant_isolation ON member_counters;
+CREATE POLICY tenant_isolation ON member_counters
+  FOR ALL
+  TO gymlab_app
+  USING (gym_id = app_current_gym_id())
+  WITH CHECK (gym_id = app_current_gym_id());
+
+
+-- -----------------------------------------------------------------------------
+-- member_notes — patron estandar.
+-- -----------------------------------------------------------------------------
+-- El socio no las ve, pero eso NO lo impone RLS: lo impone la autorizacion de
+-- la aplicacion, porque el socio consulta su ficha dentro de su propio
+-- gimnasio y RLS no distingue roles. Es autorizacion de aplicacion y necesita
+-- sus propios tests.
+ALTER TABLE member_notes ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS tenant_isolation ON member_notes;
+CREATE POLICY tenant_isolation ON member_notes
+  FOR ALL
+  TO gymlab_app
+  USING (gym_id = app_current_gym_id())
+  WITH CHECK (gym_id = app_current_gym_id());
+
+
+-- -----------------------------------------------------------------------------
 -- audit_log — aislado por tenant Y ademas append-only.
 -- -----------------------------------------------------------------------------
 -- Un registro de auditoria que la propia aplicacion puede reescribir no sirve

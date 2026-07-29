@@ -20,6 +20,20 @@ export function createDatabase({ connectionString, max = 10 }: CreateDatabaseOpt
 }
 
 /**
+ * Cierra el pool de conexiones.
+ *
+ * Hace falta llamarlo al apagar el proceso. Sin esto, un `SIGTERM` durante un
+ * despliegue deja las conexiones abiertas hasta que Postgres las expira por su
+ * cuenta: con varias instancias reiniciandose seguidas, se acumulan.
+ *
+ * En los tests el efecto es mas visible: cada fichero levanta su aplicacion y su
+ * pool, y sin cerrarlos las conexiones se van sumando durante toda la bateria.
+ */
+export async function closeDatabase(db: Database): Promise<void> {
+  await db.$client.end();
+}
+
+/**
  * Comprueba que la conexion NO puede saltarse Row Level Security.
  *
  * Esto existe por un detalle de Postgres que arruina silenciosamente todo el

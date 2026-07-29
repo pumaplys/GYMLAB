@@ -11,7 +11,7 @@
 import { randomUUID } from 'node:crypto';
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { EMAIL_QUEUES, createDatabase, sql, type Database } from '@gymlab/db';
+import { EMAIL_QUEUES, closeDatabase, createDatabase, sql, type Database } from '@gymlab/db';
 import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { AppModule } from '../app.module';
@@ -121,6 +121,7 @@ afterAll(async () => {
   await owner.execute(sql`DELETE FROM users WHERE email LIKE ${patron}`);
   await owner.execute(sql`DELETE FROM pgboss.job WHERE data->>'to' LIKE ${patron}`);
   await owner.execute(sql`DELETE FROM auth_throttle WHERE key LIKE ${'login:%' + sufijo + '%'}`);
+  await closeDatabase(owner);
 });
 
 describe('correo de invitacion', () => {

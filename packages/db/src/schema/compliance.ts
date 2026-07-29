@@ -23,6 +23,15 @@ export const consentPurpose = pgEnum('consent_purpose', [
   'terms',
   /** Datos de salud: peso, medidas, entrenamiento. Art. 9 RGPD. */
   'health_data',
+  /**
+   * Derechos de imagen: fotos en la sala, redes sociales.
+   *
+   * Proposito independiente y no agrupado con los terminos, porque se revoca por
+   * separado: alguien puede seguir siendo socio y retirar el permiso para
+   * aparecer en fotos. Si fuera la misma casilla, revocarlo obligaria a
+   * revocar tambien el contrato.
+   */
+  'image_rights',
 ]);
 
 export const consents = pgTable(

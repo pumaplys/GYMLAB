@@ -15,10 +15,23 @@
  *   pnpm db:migrate
  */
 import { randomUUID } from 'node:crypto';
-import { sql } from 'drizzle-orm';
+// Dentro del propio paquete se importa de `drizzle-orm` directamente; la
+// re-exportacion desde `@gymlab/db` es para los consumidores.
+import { eq, sql } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { createDatabase, type Database } from '../client';
-import { auditLog, authEvents, gyms, invitations, memberships, organizations, users } from '../schema';
+import { closeDatabase, createDatabase, type Database } from '../client';
+import {
+  auditLog,
+  authEvents,
+  gyms,
+  invitations,
+  memberCounters,
+  memberNotes,
+  members,
+  memberships,
+  organizations,
+  users,
+} from '../schema';
 import { withTenant, withoutTenant } from '../tenant';
 
 /** Conexion propietaria: siembra los datos saltandose RLS. Solo para el test. */
@@ -69,6 +82,10 @@ afterAll(async () => {
   await owner.delete(gyms).where(sql`id in (${gymA}, ${gymB})`);
   await owner.delete(organizations).where(sql`id in (${orgA}, ${orgB})`);
   await owner.delete(users).where(sql`id in (${userA}, ${userB})`);
+  // Cerrar los dos pools: sin esto las conexiones quedan abiertas hasta que
+  // muere el proceso, y se acumulan con las de los demas ficheros de test.
+  await closeDatabase(owner);
+  await closeDatabase(app);
 });
 
 describe('la conexion de la aplicacion no puede saltarse RLS', () => {
@@ -282,6 +299,124 @@ describe('tablas del modulo auth', () => {
     expect(filas).toHaveLength(1);
 
     await owner.delete(authEvents).where(sql`id = ${id}`);
+  });
+});
+
+describe('tablas del modulo members', () => {
+  /** Da de alta un socio con la conexion propietaria. */
+  async function sembrarSocio(gymId: string, numero: number, apellido: string) {
+    const id = randomUUID();
+    await owner
+      .insert(members)
+      .values({ id, gymId, memberNumber: numero, firstName: 'Nombre', lastName: apellido });
+    return id;
+  }
+
+  it('las fichas de socio estan aisladas por gimnasio', async () => {
+    const enGymA = await sembrarSocio(gymA, 1, 'DelGimnasioA');
+    const enGymB = await sembrarSocio(gymB, 1, 'DelGimnasioB');
+
+    const vistos = await withTenant(app, gymA, (tx) => tx.select().from(members));
+
+    expect(vistos).toHaveLength(1);
+    expect(vistos[0]?.lastName).toBe('DelGimnasioA');
+
+    await owner.delete(members).where(sql`id in (${enGymA}, ${enGymB})`);
+  });
+
+  it('el mismo numero de socio puede existir en dos gimnasios distintos', async () => {
+    // El indice unico es (gym_id, member_number), no member_number a secas:
+    // cada gimnasio empieza a contar por el 1.
+    const a = await sembrarSocio(gymA, 7, 'Siete-A');
+    const b = await sembrarSocio(gymB, 7, 'Siete-B');
+
+    expect(a).not.toBe(b);
+
+    await owner.delete(members).where(sql`id in (${a}, ${b})`);
+  });
+
+  it('un socio sin cuenta es valido: user_id es nullable', async () => {
+    // Es la decision que ordena el modulo. La senora que va a aquagym y no
+    // instala ninguna app tiene que poder existir.
+    const id = await sembrarSocio(gymA, 2, 'SinCuenta');
+
+    const filas = await withTenant(app, gymA, (tx) =>
+      tx.select().from(members).where(eq(members.id, id)),
+    );
+
+    expect(filas[0]?.userId).toBeNull();
+
+    await owner.delete(members).where(eq(members.id, id));
+  });
+
+  it('las notas del personal estan aisladas por gimnasio', async () => {
+    const socioA = await sembrarSocio(gymA, 3, 'ConNota');
+    const socioB = await sembrarSocio(gymB, 3, 'ConNotaB');
+    await owner.insert(memberNotes).values([
+      { gymId: gymA, memberId: socioA, authorUserId: userA, body: 'Nota del A' },
+      { gymId: gymB, memberId: socioB, authorUserId: userB, body: 'Nota del B' },
+    ]);
+
+    const vistas = await withTenant(app, gymA, (tx) => tx.select().from(memberNotes));
+
+    expect(vistas).toHaveLength(1);
+    expect(vistas[0]?.body).toBe('Nota del A');
+
+    await owner.delete(members).where(sql`id in (${socioA}, ${socioB})`);
+  });
+
+  it('el contador de numeros esta aislado por gimnasio', async () => {
+    await owner.insert(memberCounters).values([
+      { gymId: gymA, nextNumber: 50 },
+      { gymId: gymB, nextNumber: 90 },
+    ]);
+
+    const vistos = await withTenant(app, gymA, (tx) => tx.select().from(memberCounters));
+
+    expect(vistos).toHaveLength(1);
+    expect(vistos[0]?.nextNumber).toBe(50);
+
+    await owner.delete(memberCounters).where(sql`gym_id in (${gymA}, ${gymB})`);
+  });
+
+  it('un mismo email no puede repetirse entre socios ACTIVOS del mismo gimnasio', async () => {
+    const primero = randomUUID();
+    await owner.insert(members).values({
+      id: primero,
+      gymId: gymA,
+      memberNumber: 10,
+      firstName: 'Ana',
+      lastName: 'Uno',
+      email: 'repetido@test.local',
+    });
+
+    await expect(
+      owner.insert(members).values({
+        gymId: gymA,
+        memberNumber: 11,
+        firstName: 'Otra',
+        lastName: 'Dos',
+        email: 'repetido@test.local',
+      }),
+    ).rejects.toThrow();
+
+    // Pero tras una baja, ese email vuelve a estar libre: el indice es parcial.
+    await owner
+      .update(members)
+      .set({ status: 'inactive', leftAt: new Date() })
+      .where(eq(members.id, primero));
+
+    const segundo = randomUUID();
+    await owner.insert(members).values({
+      id: segundo,
+      gymId: gymA,
+      memberNumber: 12,
+      firstName: 'Otra',
+      lastName: 'Dos',
+      email: 'repetido@test.local',
+    });
+
+    await owner.delete(members).where(sql`id in (${primero}, ${segundo})`);
   });
 });
 
