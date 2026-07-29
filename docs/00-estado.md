@@ -103,6 +103,9 @@ pnpm test
 
 ## Fase 1 — el MVP
 
+**Plan detallado en [`02-fase-1-mvp.md`](02-fase-1-mvp.md)**: alcance, orden,
+riesgos y las tres decisiones pendientes. Resumen a continuación.
+
 Alcance cerrado: clientes, entrenadores, suscripciones, rutinas, peso, QR de
 acceso y dashboard del dueño.
 

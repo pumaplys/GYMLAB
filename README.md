@@ -2,7 +2,7 @@
 
 SaaS de gestión para gimnasios. Panel web para el gimnasio y app móvil para el socio.
 
-Arquitectura: [`docs/01-arquitectura.md`](docs/01-arquitectura.md) · Decisiones: [`docs/adr/`](docs/adr/) · Estado: [`docs/00-estado.md`](docs/00-estado.md)
+Arquitectura: [`docs/01-arquitectura.md`](docs/01-arquitectura.md) · Decisiones: [`docs/adr/`](docs/adr/) · Estado: [`docs/00-estado.md`](docs/00-estado.md) · Fase 1: [`docs/02-fase-1-mvp.md`](docs/02-fase-1-mvp.md)
 
 ---
 
