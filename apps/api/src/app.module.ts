@@ -9,6 +9,7 @@ import { DatabaseModule } from './database/database.module';
 import { HealthController } from './health.controller';
 import { InvitationsModule } from './invitations/invitations.module';
 import { JobsModule } from './jobs/jobs.module';
+import { MembersModule } from './members/members.module';
 
 /**
  * Modulo raiz del monolito modular.
@@ -30,7 +31,7 @@ import { JobsModule } from './jobs/jobs.module';
  * repositorio de otro; pide a su servicio de aplicacion.
  */
 @Module({
-  imports: [DatabaseModule, JobsModule, AuthModule, InvitationsModule],
+  imports: [DatabaseModule, JobsModule, AuthModule, InvitationsModule, MembersModule],
   controllers: [HealthController],
   providers: [
     { provide: APP_GUARD, useClass: AuthGuard },
