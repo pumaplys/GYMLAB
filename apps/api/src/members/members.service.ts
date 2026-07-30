@@ -22,10 +22,23 @@ import type {
   UpdateMemberInput,
   UpdateOwnProfileInput,
 } from '@gymlab/contracts';
+import type { Invitation } from '@gymlab/contracts';
 import { requireRequestContext, requireTransaction } from '../common/request-context';
+import { InvitationsService } from '../invitations/invitations.service';
 
+/**
+ * La direccion de dependencia es `members -> invitations` y solo esa: este
+ * servicio llama a `InvitationsService` para crear invitaciones, e `invitations`
+ * no sabe nada de `members` — reacciona a traves de la interfaz de `common`.
+ *
+ * El lado contrario —rellenar `members.user_id` al aceptarse— lo implementa
+ * `MemberAccountLink`, y esta en otra clase por un motivo que cuesta caro
+ * olvidar: ahi explica cual.
+ */
 @Injectable()
 export class MembersService {
+  constructor(private readonly invitations: InvitationsService) {}
+
   /**
    * Da de alta un socio.
    *
@@ -319,6 +332,51 @@ export class MembersService {
     await tx.delete(members).where(and(eq(members.gymId, gymId), eq(members.id, id)));
 
     return { ok: true };
+  }
+
+  // --- Invitacion a crear cuenta -----------------------------------------
+
+  /**
+   * Invita a un socio a crear su cuenta.
+   *
+   * Dar de alta e invitar son dos acciones distintas: un gimnasio real tiene
+   * socios que nunca tendran cuenta, y por eso la ficha existe sin `user_id`.
+   *
+   * Dos validaciones, y ninguna es de tramite:
+   *
+   * 1. Sin email no se puede invitar. `members.email` es nullable a proposito,
+   *    asi que este caso es normal, no un error raro: merece un mensaje claro y
+   *    no un fallo de Better Auth tres capas mas abajo.
+   *
+   * 2. Con cuenta ya vinculada, la invitacion no tiene sentido: crearia una
+   *    segunda cuenta con otro email para la misma persona.
+   */
+  async invite(gymId: string, memberId: string): Promise<Invitation> {
+    const { userId: actorUserId, role: actorRole } = requireRequestContext();
+    const socio = await this.buscar(gymId, memberId);
+
+    if (!socio.email) {
+      throw new BadRequestException(
+        'Ese socio no tiene email. Anadelo a su ficha antes de invitarle.',
+      );
+    }
+    if (socio.userId) {
+      throw new BadRequestException('Ese socio ya tiene una cuenta vinculada.');
+    }
+    if (socio.status !== 'active') {
+      throw new BadRequestException('No se puede invitar a un socio dado de baja.');
+    }
+
+    // Se delega en `invitations`, que es el dueno de ese ciclo de vida: token
+    // hasheado, caducidad, un solo uso y el correo. `members` no lo replica.
+    return this.invitations.create(
+      gymId,
+      actorUserId,
+      actorRole!,
+      socio.email,
+      'member',
+      socio.id,
+    );
   }
 
   // --- Interno -----------------------------------------------------------

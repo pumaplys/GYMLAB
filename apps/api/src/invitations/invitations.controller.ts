@@ -12,8 +12,10 @@ import {
 import {
   acceptInvitationSchema,
   createInvitationSchema,
+  linkInvitationSchema,
   type AcceptInvitationInput,
   type CreateInvitationInput,
+  type LinkInvitationInput,
 } from '@gymlab/contracts';
 import type { Request, Response } from 'express';
 import { Public } from '../common/decorators/public.decorator';
@@ -61,7 +63,12 @@ export class InvitationsController {
     return { ok: true };
   }
 
-  /** Publico: quien acepta todavia no tiene sesion. */
+  /**
+   * Publico: quien acepta todavia no tiene sesion.
+   *
+   * SOLO cuentas nuevas (ADR-0010). Si el email ya tiene cuenta responde 409 y
+   * hay que usar `link-invitation`.
+   */
   @Public()
   @Post('auth/accept-invitation')
   async accept(
@@ -72,6 +79,21 @@ export class InvitationsController {
     const { session, authHeaders } = await this.invitations.accept(body, toHeaders(req));
     forwardAuthCookies(authHeaders, res);
     return session;
+  }
+
+  /**
+   * Vincula una invitacion a la cuenta con la que ya estas dentro (ADR-0010).
+   *
+   * AUTENTICADO y sin `@Public()`. El cuerpo solo lleva el token: no hay
+   * contraseña ni nombre, asi que este endpoint no puede modificar credenciales
+   * ni por error de programacion.
+   *
+   * No exige gimnasio activo ni lo cambia: el gimnasio sale del token, y donde
+   * opera cada persona lo decide ella con /switch-gym.
+   */
+  @Post('auth/link-invitation')
+  link(@Body(new ZodBody(linkInvitationSchema)) body: LinkInvitationInput) {
+    return this.invitations.link(body.token, requireRequestContext().userId);
   }
 
   private assertGymMatches(gymId: string) {

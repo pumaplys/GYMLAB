@@ -90,6 +90,19 @@ export const members = pgTable(
     uniqueIndex('members_gym_number_key').on(t.gymId, t.memberNumber),
     index('members_gym_id_idx').on(t.gymId),
     index('members_user_id_idx').on(t.userId),
+    // Una cuenta no puede tener DOS fichas en el mismo gimnasio.
+    //
+    // Sin esto, nada impedia que dos fichas quedaran vinculadas a la misma
+    // persona, con dos numeros de socio y dos historiales. El vinculo por
+    // invitacion es lo que hace ese fallo alcanzable, asi que la restriccion
+    // entra con el.
+    //
+    // Parcial: `user_id` es nullable a proposito —los socios sin cuenta— y en un
+    // indice unico normal los NULL no chocan, pero declararlo explicito deja
+    // claro que la regla solo aplica a fichas vinculadas.
+    uniqueIndex('members_gym_user_key')
+      .on(t.gymId, t.userId)
+      .where(sql`user_id IS NOT NULL`),
     // Recepcion busca por apellido; el indice lleva gym_id delante porque toda
     // consulta esta ya acotada al tenant.
     index('members_gym_last_name_idx').on(t.gymId, t.lastName),

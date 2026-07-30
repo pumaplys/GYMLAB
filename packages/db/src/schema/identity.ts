@@ -169,46 +169,9 @@ export const memberships = pgTable(
   ],
 );
 
-/**
- * Invitaciones. Tabla de tenant: las crea un gimnasio ya autenticado.
- *
- * Dos decisiones que merecen explicacion:
- *
- * 1. `tokenHash` guarda el token **hasheado**, igual que una contrasena. Si la
- *    base de datos se filtra, las invitaciones pendientes no son canjeables.
- *
- * 2. No hay columna `status`. El estado es funcion de las fechas:
- *
- *      revokedAt  != null   -> REVOCADA
- *      acceptedAt != null   -> ACEPTADA
- *      expiresAt  < now()   -> CADUCADA
- *      en otro caso         -> PENDIENTE
- *
- *    Una columna de estado ademas de las fechas seria un segundo origen de
- *    verdad, y tarde o temprano las dos se contradicen.
- */
-export const invitations = pgTable(
-  'invitations',
-  {
-    id: primaryId(),
-    gymId: tenantId().references(() => gyms.id, { onDelete: 'cascade' }),
-    email: text('email').notNull(),
-    role: membershipRole('role').notNull(),
-    tokenHash: text('token_hash').notNull(),
-    invitedByUserId: uuid('invited_by_user_id')
-      .notNull()
-      .references(() => users.id, { onDelete: 'restrict' }),
-    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
-    acceptedAt: timestamp('accepted_at', { withTimezone: true }),
-    revokedAt: timestamp('revoked_at', { withTimezone: true }),
-    ...timestamps,
-  },
-  (t) => [
-    uniqueIndex('invitations_token_hash_key').on(t.tokenHash),
-    index('invitations_gym_id_idx').on(t.gymId),
-    index('invitations_email_idx').on(t.email),
-  ],
-);
+// `invitations` vive en `invitations.ts`: necesita apuntar a `users` y a
+// `members`, y declararla aqui obligaria a importar `members.ts`, que a su vez
+// importa este fichero. Un ciclo entre modulos de ES deja tablas sin definir.
 
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
@@ -217,6 +180,4 @@ export type Session = typeof sessions.$inferSelect;
 export type Verification = typeof verifications.$inferSelect;
 export type Membership = typeof memberships.$inferSelect;
 export type NewMembership = typeof memberships.$inferInsert;
-export type Invitation = typeof invitations.$inferSelect;
-export type NewInvitation = typeof invitations.$inferInsert;
 export type MembershipRole = (typeof membershipRole.enumValues)[number];

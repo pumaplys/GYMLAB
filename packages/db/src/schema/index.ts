@@ -18,5 +18,6 @@ export * from './_helpers';
 export * from './organization';
 export * from './identity';
 export * from './members';
+export * from './invitations';
 export * from './compliance';
 export * from './audit';

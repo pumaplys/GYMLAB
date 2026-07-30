@@ -95,6 +95,21 @@ export class MembersController {
     return this.members.reactivate(this.gym(gymId), id);
   }
 
+  /**
+   * Invita al socio a crear su cuenta.
+   *
+   * Dar de alta e invitar son dos acciones distintas: un gimnasio tiene socios
+   * que nunca tendran cuenta, y la ficha existe sin ella.
+   */
+  @Roles('owner', 'receptionist')
+  @Post(':id/invite')
+  invite(
+    @Param('gymId', ParseUUIDPipe) gymId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.members.invite(this.gym(gymId), id);
+  }
+
   @Roles('owner', 'receptionist')
   @Post(':id/notes')
   addNote(

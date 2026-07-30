@@ -1,10 +1,12 @@
 import { createHash, randomBytes } from 'node:crypto';
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Inject,
   Injectable,
   NotFoundException,
+  Optional,
 } from '@nestjs/common';
 import {
   and,
@@ -15,13 +17,18 @@ import {
   isNull,
   memberships,
   sessions,
+  sql,
   users,
   withTenant,
   withoutTenant,
   type Database,
 } from '@gymlab/db';
 import type { AcceptInvitationInput, Invitation, Role } from '@gymlab/contracts';
-import { canInvite } from '@gymlab/contracts';
+import { ACCOUNT_EXISTS, canInvite } from '@gymlab/contracts';
+import {
+  INVITATION_ACCEPTED_HOOK,
+  type InvitationAcceptedHook,
+} from '../common/invitation-hooks';
 import { env } from '../config/env';
 import { DATABASE } from '../database/database.module';
 import type { Auth } from '../auth/auth.instance';
@@ -38,6 +45,16 @@ export class InvitationsService {
     @Inject(DATABASE) private readonly db: Database,
     @Inject(AUTH) private readonly auth: Auth,
     private readonly jobs: JobsService,
+    /**
+     * Punto de extension, OPCIONAL a proposito.
+     *
+     * `invitations` no depende de `members`: depende de una interfaz que vive en
+     * `common`. Quien la implementa se registra desde fuera. Asi la unica
+     * direccion real es `members -> invitations`, sin ciclo (ADR-0006).
+     */
+    @Optional()
+    @Inject(INVITATION_ACCEPTED_HOOK)
+    private readonly hook?: InvitationAcceptedHook,
   ) {}
 
   /**
@@ -62,6 +79,13 @@ export class InvitationsService {
     actorRole: Role,
     email: string,
     role: Role,
+    /**
+     * Ficha de socio de la que sale la invitacion, si viene de una.
+     *
+     * Al aceptarse, es lo que permite rellenar `members.user_id`. El personal
+     * —dueno, recepcion, entrenador— se invita sin ficha, y aqui va null.
+     */
+    memberId: string | null = null,
   ): Promise<Invitation> {
     if (!canInvite(actorRole, role)) {
       throw new ForbiddenException(`Un ${actorRole} no puede invitar a un ${role}.`);
@@ -89,6 +113,7 @@ export class InvitationsService {
         email,
         role,
         tokenHash: hashToken(token),
+        memberId,
         invitedByUserId: actorUserId,
         expiresAt: new Date(Date.now() + TTL_MS),
       })
@@ -159,41 +184,39 @@ export class InvitationsService {
   }
 
   /**
-   * Acepta una invitacion: crea la cuenta y la pertenencia.
+   * Acepta una invitacion creando una cuenta NUEVA (ADR-0010).
    *
    * Publico, porque quien acepta todavia no tiene sesion.
    *
-   * LIMITACION ASUMIDA: el usuario lo crea Better Auth con su propia conexion,
-   * fuera de nuestra transaccion. Si lo siguiente fallara, quedaria una cuenta
-   * sin pertenencia; la invitacion sigue pendiente y se puede reintentar. No
-   * expone datos de nadie.
+   * SI EL EMAIL YA TIENE CUENTA, responde 409 y no toca nada. Fijar aqui una
+   * contrasena sobre una cuenta preexistente seria un secuestro: el email de la
+   * invitacion lo elige el personal del gimnasio, asi que podria invitar a una
+   * direccion con cuenta en OTRO gimnasio y apoderarse de ella. Ese camino va
+   * por `link()`, autenticado y sin contrasena en el contrato.
+   *
+   * LIMITACION ASUMIDA (ADR-0010): el usuario lo crea Better Auth con su propia
+   * conexion, fuera de nuestra transaccion. Si lo siguiente fallara, quedaria
+   * una cuenta sin pertenencia. Es recuperable: la cuenta existe con la
+   * contrasena elegida, asi que se puede iniciar sesion y usar `link()`, que
+   * completa la operacion. Converge al estado correcto sin intervencion manual.
    */
   async accept(input: AcceptInvitationInput, headers: Headers) {
-    const gymId = input.token.split('.')[0] ?? '';
-    if (!/^[0-9a-f-]{36}$/i.test(gymId)) {
-      throw new BadRequestException('Invitacion no valida.');
-    }
-
+    const gymId = this.gymIdDelToken(input.token);
     const ahora = new Date();
-    const pendiente = await withTenant(this.db, gymId, async (tx) => {
-      const filas = await tx
-        .select()
-        .from(invitations)
-        .where(
-          and(
-            eq(invitations.tokenHash, hashToken(input.token)),
-            isNull(invitations.acceptedAt),
-            isNull(invitations.revokedAt),
-          ),
-        )
-        .limit(1);
-      return filas[0];
-    });
+    const pendiente = await this.buscarPendiente(gymId, input.token);
 
     // Un solo mensaje para no valida / caducada / usada / revocada: los cuatro
     // casos son "no sirve", y distinguirlos solo ayuda a quien prueba tokens.
     if (!pendiente || pendiente.expiresAt <= ahora) {
       throw new BadRequestException('La invitacion no es valida, ya se uso o ha caducado.');
+    }
+
+    if (await this.existeCuenta(pendiente.email)) {
+      throw new ConflictException({
+        code: ACCOUNT_EXISTS,
+        message:
+          'Ya existe una cuenta con ese correo. Inicia sesion y vincula la invitacion desde tu cuenta.',
+      });
     }
 
     const signUp = await this.auth.api.signUpEmail({
@@ -228,6 +251,18 @@ export class InvitationsService {
           entityType: 'invitation',
           entityId: pendiente.id,
         });
+
+        // Punto de extension: `members` rellena aqui su `user_id`. Dentro de
+        // ESTA transaccion, para que un fallo al vincular deje tambien la
+        // invitacion sin consumir.
+        await this.hook?.onInvitationAccepted({
+          gymId,
+          invitationId: pendiente.id,
+          memberId: pendiente.memberId,
+          role: pendiente.role,
+          userId,
+          tx,
+        });
       },
       { userId },
     );
@@ -251,6 +286,146 @@ export class InvitationsService {
     }
 
     return { session: { token, activeGymId: gymId }, authHeaders: signUp.headers };
+  }
+
+  /**
+   * Vincula una invitacion a una cuenta que YA existe (ADR-0010).
+   *
+   * ┌──────────────────────────────────────────────────────────────────────┐
+   * │ NO RECIBE CONTRASENA, y eso es la garantia principal del diseno.      │
+   * │                                                                      │
+   * │ Al no existir el dato en el contrato, este metodo no puede modificar   │
+   * │ credenciales ni por un error de programacion. No hay nada con lo que   │
+   * │ hacerlo. Es estructural, no una comprobacion que alguien pueda        │
+   * │ olvidar — el mismo criterio que llevo a RLS en ADR-0002.              │
+   * └──────────────────────────────────────────────────────────────────────┘
+   *
+   * NO usa el gimnasio activo de la sesion: usa el del token. Alguien puede
+   * estar dentro del gimnasio 1 y vincular una invitacion del gimnasio 2, y
+   * exigirle que cambie de gimnasio antes seria absurdo.
+   *
+   * Tampoco cambia el gimnasio activo al terminar: quien decide donde opera es
+   * la persona, con /switch-gym.
+   */
+  async link(token: string, userId: string): Promise<{ ok: true; gymId: string }> {
+    const gymId = this.gymIdDelToken(token);
+    const ahora = new Date();
+    const pendiente = await this.buscarPendiente(gymId, token);
+
+    if (!pendiente || pendiente.expiresAt <= ahora) {
+      throw new BadRequestException('La invitacion no es valida, ya se uso o ha caducado.');
+    }
+
+    // El email de la sesion debe coincidir con el de la invitacion.
+    //
+    // Sin esto, cualquiera con una cuenta y un token ajeno —un correo
+    // reenviado— se daria de alta en un gimnasio al que nadie le invito. La
+    // invitacion es para una direccion concreta.
+    const [usuario] = await withoutTenant(this.db, (tx) =>
+      tx.select({ email: users.email }).from(users).where(eq(users.id, userId)).limit(1),
+    );
+    if (!usuario) throw new NotFoundException('Usuario no encontrado.');
+
+    if (usuario.email.toLowerCase() !== pendiente.email.toLowerCase()) {
+      throw new ForbiddenException(
+        'Esta invitacion es para otra direccion de correo. Inicia sesion con esa cuenta.',
+      );
+    }
+
+    await withTenant(
+      this.db,
+      gymId,
+      async (tx) => {
+        // Mismo UPDATE condicionado que en `accept()`: hace el token de un solo
+        // uso a prueba de carreras, y ademas entre los DOS endpoints — si uno lo
+        // consume, el otro se queda sin filas.
+        const marcadas = await tx
+          .update(invitations)
+          .set({ acceptedAt: ahora })
+          .where(and(eq(invitations.id, pendiente.id), isNull(invitations.acceptedAt)))
+          .returning({ id: invitations.id });
+
+        if (!marcadas[0]) {
+          throw new BadRequestException('La invitacion ya se uso.');
+        }
+
+        const yaPertenece = await tx
+          .select({ id: memberships.id })
+          .from(memberships)
+          .where(and(eq(memberships.gymId, gymId), eq(memberships.userId, userId)))
+          .limit(1);
+
+        if (yaPertenece[0]) {
+          throw new BadRequestException('Ya perteneces a ese gimnasio.');
+        }
+
+        await tx.insert(memberships).values({ gymId, userId, role: pendiente.role });
+        await tx.insert(auditLog).values({
+          gymId,
+          actorUserId: userId,
+          action: 'invitation.linked',
+          entityType: 'invitation',
+          entityId: pendiente.id,
+        });
+
+        await this.hook?.onInvitationAccepted({
+          gymId,
+          invitationId: pendiente.id,
+          memberId: pendiente.memberId,
+          role: pendiente.role,
+          userId,
+          tx,
+        });
+      },
+      { userId },
+    );
+
+    return { ok: true, gymId };
+  }
+
+  // --- Interno ----------------------------------------------------------
+
+  /** El gimnasio sale del token, nunca de la peticion (ADR-0007). */
+  private gymIdDelToken(token: string): string {
+    const gymId = token.split('.')[0] ?? '';
+    if (!/^[0-9a-f-]{36}$/i.test(gymId)) {
+      throw new BadRequestException('Invitacion no valida.');
+    }
+    return gymId;
+  }
+
+  private async buscarPendiente(gymId: string, token: string) {
+    return withTenant(this.db, gymId, async (tx) => {
+      const filas = await tx
+        .select()
+        .from(invitations)
+        .where(
+          and(
+            eq(invitations.tokenHash, hashToken(token)),
+            isNull(invitations.acceptedAt),
+            isNull(invitations.revokedAt),
+          ),
+        )
+        .limit(1);
+      return filas[0];
+    });
+  }
+
+  /**
+   * Si ese email ya tiene cuenta.
+   *
+   * Sin contexto de tenant: `users` es identidad global y no lleva RLS. La
+   * comparacion es sin distinguir mayusculas, igual que el indice unico.
+   */
+  private async existeCuenta(email: string): Promise<boolean> {
+    const filas = await withoutTenant(this.db, (tx) =>
+      tx
+        .select({ id: users.id })
+        .from(users)
+        .where(sql`lower(${users.email}) = lower(${email})`)
+        .limit(1),
+    );
+    return filas.length > 0;
   }
 
   private toDto(fila: typeof invitations.$inferSelect): Invitation {

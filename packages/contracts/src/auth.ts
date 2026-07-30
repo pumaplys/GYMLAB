@@ -121,12 +121,43 @@ export const invitationSchema = z.object({
 });
 export type Invitation = z.infer<typeof invitationSchema>;
 
+/**
+ * Aceptar una invitacion. SOLO para cuentas nuevas (ADR-0010).
+ *
+ * Si el email ya tiene cuenta, el servidor responde 409 y hay que usar
+ * `link-invitation` estando autenticado. Nunca se fija una contrasena sobre una
+ * cuenta que ya existe.
+ */
 export const acceptInvitationSchema = z.object({
   token: z.string().min(1),
   name: nameSchema,
   password: passwordSchema,
 });
 export type AcceptInvitationInput = z.infer<typeof acceptInvitationSchema>;
+
+/**
+ * Vincular una invitacion a una cuenta que YA existe (ADR-0010).
+ *
+ * ┌──────────────────────────────────────────────────────────────────────┐
+ * │ NO LLEVA CONTRASENA NI NOMBRE, y eso es la garantia principal.        │
+ * │                                                                      │
+ * │ Al no existir el dato en el contrato, este endpoint no puede modificar │
+ * │ credenciales ni por un error de programacion. Si un token de          │
+ * │ invitacion pudiera fijar la contrasena de una cuenta preexistente,     │
+ * │ quien lo tuviera se apoderaria de ella — y con ella de su acceso a     │
+ * │ otros gimnasios.                                                     │
+ * │                                                                      │
+ * │ Es una garantia estructural, no una comprobacion que alguien pueda    │
+ * │ olvidar: el mismo criterio que llevo a RLS en ADR-0002.               │
+ * └──────────────────────────────────────────────────────────────────────┘
+ */
+export const linkInvitationSchema = z.object({
+  token: z.string().min(1),
+});
+export type LinkInvitationInput = z.infer<typeof linkInvitationSchema>;
+
+/** Codigo que devuelve `accept-invitation` cuando el email ya tiene cuenta. */
+export const ACCOUNT_EXISTS = 'ACCOUNT_EXISTS' as const;
 
 /**
  * Quien puede invitar a quien. Es el control de escalada de privilegios: sin
