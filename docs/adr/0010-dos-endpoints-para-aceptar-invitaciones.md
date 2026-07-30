@@ -120,9 +120,20 @@ devuelve cero filas en todas partes.
 **Coste de revertir:** bajo. Unificar los dos endpoints más adelante sería
 posible, pero reintroduciría la bifurcación que este ADR descarta.
 
+**Una restricción que apareció al implementarlo:** quien implemente el punto de
+extensión de invitaciones no puede depender de `invitations`. Romper el ciclo de
+*módulos* —interfaz en `common`, cableado en la raíz— no basta, porque el
+contenedor de dependencias mira los *proveedores*: con `MembersService` como
+implementador el grafo seguía siendo circular
+(`MembersService → InvitationsService → hook → MembersService`) y la aplicación
+se quedaba colgada en el arranque, sin ningún error. Por eso el hook lo
+implementa una clase aparte, `MemberAccountLink`, que no depende de nada. La
+regla vale para el módulo de entrenadores cuando llegue.
+
 ## Cómo se verifica
 
-Tests de abuso, no del camino feliz:
+Tests de abuso, no del camino feliz
+(`apps/api/src/__tests__/invitation-link.e2e.test.ts`):
 
 - Un token cuyo email ya tiene cuenta **no** cambia su contraseña: tras intentar
   `accept-invitation`, la contraseña anterior sigue funcionando.
@@ -132,7 +143,9 @@ Tests de abuso, no del camino feliz:
   siempre sigue sirviendo.
 - `link-invitation` sí crea la pertenencia y vincula la ficha del socio.
 - El token es de un solo uso **entre los dos endpoints**: consumido por uno, el
-  otro lo rechaza.
+  otro lo rechaza. Se comprueba el **motivo** del rechazo, no solo el código: al
+  falsificar el test quitando las guardas del token seguía pasando, porque quien
+  ya pertenece al gimnasio recibe otro `400` que tapaba el fallo.
 
 ## Señales para revisarla
 

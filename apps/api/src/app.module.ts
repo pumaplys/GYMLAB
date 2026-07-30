@@ -7,6 +7,7 @@ import { TenantInterceptor } from './common/interceptors/tenant.interceptor';
 import { RequestContextMiddleware } from './common/middleware/request-context.middleware';
 import { DatabaseModule } from './database/database.module';
 import { HealthController } from './health.controller';
+import { InvitationHooksModule } from './invitation-hooks.module';
 import { InvitationsModule } from './invitations/invitations.module';
 import { JobsModule } from './jobs/jobs.module';
 import { MailModule } from './mail/mail.module';
@@ -41,6 +42,9 @@ import { MembersModule } from './members/members.module';
     AuthModule,
     InvitationsModule,
     MembersModule,
+    // Va DESPUES de MembersModule: registra la implementacion del punto de
+    // extension de invitaciones. Ver invitation-hooks.module.ts.
+    InvitationHooksModule,
   ],
   controllers: [HealthController],
   providers: [
