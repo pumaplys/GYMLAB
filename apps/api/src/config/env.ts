@@ -109,3 +109,19 @@ if (!parsed.success) {
 
 export const env = parsed.data;
 export type Env = typeof env;
+
+/**
+ * Las claves declaradas aqui, para que un test compruebe el cableado.
+ *
+ * Anadir una variable exige tocar TRES sitios: este esquema, `turbo.json` —que
+ * corre en modo estricto y no deja pasar lo que no declara— y el workflow de CI
+ * si es obligatoria. En local nada de eso hace falta, porque `.env` la aporta, y
+ * por eso el olvido no se nota hasta que CI se pone en rojo. Ya ha pasado dos
+ * veces: con las variables de Resend y con la semilla del QR.
+ */
+export const ENV_KEYS = Object.keys(schema.shape) as (keyof typeof schema.shape)[];
+
+/** Las que NO tienen valor por defecto: sin ellas el proceso no arranca. */
+export const ENV_KEYS_OBLIGATORIAS = ENV_KEYS.filter(
+  (k) => !schema.shape[k].safeParse(undefined).success,
+);
