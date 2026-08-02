@@ -264,6 +264,38 @@ describe('la biblioteca se copia al crear el gimnasio (ADR-0012)', () => {
     expect(res.body.fromTemplate).toBe(false);
   });
 
+  it('un nombre repetido da 400 con mensaje, nunca un 500', async () => {
+    // Salio en la revision: el indice unico hacia su trabajo, pero la violacion
+    // subia sin capturar y el panel recibia un 500 que no explica nada.
+    // Renombrar la copia es de lo primero que hace un gimnasio (ADR-0012), asi
+    // que el choque iba a pasar.
+    const crear = await http()
+      .post(`/v1/gyms/${gymA}/exercises`)
+      .set(conSesion(tokenOwnerA))
+      .send({ name: 'Sentadilla', muscleGroup: 'legs' })
+      .expect(400);
+    expect(crear.body.message).toMatch(/ya hay un ejercicio/i);
+
+    const lista = await http()
+      .get(`/v1/gyms/${gymA}/exercises`)
+      .set(conSesion(tokenOwnerA))
+      .expect(200);
+    const otro = lista.body.find((e: { name: string }) => e.name === 'Dominadas');
+
+    await http()
+      .patch(`/v1/gyms/${gymA}/exercises/${otro.id}`)
+      .set(conSesion(tokenOwnerA))
+      .send({ name: 'Sentadilla' })
+      .expect(400);
+
+    // Y renombrarse a si mismo con el mismo nombre no es un choque.
+    await http()
+      .patch(`/v1/gyms/${gymA}/exercises/${otro.id}`)
+      .set(conSesion(tokenOwnerA))
+      .send({ name: 'Dominadas', equipment: 'Barra fija' })
+      .expect(200);
+  });
+
   it('el catalogo de plataforma NO es escribible desde la aplicacion', async () => {
     // Es dato de referencia compartido: un gimnasio no puede tocarlo.
     const appDb = createDatabase({ connectionString: process.env.DATABASE_URL_APP!, max: 1 });
@@ -403,6 +435,73 @@ describe('un entrenador solo asigna rutinas a SUS socios', () => {
       .get(`/v1/gyms/${gymA}/members/${delCompanero}/routines`)
       .set(conSesion(tokenEntrenador1))
       .expect(404);
+  });
+
+  it('NO puede borrar la rutina de un companero, ni llevarse sus asignaciones', async () => {
+    // HALLAZGO DE LA REVISION, comprobado antes ejecutando: un entrenador sin
+    // relacion con nada de esto borraba la rutina de otro y la asignacion del
+    // socio ajeno desaparecia por cascada. Irreversible y sobre gente que no era
+    // suya. Compartir para leer y asignar si; para borrar no.
+    const socioDeOtro = await altaSocio(gymA, tokenOwnerA, 'DeCompanero');
+    await http()
+      .post(`/v1/gyms/${gymA}/trainers/${entrenador2}/members`)
+      .set(conSesion(tokenOwnerA))
+      .send({ memberId: socioDeOtro })
+      .expect(201);
+
+    // La rutina la crea el DUENO, asi que el entrenador 1 no es su creador.
+    const ajena = await crearRutina(
+      gymA,
+      tokenOwnerA,
+      'Del companero',
+      await unEjercicio(gymA, tokenOwnerA),
+    );
+    await http()
+      .post(`/v1/gyms/${gymA}/routines/${ajena.id}/members`)
+      .set(conSesion(tokenOwnerA))
+      .send({ memberId: socioDeOtro })
+      .expect(201);
+
+    const res = await http()
+      .delete(`/v1/gyms/${gymA}/routines/${ajena.id}`)
+      .set(conSesion(tokenEntrenador1))
+      .expect(403);
+    expect(res.body.message).toMatch(/quien la creo/i);
+
+    // Y la asignacion del socio ajeno sigue en pie.
+    const sigue = await http()
+      .get(`/v1/gyms/${gymA}/routines/${ajena.id}`)
+      .set(conSesion(tokenOwnerA))
+      .expect(200);
+    expect(sigue.body.activeAssignments).toBe(1);
+  });
+
+  it('SI puede borrar la que creo el mismo', async () => {
+    const propia = await crearRutina(
+      gymA,
+      tokenEntrenador1,
+      'Mia propia',
+      await unEjercicio(gymA, tokenEntrenador1),
+    );
+
+    await http()
+      .delete(`/v1/gyms/${gymA}/routines/${propia.id}`)
+      .set(conSesion(tokenEntrenador1))
+      .expect(200);
+  });
+
+  it('el dueno puede borrar cualquiera', async () => {
+    const deOtro = await crearRutina(
+      gymA,
+      tokenEntrenador1,
+      'Del entrenador',
+      await unEjercicio(gymA, tokenEntrenador1),
+    );
+
+    await http()
+      .delete(`/v1/gyms/${gymA}/routines/${deOtro.id}`)
+      .set(conSesion(tokenOwnerA))
+      .expect(200);
   });
 
   it('el dueno si puede asignar a cualquiera', async () => {

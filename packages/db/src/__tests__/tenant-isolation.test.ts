@@ -788,20 +788,32 @@ describe('integridad referencial: el tenant viaja en la clave ajena', () => {
     // Guardarrail, hermano del que exige RLS a toda tabla con gym_id: si alguien
     // anade una relacion nueva apuntando solo por `id`, esto se pone en rojo en
     // el PR en lugar de descubrirse con datos cruzados en produccion.
-    const conTenant = ['members', 'trainers', 'plans', 'member_subscriptions'];
-
+    // LA LISTA SE DERIVA DEL CATALOGO, no se mantiene a mano.
+    //
+    // Antes era un array escrito aqui, y en la revision del modulo de rutinas se
+    // vio el fallo: llegaron `exercises` y `routines`, nadie se acordo de
+    // anadirlas, y el guardarrail seguia en verde sin cubrirlas. Un guardarrail
+    // que hay que recordar actualizar no es un guardarrail, es una nota.
+    //
+    // Ahora es "toda tabla que tenga columna gym_id", asi que los modulos que
+    // vengan quedan cubiertos sin tocar este test. Las claves hacia `gyms` no
+    // entran: esa tabla no tiene columna `gym_id`, su identificador es `id`.
     const result = await owner.execute<{ tabla: string; constraint: string; def: string }>(sql`
       SELECT conrelid::regclass::text AS tabla,
              conname AS constraint,
              pg_get_constraintdef(oid) AS def
-      FROM pg_constraint
-      WHERE contype = 'f'
-        AND confrelid::regclass::text = ANY(${sql.raw(
-          `ARRAY[${conTenant.map((t) => `'${t}'`).join(',')}]`,
-        )})
+      FROM pg_constraint c
+      WHERE c.contype = 'f'
+        AND EXISTS (
+          SELECT 1 FROM information_schema.columns col
+          WHERE col.table_schema = 'public'
+            AND col.table_name = c.confrelid::regclass::text
+            AND col.column_name = 'gym_id'
+        )
     `);
 
-    expect(result.rows.length).toBeGreaterThan(0);
+    // Si esto baja de golpe, es que la deteccion dejo de encontrar tablas.
+    expect(result.rows.length).toBeGreaterThan(8);
     for (const fila of result.rows) {
       expect(fila.def, `${fila.tabla}.${fila.constraint} no incluye gym_id`).toContain('gym_id');
     }
