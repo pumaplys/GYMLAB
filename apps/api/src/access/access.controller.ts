@@ -3,12 +3,13 @@ import {
   listAccessEventsQuerySchema,
   updateGymSettingsSchema,
   verifyAccessSchema,
+  type ListAccessEventsQuery,
   type UpdateGymSettingsInput,
   type VerifyAccessInput,
 } from '@gymlab/contracts';
 import { Roles } from '../common/decorators/roles.decorator';
 import { requireRequestContext } from '../common/request-context';
-import { ZodBody } from '../common/zod.pipe';
+import { ZodBody, ZodQuery } from '../common/zod.pipe';
 import { AccessService } from './access.service';
 import { GymSettingsService } from './gym-settings.service';
 
@@ -58,8 +59,11 @@ export class AccessController {
   }
 
   @Get('events')
-  events(@Param('gymId', ParseUUIDPipe) gymId: string, @Query() query: unknown) {
-    return this.access.listarEventos(this.gym(gymId), listAccessEventsQuerySchema.parse(query));
+  events(
+    @Param('gymId', ParseUUIDPipe) gymId: string,
+    @Query(new ZodQuery(listAccessEventsQuerySchema)) query: ListAccessEventsQuery,
+  ) {
+    return this.access.listarEventos(this.gym(gymId), query);
   }
 
   private gym(gymIdRuta: string): string {

@@ -438,6 +438,40 @@ export class MembersService implements OnModuleInit {
     );
   }
 
+  /**
+   * Metricas de socios para el panel del dueno.
+   *
+   * Vive AQUI y no en el dashboard porque `members` es el dueno de esta tabla
+   * (ADR-0006). El panel pregunta; no lee tablas ajenas.
+   *
+   * Una sola consulta con `FILTER`: cuatro recuentos sobre el mismo barrido en
+   * lugar de cuatro viajes.
+   */
+  async stats(gymId: string, hoy: string) {
+    const tx = requireTransaction();
+    const res = await tx.execute<{
+      activos: string;
+      altas: string;
+      bajas: string;
+      con_cuenta: string;
+    }>(sql`
+      SELECT count(*) FILTER (WHERE status = 'active') AS activos,
+             count(*) FILTER (WHERE joined_at >= date_trunc('month', ${hoy}::date)) AS altas,
+             count(*) FILTER (WHERE left_at >= date_trunc('month', ${hoy}::date)) AS bajas,
+             count(*) FILTER (WHERE status = 'active' AND user_id IS NOT NULL) AS con_cuenta
+      FROM members
+      WHERE gym_id = ${gymId}
+    `);
+
+    const f = res.rows[0];
+    return {
+      activos: Number(f?.activos ?? 0),
+      altasDelMes: Number(f?.altas ?? 0),
+      bajasDelMes: Number(f?.bajas ?? 0),
+      conCuenta: Number(f?.con_cuenta ?? 0),
+    };
+  }
+
   // --- Interno -----------------------------------------------------------
 
   /**

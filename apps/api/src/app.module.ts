@@ -8,6 +8,7 @@ import { RolesGuard } from './common/guards/roles.guard';
 import { TenantInterceptor } from './common/interceptors/tenant.interceptor';
 import { RequestContextMiddleware } from './common/middleware/request-context.middleware';
 import { DatabaseModule } from './database/database.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 import { HealthController } from './health.controller';
 import { InvitationHooksModule } from './invitation-hooks.module';
 import { InvitationsModule } from './invitations/invitations.module';
@@ -53,6 +54,7 @@ import { TrainingModule } from './training/training.module';
     TrainingModule,
     ProgressModule,
     AccessModule,
+    DashboardModule,
     // Van DESPUES de los modulos de dominio: registran sus implementaciones de
     // los dos puntos de extension. Ver ADR-0010 y ADR-0011.
     InvitationHooksModule,

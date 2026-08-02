@@ -24,7 +24,7 @@ import {
 } from '@gymlab/contracts';
 import { Roles } from '../common/decorators/roles.decorator';
 import { requireRequestContext } from '../common/request-context';
-import { ZodBody } from '../common/zod.pipe';
+import { ZodBody, ZodQuery } from '../common/zod.pipe';
 import { MembersService } from './members.service';
 
 /**
@@ -53,9 +53,11 @@ export class MembersController {
 
   @Roles('owner', 'receptionist')
   @Get()
-  list(@Param('gymId', ParseUUIDPipe) gymId: string, @Query() query: unknown) {
-    const parsed = listMembersQuerySchema.parse(query) satisfies ListMembersQuery;
-    return this.members.list(this.gym(gymId), parsed);
+  list(
+    @Param('gymId', ParseUUIDPipe) gymId: string,
+    @Query(new ZodQuery(listMembersQuerySchema)) query: ListMembersQuery,
+  ) {
+    return this.members.list(this.gym(gymId), query);
   }
 
   @Roles('owner', 'receptionist')
