@@ -411,6 +411,27 @@ CREATE POLICY tenant_isolation ON routine_assignments
 
 
 -- -----------------------------------------------------------------------------
+-- body_metrics — patron estandar, y la tabla mas sensible del producto.
+-- -----------------------------------------------------------------------------
+-- Categoria especial del RGPD (art. 9). RLS impide que un gimnasio vea los datos
+-- de salud de otro, que es lo que evita una brecha notificable.
+--
+-- Lo que RLS NO hace, y hay que tener presente: dentro de un gimnasio no
+-- distingue roles, asi que que recepcion no acceda y que un entrenador vea solo a
+-- sus asignados es autorizacion de aplicacion. Y tampoco comprueba el
+-- consentimiento: eso vive en ProgressService, que rechaza toda escritura sin uno
+-- vigente.
+ALTER TABLE body_metrics ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS tenant_isolation ON body_metrics;
+CREATE POLICY tenant_isolation ON body_metrics
+  FOR ALL
+  TO gymlab_app
+  USING (gym_id = app_current_gym_id())
+  WITH CHECK (gym_id = app_current_gym_id());
+
+
+-- -----------------------------------------------------------------------------
 -- exercise_templates — SIN RLS, decision consciente (ADR-0012).
 -- -----------------------------------------------------------------------------
 -- No lleva `gym_id`: son datos de referencia de la plataforma, como una lista de

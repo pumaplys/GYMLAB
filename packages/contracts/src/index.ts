@@ -26,3 +26,4 @@ export * from './trainers';
 export * from './billing';
 export * from './access';
 export * from './training';
+export * from './progress';
