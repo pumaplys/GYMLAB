@@ -1,7 +1,11 @@
 /**
- * El arranque falla si nadie reacciona a las invitaciones.
+ * El arranque falla si un punto de extension se queda sin implementadores.
  *
- * Test unitario y no funcional a proposito: lo que se comprueba es la guarda,
+ * Son los dos casos en los que el sistema seguiria respondiendo 200 mientras
+ * hace menos de lo debido: aceptar invitaciones sin vincular nada, y entregar una
+ * exportacion del art. 15 incompleta. Los dos en silencio.
+ *
+ * Tests unitarios y no funcionales a proposito: lo que se comprueba es la guarda,
  * no el flujo. Levantar la aplicacion entera para esto solo la haria mas lenta.
  */
 import { describe, expect, it } from 'vitest';
@@ -9,7 +13,9 @@ import type {
   InvitationAcceptedEvent,
   InvitationAcceptedHooks,
 } from '../common/invitation-hooks';
+import type { PersonalDataContributors } from '../common/personal-data';
 import { InvitationsService } from '../invitations/invitations.service';
+import { MembersService } from '../members/members.service';
 
 /**
  * El constructor no ejecuta nada, asi que las dependencias no hacen falta para
@@ -34,5 +40,25 @@ describe('guarda de arranque de InvitationsService', () => {
   it('con implementadores registrados, arranca', () => {
     expect(() => crear([hookInerte]).onModuleInit()).not.toThrow();
     expect(() => crear([hookInerte, hookInerte]).onModuleInit()).not.toThrow();
+  });
+});
+
+const crearMembers = (contribuidores: PersonalDataContributors) =>
+  new MembersService(undefined as never, contribuidores);
+
+const contribuidorInerte = {
+  seccion: 'nada',
+  aportarDatos: async () => ({}),
+};
+
+describe('guarda de arranque de MembersService (ADR-0011)', () => {
+  it('sin ningun contribuidor registrado, muere en el arranque', () => {
+    // El modo de fallo que evita: la exportacion del art. 15 responderia 200 con
+    // solo la ficha, omitiendo cuotas y pagos ante una solicitud legal.
+    expect(() => crearMembers([]).onModuleInit()).toThrow(/PersonalDataContributor/);
+  });
+
+  it('con contribuidores registrados, arranca', () => {
+    expect(() => crearMembers([contribuidorInerte]).onModuleInit()).not.toThrow();
   });
 });

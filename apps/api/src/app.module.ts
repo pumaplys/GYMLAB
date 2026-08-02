@@ -1,6 +1,7 @@
 import { MiddlewareConsumer, Module, type NestModule } from '@nestjs/common';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { AuthModule } from './auth/auth.module';
+import { BillingModule } from './billing/billing.module';
 import { AuthGuard } from './common/guards/auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { TenantInterceptor } from './common/interceptors/tenant.interceptor';
@@ -12,6 +13,7 @@ import { InvitationsModule } from './invitations/invitations.module';
 import { JobsModule } from './jobs/jobs.module';
 import { MailModule } from './mail/mail.module';
 import { MembersModule } from './members/members.module';
+import { PersonalDataModule } from './personal-data.module';
 import { TrainersModule } from './trainers/trainers.module';
 
 /**
@@ -44,9 +46,11 @@ import { TrainersModule } from './trainers/trainers.module';
     InvitationsModule,
     MembersModule,
     TrainersModule,
-    // Va DESPUES de los modulos de dominio: registra sus implementaciones del
-    // punto de extension de invitaciones. Ver invitation-hooks.module.ts.
+    BillingModule,
+    // Van DESPUES de los modulos de dominio: registran sus implementaciones de
+    // los dos puntos de extension. Ver ADR-0010 y ADR-0011.
     InvitationHooksModule,
+    PersonalDataModule,
   ],
   controllers: [HealthController],
   providers: [
