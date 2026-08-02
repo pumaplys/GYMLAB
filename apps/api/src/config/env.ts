@@ -60,6 +60,25 @@ const schema = z.object({
     .min(32, 'ACCESS_TOKEN_SECRET debe tener al menos 32 caracteres'),
 
   /**
+   * Version vigente del consentimiento de datos de salud (RGPD art. 9).
+   *
+   * ┌──────────────────────────────────────────────────────────────────────────┐
+   * │ OPCIONAL, Y MIENTRAS NO EXISTA NO SE PUEDE REGISTRAR NINGUN PESO.         │
+   * │                                                                          │
+   * │ No es un descuido ni un interruptor de funcionalidad: es que todavia no   │
+   * │ hay texto legal, y se decidio dejar el dato PENDIENTE antes que inventar  │
+   * │ una version ficticia. Con una inventada, el sistema aceptaria datos de    │
+   * │ salud amparandose en un consentimiento que nadie redacto ni acepto.       │
+   * │                                                                          │
+   * │ Cuando exista, se pone aqui su identificador —por ejemplo '2026-09-01'—.  │
+   * │ Cambiarla EXIGE una aceptacion nueva a todo el mundo: la validez se       │
+   * │ comprueba contra este valor exacto, asi que un consentimiento de la       │
+   * │ version anterior deja de servir el dia que esto cambia.                    │
+   * └──────────────────────────────────────────────────────────────────────────┘
+   */
+  HEALTH_CONSENT_VERSION: z.string().min(1).optional(),
+
+  /**
    * Origenes permitidos por CORS, separados por comas.
    *
    * Lista blanca y nunca `*`: el transporte por cookie exige

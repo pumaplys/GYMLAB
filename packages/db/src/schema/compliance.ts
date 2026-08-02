@@ -1,6 +1,18 @@
-import { index, pgEnum, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
+import {
+  check,
+  foreignKey,
+  index,
+  pgEnum,
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+} from 'drizzle-orm/pg-core';
 import { primaryId, tenantId, timestamps } from './_helpers';
 import { users } from './identity';
+import { members } from './members';
 import { gyms } from './organization';
 
 /**
@@ -39,9 +51,28 @@ export const consents = pgTable(
   {
     id: primaryId(),
     gymId: tenantId().references(() => gyms.id, { onDelete: 'cascade' }),
-    userId: uuid('user_id')
-      .notNull()
-      .references(() => users.id, { onDelete: 'cascade' }),
+    /**
+     * Cuenta que consintio, si la tiene.
+     *
+     * ANULABLE desde el modulo de progreso, y el motivo es el que ordena todo
+     * `members`: un gimnasio real tiene socios que nunca tendran cuenta. Exigir
+     * `user_id` significaba que a esas personas no se les podia registrar el peso
+     * —no habia donde anotar su consentimiento—, y la senora que va a aquagym es
+     * justo quien mas veces pasa por la bascula del entrenador.
+     */
+    userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }),
+    /**
+     * Ficha de socio que consintio.
+     *
+     * Es la clave natural y no un anadido: esta misma tabla ya explicaba que el
+     * socio no consiente que GYMLAB trate sus datos, sino que **su gimnasio** lo
+     * haga. La identidad dentro de un gimnasio es la ficha, no la cuenta global.
+     * `user_id` era la aproximacion posible en la Fase 0, cuando `members` aun no
+     * existia.
+     *
+     * Al menos uno de los dos debe estar relleno; lo impone una restriccion CHECK.
+     */
+    memberId: uuid('member_id'),
     purpose: consentPurpose('purpose').notNull(),
     /** Version del documento aceptado, p. ej. '2026-07-01'. */
     version: text('version').notNull(),
@@ -53,7 +84,31 @@ export const consents = pgTable(
   },
   (t) => [
     index('consents_gym_user_idx').on(t.gymId, t.userId),
+    index('consents_gym_member_idx').on(t.gymId, t.memberId),
     index('consents_purpose_idx').on(t.purpose),
+    /**
+     * Una sola aceptacion VIGENTE por socio, finalidad y version.
+     *
+     * Sin esto, pulsar dos veces en el mostrador creaba dos filas identicas. No
+     * rompia nada —la comprobacion mira la mas reciente— pero un registro de
+     * consentimientos con duplicados es peor prueba, no mejor: ante una
+     * autoridad hay que poder decir cuando acepto esta persona esta version, no
+     * ofrecer tres fechas distintas para lo mismo.
+     *
+     * PARCIAL sobre las no revocadas, y eso es lo que permite el camino
+     * legitimo: si alguien revoca y mas adelante vuelve a aceptar la MISMA
+     * version, la fila revocada se queda como historial y la nueva no choca.
+     */
+    uniqueIndex('consents_vigente_key')
+      .on(t.gymId, t.memberId, t.purpose, t.version)
+      .where(sql`revoked_at IS NULL AND member_id IS NOT NULL`),
+    foreignKey({
+      columns: [t.gymId, t.memberId],
+      foreignColumns: [members.gymId, members.id],
+      name: 'consents_gym_member_fk',
+    }).onDelete('cascade'),
+    // Un consentimiento sin sujeto no prueba nada ante una autoridad de control.
+    check('consents_sujeto_check', sql`user_id IS NOT NULL OR member_id IS NOT NULL`),
   ],
 );
 
