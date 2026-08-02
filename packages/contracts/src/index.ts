@@ -24,3 +24,4 @@ export * from './auth';
 export * from './members';
 export * from './trainers';
 export * from './billing';
+export * from './access';

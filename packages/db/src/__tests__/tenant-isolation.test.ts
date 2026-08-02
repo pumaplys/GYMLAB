@@ -21,6 +21,8 @@ import { eq, sql } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { closeDatabase, createDatabase, type Database } from '../client';
 import {
+  accessEvents,
+  accessTokens,
   auditLog,
   authEvents,
   gyms,
@@ -799,6 +801,82 @@ describe('integridad referencial: el tenant viaja en la clave ajena', () => {
     for (const fila of result.rows) {
       expect(fila.def, `${fila.tabla}.${fila.constraint} no incluye gym_id`).toContain('gym_id');
     }
+  });
+});
+
+describe('tablas del modulo access', () => {
+  it('los tokens y los eventos de acceso estan aislados por gimnasio', async () => {
+    const socioA = randomUUID();
+    const socioB = randomUUID();
+    await owner
+      .insert(members)
+      .values({ id: socioA, gymId: gymA, memberNumber: 70, firstName: 'N', lastName: 'A' });
+    await owner
+      .insert(members)
+      .values({ id: socioB, gymId: gymB, memberNumber: 70, firstName: 'N', lastName: 'B' });
+
+    await owner.insert(accessTokens).values([
+      {
+        jti: randomUUID(),
+        gymId: gymA,
+        memberId: socioA,
+        decision: 'ALLOW',
+        reason: 'OK',
+        consumedBySessionId: 's-a',
+        expiresAt: new Date(Date.now() + 60_000),
+      },
+      {
+        jti: randomUUID(),
+        gymId: gymB,
+        memberId: socioB,
+        decision: 'DENY',
+        reason: 'TOKEN_REUSED',
+        consumedBySessionId: 's-b',
+        expiresAt: new Date(Date.now() + 60_000),
+      },
+    ]);
+    await owner.insert(accessEvents).values([
+      { gymId: gymA, memberId: socioA, decision: 'ALLOW', reason: 'OK' },
+      { gymId: gymB, memberId: socioB, decision: 'DENY', reason: 'DUES_EXPIRED' },
+    ]);
+
+    const tokens = await withTenant(app, gymA, (tx) => tx.select().from(accessTokens));
+    expect(tokens).toHaveLength(1);
+    expect(tokens[0]?.memberId).toBe(socioA);
+
+    const eventos = await withTenant(app, gymA, (tx) => tx.select().from(accessEvents));
+    expect(eventos).toHaveLength(1);
+    expect(eventos[0]?.decision).toBe('ALLOW');
+
+    await owner.delete(members).where(sql`id in (${socioA}, ${socioB})`);
+    await owner.delete(accessEvents).where(sql`gym_id in (${gymA}, ${gymB})`);
+  });
+
+  it('borrar al socio conserva el evento de acceso, desligado', async () => {
+    // La asistencia es dato del gimnasio y sobrevive al borrado de la ficha,
+    // igual que los pagos. La clave ajena anula SOLO `member_id`, no `gym_id`.
+    const socio = randomUUID();
+    await owner
+      .insert(members)
+      .values({ id: socio, gymId: gymA, memberNumber: 71, firstName: 'N', lastName: 'Borrado' });
+    await owner.insert(accessEvents).values({
+      gymId: gymA,
+      memberId: socio,
+      decision: 'ALLOW',
+      reason: 'OK',
+    });
+
+    await owner.delete(members).where(eq(members.id, socio));
+
+    const filas = await owner
+      .select()
+      .from(accessEvents)
+      .where(eq(accessEvents.gymId, gymA));
+    expect(filas).toHaveLength(1);
+    expect(filas[0]?.memberId).toBeNull();
+    expect(filas[0]?.gymId).toBe(gymA);
+
+    await owner.delete(accessEvents).where(eq(accessEvents.gymId, gymA));
   });
 });
 

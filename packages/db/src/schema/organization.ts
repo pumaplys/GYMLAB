@@ -46,6 +46,21 @@ export const gyms = pgTable(
      * semana de margen, y decidirlo por ellos seria inventarles el negocio.
      */
     graceDays: integer('grace_days').notNull().default(0),
+    /**
+     * Cuantos meses se conservan los eventos de acceso (RGPD art. 5.1.e).
+     *
+     * Configurable por gimnasio y no una constante de la plataforma: la
+     * asistencia es dato de negocio, y hay clientes con obligaciones o
+     * costumbres distintas. Doce meses por defecto permiten comparar con el
+     * mismo mes del ano anterior.
+     *
+     * OJO AL BAJARLO: la purga es destructiva. Si el dashboard llega a querer
+     * asistencia de mas atras, hara falta calcular agregados ANTES de purgar,
+     * porque ese dato no vuelve.
+     */
+    accessEventsRetentionMonths: integer('access_events_retention_months')
+      .notNull()
+      .default(12),
     ...timestamps,
   },
   (t) => [

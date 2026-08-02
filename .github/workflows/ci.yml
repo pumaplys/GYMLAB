@@ -58,6 +58,9 @@ jobs:
       # Valores de usar y tirar: esta base de datos vive lo que dura el job.
       # Los secretos de verdad nunca pasan por aqui.
       AUTH_SECRET: ci-secret-de-usar-y-tirar-mas-de-32-caracteres
+      # Semilla del QR de acceso. DISTINTA de AUTH_SECRET tambien aqui: si en CI
+      # compartieran valor, nada delataria el dia que el codigo las confundiera.
+      ACCESS_TOKEN_SECRET: ci-semilla-de-acceso-de-usar-y-tirar-32-caracteres
       PLATFORM_INVITE_CODE: ci-platform-code
       API_URL: http://localhost:3001
       API_PORT: '3001'

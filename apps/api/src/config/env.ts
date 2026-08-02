@@ -45,6 +45,21 @@ const schema = z.object({
   PLATFORM_INVITE_CODE: z.string().min(8),
 
   /**
+   * Semilla de la que se derivan las claves de firma del QR de acceso.
+   *
+   * NO se usa directamente para firmar: de ella sale una clave por gimnasio con
+   * HKDF, de modo que un token del gimnasio A no verifica en el B. Ver
+   * `access/access-token.ts`.
+   *
+   * Es distinta de `AUTH_SECRET` a proposito. Comprometer una no debe comprometer
+   * la otra, y son cosas de vida muy distinta: las sesiones duran meses y estos
+   * tokens sesenta segundos, asi que rotar esta apenas cuesta nada.
+   */
+  ACCESS_TOKEN_SECRET: z
+    .string()
+    .min(32, 'ACCESS_TOKEN_SECRET debe tener al menos 32 caracteres'),
+
+  /**
    * Origenes permitidos por CORS, separados por comas.
    *
    * Lista blanca y nunca `*`: el transporte por cookie exige
@@ -94,3 +109,19 @@ if (!parsed.success) {
 
 export const env = parsed.data;
 export type Env = typeof env;
+
+/**
+ * Las claves declaradas aqui, para que un test compruebe el cableado.
+ *
+ * Anadir una variable exige tocar TRES sitios: este esquema, `turbo.json` —que
+ * corre en modo estricto y no deja pasar lo que no declara— y el workflow de CI
+ * si es obligatoria. En local nada de eso hace falta, porque `.env` la aporta, y
+ * por eso el olvido no se nota hasta que CI se pone en rojo. Ya ha pasado dos
+ * veces: con las variables de Resend y con la semilla del QR.
+ */
+export const ENV_KEYS = Object.keys(schema.shape) as (keyof typeof schema.shape)[];
+
+/** Las que NO tienen valor por defecto: sin ellas el proceso no arranca. */
+export const ENV_KEYS_OBLIGATORIAS = ENV_KEYS.filter(
+  (k) => !schema.shape[k].safeParse(undefined).success,
+);
