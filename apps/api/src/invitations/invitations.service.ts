@@ -7,6 +7,7 @@ import {
   Injectable,
   NotFoundException,
   Optional,
+  type OnModuleInit,
 } from '@nestjs/common';
 import {
   and,
@@ -41,7 +42,7 @@ import { JobsService } from '../jobs/jobs.service';
 const TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 @Injectable()
-export class InvitationsService {
+export class InvitationsService implements OnModuleInit {
   constructor(
     @Inject(DATABASE) private readonly db: Database,
     @Inject(AUTH) private readonly auth: Auth,
@@ -58,6 +59,31 @@ export class InvitationsService {
     @Inject(INVITATION_ACCEPTED_HOOK)
     private readonly hooks: InvitationAcceptedHooks = [],
   ) {}
+
+  /**
+   * Sin implementadores registrados, la aplicacion no arranca.
+   *
+   * El token es `@Optional()` para que un fallo de cableado de un error legible
+   * en lugar del galimatias de inyeccion de Nest — pero entonces el valor por
+   * defecto es una lista vacia, y ese es justo el modo de fallo peligroso: las
+   * invitaciones se aceptarian **sin vincular nada y sin error**. El socio
+   * tendria cuenta y pertenencia, su ficha seguiria sin `user_id`, y el
+   * entrenador se quedaria sin perfil. Nadie se entera hasta que alguien busca
+   * su ficha semanas despues.
+   *
+   * Morir en el arranque convierte un fallo silencioso en uno ruidoso, que es
+   * el unico cambio que importa aqui.
+   */
+  onModuleInit(): void {
+    if (this.hooks.length === 0) {
+      throw new Error(
+        '[invitations] No hay ningun InvitationAcceptedHook registrado. ' +
+          'Revisa que InvitationHooksModule este en los imports de AppModule: ' +
+          'sin el, aceptar una invitacion no vincularia la ficha del socio ni ' +
+          'crearia el perfil del entrenador, y lo haria en silencio.',
+      );
+    }
+  }
 
   /**
    * Avisa a quienes reaccionan a una invitacion aceptada.

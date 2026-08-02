@@ -314,7 +314,18 @@ export class TrainersService {
     return fila.id;
   }
 
-  /** Socios con asignacion VIGENTE de un entrenador. El filtro de autorizacion. */
+  /**
+   * Socios ACTIVOS con asignacion vigente. El filtro de autorizacion.
+   *
+   * LA ASIGNACION SOBREVIVE A LA BAJA DEL SOCIO, pero no se muestra. Es la misma
+   * idea que hace que dar de baja no borre la ficha: cuando esa persona vuelve
+   * —y en un gimnasio vuelven—, recupera a su entrenador sin que nadie tenga que
+   * acordarse de reasignarla.
+   *
+   * Excluirla aqui y no al darla de baja resuelve ademas una incoherencia: se
+   * rechaza asignar a un socio de baja, asi que verlo en la lista por haberse
+   * dado de baja despues era contradictorio.
+   */
   private async asignados(
     gymId: string,
     trainerId: string,
@@ -326,6 +337,7 @@ export class TrainersService {
       eq(trainerAssignments.gymId, gymId),
       eq(trainerAssignments.trainerId, trainerId),
       isNull(trainerAssignments.endedAt),
+      eq(members.status, 'active'),
     ];
     if (memberId) condiciones.push(eq(trainerAssignments.memberId, memberId));
 
@@ -390,9 +402,19 @@ export class TrainersService {
       phone: trainers.phone,
       status: trainers.status,
       createdAt: trainers.createdAt,
+      // Cuenta lo MISMO que devuelve `asignados()`: asignacion vigente y socio
+      // activo. Si las dos consultas se separan, el panel muestra un numero que
+      // no coincide con la lista, que es de los fallos que peor se explican.
+      //
+      // OJO AL SUMAR ESTA COLUMNA: un socio con dos entrenadores cuenta en los
+      // dos. Para "socios atendidos" en el dashboard hara falta un
+      // COUNT(DISTINCT member_id), no la suma de estos contadores.
       activeMembers: sql<number>`(
         SELECT count(*) FROM trainer_assignments ta
-        WHERE ta.trainer_id = ${trainers.id} AND ta.ended_at IS NULL
+        JOIN members m ON m.id = ta.member_id
+        WHERE ta.trainer_id = ${trainers.id}
+          AND ta.ended_at IS NULL
+          AND m.status = 'active'
       )::int`.as('active_members'),
     };
   }

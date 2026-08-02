@@ -254,6 +254,53 @@ describe('el entrenador ve SOLO a sus socios asignados', () => {
     expect(lista.body.map((m: { id: string }) => m.id)).not.toContain(socio);
   });
 
+  it('un socio dado de baja desaparece de su lista, y vuelve al reactivarlo', async () => {
+    // La asignacion NO se termina al dar de baja: sobrevive escondida. Es la
+    // misma idea que hace que la baja no borre la ficha — cuando esa persona
+    // vuelve, recupera a su entrenador sin que nadie reasigne nada.
+    //
+    // Antes de este arreglo el entrenador seguia viendo al socio de baja, lo
+    // que ademas contradecia que asignar a un socio de baja este prohibido.
+    const socio = await altaSocio(gymA, tokenOwnerA, 'VaYVuelve');
+    await asignar(gymA, tokenOwnerA, entrenador1, socio).expect(201);
+
+    const conta = async () =>
+      (await http().get(`/v1/gyms/${gymA}/trainers/${entrenador1}`).set(conSesion(tokenOwnerA)))
+        .body.activeMembers as number;
+    const antes = await conta();
+
+    await http()
+      .post(`/v1/gyms/${gymA}/members/${socio}/deactivate`)
+      .set(conSesion(tokenOwnerA))
+      .expect(201);
+
+    const durante = await http()
+      .get('/v1/me/trainer/members')
+      .set(conSesion(tokenEntrenador1))
+      .expect(200);
+    expect(durante.body.map((m: { id: string }) => m.id)).not.toContain(socio);
+
+    // Ni por id directo, ni en el contador que ve el dueno.
+    await http()
+      .get(`/v1/me/trainer/members/${socio}`)
+      .set(conSesion(tokenEntrenador1))
+      .expect(404);
+    expect(await conta()).toBe(antes - 1);
+
+    await http()
+      .post(`/v1/gyms/${gymA}/members/${socio}/reactivate`)
+      .set(conSesion(tokenOwnerA))
+      .expect(201);
+
+    // Y vuelve solo: la asignacion nunca se termino.
+    const despues = await http()
+      .get('/v1/me/trainer/members')
+      .set(conSesion(tokenEntrenador1))
+      .expect(200);
+    expect(despues.body.map((m: { id: string }) => m.id)).toContain(socio);
+    expect(await conta()).toBe(antes);
+  });
+
   it('no puede listar los socios del gimnasio ni a los entrenadores', async () => {
     await http().get(`/v1/gyms/${gymA}/members`).set(conSesion(tokenEntrenador1)).expect(403);
     await http().get(`/v1/gyms/${gymA}/trainers`).set(conSesion(tokenEntrenador1)).expect(403);
