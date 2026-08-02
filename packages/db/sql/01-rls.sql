@@ -367,6 +367,66 @@ CREATE POLICY tenant_isolation ON access_events
 
 
 -- -----------------------------------------------------------------------------
+-- exercises, routines, routine_items, routine_assignments — patron estandar.
+-- -----------------------------------------------------------------------------
+-- Que un entrenador vea solo las rutinas de SUS socios no lo impone RLS: dentro
+-- de un gimnasio la politica no distingue roles. Es autorizacion de aplicacion,
+-- vive en TrainingService y tiene sus propios tests de abuso — igual que pasaba
+-- con las asignaciones de entrenador.
+ALTER TABLE exercises ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS tenant_isolation ON exercises;
+CREATE POLICY tenant_isolation ON exercises
+  FOR ALL
+  TO gymlab_app
+  USING (gym_id = app_current_gym_id())
+  WITH CHECK (gym_id = app_current_gym_id());
+
+ALTER TABLE routines ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS tenant_isolation ON routines;
+CREATE POLICY tenant_isolation ON routines
+  FOR ALL
+  TO gymlab_app
+  USING (gym_id = app_current_gym_id())
+  WITH CHECK (gym_id = app_current_gym_id());
+
+ALTER TABLE routine_items ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS tenant_isolation ON routine_items;
+CREATE POLICY tenant_isolation ON routine_items
+  FOR ALL
+  TO gymlab_app
+  USING (gym_id = app_current_gym_id())
+  WITH CHECK (gym_id = app_current_gym_id());
+
+ALTER TABLE routine_assignments ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS tenant_isolation ON routine_assignments;
+CREATE POLICY tenant_isolation ON routine_assignments
+  FOR ALL
+  TO gymlab_app
+  USING (gym_id = app_current_gym_id())
+  WITH CHECK (gym_id = app_current_gym_id());
+
+
+-- -----------------------------------------------------------------------------
+-- exercise_templates — SIN RLS, decision consciente (ADR-0012).
+-- -----------------------------------------------------------------------------
+-- No lleva `gym_id`: son datos de referencia de la plataforma, como una lista de
+-- paises. No hay nada que aislar porque no pertenecen a nadie.
+--
+-- La aplicacion solo LEE. Escribirlos es sembrar el catalogo, y eso ocurre en una
+-- migracion con el rol propietario. Se retiran los permisos de escritura para que
+-- un fallo de programacion no pueda tocar el catalogo de toda la plataforma desde
+-- una peticion de un gimnasio.
+REVOKE INSERT, UPDATE, DELETE ON exercise_templates FROM gymlab_app;
+
+COMMENT ON TABLE exercise_templates IS
+  'Catalogo de ejercicios de la plataforma. Sin gym_id ni RLS a proposito: son datos de referencia (ADR-0012). Se copian a cada gimnasio al darse de alta; la aplicacion solo lee.';
+
+
+-- -----------------------------------------------------------------------------
 -- Purga de acceso — LA UNICA EXCEPCION A RLS EN TODO EL PRODUCTO.
 -- -----------------------------------------------------------------------------
 -- El problema: la retencion de `access_events` es POR GIMNASIO, asi que el

@@ -25,6 +25,8 @@ import {
   accessTokens,
   auditLog,
   authEvents,
+  exercises,
+  exerciseTemplates,
   gyms,
   invitations,
   memberCounters,
@@ -35,6 +37,8 @@ import {
   organizations,
   payments,
   plans,
+  routineItems,
+  routines,
   trainerAssignments,
   trainers,
   users,
@@ -877,6 +881,72 @@ describe('tablas del modulo access', () => {
     expect(filas[0]?.gymId).toBe(gymA);
 
     await owner.delete(accessEvents).where(eq(accessEvents.gymId, gymA));
+  });
+});
+
+describe('tablas del modulo training', () => {
+  it('las bibliotecas de ejercicios estan aisladas por gimnasio', async () => {
+    // ADR-0012: cada gimnasio tiene SU copia. Aqui se comprueba que ademas no ve
+    // la del vecino, que es lo que hace que renombrar o borrar sea seguro.
+    const enA = randomUUID();
+    const enB = randomUUID();
+    await owner
+      .insert(exercises)
+      .values({ id: enA, gymId: gymA, name: 'Press de A', muscleGroup: 'chest' });
+    await owner
+      .insert(exercises)
+      .values({ id: enB, gymId: gymB, name: 'Press de B', muscleGroup: 'chest' });
+
+    const vistos = await withTenant(app, gymA, (tx) => tx.select().from(exercises));
+
+    expect(vistos).toHaveLength(1);
+    expect(vistos[0]?.name).toBe('Press de A');
+
+    await owner.delete(exercises).where(sql`id in (${enA}, ${enB})`);
+  });
+
+  it('el catalogo de plataforma SI es visible desde cualquier gimnasio', async () => {
+    // No lleva `gym_id` ni RLS a proposito: son datos de referencia. Este test
+    // deja escrito que es intencionado y no un olvido.
+    const desdeA = await withTenant(app, gymA, (tx) => tx.select().from(exerciseTemplates));
+    const desdeB = await withTenant(app, gymB, (tx) => tx.select().from(exerciseTemplates));
+
+    expect(desdeA.length).toBeGreaterThan(60);
+    expect(desdeA.length).toBe(desdeB.length);
+  });
+
+  it('borrar un ejercicio conserva el item de la rutina, con su nombre copiado', async () => {
+    // La promesa de ADR-0012 vista desde la base de datos: la clave ajena anula
+    // SOLO `exercise_id`, no `gym_id`, que es NOT NULL.
+    const ejercicio = randomUUID();
+    const rutina = randomUUID();
+    await owner
+      .insert(exercises)
+      .values({ id: ejercicio, gymId: gymA, name: 'Se borra', muscleGroup: 'legs' });
+    await owner.insert(routines).values({ id: rutina, gymId: gymA, name: 'Con el borrado' });
+    await owner.insert(routineItems).values({
+      gymId: gymA,
+      routineId: rutina,
+      exerciseId: ejercicio,
+      exerciseName: 'Se borra',
+      position: 1,
+      sets: 4,
+      reps: '10',
+    });
+
+    await owner.delete(exercises).where(eq(exercises.id, ejercicio));
+
+    const items = await owner
+      .select()
+      .from(routineItems)
+      .where(eq(routineItems.routineId, rutina));
+
+    expect(items).toHaveLength(1);
+    expect(items[0]?.exerciseId).toBeNull();
+    expect(items[0]?.exerciseName).toBe('Se borra');
+    expect(items[0]?.gymId).toBe(gymA);
+
+    await owner.delete(routines).where(eq(routines.id, rutina));
   });
 });
 

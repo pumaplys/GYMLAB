@@ -2,6 +2,7 @@ import { Global, Module } from '@nestjs/common';
 import type { Database } from '@gymlab/db';
 import { DATABASE } from '../database/database.module';
 import { JobsService } from '../jobs/jobs.service';
+import { TrainingModule } from '../training/training.module';
 import { AuthController } from './auth.controller';
 import { createAuth } from './auth.instance';
 import { AuthService } from './auth.service';
@@ -16,6 +17,9 @@ import { AuthThrottle } from './auth.throttle';
  */
 @Global()
 @Module({
+  // `training` para sembrar la biblioteca de ejercicios al crear un gimnasio
+  // (ADR-0012). La direccion es `auth -> training` y nunca al reves.
+  imports: [TrainingModule],
   controllers: [AuthController],
   providers: [
     {
