@@ -30,6 +30,8 @@ import {
   members,
   memberships,
   organizations,
+  trainerAssignments,
+  trainers,
   users,
 } from '../schema';
 import { withTenant, withoutTenant } from '../tenant';
@@ -417,6 +419,119 @@ describe('tablas del modulo members', () => {
     });
 
     await owner.delete(members).where(sql`id in (${primero}, ${segundo})`);
+  });
+});
+
+describe('tablas del modulo trainers', () => {
+  /** Crea un perfil de entrenador con la conexion propietaria. */
+  async function sembrarEntrenador(gymId: string, userId: string) {
+    const id = randomUUID();
+    await owner.insert(trainers).values({ id, gymId, userId });
+    return id;
+  }
+
+  async function sembrarSocio(gymId: string, numero: number, apellido: string) {
+    const id = randomUUID();
+    await owner
+      .insert(members)
+      .values({ id, gymId, memberNumber: numero, firstName: 'Nombre', lastName: apellido });
+    return id;
+  }
+
+  it('los perfiles de entrenador estan aislados por gimnasio', async () => {
+    const enA = await sembrarEntrenador(gymA, userA);
+    const enB = await sembrarEntrenador(gymB, userB);
+
+    const vistos = await withTenant(app, gymA, (tx) => tx.select().from(trainers));
+
+    expect(vistos).toHaveLength(1);
+    expect(vistos[0]?.id).toBe(enA);
+
+    await owner.delete(trainers).where(sql`id in (${enA}, ${enB})`);
+  });
+
+  it('la misma cuenta puede ser entrenadora en dos gimnasios', async () => {
+    // El indice unico es (gym_id, user_id): una identidad global, un perfil por
+    // gimnasio. Igual que una persona puede ser socia de dos gimnasios.
+    const enA = await sembrarEntrenador(gymA, userA);
+    const enB = await sembrarEntrenador(gymB, userA);
+
+    expect(enA).not.toBe(enB);
+
+    await owner.delete(trainers).where(sql`id in (${enA}, ${enB})`);
+  });
+
+  it('las asignaciones estan aisladas por gimnasio', async () => {
+    const entrenadorA = await sembrarEntrenador(gymA, userA);
+    const entrenadorB = await sembrarEntrenador(gymB, userB);
+    const socioA = await sembrarSocio(gymA, 20, 'AsignadoA');
+    const socioB = await sembrarSocio(gymB, 20, 'AsignadoB');
+    await owner.insert(trainerAssignments).values([
+      { gymId: gymA, trainerId: entrenadorA, memberId: socioA },
+      { gymId: gymB, trainerId: entrenadorB, memberId: socioB },
+    ]);
+
+    const vistas = await withTenant(app, gymA, (tx) => tx.select().from(trainerAssignments));
+
+    expect(vistas).toHaveLength(1);
+    expect(vistas[0]?.memberId).toBe(socioA);
+
+    await owner.delete(members).where(sql`id in (${socioA}, ${socioB})`);
+    await owner.delete(trainers).where(sql`id in (${entrenadorA}, ${entrenadorB})`);
+  });
+
+  it('el mismo par entrenador-socio no puede estar asignado dos veces A LA VEZ', async () => {
+    const entrenador = await sembrarEntrenador(gymA, userA);
+    const socio = await sembrarSocio(gymA, 21, 'Duplicado');
+
+    await owner
+      .insert(trainerAssignments)
+      .values({ gymId: gymA, trainerId: entrenador, memberId: socio });
+
+    await expect(
+      owner
+        .insert(trainerAssignments)
+        .values({ gymId: gymA, trainerId: entrenador, memberId: socio }),
+    ).rejects.toThrow();
+
+    // Pero el indice es PARCIAL: terminada la asignacion, volver a asignar a la
+    // misma pareja mas adelante es legitimo y no choca con la fila historica.
+    await owner
+      .update(trainerAssignments)
+      .set({ endedAt: new Date() })
+      .where(eq(trainerAssignments.trainerId, entrenador));
+
+    await owner
+      .insert(trainerAssignments)
+      .values({ gymId: gymA, trainerId: entrenador, memberId: socio });
+
+    await owner.delete(members).where(eq(members.id, socio));
+    await owner.delete(trainers).where(eq(trainers.id, entrenador));
+  });
+
+  it('RLS NO impide que un entrenador vea las asignaciones de un companero', async () => {
+    // ESTE TEST DOCUMENTA UN LIMITE, no una garantia.
+    //
+    // Dentro de un gimnasio, RLS no distingue roles: el entrenador y el dueno
+    // son el mismo `gymlab_app`. Que cada entrenador vea solo a SUS socios lo
+    // decide TrainersService, y por eso tiene sus propios tests de abuso.
+    // Si algun dia esto se pone en rojo porque las filas ajenas dejan de verse,
+    // sera que alguien anadio una politica por rol — y habra que revisar si el
+    // filtro de la aplicacion sigue haciendo falta.
+    const entrenador1 = await sembrarEntrenador(gymA, userA);
+    const entrenador2 = await sembrarEntrenador(gymA, userB);
+    const socio = await sembrarSocio(gymA, 22, 'DeOtro');
+    await owner
+      .insert(trainerAssignments)
+      .values({ gymId: gymA, trainerId: entrenador2, memberId: socio });
+
+    const vistas = await withTenant(app, gymA, (tx) => tx.select().from(trainerAssignments));
+
+    expect(vistas).toHaveLength(1);
+    expect(vistas[0]?.trainerId).toBe(entrenador2);
+
+    await owner.delete(members).where(eq(members.id, socio));
+    await owner.delete(trainers).where(sql`id in (${entrenador1}, ${entrenador2})`);
   });
 });
 
