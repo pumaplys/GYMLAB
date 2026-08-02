@@ -1,7 +1,6 @@
 # Estado del proyecto
 
-> Última actualización: **2026-07-30** · **Fase 1 en curso** · Siguiente: módulo 3,
-> planes y suscripciones — **bloqueado por la asunción A1**
+> Última actualización: **2026-08-02** · **Fase 1 (MVP) COMPLETADA** · Siguiente: Fase 2
 
 Documento de continuidad: qué está hecho, qué está a medias y cuál es el
 siguiente paso. Se actualiza al final de cada sesión de trabajo.
@@ -10,131 +9,109 @@ siguiente paso. Se actualiza al final de cada sesión de trabajo.
 
 ## Dónde estamos
 
-| | |
+| Fase | Estado |
 |---|---|
-| Fase 0 | ✅ cerrada |
-| Fase 1 · paso 0 · Resend | ✅ |
-| Fase 1 · módulo 1 · Socios | ✅ *(sin `consents`, ver deuda)* |
-| Fase 1 · módulo 2 · Entrenadores y asignaciones | ✅ |
-| Fase 1 · módulo 3 · Planes y suscripciones | ⛔ **bloqueado: hay que cerrar A1** |
+| Fase 0 — cimientos | ✅ cerrada |
+| Fase 1 — MVP, 7 módulos | ✅ **cerrada** |
+| Fase 2 | por planificar — ver [`03-fase-2.md`](03-fase-2.md) |
 
-**134 tests** (27 de aislamiento + 107 funcionales), `build`, `typecheck`, `lint`
-y `test` en verde en local y en CI. **10 ADR** en [`adr/`](adr/).
+**266 tests** (40 de aislamiento e integridad + 226 funcionales). `build`,
+`typecheck`, `lint` y `test` en verde en local y en CI. **12 ADR**.
+
+El objetivo declarado de la Fase 1 era *«tres gimnasios piloto usándolo a diario»*.
+El alcance funcional está completo; **eso todavía no ha ocurrido**, y es la
+siguiente prueba de fuego. Lo que falta para poder ponerlo en manos de alguien
+está en la sección de deuda.
 
 ---
 
-## Fase 0 — cerrada
+## Los siete módulos
 
-| | Estado |
-|---|---|
-| Definición de producto y alcance del MVP | ✅ |
-| Arquitectura y ADR 0001–0009 | ✅ [`adr/`](adr/) |
-| Monorepo, toolchain y catálogo de versiones | ✅ |
-| Aislamiento multi-tenant (RLS) | ✅ verificado por falsificación |
-| Autenticación, sesiones e invitaciones | ✅ 38 tests de abuso |
-| Trabajos en segundo plano y outbox transaccional | ✅ verificado por falsificación |
-| CI en GitHub Actions con protección de rama | ✅ en verde sobre `main` |
-| Revisión arquitectónica y corrección de hallazgos | ✅ |
-
-**54 tests al cerrar la fase** (16 de aislamiento + 38 de auth), en verde en los
-6 workspaces. La cifra actual está arriba: es un registro histórico, no el estado
-de hoy.
+| # | Módulo | Qué resolvió |
+|---|---|---|
+| 0 | **Resend** | Dos transportes intercambiables y clasificación de errores en transitorio / permanente / desconocido, que es lo que decide si pg-boss reintenta o se rinde |
+| 1 | **Socios** | Un socio **no** es un usuario: la ficha existe con o sin cuenta. Invitación en dos endpoints por seguridad (ADR-0010) |
+| 2 | **Entrenadores** | Un entrenador ve **solo sus asignados**. RLS no puede imponerlo, así que se resolvió por construcción |
+| 3 | **Cuotas** | GYMLAB registra, no cobra. Un pago cubre exactamente un periodo; «vencida» no es un estado guardado |
+| 4 | **QR de acceso** | Firma HMAC con clave derivada por gimnasio, uso único por `jti` y tolerancia a reintentos de red |
+| 5 | **Rutinas** | La biblioteca se copia, no se comparte (ADR-0012); las rutinas guardan copia del nombre del ejercicio |
+| 6 | **Progreso** | Datos de salud (art. 9). Ninguna escritura sin consentimiento vigente, comprobado en el servicio |
+| 7 | **Dashboard** | El único sin tablas propias: cada módulo calcula sus métricas y el panel compone |
 
 ---
 
-## Qué hay construido
+## Las tres barreras que sostienen el producto
 
-### Aislamiento entre gimnasios
-
-Tres capas que se refuerzan: políticas RLS por tabla, `withTenant()` fijando
+**Aislamiento entre gimnasios.** Políticas RLS por tabla, `withTenant()` fijando
 `app.gym_id` local a la transacción, y `assertRlsIsEnforced()` abortando el
-arranque si la conexión pudiera saltárselas.
+arranque si la conexión pudiera saltárselas. Dos roles de base de datos, porque
+en PostgreSQL el propietario ignora RLS.
 
-**Dos roles de base de datos**, porque en Postgres un superusuario y el
-propietario ignoran RLS: `gymlab` para migraciones, `gymlab_app` para la
-aplicación.
+**El tenant viaja en la clave ajena.** Desde el PR de integridad, las relaciones
+son compuestas `(gym_id, id)`: una fila del gimnasio A no puede apuntar a una del
+B ni aunque el código lo intente. Antes era representable — se comprobó.
 
-**Verificado por falsificación**, no solo por tests en verde: apuntando la
-aplicación al rol propietario, 8 de 13 casos fallan — incluido un `DELETE` sin
-filtro que sí borra filas del otro gimnasio. Un test de RLS en verde pasaría
-igual si las políticas no existieran; solo la prueba inversa demuestra algo.
+**Lo que RLS no puede hacer.** Dentro de un gimnasio no distingue roles: que un
+entrenador vea solo a sus socios, que recepción no acceda a datos de salud y que
+solo el dueño vea el panel es **autorización de aplicación**, y por eso cada uno
+tiene tests de abuso propios.
 
-**Guardarraíl para el futuro:** un test consulta el catálogo de Postgres y exige
-que *toda* tabla con `gym_id` tenga RLS y al menos una política. Olvidarla en una
-tabla nueva pone el PR en rojo.
+### Tres guardarraíles que vigilan lo anterior
 
-### Autenticación
+Ninguno comprueba una funcionalidad: comprueban que nadie se salte un paso.
 
-11 endpoints propios, sin montar el router de Better Auth (ADR-0009), de modo que
-la superficie expuesta es exactamente la que hemos escrito.
-
-Cuatro barreras por petición: sesión válida → rol suficiente → contexto de tenant
-→ RLS. Las tres primeras son código nuestro y pueden fallar; la cuarta no depende
-de nosotros.
-
-Invitaciones con token hasheado y de un solo uso a prueba de carreras, matriz de
-permisos contra escalada, sesiones de 12 h para el personal y 90 días para el
-socio, y límite de intentos con contador atómico.
-
-### Trabajos en segundo plano
-
-pg-boss sobre Postgres. Encolar dentro de la transacción de la petición da el
-patrón **transactional outbox** sin construir nada: el correo de invitación solo
-existe si la invitación se guardó.
-
-También verificado por falsificación: forzando a `enqueue` a ignorar la
-transacción, el test de rollback y solo ese se pone en rojo.
+- **Toda tabla con `gym_id`** debe tener RLS y al menos una política.
+- **Toda clave ajena hacia una tabla de tenant** debe incluir `gym_id`. La lista
+  se **deriva del catálogo**; cuando era manual, dos tablas nuevas se quedaron
+  fuera sin que nada se pusiera en rojo.
+- **Toda variable de entorno** debe estar en `turbo.json`, en CI si es obligatoria
+  y en `.env.example`. Se añadió tras fallar dos veces por lo mismo.
 
 ---
 
-## Qué se ha construido en la Fase 1
+## Método: verificación por falsificación
 
-### Paso 0 — Resend
+Un test en verde no demuestra nada si no se puede hacer fallar. En cada límite de
+seguridad se rompió la garantía a propósito para comprobar que el test lo
+detecta. Lo que encontró, entre otras cosas:
 
-Envío real con dos transportes intercambiables (Resend en producción, consola en
-desarrollo) y clasificación de errores en transitorio / permanente / desconocido,
-que es lo que decide si pg-boss reintenta o se rinde. En producción la aplicación
-**no arranca** sin `RESEND_API_KEY`: mejor no desplegar que desplegar mudo.
+- un test de concurrencia del QR que **pasaba igual** con la implementación
+  ingenua: dos peticiones HTTP en paralelo casi nunca caen en una ventana de
+  milisegundos. Reescrito con veinte transacciones simultáneas, la versión
+  ingenua falla con clave duplicada;
+- que sin la derivación HKDF por gimnasio, un token del gimnasio A **valida** en
+  el B y solo nos salvaba que la ficha no existiera allí;
+- que el aislamiento de la biblioteca de ejercicios no dependía del `WHERE` del
+  servicio sino de RLS — el test lo dice ahora explícitamente.
 
-### Módulo 1 — Socios
+---
 
-La decisión que ordena el módulo: **un socio no es un usuario**. La ficha existe
-con o sin cuenta, porque un gimnasio real tiene socios que nunca instalarán una
-app. Dar de alta e invitar son dos acciones distintas.
+## Decisiones de arquitectura
 
-Número de socio secuencial por gimnasio con un UPSERT atómico —no `max()+1`, que
-es la trampa que ya nos mordió con el límite de intentos—, índices únicos
-parciales para el email entre activos, y RGPD con exportación (art. 15 y 20) y
-borrado (art. 17) separados de la baja.
+| ADR | Decisión | Por qué importa hoy |
+|---|---|---|
+| [0001](adr/0001-monolito-modular.md) | Monolito modular, no microservicios | Un desarrollador no opera un sistema distribuido |
+| [0002](adr/0002-multi-tenancy-rls.md) | Esquema compartido + `gym_id` + RLS | Es el límite que impide la fuga entre clientes |
+| [0003](adr/0003-typescript-extremo-a-extremo.md) | TypeScript en todo | Un cambio de contrato rompe la compilación, no producción |
+| [0004](adr/0004-stack-tecnologico.md) | NestJS, PostgreSQL, Drizzle, REST | |
+| [0005](adr/0005-monorepo.md) | pnpm + Turborepo | |
+| [0006](adr/0006-modulos-del-dominio.md) | Fronteras de módulo: se pide al servicio, nunca a su tabla | La regla que más veces ha condicionado el diseño |
+| [0007](adr/0007-autenticacion-y-sesiones.md) | Cuatro barreras por petición | |
+| [0008](adr/0008-alcance-de-la-transaccion.md) | Una transacción por petición; outbox con pg-boss | |
+| [0009](adr/0009-no-montar-el-router-de-better-auth.md) | Endpoints propios de autenticación | La superficie expuesta es exactamente la que escribimos |
+| [0010](adr/0010-dos-endpoints-para-aceptar-invitaciones.md) | `accept` y `link` separados | Un token de invitación **nunca** escribe credenciales de una cuenta existente |
+| [0011](adr/0011-exportacion-de-datos-personales-por-punto-de-extension.md) | Exportación RGPD compuesta por punto de extensión | El borrado lo resuelven las claves ajenas; la lectura no |
+| [0012](adr/0012-biblioteca-de-ejercicios-por-copia.md) | La biblioteca de ejercicios se copia | Evita la única tabla con `gym_id` anulable |
 
-**Invitación de socio en dos endpoints (ADR-0010).** Un token de invitación nunca
-puede escribir credenciales de una cuenta que ya existe: `accept-invitation` es
-solo para cuentas nuevas y responde `409` si el email ya tiene una;
-`link-invitation` va autenticado y su contrato **solo admite el token**, así que
-no hay dato con el que modificar credenciales ni por error de programación.
+### La lección que más caro salió
 
-### Módulo 2 — Entrenadores y asignaciones
+Romper un ciclo de **módulos** no basta: el contenedor de dependencias mira los
+**proveedores**. Con `MembersService` implementando el punto de extensión de
+invitaciones, el grafo seguía siendo circular y **Nest se quedaba colgado en el
+arranque sin emitir ningún error** — ni el `build` ni el `typecheck` lo detectan.
 
-**El límite que RLS no puede imponer.** Dentro de un gimnasio, el entrenador y el
-dueño son el mismo rol de PostgreSQL: ninguna política puede expresar «solo sus
-asignados». Es autorización de aplicación, y está construida para que sea difícil
-de saltarse: el rol `trainer` **no aparece en ninguna ruta del personal**, y sus
-endpoints (`/v1/me/trainer/...`) parten del `userId` de la sesión, sin ningún
-parámetro con el que nombrar a otro entrenador.
-
-Falsificado: quitando el filtro de asignación, el entrenador vería los 11 socios
-del gimnasio en lugar de 1.
-
-Las asignaciones **se terminan, no se borran** (`ended_at`), y un socio dado de
-baja desaparece de la lista sin perder la asignación: cuando vuelve, recupera a
-su entrenador sin que nadie reasigne nada.
-
-**Un descubrimiento que costó caro y conviene no repetir:** romper un ciclo de
-*módulos* no basta. El contenedor de dependencias mira los **proveedores**, y con
-`MembersService` implementando el punto de extensión de invitaciones el grafo
-seguía siendo circular; Nest se quedaba colgado en el arranque **sin dar ningún
-error**. De ahí que los implementadores de hooks sean clases dedicadas y sin
-dependencias (`MemberAccountLink`, `TrainerProfileLink`). Está en ADR-0010.
+De ahí la regla que ya se aplica en tres sitios: **quien implementa un punto de
+extensión es una clase dedicada y sin dependencias hacia quien lo invoca.**
 
 ---
 
@@ -142,20 +119,19 @@ dependencias (`MemberAccountLink`, `TrainerProfileLink`). Está en ADR-0010.
 
 | Qué | Por qué sigue ahí | Cuándo se resuelve |
 |---|---|---|
-| **`consents` sin usar** | La tabla existe con RLS y justificación legal, pero nadie escribe en ella. Falta lo que no es técnico: los textos reales y su versión. Se decidió **dejar el dato pendiente antes que inventar una versión ficticia** | Antes del módulo 6, que guarda datos de salud |
-| **Clave ajena no compuesta en `trainer_assignments`** | Una asignación puede apuntar a un socio de otro gimnasio: el `WITH CHECK` solo mira `gym_id` y la clave ajena solo mira que el socio exista. **Comprobado: la fila incoherente es insertable.** No hay fuga —el JOIN con `members` sí está filtrado por RLS— y la API lo valida antes de insertar, así que es integridad, no un agujero | PR propio de integridad de datos, antes del módulo 5 |
-| **Un rol por persona y gimnasio** | Un dueño que además entrene no puede tener socios asignados. Resolverlo es apilar roles, que cambia el modelo de permisos | Si un piloto lo pide |
+| **Textos de consentimiento sin redactar** | `HEALTH_CONSENT_VERSION` no tiene valor, así que el módulo 6 está **entregado y bloqueado**: no acepta ni un dato de salud. No es técnico | **Antes de cualquier piloto que use progreso** |
+| **`trust proxy` sin configurar** | Detrás del proxy del hosting, `x-forwarded-for` no será fiable y el límite de intentos perderá precisión | **Antes de producción** |
+| **Agregados de asistencia** | `access_events` se purga según la retención de cada gimnasio (12 meses por defecto). Comparar con el año anterior exige calcular agregados **antes** de que la purga se lleve el detalle | Antes de la primera purga real |
 | **`slug` es el UUID del gimnasio** | La columna existe para URLs legibles y hoy no aporta nada | Cuando haya URLs públicas |
-| **Sesión: solo el máximo absoluto** | ADR-0007 mencionaba además 8 h de inactividad. Better Auth modela el refresco de forma global, no por rol. El máximo es el que acota el riesgo real | Si aparece la necesidad |
-| **`trust proxy` sin configurar** | Detrás del proxy del hosting, `x-forwarded-for` no será fiable y el límite de intentos perderá precisión | Antes de producción |
+| **Un rol por persona y gimnasio** | Un dueño que además entrene no puede tener socios asignados | Si un piloto lo pide |
+| **Sin panel web ni app** | Solo existe la API. Un piloto necesita interfaz | Fase 2, y es lo primero |
 | **`ignoreDeprecations: "6.0"`** | `tsup` inyecta un `baseUrl` propio al generar los `.d.ts` | Al actualizar `tsup` |
 
-### Consecuencia que conviene tener presente
+### Lo que hay que tener presente
 
-**Todavía no se registra ningún consentimiento.** El módulo 6 guarda peso y
-medidas, que son categoría especial del RGPD (art. 9) y exigen consentimiento
-vigente. No se puede empezar sin los textos y su versión: es la decisión que
-falta, y no es técnica.
+**El producto no se puede usar todavía**, y no por falta de funcionalidad: no hay
+interfaz. La API está completa y probada; nadie puede abrirla sin escribir
+peticiones a mano.
 
 ---
 
@@ -165,45 +141,6 @@ falta, y no es técnica.
 docker compose up -d
 cp .env.example .env      # solo la primera vez
 pnpm install
-pnpm db:migrate           # migraciones + roles + RLS + colas
+pnpm db:migrate           # migraciones + roles + RLS + colas + catálogo
 pnpm test
 ```
-
----
-
-## Fase 1 — el MVP
-
-**Plan detallado en [`02-fase-1-mvp.md`](02-fase-1-mvp.md)**: alcance, orden,
-riesgos y las tres decisiones pendientes. Resumen a continuación.
-
-Alcance cerrado: clientes, entrenadores, suscripciones, rutinas, peso, QR de
-acceso y dashboard del dueño.
-
-### Orden y avance
-
-| # | Módulo | Estado | Por qué en esa posición |
-|---|---|---|---|
-| 0 | Proveedor de correo (Resend) | ✅ | El alta de un socio es una invitación por email |
-| 1 | Socios | ✅ | Todo cuelga de un socio |
-| 2 | Entrenadores y asignaciones | ✅ | Quien asigna una rutina es un entrenador con socios asignados |
-| 3 | Planes y suscripciones | ⛔ **A1** | Determina si un socio está *activo*, dato que el QR necesita |
-| 4 | Acceso por QR | | La funcionalidad más visible; ya diseñada en detalle |
-| 5 | Rutinas | | |
-| 6 | Progreso y peso | | Datos de salud (art. 9): exige que `consents` funcione |
-| 7 | Dashboard | | Lee de los anteriores; por definición va al final |
-
-### Decisiones pendientes
-
-**Asunción A1 — ¿mueve GYMLAB el dinero de las cuotas?** Ya no es «antes del
-punto 3»: **el punto 3 es el siguiente**. Si la respuesta es sí, entran Stripe
-Connect, verificación de identidad por gimnasio y liquidaciones, y eso no es un
-detalle del módulo sino un producto dentro de él.
-
-**Consentimientos** — textos, versionado y momento en que se piden. Bloquea el
-módulo 6.
-
-**Biblioteca de ejercicios** — global de la plataforma o propia de cada gimnasio.
-Afecta al módulo 5.
-
-**El `slug`**, cuando aparezcan URLs públicas: generarlo a partir del nombre o
-eliminar la columna.
