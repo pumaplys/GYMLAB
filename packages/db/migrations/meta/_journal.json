@@ -64,6 +64,13 @@
       "when": 1785669234134,
       "tag": "0008_integridad_referencial",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1785670365894,
+      "tag": "0009_acceso_qr",
+      "breakpoints": true
     }
   ]
 }

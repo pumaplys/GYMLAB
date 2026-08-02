@@ -341,6 +341,89 @@ REVOKE DELETE ON payments FROM gymlab_app;
 
 
 -- -----------------------------------------------------------------------------
+-- access_tokens — patron estandar.
+-- -----------------------------------------------------------------------------
+ALTER TABLE access_tokens ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS tenant_isolation ON access_tokens;
+CREATE POLICY tenant_isolation ON access_tokens
+  FOR ALL
+  TO gymlab_app
+  USING (gym_id = app_current_gym_id())
+  WITH CHECK (gym_id = app_current_gym_id());
+
+
+-- -----------------------------------------------------------------------------
+-- access_events — patron estandar.
+-- -----------------------------------------------------------------------------
+ALTER TABLE access_events ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS tenant_isolation ON access_events;
+CREATE POLICY tenant_isolation ON access_events
+  FOR ALL
+  TO gymlab_app
+  USING (gym_id = app_current_gym_id())
+  WITH CHECK (gym_id = app_current_gym_id());
+
+
+-- -----------------------------------------------------------------------------
+-- Purga de acceso — LA UNICA EXCEPCION A RLS EN TODO EL PRODUCTO.
+-- -----------------------------------------------------------------------------
+-- El problema: la retencion de `access_events` es POR GIMNASIO, asi que el
+-- trabajo de purga necesita recorrer todos los gimnasios. Y no puede: con el rol
+-- de la aplicacion, la politica de `gyms` solo deja ver el gimnasio activo y
+-- aquellos a los que pertenece el usuario. Un trabajo de fondo no tiene ninguno
+-- de los dos.
+--
+-- Las alternativas y por que se descartaron:
+--
+--   * Conectar el worker con el rol PROPIETARIO. Funciona y es lo comodo, pero
+--     mete una conexion que se salta RLS dentro del proceso que atiende
+--     peticiones. Un fallo ahi deja de estar acotado.
+--   * Abrir una politica de lectura general sobre `gyms`. Desactivaria justo lo
+--     que protege el producto.
+--   * Programar un trabajo por gimnasio. Alguien tendria que enumerarlos igual.
+--
+-- Lo que se hace: una funcion SECURITY DEFINER, es decir, se ejecuta con los
+-- permisos de su propietario (`gymlab`) y por tanto ve todas las filas. La
+-- aplicacion no gana ningun privilegio general: gana EXACTAMENTE esta capacidad,
+-- que solo sabe borrar filas caducadas y no devuelve ni un dato personal.
+--
+-- `SET search_path = public` es obligatorio en una funcion SECURITY DEFINER: sin
+-- el, quien pudiera manipular el search_path podria hacer que resolviera a otras
+-- tablas y ejecutar codigo con los permisos del propietario.
+CREATE OR REPLACE FUNCTION app_purge_access_data()
+  RETURNS TABLE (tokens_borrados bigint, eventos_borrados bigint)
+  LANGUAGE plpgsql
+  SECURITY DEFINER
+  SET search_path = public
+  AS $$
+  DECLARE
+    n_tokens bigint;
+    n_eventos bigint;
+  BEGIN
+    -- Los tokens consumidos solo existen para impedir la reutilizacion y para
+    -- tolerar un reintento de red. Una hora despues de caducar no sirven a nadie.
+    DELETE FROM access_tokens WHERE expires_at < now() - INTERVAL '1 hour';
+    GET DIAGNOSTICS n_tokens = ROW_COUNT;
+
+    -- Cada gimnasio con su propio plazo.
+    DELETE FROM access_events e
+      USING gyms g
+     WHERE e.gym_id = g.id
+       AND e.occurred_at < now() - (g.access_events_retention_months * INTERVAL '1 month');
+    GET DIAGNOSTICS n_eventos = ROW_COUNT;
+
+    RETURN QUERY SELECT n_tokens, n_eventos;
+  END;
+  $$;
+
+-- Nadie mas que la aplicacion. `PUBLIC` incluiria a cualquier rol futuro.
+REVOKE EXECUTE ON FUNCTION app_purge_access_data() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION app_purge_access_data() TO gymlab_app;
+
+
+-- -----------------------------------------------------------------------------
 -- audit_log — aislado por tenant Y ademas append-only.
 -- -----------------------------------------------------------------------------
 -- Un registro de auditoria que la propia aplicacion puede reescribir no sirve
