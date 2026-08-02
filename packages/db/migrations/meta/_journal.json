@@ -43,6 +43,13 @@
       "when": 1785369043655,
       "tag": "0005_invitation_member_link",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1785664843325,
+      "tag": "0006_trainers",
+      "breakpoints": true
     }
   ]
 }

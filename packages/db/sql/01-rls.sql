@@ -254,6 +254,39 @@ CREATE POLICY tenant_isolation ON member_notes
 
 
 -- -----------------------------------------------------------------------------
+-- trainers — patron estandar.
+-- -----------------------------------------------------------------------------
+ALTER TABLE trainers ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS tenant_isolation ON trainers;
+CREATE POLICY tenant_isolation ON trainers
+  FOR ALL
+  TO gymlab_app
+  USING (gym_id = app_current_gym_id())
+  WITH CHECK (gym_id = app_current_gym_id());
+
+
+-- -----------------------------------------------------------------------------
+-- trainer_assignments — patron estandar, y NO basta.
+-- -----------------------------------------------------------------------------
+-- Esta politica impide que un gimnasio vea las asignaciones de otro. NO impide
+-- que un entrenador vea las de un companero: para PostgreSQL, dentro del mismo
+-- gimnasio los dos son el mismo rol `gymlab_app`.
+--
+-- Que cada entrenador vea solo a SUS socios es autorizacion de aplicacion, vive
+-- en TrainersService y tiene sus propios tests de abuso. Se deja escrito aqui
+-- para que nadie lea esta politica y suponga que el filtro ya esta hecho.
+ALTER TABLE trainer_assignments ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS tenant_isolation ON trainer_assignments;
+CREATE POLICY tenant_isolation ON trainer_assignments
+  FOR ALL
+  TO gymlab_app
+  USING (gym_id = app_current_gym_id())
+  WITH CHECK (gym_id = app_current_gym_id());
+
+
+-- -----------------------------------------------------------------------------
 -- audit_log — aislado por tenant Y ademas append-only.
 -- -----------------------------------------------------------------------------
 -- Un registro de auditoria que la propia aplicacion puede reescribir no sirve

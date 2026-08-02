@@ -7,6 +7,7 @@ import {
   Injectable,
   NotFoundException,
   Optional,
+  type OnModuleInit,
 } from '@nestjs/common';
 import {
   and,
@@ -27,7 +28,8 @@ import type { AcceptInvitationInput, Invitation, Role } from '@gymlab/contracts'
 import { ACCOUNT_EXISTS, canInvite } from '@gymlab/contracts';
 import {
   INVITATION_ACCEPTED_HOOK,
-  type InvitationAcceptedHook,
+  type InvitationAcceptedEvent,
+  type InvitationAcceptedHooks,
 } from '../common/invitation-hooks';
 import { env } from '../config/env';
 import { DATABASE } from '../database/database.module';
@@ -40,22 +42,64 @@ import { JobsService } from '../jobs/jobs.service';
 const TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 @Injectable()
-export class InvitationsService {
+export class InvitationsService implements OnModuleInit {
   constructor(
     @Inject(DATABASE) private readonly db: Database,
     @Inject(AUTH) private readonly auth: Auth,
     private readonly jobs: JobsService,
     /**
-     * Punto de extension, OPCIONAL a proposito.
+     * Punto de extension, OPCIONAL a proposito y en plural.
      *
-     * `invitations` no depende de `members`: depende de una interfaz que vive en
-     * `common`. Quien la implementa se registra desde fuera. Asi la unica
-     * direccion real es `members -> invitations`, sin ciclo (ADR-0006).
+     * `invitations` no depende de `members` ni de `trainers`: depende de una
+     * interfaz que vive en `common`. Quienes la implementan se registran desde
+     * fuera, en la raiz. Asi las unicas direcciones reales salen hacia aqui, sin
+     * ciclo (ADR-0006).
      */
     @Optional()
     @Inject(INVITATION_ACCEPTED_HOOK)
-    private readonly hook?: InvitationAcceptedHook,
+    private readonly hooks: InvitationAcceptedHooks = [],
   ) {}
+
+  /**
+   * Sin implementadores registrados, la aplicacion no arranca.
+   *
+   * El token es `@Optional()` para que un fallo de cableado de un error legible
+   * en lugar del galimatias de inyeccion de Nest — pero entonces el valor por
+   * defecto es una lista vacia, y ese es justo el modo de fallo peligroso: las
+   * invitaciones se aceptarian **sin vincular nada y sin error**. El socio
+   * tendria cuenta y pertenencia, su ficha seguiria sin `user_id`, y el
+   * entrenador se quedaria sin perfil. Nadie se entera hasta que alguien busca
+   * su ficha semanas despues.
+   *
+   * Morir en el arranque convierte un fallo silencioso en uno ruidoso, que es
+   * el unico cambio que importa aqui.
+   */
+  onModuleInit(): void {
+    if (this.hooks.length === 0) {
+      throw new Error(
+        '[invitations] No hay ningun InvitationAcceptedHook registrado. ' +
+          'Revisa que InvitationHooksModule este en los imports de AppModule: ' +
+          'sin el, aceptar una invitacion no vincularia la ficha del socio ni ' +
+          'crearia el perfil del entrenador, y lo haria en silencio.',
+      );
+    }
+  }
+
+  /**
+   * Avisa a quienes reaccionan a una invitacion aceptada.
+   *
+   * EN SERIE Y NO EN PARALELO: todos escriben en la MISMA transaccion, que la
+   * lleva el evento. Un `Promise.all` lanzaria varias sentencias a la vez sobre
+   * una sola conexion, que es justo lo que `node-postgres` no admite.
+   *
+   * Sin capturar errores: si uno falla, la transaccion entera se deshace y la
+   * invitacion no se consume. Es la atomicidad que promete ADR-0010.
+   */
+  private async avisarHooks(evento: InvitationAcceptedEvent): Promise<void> {
+    for (const hook of this.hooks) {
+      await hook.onInvitationAccepted(evento);
+    }
+  }
 
   /**
    * Crea una invitacion.
@@ -252,10 +296,10 @@ export class InvitationsService {
           entityId: pendiente.id,
         });
 
-        // Punto de extension: `members` rellena aqui su `user_id`. Dentro de
-        // ESTA transaccion, para que un fallo al vincular deje tambien la
-        // invitacion sin consumir.
-        await this.hook?.onInvitationAccepted({
+        // Punto de extension: `members` rellena aqui su `user_id` y `trainers`
+        // crea el perfil. Dentro de ESTA transaccion, para que un fallo al
+        // vincular deje tambien la invitacion sin consumir.
+        await this.avisarHooks({
           gymId,
           invitationId: pendiente.id,
           memberId: pendiente.memberId,
@@ -368,7 +412,7 @@ export class InvitationsService {
           entityId: pendiente.id,
         });
 
-        await this.hook?.onInvitationAccepted({
+        await this.avisarHooks({
           gymId,
           invitationId: pendiente.id,
           memberId: pendiente.memberId,

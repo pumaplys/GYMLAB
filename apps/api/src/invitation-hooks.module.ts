@@ -1,10 +1,12 @@
 import { Global, Module } from '@nestjs/common';
-import { INVITATION_ACCEPTED_HOOK } from './common/invitation-hooks';
+import { INVITATION_ACCEPTED_HOOK, type InvitationAcceptedHooks } from './common/invitation-hooks';
 import { MemberAccountLink } from './members/member-account-link';
 import { MembersModule } from './members/members.module';
+import { TrainerProfileLink } from './trainers/trainer-profile-link';
+import { TrainersModule } from './trainers/trainers.module';
 
 /**
- * Conecta el punto de extension de invitaciones con quien lo implementa.
+ * Conecta el punto de extension de invitaciones con quienes lo implementan.
  *
  * VIVE AQUI, EN LA RAIZ, Y NO DENTRO DE NINGUN MODULO DE DOMINIO. El motivo es
  * concreto: para inyectar en `InvitationsService` un proveedor declarado por
@@ -17,26 +19,31 @@ import { MembersModule } from './members/members.module';
  *
  *   members              -> invitations   (crear invitaciones)
  *   invitations          -> common        (la interfaz, sin dependencias)
- *   invitation-hooks     -> members       (registrar la implementacion)
+ *   invitation-hooks     -> members, trainers  (registrar implementaciones)
  *
  * `@Global()` para que `InvitationsService` pueda resolver el token sin importar
  * este modulo, cerrando la ultima via por la que reapareceria el ciclo.
  *
- * OJO CON QUE SE REGISTRA AQUI: `MemberAccountLink`, no `MembersService`. Este
- * modulo esta en el grafo de dependencias de `InvitationsService`, asi que lo que
- * se registre arrastra consigo todo lo que necesite. Apuntar a `MembersService`
- * —que depende de `InvitationsService`— cerraba un ciclo de proveedores con el
- * que Nest se queda colgado, sin error. Ver `members/member-account-link.ts`.
- *
- * CUANDO LLEGUE EL MODULO DE ENTRENADORES tendra que reaccionar tambien —crear
- * su perfil al aceptarse una invitacion—. El sitio donde anadirlo es este, no
- * `invitations`, y con la misma regla: un implementador sin dependencias hacia
- * quien le invoca.
+ * OJO CON QUE SE REGISTRA AQUI: clases dedicadas y sin dependencias, nunca los
+ * servicios de cada modulo. Este modulo esta en el grafo de dependencias de
+ * `InvitationsService`, asi que lo que se registre arrastra consigo todo lo que
+ * necesite; apuntar a `MembersService` —que depende de `InvitationsService`—
+ * cerraba un ciclo de proveedores con el que Nest se queda colgado, sin error.
+ * Ver `members/member-account-link.ts` y ADR-0010.
  */
 @Global()
 @Module({
-  imports: [MembersModule],
-  providers: [{ provide: INVITATION_ACCEPTED_HOOK, useExisting: MemberAccountLink }],
+  imports: [MembersModule, TrainersModule],
+  providers: [
+    {
+      provide: INVITATION_ACCEPTED_HOOK,
+      // Una lista, no un unico implementador: al aceptarse una invitacion puede
+      // haber varios modulos que reaccionen —la ficha del socio y el perfil del
+      // entrenador— y cada uno decide si le concierne mirando el evento.
+      useFactory: (...hooks: InvitationAcceptedHooks) => hooks,
+      inject: [MemberAccountLink, TrainerProfileLink],
+    },
+  ],
   exports: [INVITATION_ACCEPTED_HOOK],
 })
 export class InvitationHooksModule {}

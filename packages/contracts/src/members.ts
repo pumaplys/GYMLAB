@@ -23,7 +23,7 @@ const nameSchema = z.string().trim().min(1, 'Obligatorio').max(120);
  * una llamada fallida — no una brecha de seguridad. Se comprueba longitud y que
  * solo haya digitos y separadores.
  */
-const phoneSchema = z
+export const phoneSchema = z
   .string()
   .trim()
   .min(6)

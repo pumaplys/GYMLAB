@@ -25,6 +25,7 @@ import type {
 import type { Invitation } from '@gymlab/contracts';
 import { requireRequestContext, requireTransaction } from '../common/request-context';
 import { InvitationsService } from '../invitations/invitations.service';
+import { memberToDto } from './member.mapper';
 
 /**
  * La direccion de dependencia es `members -> invitations` y solo esa: este
@@ -74,7 +75,7 @@ export class MembersService {
       metadata: { memberNumber: fila!.memberNumber },
     });
 
-    return this.toDto(fila!);
+    return memberToDto(fila!);
   }
 
   async list(gymId: string, query: ListMembersQuery): Promise<MemberList> {
@@ -109,7 +110,7 @@ export class MembersService {
     ]);
 
     return {
-      items: filas.map((f) => this.toDto(f)),
+      items: filas.map((f) => memberToDto(f)),
       total: Number(total?.n ?? 0),
       page: query.page,
       pageSize: query.pageSize,
@@ -117,7 +118,7 @@ export class MembersService {
   }
 
   async getById(gymId: string, id: string): Promise<Member> {
-    return this.toDto(await this.buscar(gymId, id));
+    return memberToDto(await this.buscar(gymId, id));
   }
 
   async update(gymId: string, id: string, input: UpdateMemberInput): Promise<Member> {
@@ -146,7 +147,7 @@ export class MembersService {
       metadata: { campos: Object.keys(input) },
     });
 
-    return this.toDto(fila!);
+    return memberToDto(fila!);
   }
 
   /**
@@ -178,7 +179,7 @@ export class MembersService {
       entityId: id,
     });
 
-    return this.toDto(fila!);
+    return memberToDto(fila!);
   }
 
   async reactivate(gymId: string, id: string): Promise<Member> {
@@ -207,7 +208,7 @@ export class MembersService {
       entityId: id,
     });
 
-    return this.toDto(fila!);
+    return memberToDto(fila!);
   }
 
   // --- El socio y sus propios datos --------------------------------------
@@ -221,7 +222,7 @@ export class MembersService {
       .limit(1);
 
     if (!fila) throw new NotFoundException('No tienes ficha de socio en este gimnasio.');
-    return this.toDto(fila);
+    return memberToDto(fila);
   }
 
   async updateOwnProfile(
@@ -238,7 +239,7 @@ export class MembersService {
       .where(and(eq(members.gymId, gymId), eq(members.id, actual.id)))
       .returning();
 
-    return this.toDto(fila!);
+    return memberToDto(fila!);
   }
 
   // --- Notas internas ----------------------------------------------------
@@ -298,7 +299,7 @@ export class MembersService {
   async exportData(gymId: string, id: string) {
     return {
       exportadoEl: new Date().toISOString(),
-      ficha: this.toDto(await this.buscar(gymId, id)),
+      ficha: memberToDto(await this.buscar(gymId, id)),
       notasInternas: await this.listNotes(gymId, id),
     };
   }
@@ -441,21 +442,4 @@ export class MembersService {
     return fila;
   }
 
-  private toDto(fila: MemberRow): Member {
-    return {
-      id: fila.id,
-      memberNumber: fila.memberNumber,
-      firstName: fila.firstName,
-      lastName: fila.lastName,
-      email: fila.email,
-      phone: fila.phone,
-      birthDate: fila.birthDate,
-      status: fila.status,
-      joinedAt: fila.joinedAt.toISOString(),
-      leftAt: fila.leftAt?.toISOString() ?? null,
-      // Se expone si tiene cuenta, no el id de usuario: el panel no necesita
-      // ese identificador y no hay razon para difundirlo.
-      hasAccount: fila.userId !== null,
-    };
-  }
 }
