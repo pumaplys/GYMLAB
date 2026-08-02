@@ -1,12 +1,14 @@
 import { sql } from 'drizzle-orm';
 import {
   date,
+  foreignKey,
   index,
   integer,
   pgEnum,
   pgTable,
   text,
   timestamp,
+  unique,
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
@@ -100,6 +102,9 @@ export const plans = pgTable(
       .on(t.gymId, sql`lower(${t.name})`)
       .where(sql`status = 'active'`),
     index('plans_gym_id_idx').on(t.gymId),
+    // Para que las suscripciones apunten aqui con clave ajena compuesta y no se
+    // pueda contratar el plan de otro gimnasio.
+    unique('plans_gym_id_key').on(t.gymId, t.id),
   ],
 );
 
@@ -126,13 +131,9 @@ export const memberSubscriptions = pgTable(
      * no —el gimnasio tiene obligacion fiscal de conservarlos— y por eso alli la
      * regla es otra.
      */
-    memberId: uuid('member_id')
-      .notNull()
-      .references(() => members.id, { onDelete: 'cascade' }),
+    memberId: uuid('member_id').notNull(),
     /** `restrict`: un plan con suscripciones no se puede borrar, solo archivar. */
-    planId: uuid('plan_id')
-      .notNull()
-      .references(() => plans.id, { onDelete: 'restrict' }),
+    planId: uuid('plan_id').notNull(),
 
     /**
      * COPIA del precio del plan al contratarlo.
@@ -174,6 +175,19 @@ export const memberSubscriptions = pgTable(
     index('member_subscriptions_gym_member_idx').on(t.gymId, t.memberId),
     // El dashboard preguntara "que cuotas vencen esta semana".
     index('member_subscriptions_gym_period_end_idx').on(t.gymId, t.currentPeriodEnd),
+    // Compuestas: la cuota, el socio y el plan han de ser del MISMO gimnasio.
+    foreignKey({
+      columns: [t.gymId, t.memberId],
+      foreignColumns: [members.gymId, members.id],
+      name: 'member_subscriptions_gym_member_fk',
+    }).onDelete('cascade'),
+    foreignKey({
+      columns: [t.gymId, t.planId],
+      foreignColumns: [plans.gymId, plans.id],
+      name: 'member_subscriptions_gym_plan_fk',
+    }).onDelete('restrict'),
+    // Para que los pagos apunten aqui con clave ajena compuesta.
+    unique('member_subscriptions_gym_id_key').on(t.gymId, t.id),
   ],
 );
 
@@ -203,11 +217,9 @@ export const payments = pgTable(
      * ahi para que el gimnasio cuadre su contabilidad, sin ningun dato personal.
      * Lo ampara el art. 17.3.b — la conservacion por obligacion legal prevalece.
      */
-    memberId: uuid('member_id').references(() => members.id, { onDelete: 'set null' }),
+    memberId: uuid('member_id'),
     /** Nulo en una matricula o en un cobro suelto, que no cubren cuota. */
-    subscriptionId: uuid('subscription_id').references(() => memberSubscriptions.id, {
-      onDelete: 'set null',
-    }),
+    subscriptionId: uuid('subscription_id'),
 
     concept: paymentConcept('concept').notNull(),
     amountCents: integer('amount_cents').notNull(),
@@ -232,6 +244,37 @@ export const payments = pgTable(
     index('payments_gym_member_idx').on(t.gymId, t.memberId),
     index('payments_gym_paid_on_idx').on(t.gymId, t.paidOn),
     index('payments_subscription_idx').on(t.subscriptionId),
+    /**
+     * ┌────────────────────────────────────────────────────────────────────────┐
+     * │ ATENCION AL LEER LA MIGRACION: estas dos claves NO son exactamente lo   │
+     * │ que drizzle escribe aqui.                                               │
+     * │                                                                        │
+     * │ En SQL llevan `ON DELETE SET NULL (member_id)` y                        │
+     * │ `ON DELETE SET NULL (subscription_id)` — con la columna entre           │
+     * │ parentesis, sintaxis de PostgreSQL 15+. Drizzle no sabe expresar esa    │
+     * │ lista, y su `set null` a secas pondria a NULL **todas** las columnas de  │
+     * │ la clave, incluido `gym_id`, que es NOT NULL: el borrado de un socio     │
+     * │ fallaria con violacion de no-nulo.                                       │
+     * │                                                                        │
+     * │ Por eso la migracion 0008 ajusta esas dos a mano. El snapshot dice      │
+     * │ "set null" y la base de datos dice "set null (columna)"; drizzle nunca   │
+     * │ compara contra la base de datos, asi que la divergencia es estable y no  │
+     * │ genera migraciones espureas. Hay un test que comprueba el catalogo real. │
+     * └────────────────────────────────────────────────────────────────────────┘
+     *
+     * El comportamiento buscado sigue siendo el del art. 17.3.b: al borrar al
+     * socio, el pago sobrevive desligado con su importe y su fecha.
+     */
+    foreignKey({
+      columns: [t.gymId, t.memberId],
+      foreignColumns: [members.gymId, members.id],
+      name: 'payments_gym_member_fk',
+    }).onDelete('set null'),
+    foreignKey({
+      columns: [t.gymId, t.subscriptionId],
+      foreignColumns: [memberSubscriptions.gymId, memberSubscriptions.id],
+      name: 'payments_gym_subscription_fk',
+    }).onDelete('set null'),
   ],
 );
 

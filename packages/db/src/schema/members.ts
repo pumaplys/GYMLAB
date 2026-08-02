@@ -1,12 +1,14 @@
 import { sql } from 'drizzle-orm';
 import {
   date,
+  foreignKey,
   index,
   integer,
   pgEnum,
   pgTable,
   text,
   timestamp,
+  unique,
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
@@ -87,6 +89,15 @@ export const members = pgTable(
     ...timestamps,
   },
   (t) => [
+    // Existe para que OTRAS tablas puedan apuntar aqui con clave ajena
+    // COMPUESTA (gym_id, member_id) y no solo por `id`.
+    //
+    // Sin ella, una asignacion de entrenador o una cuota podian declarar
+    // `gym_id` del gimnasio A y apuntar a un socio del B: la clave ajena solo
+    // comprobaba que el socio existiera, no de quien era. RLS impedia leer esa
+    // fila, asi que no habia fuga — pero la incoherencia era representable, y en
+    // este proyecto lo que no debe ocurrir se impide, no se vigila.
+    unique('members_gym_id_key').on(t.gymId, t.id),
     uniqueIndex('members_gym_number_key').on(t.gymId, t.memberNumber),
     index('members_gym_id_idx').on(t.gymId),
     index('members_user_id_idx').on(t.userId),
@@ -150,15 +161,21 @@ export const memberNotes = pgTable(
   {
     id: primaryId(),
     gymId: tenantId().references(() => gyms.id, { onDelete: 'cascade' }),
-    memberId: uuid('member_id')
-      .notNull()
-      .references(() => members.id, { onDelete: 'cascade' }),
+    memberId: uuid('member_id').notNull(),
     /** Nulo si el autor se borro por derecho al olvido. */
     authorUserId: uuid('author_user_id').references(() => users.id, { onDelete: 'set null' }),
     body: text('body').notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [index('member_notes_gym_member_idx').on(t.gymId, t.memberId)],
+  (t) => [
+    index('member_notes_gym_member_idx').on(t.gymId, t.memberId),
+    // Compuesta: la nota y el socio han de ser del MISMO gimnasio.
+    foreignKey({
+      columns: [t.gymId, t.memberId],
+      foreignColumns: [members.gymId, members.id],
+      name: 'member_notes_gym_member_fk',
+    }).onDelete('cascade'),
+  ],
 );
 
 export type Member = typeof members.$inferSelect;

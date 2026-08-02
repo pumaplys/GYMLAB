@@ -1,5 +1,15 @@
 import { sql } from 'drizzle-orm';
-import { index, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import {
+  foreignKey,
+  index,
+  pgEnum,
+  pgTable,
+  text,
+  timestamp,
+  unique,
+  uniqueIndex,
+  uuid,
+} from 'drizzle-orm/pg-core';
 import { primaryId, tenantId, timestamps } from './_helpers';
 import { users } from './identity';
 import { members } from './members';
@@ -59,6 +69,8 @@ export const trainers = pgTable(
     // invitaciones seguidas crearia dos perfiles de la misma persona.
     uniqueIndex('trainers_gym_user_key').on(t.gymId, t.userId),
     index('trainers_gym_id_idx').on(t.gymId),
+    // Para que las asignaciones puedan apuntar aqui con clave ajena compuesta.
+    unique('trainers_gym_id_key').on(t.gymId, t.id),
   ],
 );
 
@@ -87,12 +99,8 @@ export const trainerAssignments = pgTable(
   {
     id: primaryId(),
     gymId: tenantId().references(() => gyms.id, { onDelete: 'cascade' }),
-    trainerId: uuid('trainer_id')
-      .notNull()
-      .references(() => trainers.id, { onDelete: 'cascade' }),
-    memberId: uuid('member_id')
-      .notNull()
-      .references(() => members.id, { onDelete: 'cascade' }),
+    trainerId: uuid('trainer_id').notNull(),
+    memberId: uuid('member_id').notNull(),
 
     /** Quien hizo la asignacion. Nulo si esa cuenta se borro. */
     assignedByUserId: uuid('assigned_by_user_id').references(() => users.id, {
@@ -116,6 +124,25 @@ export const trainerAssignments = pgTable(
     // entrenadores de este socio". Con gym_id delante, como todo lo demas.
     index('trainer_assignments_gym_trainer_idx').on(t.gymId, t.trainerId),
     index('trainer_assignments_gym_member_idx').on(t.gymId, t.memberId),
+    // CLAVES AJENAS COMPUESTAS, y aqui esta el motivo de todo el arreglo.
+    //
+    // Con la clave simple, esta fila podia declarar `gym_id` del gimnasio A y
+    // apuntar a un socio o a un entrenador del B: la restriccion solo comprobaba
+    // que existieran. Se verifico que la fila incoherente era insertable.
+    //
+    // No habia fuga —al leer, el JOIN con `members` si esta filtrado por RLS y
+    // la fila desaparecia—, pero lo que nos salvaba era una politica de OTRA
+    // tabla, no una garantia propia. Ahora la incoherencia es irrepresentable.
+    foreignKey({
+      columns: [t.gymId, t.trainerId],
+      foreignColumns: [trainers.gymId, trainers.id],
+      name: 'trainer_assignments_gym_trainer_fk',
+    }).onDelete('cascade'),
+    foreignKey({
+      columns: [t.gymId, t.memberId],
+      foreignColumns: [members.gymId, members.id],
+      name: 'trainer_assignments_gym_member_fk',
+    }).onDelete('cascade'),
   ],
 );
 
