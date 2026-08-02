@@ -25,6 +25,8 @@ import {
   accessTokens,
   auditLog,
   authEvents,
+  exercises,
+  exerciseTemplates,
   gyms,
   invitations,
   memberCounters,
@@ -35,6 +37,8 @@ import {
   organizations,
   payments,
   plans,
+  routineItems,
+  routines,
   trainerAssignments,
   trainers,
   users,
@@ -784,20 +788,32 @@ describe('integridad referencial: el tenant viaja en la clave ajena', () => {
     // Guardarrail, hermano del que exige RLS a toda tabla con gym_id: si alguien
     // anade una relacion nueva apuntando solo por `id`, esto se pone en rojo en
     // el PR en lugar de descubrirse con datos cruzados en produccion.
-    const conTenant = ['members', 'trainers', 'plans', 'member_subscriptions'];
-
+    // LA LISTA SE DERIVA DEL CATALOGO, no se mantiene a mano.
+    //
+    // Antes era un array escrito aqui, y en la revision del modulo de rutinas se
+    // vio el fallo: llegaron `exercises` y `routines`, nadie se acordo de
+    // anadirlas, y el guardarrail seguia en verde sin cubrirlas. Un guardarrail
+    // que hay que recordar actualizar no es un guardarrail, es una nota.
+    //
+    // Ahora es "toda tabla que tenga columna gym_id", asi que los modulos que
+    // vengan quedan cubiertos sin tocar este test. Las claves hacia `gyms` no
+    // entran: esa tabla no tiene columna `gym_id`, su identificador es `id`.
     const result = await owner.execute<{ tabla: string; constraint: string; def: string }>(sql`
       SELECT conrelid::regclass::text AS tabla,
              conname AS constraint,
              pg_get_constraintdef(oid) AS def
-      FROM pg_constraint
-      WHERE contype = 'f'
-        AND confrelid::regclass::text = ANY(${sql.raw(
-          `ARRAY[${conTenant.map((t) => `'${t}'`).join(',')}]`,
-        )})
+      FROM pg_constraint c
+      WHERE c.contype = 'f'
+        AND EXISTS (
+          SELECT 1 FROM information_schema.columns col
+          WHERE col.table_schema = 'public'
+            AND col.table_name = c.confrelid::regclass::text
+            AND col.column_name = 'gym_id'
+        )
     `);
 
-    expect(result.rows.length).toBeGreaterThan(0);
+    // Si esto baja de golpe, es que la deteccion dejo de encontrar tablas.
+    expect(result.rows.length).toBeGreaterThan(8);
     for (const fila of result.rows) {
       expect(fila.def, `${fila.tabla}.${fila.constraint} no incluye gym_id`).toContain('gym_id');
     }
@@ -877,6 +893,72 @@ describe('tablas del modulo access', () => {
     expect(filas[0]?.gymId).toBe(gymA);
 
     await owner.delete(accessEvents).where(eq(accessEvents.gymId, gymA));
+  });
+});
+
+describe('tablas del modulo training', () => {
+  it('las bibliotecas de ejercicios estan aisladas por gimnasio', async () => {
+    // ADR-0012: cada gimnasio tiene SU copia. Aqui se comprueba que ademas no ve
+    // la del vecino, que es lo que hace que renombrar o borrar sea seguro.
+    const enA = randomUUID();
+    const enB = randomUUID();
+    await owner
+      .insert(exercises)
+      .values({ id: enA, gymId: gymA, name: 'Press de A', muscleGroup: 'chest' });
+    await owner
+      .insert(exercises)
+      .values({ id: enB, gymId: gymB, name: 'Press de B', muscleGroup: 'chest' });
+
+    const vistos = await withTenant(app, gymA, (tx) => tx.select().from(exercises));
+
+    expect(vistos).toHaveLength(1);
+    expect(vistos[0]?.name).toBe('Press de A');
+
+    await owner.delete(exercises).where(sql`id in (${enA}, ${enB})`);
+  });
+
+  it('el catalogo de plataforma SI es visible desde cualquier gimnasio', async () => {
+    // No lleva `gym_id` ni RLS a proposito: son datos de referencia. Este test
+    // deja escrito que es intencionado y no un olvido.
+    const desdeA = await withTenant(app, gymA, (tx) => tx.select().from(exerciseTemplates));
+    const desdeB = await withTenant(app, gymB, (tx) => tx.select().from(exerciseTemplates));
+
+    expect(desdeA.length).toBeGreaterThan(60);
+    expect(desdeA.length).toBe(desdeB.length);
+  });
+
+  it('borrar un ejercicio conserva el item de la rutina, con su nombre copiado', async () => {
+    // La promesa de ADR-0012 vista desde la base de datos: la clave ajena anula
+    // SOLO `exercise_id`, no `gym_id`, que es NOT NULL.
+    const ejercicio = randomUUID();
+    const rutina = randomUUID();
+    await owner
+      .insert(exercises)
+      .values({ id: ejercicio, gymId: gymA, name: 'Se borra', muscleGroup: 'legs' });
+    await owner.insert(routines).values({ id: rutina, gymId: gymA, name: 'Con el borrado' });
+    await owner.insert(routineItems).values({
+      gymId: gymA,
+      routineId: rutina,
+      exerciseId: ejercicio,
+      exerciseName: 'Se borra',
+      position: 1,
+      sets: 4,
+      reps: '10',
+    });
+
+    await owner.delete(exercises).where(eq(exercises.id, ejercicio));
+
+    const items = await owner
+      .select()
+      .from(routineItems)
+      .where(eq(routineItems.routineId, rutina));
+
+    expect(items).toHaveLength(1);
+    expect(items[0]?.exerciseId).toBeNull();
+    expect(items[0]?.exerciseName).toBe('Se borra');
+    expect(items[0]?.gymId).toBe(gymA);
+
+    await owner.delete(routines).where(eq(routines.id, rutina));
   });
 });
 

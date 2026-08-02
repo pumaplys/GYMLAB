@@ -16,6 +16,7 @@ import { MailModule } from './mail/mail.module';
 import { MembersModule } from './members/members.module';
 import { PersonalDataModule } from './personal-data.module';
 import { TrainersModule } from './trainers/trainers.module';
+import { TrainingModule } from './training/training.module';
 
 /**
  * Modulo raiz del monolito modular.
@@ -48,6 +49,7 @@ import { TrainersModule } from './trainers/trainers.module';
     MembersModule,
     TrainersModule,
     BillingModule,
+    TrainingModule,
     AccessModule,
     // Van DESPUES de los modulos de dominio: registran sus implementaciones de
     // los dos puntos de extension. Ver ADR-0010 y ADR-0011.
