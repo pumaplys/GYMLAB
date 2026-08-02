@@ -27,7 +27,8 @@ import type { AcceptInvitationInput, Invitation, Role } from '@gymlab/contracts'
 import { ACCOUNT_EXISTS, canInvite } from '@gymlab/contracts';
 import {
   INVITATION_ACCEPTED_HOOK,
-  type InvitationAcceptedHook,
+  type InvitationAcceptedEvent,
+  type InvitationAcceptedHooks,
 } from '../common/invitation-hooks';
 import { env } from '../config/env';
 import { DATABASE } from '../database/database.module';
@@ -46,16 +47,33 @@ export class InvitationsService {
     @Inject(AUTH) private readonly auth: Auth,
     private readonly jobs: JobsService,
     /**
-     * Punto de extension, OPCIONAL a proposito.
+     * Punto de extension, OPCIONAL a proposito y en plural.
      *
-     * `invitations` no depende de `members`: depende de una interfaz que vive en
-     * `common`. Quien la implementa se registra desde fuera. Asi la unica
-     * direccion real es `members -> invitations`, sin ciclo (ADR-0006).
+     * `invitations` no depende de `members` ni de `trainers`: depende de una
+     * interfaz que vive en `common`. Quienes la implementan se registran desde
+     * fuera, en la raiz. Asi las unicas direcciones reales salen hacia aqui, sin
+     * ciclo (ADR-0006).
      */
     @Optional()
     @Inject(INVITATION_ACCEPTED_HOOK)
-    private readonly hook?: InvitationAcceptedHook,
+    private readonly hooks: InvitationAcceptedHooks = [],
   ) {}
+
+  /**
+   * Avisa a quienes reaccionan a una invitacion aceptada.
+   *
+   * EN SERIE Y NO EN PARALELO: todos escriben en la MISMA transaccion, que la
+   * lleva el evento. Un `Promise.all` lanzaria varias sentencias a la vez sobre
+   * una sola conexion, que es justo lo que `node-postgres` no admite.
+   *
+   * Sin capturar errores: si uno falla, la transaccion entera se deshace y la
+   * invitacion no se consume. Es la atomicidad que promete ADR-0010.
+   */
+  private async avisarHooks(evento: InvitationAcceptedEvent): Promise<void> {
+    for (const hook of this.hooks) {
+      await hook.onInvitationAccepted(evento);
+    }
+  }
 
   /**
    * Crea una invitacion.
@@ -252,10 +270,10 @@ export class InvitationsService {
           entityId: pendiente.id,
         });
 
-        // Punto de extension: `members` rellena aqui su `user_id`. Dentro de
-        // ESTA transaccion, para que un fallo al vincular deje tambien la
-        // invitacion sin consumir.
-        await this.hook?.onInvitationAccepted({
+        // Punto de extension: `members` rellena aqui su `user_id` y `trainers`
+        // crea el perfil. Dentro de ESTA transaccion, para que un fallo al
+        // vincular deje tambien la invitacion sin consumir.
+        await this.avisarHooks({
           gymId,
           invitationId: pendiente.id,
           memberId: pendiente.memberId,
@@ -368,7 +386,7 @@ export class InvitationsService {
           entityId: pendiente.id,
         });
 
-        await this.hook?.onInvitationAccepted({
+        await this.avisarHooks({
           gymId,
           invitationId: pendiente.id,
           memberId: pendiente.memberId,

@@ -13,10 +13,14 @@ import type { MembershipRole, Transaction } from '@gymlab/db';
  * `common` —donde no hay dependencias— y no sabe nada de `members`. La unica
  * direccion real es `members -> invitations`.
  *
- * Y hay una razon de futuro: el modulo de entrenadores tambien tendra que
- * reaccionar a una invitacion aceptada, para crear su perfil. Con llamadas
- * directas, `invitations` acabaria importando `members` y `staff`; con este
- * punto de extension, cada modulo se registra por su cuenta.
+ * Y esa razon de futuro ya llego: `trainers` crea el perfil del entrenador
+ * cuando acepta su invitacion, igual que `members` rellena su `user_id`. Con
+ * llamadas directas, `invitations` importaria los dos modulos; con este punto de
+ * extension, cada uno se registra por su cuenta y `invitations` no cambia.
+ *
+ * EL TOKEN RESUELVE UNA LISTA, no un solo implementador, justo por eso. Cuando
+ * eran dos modulos en lugar de uno, un token de valor unico habria obligado a
+ * elegir cual de los dos reacciona.
  */
 export const INVITATION_ACCEPTED_HOOK = Symbol('INVITATION_ACCEPTED_HOOK');
 
@@ -41,3 +45,17 @@ export interface InvitationAcceptedEvent {
 export interface InvitationAcceptedHook {
   onInvitationAccepted(evento: InvitationAcceptedEvent): Promise<void>;
 }
+
+/**
+ * REGLA PARA QUIEN IMPLEMENTE ESTA INTERFAZ, y cuesta caro descubrirla sola:
+ *
+ * el implementador NO puede depender de `InvitationsService`, ni directa ni
+ * indirectamente. Este token esta en el grafo de dependencias de ese servicio,
+ * asi que lo que se registre arrastra consigo todo lo que necesite. Cerrar el
+ * circulo deja a Nest esperando para siempre en el arranque, SIN ningun error.
+ *
+ * Por eso los implementadores son clases dedicadas y sin dependencias
+ * —`MemberAccountLink`, `TrainerProfileLink`— y no los servicios de cada modulo,
+ * que si necesitan crear invitaciones. Ver ADR-0010.
+ */
+export type InvitationAcceptedHooks = readonly InvitationAcceptedHook[];

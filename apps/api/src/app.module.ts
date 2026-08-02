@@ -12,6 +12,7 @@ import { InvitationsModule } from './invitations/invitations.module';
 import { JobsModule } from './jobs/jobs.module';
 import { MailModule } from './mail/mail.module';
 import { MembersModule } from './members/members.module';
+import { TrainersModule } from './trainers/trainers.module';
 
 /**
  * Modulo raiz del monolito modular.
@@ -42,8 +43,9 @@ import { MembersModule } from './members/members.module';
     AuthModule,
     InvitationsModule,
     MembersModule,
-    // Va DESPUES de MembersModule: registra la implementacion del punto de
-    // extension de invitaciones. Ver invitation-hooks.module.ts.
+    TrainersModule,
+    // Va DESPUES de los modulos de dominio: registra sus implementaciones del
+    // punto de extension de invitaciones. Ver invitation-hooks.module.ts.
     InvitationHooksModule,
   ],
   controllers: [HealthController],
