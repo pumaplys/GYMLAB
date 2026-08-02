@@ -456,6 +456,29 @@ export class TrainingService {
     return this.rutinasDe(gymId, ficha.id);
   }
 
+  /**
+   * Metricas de rutinas para el panel.
+   *
+   * Las dos por `DISTINCT` y por el mismo motivo que en entrenadores: una rutina
+   * puede estar asignada a muchos socios y un socio puede seguir varias, asi que
+   * contar filas de asignacion responderia a una pregunta que nadie hizo.
+   */
+  async stats(gymId: string) {
+    const tx = requireTransaction();
+    const res = await tx.execute<{ rutinas: string; socios: string }>(sql`
+      SELECT count(DISTINCT routine_id) AS rutinas,
+             count(DISTINCT member_id) AS socios
+      FROM routine_assignments
+      WHERE gym_id = ${gymId} AND ended_at IS NULL
+    `);
+
+    const f = res.rows[0];
+    return {
+      rutinasActivas: Number(f?.rutinas ?? 0),
+      sociosConRutina: Number(f?.socios ?? 0),
+    };
+  }
+
   // --- Interno -------------------------------------------------------------
 
   private async rutinasDe(gymId: string, memberId: string): Promise<AssignedRoutine[]> {

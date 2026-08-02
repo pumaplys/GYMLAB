@@ -294,6 +294,36 @@ export class TrainersService {
     return socio;
   }
 
+  /**
+   * Metricas de entrenadores para el panel.
+   *
+   * ┌──────────────────────────────────────────────────────────────────────────┐
+   * │ `count(DISTINCT member_id)` Y NO LA SUMA DE `activeMembers`.              │
+   * │                                                                          │
+   * │ Un socio puede tener dos entrenadores a la vez —fuerza y rehabilitacion—, │
+   * │ decision tomada al disenar este modulo. Sumar los contadores de cada      │
+   * │ entrenador lo contaria dos veces, y el dueno veria mas socios atendidos   │
+   * │ de los que tiene. Es un error que solo se detecta cuando los numeros ya   │
+   * │ estan mal, asi que se cierra aqui.                                         │
+   * └──────────────────────────────────────────────────────────────────────────┘
+   */
+  async stats(gymId: string) {
+    const tx = requireTransaction();
+    const res = await tx.execute<{ activos: string; socios: string }>(sql`
+      SELECT
+        (SELECT count(*) FROM trainers
+          WHERE gym_id = ${gymId} AND status = 'active') AS activos,
+        (SELECT count(DISTINCT member_id) FROM trainer_assignments
+          WHERE gym_id = ${gymId} AND ended_at IS NULL) AS socios
+    `);
+
+    const f = res.rows[0];
+    return {
+      entrenadoresActivos: Number(f?.activos ?? 0),
+      sociosConEntrenador: Number(f?.socios ?? 0),
+    };
+  }
+
   // --- Interno -------------------------------------------------------------
 
   /**

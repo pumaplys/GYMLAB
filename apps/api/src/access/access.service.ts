@@ -7,6 +7,7 @@ import {
   desc,
   eq,
   members,
+  sql,
   type AccessDecision,
   type AccessReason,
 } from '@gymlab/db';
@@ -287,6 +288,67 @@ export class AccessService {
         : null,
       diasRestantes: datos.diasRestantes,
       isRetry: datos.isRetry ?? false,
+    };
+  }
+
+  /**
+   * Metricas de asistencia para el panel.
+   *
+   * ┌──────────────────────────────────────────────────────────────────────────┐
+   * │ DOS DETALLES QUE CAMBIAN EL NUMERO, y los dos son faciles de olvidar:     │
+   * │                                                                          │
+   * │ 1. Se excluyen las repeticiones (`is_retry`). Un escaner con mala         │
+   * │    cobertura reintenta, y contar esas repeticiones inflaria la            │
+   * │    asistencia con entradas que no ocurrieron.                             │
+   * │                                                                          │
+   * │ 2. `sociosDistintos` es `count(DISTINCT member_id)`, no la suma de        │
+   * │    entradas: quien viene cuatro veces cuenta UNA. Es la diferencia entre  │
+   * │    "cuanto se usa el gimnasio" y "cuanta gente lo usa", y un dueno decide │
+   * │    cosas distintas con cada una.                                          │
+   * └──────────────────────────────────────────────────────────────────────────┘
+   *
+   * OJO CON EL HORIZONTE: `access_events` se purga segun la retencion de cada
+   * gimnasio (12 meses por defecto). Pedir una ventana mayor no da error, da
+   * menos datos. Si algun dia hace falta comparar con el ano pasado, habra que
+   * calcular agregados ANTES de que la purga se lleve el detalle.
+   */
+  async stats(gymId: string, dias: number) {
+    const tx = requireTransaction();
+
+    const resumen = await tx.execute<{
+      entradas: string;
+      socios: string;
+      denegados: string;
+    }>(sql`
+      SELECT count(*) FILTER (WHERE decision <> 'DENY' AND is_retry = false) AS entradas,
+             count(DISTINCT member_id) FILTER (WHERE decision <> 'DENY' AND is_retry = false) AS socios,
+             count(*) FILTER (WHERE decision = 'DENY') AS denegados
+      FROM access_events
+      WHERE gym_id = ${gymId}
+        AND occurred_at >= now() - (${dias}::int * INTERVAL '1 day')
+    `);
+
+    // La serie se agrupa por el dia DEL GIMNASIO, no del servidor: una entrada
+    // de las 00:30 en Madrid pertenece a ese dia, no al anterior en UTC.
+    const serie = await tx.execute<{ dia: string; entradas: string }>(sql`
+      SELECT (e.occurred_at AT TIME ZONE g.timezone)::date AS dia,
+             count(*) AS entradas
+      FROM access_events e
+      JOIN gyms g ON g.id = e.gym_id
+      WHERE e.gym_id = ${gymId}
+        AND e.decision <> 'DENY'
+        AND e.is_retry = false
+        AND e.occurred_at >= now() - (${dias}::int * INTERVAL '1 day')
+      GROUP BY 1
+      ORDER BY 1
+    `);
+
+    const f = resumen.rows[0];
+    return {
+      entradas: Number(f?.entradas ?? 0),
+      sociosDistintos: Number(f?.socios ?? 0),
+      accesosDenegados: Number(f?.denegados ?? 0),
+      porDia: serie.rows.map((r) => ({ dia: String(r.dia), entradas: Number(r.entradas) })),
     };
   }
 

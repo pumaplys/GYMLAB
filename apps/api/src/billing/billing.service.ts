@@ -590,6 +590,60 @@ export class BillingService {
     return this.pagoToDto(fila);
   }
 
+  /**
+   * Metricas de cuotas e ingresos para el panel.
+   *
+   * `sinSuscripcion` es la que mas vale de las cinco: socios ACTIVOS sin ninguna
+   * cuota vigente. Es dinero que el gimnasio cree estar cobrando y no cobra, y
+   * no aparece en ninguna otra pantalla.
+   *
+   * Los ingresos excluyen los pagos anulados. Sumarlos convertiria una
+   * correccion de un error de tecleo en facturacion inventada.
+   */
+  async stats(gymId: string) {
+    const tx = requireTransaction();
+    const hoy = await this.hoy(gymId);
+
+    const res = await tx.execute<Record<string, string>>(sql`
+      WITH vigentes AS (
+        SELECT s.status,
+               (s.current_period_end - ${hoy}::date) AS dias
+        FROM member_subscriptions s
+        WHERE s.gym_id = ${gymId} AND s.status IN ('active', 'paused')
+      )
+      SELECT
+        (SELECT count(*) FROM vigentes WHERE status = 'active' AND dias >= ${DIAS_DE_AVISO}) AS al_corriente,
+        (SELECT count(*) FROM vigentes WHERE status = 'active' AND dias >= 0 AND dias < ${DIAS_DE_AVISO}) AS por_vencer,
+        (SELECT count(*) FROM vigentes WHERE status = 'active' AND dias < 0) AS vencidas,
+        (SELECT count(*) FROM vigentes WHERE status = 'paused') AS pausadas,
+        (SELECT count(*) FROM members m
+          WHERE m.gym_id = ${gymId} AND m.status = 'active'
+            AND NOT EXISTS (
+              SELECT 1 FROM member_subscriptions s2
+              WHERE s2.gym_id = m.gym_id AND s2.member_id = m.id
+                AND s2.status IN ('active', 'paused')
+            )) AS sin_suscripcion,
+        (SELECT coalesce(sum(amount_cents), 0) FROM payments p
+          WHERE p.gym_id = ${gymId} AND p.voided_at IS NULL
+            AND p.paid_on >= date_trunc('month', ${hoy}::date)) AS ingresos
+    `);
+
+    const f = res.rows[0];
+    return {
+      alCorriente: Number(f?.al_corriente ?? 0),
+      porVencer: Number(f?.por_vencer ?? 0),
+      vencidas: Number(f?.vencidas ?? 0),
+      pausadas: Number(f?.pausadas ?? 0),
+      sinSuscripcion: Number(f?.sin_suscripcion ?? 0),
+      ingresosDelMesCents: Number(f?.ingresos ?? 0),
+    };
+  }
+
+  /** El dia de referencia del gimnasio, para que el panel lo muestre. */
+  async hoyDelGimnasio(gymId: string): Promise<string> {
+    return this.hoy(gymId);
+  }
+
   // --- Interno -------------------------------------------------------------
 
   /** Hoy en la zona del gimnasio, no en la del servidor. */
