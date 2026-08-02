@@ -692,6 +692,116 @@ describe('tablas del modulo billing', () => {
   });
 });
 
+describe('integridad referencial: el tenant viaja en la clave ajena', () => {
+  /**
+   * Estos tests cubren un hueco REAL que existio y se verifico ejecutando: con
+   * la clave ajena simple, una fila del gimnasio A podia apuntar a un socio del
+   * B. No habia fuga, porque al leer el JOIN con `members` esta filtrado por
+   * RLS y la fila desaparecia — pero lo que nos salvaba era la politica de OTRA
+   * tabla. Ahora la incoherencia es irrepresentable.
+   */
+  async function sembrarSocio(gymId: string, numero: number) {
+    const id = randomUUID();
+    await owner
+      .insert(members)
+      .values({ id, gymId, memberNumber: numero, firstName: 'N', lastName: 'A' });
+    return id;
+  }
+
+  it('una asignacion no puede apuntar a un socio de OTRO gimnasio', async () => {
+    const entrenadorA = randomUUID();
+    await owner.insert(trainers).values({ id: entrenadorA, gymId: gymA, userId: userA });
+    const socioB = await sembrarSocio(gymB, 60);
+
+    await expect(
+      owner
+        .insert(trainerAssignments)
+        .values({ gymId: gymA, trainerId: entrenadorA, memberId: socioB }),
+    ).rejects.toThrow();
+
+    await owner.delete(members).where(eq(members.id, socioB));
+    await owner.delete(trainers).where(eq(trainers.id, entrenadorA));
+  });
+
+  it('una cuota no puede apuntar a un plan de OTRO gimnasio', async () => {
+    const planB = randomUUID();
+    await owner
+      .insert(plans)
+      .values({ id: planB, gymId: gymB, name: 'De B', priceCents: 3000, period: 'monthly' });
+    const socioA = await sembrarSocio(gymA, 61);
+
+    await expect(
+      owner.insert(memberSubscriptions).values({
+        gymId: gymA,
+        memberId: socioA,
+        planId: planB,
+        priceCents: 3000,
+        startedOn: '2026-01-01',
+        currentPeriodEnd: '2026-01-01',
+      }),
+    ).rejects.toThrow();
+
+    await owner.delete(members).where(eq(members.id, socioA));
+    await owner.delete(plans).where(eq(plans.id, planB));
+  });
+
+  it('borrar al socio deja el pago desligado SIN romper su gym_id', async () => {
+    // EL TEST QUE JUSTIFICA LA SINTAXIS RARA DE LA MIGRACION.
+    //
+    // La clave es compuesta, asi que un `ON DELETE SET NULL` normal pondria a
+    // NULL las DOS columnas, incluida `gym_id`, que es NOT NULL: borrar un socio
+    // fallaria. Por eso lleva la lista de columnas de PostgreSQL 15+, que drizzle
+    // no sabe generar y va escrita a mano en la migracion 0008.
+    //
+    // El comportamiento buscado es el del art. 17.3.b: el pago sobrevive con
+    // importe y fecha para la contabilidad del gimnasio, sin dato personal.
+    const socio = await sembrarSocio(gymA, 62);
+    const pago = randomUUID();
+    await owner.insert(payments).values({
+      id: pago,
+      gymId: gymA,
+      memberId: socio,
+      concept: 'subscription',
+      amountCents: 3000,
+      method: 'cash',
+      paidOn: '2026-01-01',
+    });
+
+    await owner.delete(members).where(eq(members.id, socio));
+
+    const filas = await owner.select().from(payments).where(eq(payments.id, pago));
+    expect(filas).toHaveLength(1);
+    expect(filas[0]?.memberId).toBeNull();
+    expect(filas[0]?.gymId).toBe(gymA);
+    expect(filas[0]?.amountCents).toBe(3000);
+
+    await owner.delete(payments).where(eq(payments.id, pago));
+  });
+
+  it('TODA clave ajena hacia una tabla de tenant lleva gym_id', async () => {
+    // Guardarrail, hermano del que exige RLS a toda tabla con gym_id: si alguien
+    // anade una relacion nueva apuntando solo por `id`, esto se pone en rojo en
+    // el PR en lugar de descubrirse con datos cruzados en produccion.
+    const conTenant = ['members', 'trainers', 'plans', 'member_subscriptions'];
+
+    const result = await owner.execute<{ tabla: string; constraint: string; def: string }>(sql`
+      SELECT conrelid::regclass::text AS tabla,
+             conname AS constraint,
+             pg_get_constraintdef(oid) AS def
+      FROM pg_constraint
+      WHERE contype = 'f'
+        AND confrelid::regclass::text = ANY(${sql.raw(
+          `ARRAY[${conTenant.map((t) => `'${t}'`).join(',')}]`,
+        )})
+    `);
+
+    expect(result.rows.length).toBeGreaterThan(0);
+    for (const fila of result.rows) {
+      expect(fila.def, `${fila.tabla}.${fila.constraint} no incluye gym_id`).toContain('gym_id');
+    }
+  });
+});
+
 describe('withTenant', () => {
   it('rechaza un gymId que no es UUID', async () => {
     await expect(withTenant(app, "'; DROP TABLE users; --", async () => null)).rejects.toThrow(

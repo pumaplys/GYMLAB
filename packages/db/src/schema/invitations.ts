@@ -1,4 +1,12 @@
-import { index, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import {
+  foreignKey,
+  index,
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+} from 'drizzle-orm/pg-core';
 import { primaryId, tenantId, timestamps } from './_helpers';
 import { membershipRole, users } from './identity';
 import { members } from './members';
@@ -53,7 +61,7 @@ export const invitations = pgTable(
      * apuntando a una ficha inexistente, y el flujo de aceptacion fallaria en un
      * sitio donde ya no se puede explicar por que.
      */
-    memberId: uuid('member_id').references(() => members.id, { onDelete: 'cascade' }),
+    memberId: uuid('member_id'),
 
     invitedByUserId: uuid('invited_by_user_id')
       .notNull()
@@ -68,6 +76,14 @@ export const invitations = pgTable(
     index('invitations_gym_id_idx').on(t.gymId),
     index('invitations_email_idx').on(t.email),
     index('invitations_member_id_idx').on(t.memberId),
+    // Compuesta: la invitacion y la ficha han de ser del MISMO gimnasio. Aqui
+    // `cascade` sobre las dos columnas es correcto porque la invitacion entera
+    // deja de tener sentido si desaparece la ficha de la que salio.
+    foreignKey({
+      columns: [t.gymId, t.memberId],
+      foreignColumns: [members.gymId, members.id],
+      name: 'invitations_gym_member_fk',
+    }).onDelete('cascade'),
   ],
 );
 
