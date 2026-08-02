@@ -1,4 +1,4 @@
-import { index, pgTable, text, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { index, integer, pgTable, text, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 import { primaryId, timestamps } from './_helpers';
 
 /**
@@ -37,6 +37,15 @@ export const gyms = pgTable(
     slug: text('slug').notNull(),
     /** Determina cuando vence una cuota o en que dia cae un acceso. */
     timezone: text('timezone').notNull().default('Europe/Madrid'),
+    /**
+     * Dias de cortesia tras vencer una cuota antes de denegar el acceso.
+     *
+     * Por defecto 0 —vencida es vencida— y cada gimnasio lo sube si su forma de
+     * trabajar es otra. Es un ajuste del negocio, no una constante de la
+     * plataforma: hay gimnasios que cobran el dia 1 y otros que dejan la primera
+     * semana de margen, y decidirlo por ellos seria inventarles el negocio.
+     */
+    graceDays: integer('grace_days').notNull().default(0),
     ...timestamps,
   },
   (t) => [

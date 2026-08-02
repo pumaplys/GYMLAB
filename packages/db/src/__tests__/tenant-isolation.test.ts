@@ -29,7 +29,10 @@ import {
   memberNotes,
   members,
   memberships,
+  memberSubscriptions,
   organizations,
+  payments,
+  plans,
   trainerAssignments,
   trainers,
   users,
@@ -532,6 +535,160 @@ describe('tablas del modulo trainers', () => {
 
     await owner.delete(members).where(eq(members.id, socio));
     await owner.delete(trainers).where(sql`id in (${entrenador1}, ${entrenador2})`);
+  });
+});
+
+describe('tablas del modulo billing', () => {
+  async function sembrarPlan(gymId: string) {
+    const id = randomUUID();
+    await owner
+      .insert(plans)
+      .values({ id, gymId, name: `Plan ${id.slice(0, 6)}`, priceCents: 3000, period: 'monthly' });
+    return id;
+  }
+
+  async function sembrarSocio(gymId: string, numero: number) {
+    const id = randomUUID();
+    await owner
+      .insert(members)
+      .values({ id, gymId, memberNumber: numero, firstName: 'N', lastName: 'A' });
+    return id;
+  }
+
+  it('los planes estan aislados por gimnasio', async () => {
+    const enA = await sembrarPlan(gymA);
+    const enB = await sembrarPlan(gymB);
+
+    const vistos = await withTenant(app, gymA, (tx) => tx.select().from(plans));
+
+    expect(vistos).toHaveLength(1);
+    expect(vistos[0]?.id).toBe(enA);
+
+    await owner.delete(plans).where(sql`id in (${enA}, ${enB})`);
+  });
+
+  it('las cuotas y los pagos estan aislados por gimnasio', async () => {
+    const planA = await sembrarPlan(gymA);
+    const planB = await sembrarPlan(gymB);
+    const socioA = await sembrarSocio(gymA, 40);
+    const socioB = await sembrarSocio(gymB, 40);
+
+    await owner.insert(memberSubscriptions).values([
+      {
+        gymId: gymA,
+        memberId: socioA,
+        planId: planA,
+        priceCents: 3000,
+        startedOn: '2026-01-01',
+        currentPeriodEnd: '2026-02-01',
+      },
+      {
+        gymId: gymB,
+        memberId: socioB,
+        planId: planB,
+        priceCents: 3000,
+        startedOn: '2026-01-01',
+        currentPeriodEnd: '2026-02-01',
+      },
+    ]);
+    await owner.insert(payments).values([
+      {
+        gymId: gymA,
+        memberId: socioA,
+        concept: 'subscription',
+        amountCents: 3000,
+        method: 'cash',
+        paidOn: '2026-01-01',
+      },
+      {
+        gymId: gymB,
+        memberId: socioB,
+        concept: 'subscription',
+        amountCents: 9999,
+        method: 'cash',
+        paidOn: '2026-01-01',
+      },
+    ]);
+
+    const cuotas = await withTenant(app, gymA, (tx) => tx.select().from(memberSubscriptions));
+    expect(cuotas).toHaveLength(1);
+    expect(cuotas[0]?.memberId).toBe(socioA);
+
+    const pagados = await withTenant(app, gymA, (tx) => tx.select().from(payments));
+    expect(pagados).toHaveLength(1);
+    expect(pagados[0]?.amountCents).toBe(3000);
+
+    await owner.delete(members).where(sql`id in (${socioA}, ${socioB})`);
+    await owner.delete(payments).where(sql`gym_id in (${gymA}, ${gymB})`);
+    await owner.delete(memberSubscriptions).where(sql`gym_id in (${gymA}, ${gymB})`);
+    await owner.delete(plans).where(sql`id in (${planA}, ${planB})`);
+  });
+
+  it('la aplicacion NO puede borrar un pago: append-only impuesto por permisos', async () => {
+    // El caracter append-only no se deja al codigo. Anular es un UPDATE previsto
+    // (`voided_at`); hacer desaparecer la fila no existe como operacion.
+    const plan = await sembrarPlan(gymA);
+    const socio = await sembrarSocio(gymA, 41);
+    const pago = randomUUID();
+    await owner.insert(memberSubscriptions).values({
+      gymId: gymA,
+      memberId: socio,
+      planId: plan,
+      priceCents: 3000,
+      startedOn: '2026-01-01',
+      currentPeriodEnd: '2026-02-01',
+    });
+    await owner.insert(payments).values({
+      id: pago,
+      gymId: gymA,
+      memberId: socio,
+      concept: 'subscription',
+      amountCents: 3000,
+      method: 'cash',
+      paidOn: '2026-01-01',
+    });
+
+    await expect(
+      withTenant(app, gymA, (tx) => tx.delete(payments).where(eq(payments.id, pago))),
+    ).rejects.toThrow();
+
+    // Pero anularlo si se puede: es la via prevista para corregir un error.
+    await withTenant(app, gymA, (tx) =>
+      tx.update(payments).set({ voidedAt: new Date() }).where(eq(payments.id, pago)),
+    );
+
+    await owner.delete(members).where(eq(members.id, socio));
+    await owner.delete(payments).where(eq(payments.id, pago));
+    await owner.delete(memberSubscriptions).where(sql`gym_id = ${gymA}`);
+    await owner.delete(plans).where(eq(plans.id, plan));
+  });
+
+  it('un socio no puede tener DOS cuotas vigentes a la vez', async () => {
+    const plan = await sembrarPlan(gymA);
+    const socio = await sembrarSocio(gymA, 42);
+    const primera = {
+      gymId: gymA,
+      memberId: socio,
+      planId: plan,
+      priceCents: 3000,
+      startedOn: '2026-01-01',
+      currentPeriodEnd: '2026-02-01',
+    };
+
+    await owner.insert(memberSubscriptions).values(primera);
+    await expect(owner.insert(memberSubscriptions).values(primera)).rejects.toThrow();
+
+    // Cancelada la primera, se puede dar de alta otra: el indice es parcial, y
+    // ese es el camino de vuelta de quien dejo de pagar y quiere volver.
+    await owner
+      .update(memberSubscriptions)
+      .set({ status: 'cancelled', cancelledAt: new Date() })
+      .where(eq(memberSubscriptions.memberId, socio));
+    await owner.insert(memberSubscriptions).values(primera);
+
+    await owner.delete(members).where(eq(members.id, socio));
+    await owner.delete(memberSubscriptions).where(sql`gym_id = ${gymA}`);
+    await owner.delete(plans).where(eq(plans.id, plan));
   });
 });
 

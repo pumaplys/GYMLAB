@@ -19,6 +19,7 @@ export * from './organization';
 export * from './identity';
 export * from './members';
 export * from './trainers';
+export * from './billing';
 export * from './invitations';
 export * from './compliance';
 export * from './audit';
