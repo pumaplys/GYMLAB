@@ -287,6 +287,60 @@ CREATE POLICY tenant_isolation ON trainer_assignments
 
 
 -- -----------------------------------------------------------------------------
+-- plans — patron estandar.
+-- -----------------------------------------------------------------------------
+ALTER TABLE plans ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS tenant_isolation ON plans;
+CREATE POLICY tenant_isolation ON plans
+  FOR ALL
+  TO gymlab_app
+  USING (gym_id = app_current_gym_id())
+  WITH CHECK (gym_id = app_current_gym_id());
+
+
+-- -----------------------------------------------------------------------------
+-- member_subscriptions — patron estandar.
+-- -----------------------------------------------------------------------------
+-- Que un socio solo vea SU cuota y no la de sus companeros no lo impone RLS: el
+-- socio consulta dentro de su propio gimnasio y la politica no distingue roles.
+-- Es autorizacion de aplicacion, con sus propios tests.
+ALTER TABLE member_subscriptions ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS tenant_isolation ON member_subscriptions;
+CREATE POLICY tenant_isolation ON member_subscriptions
+  FOR ALL
+  TO gymlab_app
+  USING (gym_id = app_current_gym_id())
+  WITH CHECK (gym_id = app_current_gym_id());
+
+
+-- -----------------------------------------------------------------------------
+-- payments — aislado por tenant Y ademas sin borrado.
+-- -----------------------------------------------------------------------------
+-- Un registro de dinero que la aplicacion puede borrar en silencio no sirve como
+-- registro de dinero. Igual que en `audit_log`, el caracter append-only no se
+-- deja al codigo: se retira el permiso.
+--
+-- UPDATE si se conserva, al contrario que en `audit_log`, porque anular un pago
+-- es un UPDATE (`voided_at`, motivo y autor) y es la via prevista para corregir
+-- un error. Lo que no existe es hacer desaparecer la fila.
+--
+-- El REVOKE va despues del GRANT de 00-roles.sql, que concede permisos sobre
+-- todas las tablas. El orden de los dos archivos importa.
+ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS tenant_isolation ON payments;
+CREATE POLICY tenant_isolation ON payments
+  FOR ALL
+  TO gymlab_app
+  USING (gym_id = app_current_gym_id())
+  WITH CHECK (gym_id = app_current_gym_id());
+
+REVOKE DELETE ON payments FROM gymlab_app;
+
+
+-- -----------------------------------------------------------------------------
 -- audit_log — aislado por tenant Y ademas append-only.
 -- -----------------------------------------------------------------------------
 -- Un registro de auditoria que la propia aplicacion puede reescribir no sirve

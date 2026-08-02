@@ -1,4 +1,11 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  NotFoundException,
+  Optional,
+  type OnModuleInit,
+} from '@nestjs/common';
 import {
   and,
   auditLog,
@@ -23,6 +30,10 @@ import type {
   UpdateOwnProfileInput,
 } from '@gymlab/contracts';
 import type { Invitation } from '@gymlab/contracts';
+import {
+  PERSONAL_DATA_CONTRIBUTORS,
+  type PersonalDataContributors,
+} from '../common/personal-data';
 import { requireRequestContext, requireTransaction } from '../common/request-context';
 import { InvitationsService } from '../invitations/invitations.service';
 import { memberToDto } from './member.mapper';
@@ -37,8 +48,40 @@ import { memberToDto } from './member.mapper';
  * olvidar: ahi explica cual.
  */
 @Injectable()
-export class MembersService {
-  constructor(private readonly invitations: InvitationsService) {}
+export class MembersService implements OnModuleInit {
+  constructor(
+    private readonly invitations: InvitationsService,
+    /**
+     * Quienes aportan datos a la exportacion del art. 15 (ADR-0011).
+     *
+     * OPCIONAL a proposito: hasta que existio `billing` no habia ninguno, y un
+     * modulo que se despliegue sin ellos debe exportar la ficha igual. Lo que no
+     * puede es fallar en silencio, asi que la lista se comprueba al arrancar.
+     */
+    @Optional()
+    @Inject(PERSONAL_DATA_CONTRIBUTORS)
+    private readonly contribuidores: PersonalDataContributors = [],
+  ) {}
+
+  /**
+   * Sin contribuidores registrados, la aplicacion no arranca.
+   *
+   * No detecta que FALTE uno concreto —eso lo dice ADR-0011 y no tiene solucion
+   * automatica sin inventar un registro que tambien habria que mantener a mano—,
+   * pero si el caso en que el cableado entero desaparece. Y ese importa: la
+   * exportacion seguiria respondiendo 200 con menos datos de los debidos ante una
+   * solicitud legal, sin que nadie viera un error.
+   */
+  onModuleInit(): void {
+    if (this.contribuidores.length === 0) {
+      throw new Error(
+        '[members] No hay ningun PersonalDataContributor registrado. ' +
+          'Revisa que PersonalDataModule este en los imports de AppModule: sin el, ' +
+          'la exportacion del art. 15 entregaria solo la ficha y omitiria en ' +
+          'silencio las cuotas y los pagos.',
+      );
+    }
+  }
 
   /**
    * Da de alta un socio.
@@ -295,12 +338,27 @@ export class MembersService {
    * │ Consecuencia practica para el gimnasio: una nota interna no es        │
    * │ secreta. Hay que escribirlas sabiendo que esa persona puede pedirlas. │
    * └──────────────────────────────────────────────────────────────────────┘
+   *
+   * LO QUE GUARDAN OTROS MODULOS —cuotas, pagos y, mas adelante, peso y
+   * medidas— llega por el punto de extension de ADR-0011. Este metodo no sabe
+   * quien contribuye ni cuantos son, y esa ignorancia es deliberada: `billing`
+   * ya depende de `members`, asi que preguntarle de vuelta cerraria un ciclo.
    */
   async exportData(gymId: string, id: string) {
+    const ficha = memberToDto(await this.buscar(gymId, id));
+
+    // En serie y no en paralelo: todos leen de la MISMA transaccion de la
+    // peticion, y una conexion de node-postgres no admite sentencias a la vez.
+    const deOtrosModulos: Record<string, unknown> = {};
+    for (const contribuidor of this.contribuidores) {
+      deOtrosModulos[contribuidor.seccion] = await contribuidor.aportarDatos(gymId, id);
+    }
+
     return {
       exportadoEl: new Date().toISOString(),
-      ficha: memberToDto(await this.buscar(gymId, id)),
+      ficha,
       notasInternas: await this.listNotes(gymId, id),
+      ...deOtrosModulos,
     };
   }
 

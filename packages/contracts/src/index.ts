@@ -23,3 +23,4 @@ export const CONTRACTS_VERSION = '0.0.0' as const;
 export * from './auth';
 export * from './members';
 export * from './trainers';
+export * from './billing';
