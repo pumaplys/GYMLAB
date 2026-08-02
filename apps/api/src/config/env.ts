@@ -45,6 +45,21 @@ const schema = z.object({
   PLATFORM_INVITE_CODE: z.string().min(8),
 
   /**
+   * Semilla de la que se derivan las claves de firma del QR de acceso.
+   *
+   * NO se usa directamente para firmar: de ella sale una clave por gimnasio con
+   * HKDF, de modo que un token del gimnasio A no verifica en el B. Ver
+   * `access/access-token.ts`.
+   *
+   * Es distinta de `AUTH_SECRET` a proposito. Comprometer una no debe comprometer
+   * la otra, y son cosas de vida muy distinta: las sesiones duran meses y estos
+   * tokens sesenta segundos, asi que rotar esta apenas cuesta nada.
+   */
+  ACCESS_TOKEN_SECRET: z
+    .string()
+    .min(32, 'ACCESS_TOKEN_SECRET debe tener al menos 32 caracteres'),
+
+  /**
    * Origenes permitidos por CORS, separados por comas.
    *
    * Lista blanca y nunca `*`: el transporte por cookie exige

@@ -1,5 +1,6 @@
 import { MiddlewareConsumer, Module, type NestModule } from '@nestjs/common';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { AccessModule } from './access/access.module';
 import { AuthModule } from './auth/auth.module';
 import { BillingModule } from './billing/billing.module';
 import { AuthGuard } from './common/guards/auth.guard';
@@ -47,6 +48,7 @@ import { TrainersModule } from './trainers/trainers.module';
     MembersModule,
     TrainersModule,
     BillingModule,
+    AccessModule,
     // Van DESPUES de los modulos de dominio: registran sus implementaciones de
     // los dos puntos de extension. Ver ADR-0010 y ADR-0011.
     InvitationHooksModule,
