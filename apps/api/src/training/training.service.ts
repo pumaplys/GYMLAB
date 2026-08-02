@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   and,
   asc,
@@ -13,6 +18,7 @@ import {
   routines,
   sql,
   type Exercise as ExerciseRow,
+  type Routine as RoutineRow,
   type Transaction,
 } from '@gymlab/db';
 import type {
@@ -87,6 +93,8 @@ export class TrainingService {
 
   async createExercise(gymId: string, input: CreateExerciseInput): Promise<Exercise> {
     const tx = requireTransaction();
+    await this.assertNombreLibre(gymId, input.name);
+
     const [fila] = await tx
       .insert(exercises)
       .values({
@@ -106,7 +114,11 @@ export class TrainingService {
     input: UpdateExerciseInput,
   ): Promise<Exercise> {
     const tx = requireTransaction();
-    await this.buscarEjercicio(gymId, id);
+    const actual = await this.buscarEjercicio(gymId, id);
+
+    if (input.name && input.name !== actual.name) {
+      await this.assertNombreLibre(gymId, input.name);
+    }
 
     const [fila] = await tx
       .update(exercises)
@@ -171,7 +183,7 @@ export class TrainingService {
       .where(eq(routines.gymId, gymId))
       .orderBy(desc(routines.createdAt));
 
-    return Promise.all(filas.map((f) => this.getRoutine(gymId, f.id)));
+    return this.armar(gymId, filas);
   }
 
   async getRoutine(gymId: string, id: string): Promise<Routine> {
@@ -184,28 +196,50 @@ export class TrainingService {
 
     if (!rutina) throw new NotFoundException('Rutina no encontrada.');
 
+    const [armada] = await this.armar(gymId, [rutina]);
+    return armada!;
+  }
+
+  /**
+   * Monta las rutinas con sus ejercicios y sus asignaciones vigentes.
+   *
+   * ┌──────────────────────────────────────────────────────────────────────────┐
+   * │ TRES CONSULTAS EN TOTAL, no tres por rutina.                              │
+   * │                                                                          │
+   * │ Aqui habia un `Promise.all` que llamaba a `getRoutine` por cada fila: N+1 │
+   * │ —cincuenta rutinas eran ciento cincuenta viajes donde bastan tres— y      │
+   * │ ademas lanzaba consultas simultaneas sobre la MISMA transaccion, justo lo │
+   * │ contrario de la regla que este mismo fichero documentaba unas lineas mas  │
+   * │ abajo. No reventaba porque el cliente de `pg` las encola, que es la peor  │
+   * │ forma de que un error no se note.                                         │
+   * └──────────────────────────────────────────────────────────────────────────┘
+   */
+  private async armar(gymId: string, filas: RoutineRow[]): Promise<Routine[]> {
+    if (filas.length === 0) return [];
+    const tx = requireTransaction();
+    const ids = filas.map((f) => f.id);
+
     const items = await tx
       .select()
       .from(routineItems)
-      .where(and(eq(routineItems.gymId, gymId), eq(routineItems.routineId, id)))
+      .where(and(eq(routineItems.gymId, gymId), inArray(routineItems.routineId, ids)))
       .orderBy(asc(routineItems.position));
 
-    const [activas] = await tx
-      .select({ n: sql<number>`count(*)::int` })
+    const conteos = await tx
+      .select({ routineId: routineAssignments.routineId, n: sql<number>`count(*)::int` })
       .from(routineAssignments)
       .where(
         and(
           eq(routineAssignments.gymId, gymId),
-          eq(routineAssignments.routineId, id),
+          inArray(routineAssignments.routineId, ids),
           isNull(routineAssignments.endedAt),
         ),
-      );
+      )
+      .groupBy(routineAssignments.routineId);
 
-    return {
-      id: rutina.id,
-      name: rutina.name,
-      description: rutina.description,
-      items: items.map((i) => ({
+    const porRutina = new Map(ids.map((id) => [id, [] as Routine['items']]));
+    for (const i of items) {
+      porRutina.get(i.routineId)?.push({
         id: i.id,
         exerciseId: i.exerciseId,
         exerciseName: i.exerciseName,
@@ -214,9 +248,17 @@ export class TrainingService {
         reps: i.reps,
         restSeconds: i.restSeconds,
         notes: i.notes,
-      })),
-      activeAssignments: Number(activas?.n ?? 0),
-    };
+      });
+    }
+    const activas = new Map(conteos.map((c) => [c.routineId, Number(c.n)]));
+
+    return filas.map((f) => ({
+      id: f.id,
+      name: f.name,
+      description: f.description,
+      items: porRutina.get(f.id) ?? [],
+      activeAssignments: activas.get(f.id) ?? 0,
+    }));
   }
 
   async updateRoutine(gymId: string, id: string, input: UpdateRoutineInput): Promise<Routine> {
@@ -255,14 +297,43 @@ export class TrainingService {
   /**
    * Borra una rutina. Sus asignaciones se van en cascada.
    *
-   * A diferencia de las asignaciones de entrenador, aqui no se conserva
-   * historial: una rutina borrada no es informacion que el gimnasio necesite, y
-   * el seguimiento del modulo 6 registrara series hechas, no prescripciones.
+   * ┌──────────────────────────────────────────────────────────────────────────┐
+   * │ SOLO SU CREADOR, O EL DUENO. Y este limite salio de una revision.         │
+   * │                                                                          │
+   * │ Las rutinas se comparten dentro del gimnasio —dos entrenadores usan la    │
+   * │ misma "Fuerza principiantes" y duplicarla no tendria sentido—, pero       │
+   * │ compartir para leer y asignar no es lo mismo que compartir para borrar:   │
+   * │ se comprobo ejecutando que un entrenador podia borrar la rutina de un     │
+   * │ companero y llevarse por cascada las asignaciones de socios que no eran   │
+   * │ suyos. Irreversible, y sobre gente ajena.                                 │
+   * │                                                                          │
+   * │ Si la cuenta del creador ya no existe, `created_by_user_id` es nulo y     │
+   * │ solo el dueno puede borrarla. Es el desenlace correcto: alguien tiene que │
+   * │ poder, y el dueno responde del gimnasio.                                  │
+   * └──────────────────────────────────────────────────────────────────────────┘
+   *
+   * Editar sigue abierto a cualquier entrenador: es compartido por diseno y se
+   * puede deshacer. Borrar no.
    */
   async deleteRoutine(gymId: string, id: string): Promise<{ ok: true }> {
     const tx = requireTransaction();
-    const { userId: actorUserId } = requireRequestContext();
+    const { userId: actorUserId, role } = requireRequestContext();
     await this.getRoutine(gymId, id);
+
+    if (role === 'trainer') {
+      const [rutina] = await tx
+        .select({ creador: routines.createdByUserId })
+        .from(routines)
+        .where(and(eq(routines.gymId, gymId), eq(routines.id, id)))
+        .limit(1);
+
+      if (rutina?.creador !== actorUserId) {
+        throw new ForbiddenException(
+          'Solo puede borrar esta rutina quien la creo, o el dueno del gimnasio. ' +
+            'Puede haber socios de otro entrenador siguiendola.',
+        );
+      }
+    }
 
     await tx.delete(routines).where(and(eq(routines.gymId, gymId), eq(routines.id, id)));
 
@@ -405,17 +476,27 @@ export class TrainingService {
       )
       .orderBy(desc(routineAssignments.assignedAt));
 
-    const resultado: AssignedRoutine[] = [];
-    // En serie: todas leen de la MISMA transaccion de la peticion, y una conexion
-    // de node-postgres no admite sentencias simultaneas.
-    for (const a of asignadas) {
-      resultado.push({
-        ...(await this.getRoutine(gymId, a.routineId)),
-        assignmentId: a.assignmentId,
-        assignedAt: a.assignedAt.toISOString(),
-      });
-    }
-    return resultado;
+    if (asignadas.length === 0) return [];
+
+    // Se montan TODAS de una vez, con las mismas tres consultas que el listado.
+    // Antes esto era un bucle que llamaba a `getRoutine` por asignacion: en
+    // serie, si —la transaccion es una— pero igualmente N+1.
+    const tx2 = requireTransaction();
+    const rutinas = await tx2
+      .select()
+      .from(routines)
+      .where(
+        and(eq(routines.gymId, gymId), inArray(routines.id, asignadas.map((a) => a.routineId))),
+      );
+
+    const armadas = new Map((await this.armar(gymId, rutinas)).map((r) => [r.id, r]));
+
+    return asignadas.flatMap((a) => {
+      const rutina = armadas.get(a.routineId);
+      return rutina
+        ? [{ ...rutina, assignmentId: a.assignmentId, assignedAt: a.assignedAt.toISOString() }]
+        : [];
+    });
   }
 
   /**
@@ -463,6 +544,27 @@ export class TrainingService {
         notes: item.notes ?? null,
       })),
     );
+  }
+
+  /**
+   * El indice unico ya impide el nombre repetido; el mensaje se da aqui.
+   *
+   * Sin esto, renombrar un ejercicio al nombre de otro producia un 500 con una
+   * violacion de indice, que en el panel no dice nada. Renombrar la copia es de
+   * las primeras cosas que hace un gimnasio (ADR-0012), asi que el choque va a
+   * pasar. Mismo tratamiento que el email repetido en `members`.
+   */
+  private async assertNombreLibre(gymId: string, nombre: string): Promise<void> {
+    const tx = requireTransaction();
+    const [existe] = await tx
+      .select({ id: exercises.id })
+      .from(exercises)
+      .where(and(eq(exercises.gymId, gymId), eq(exercises.name, nombre)))
+      .limit(1);
+
+    if (existe) {
+      throw new BadRequestException(`Ya hay un ejercicio llamado "${nombre}" en este gimnasio.`);
+    }
   }
 
   private async buscarEjercicio(gymId: string, id: string): Promise<ExerciseRow> {
