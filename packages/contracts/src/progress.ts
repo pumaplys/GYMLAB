@@ -21,8 +21,25 @@ const medidaSchema = z.number().positive().max(999);
 
 export const recordBodyMetricSchema = z
   .object({
-    /** Por defecto ahora. Se admite pasado: el entrenador apunta el lunes lo del sabado. */
-    measuredAt: z.string().datetime().optional(),
+    /**
+     * Cuando se tomo la medida. Por defecto, ahora.
+     *
+     * SE ADMITE EL PASADO —el entrenador apunta el lunes lo que peso el sabado—
+     * PERO NO EL FUTURO: una medicion fechada manana no existe, solo puede ser
+     * un error de teclado. Mismo criterio que la fecha de nacimiento en
+     * `members`, donde el futuro tambien se rechaza.
+     *
+     * Se dan dos minutos de margen para no pelearse con el reloj del cliente:
+     * un movil desajustado no deberia impedir registrar un peso.
+     */
+    measuredAt: z
+      .string()
+      .datetime()
+      .refine(
+        (v) => new Date(v).getTime() <= Date.now() + 2 * 60 * 1000,
+        'La fecha de la medicion no puede estar en el futuro',
+      )
+      .optional(),
     weightKg: z.number().positive().max(500).optional(),
     bodyFatPercent: z.number().positive().max(80).optional(),
     chestCm: medidaSchema.optional(),

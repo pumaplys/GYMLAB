@@ -4,6 +4,7 @@ import {
   Delete,
   ForbiddenException,
   Get,
+  HttpCode,
   Param,
   ParseUUIDPipe,
   Post,
@@ -93,6 +94,13 @@ export class HealthConsentController {
     return this.progress.healthConsentStatus(this.gym(gymId), memberId);
   }
 
+  /**
+   * 200 y no 201: la operacion es IDEMPOTENTE.
+   *
+   * Aceptar dos veces la misma version no crea una segunda fila, asi que
+   * prometer "creado" seria mentir la mitad de las veces.
+   */
+  @HttpCode(200)
   @Post()
   grant(
     @Param('gymId', ParseUUIDPipe) gymId: string,

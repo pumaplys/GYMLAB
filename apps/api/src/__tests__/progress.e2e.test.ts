@@ -243,7 +243,7 @@ describe('con texto legal, hace falta que el socio lo acepte', () => {
     conVersion(VERSION);
     const socio = await altaSocio(gymA, tokenOwnerA, 'Acepta');
 
-    const estado = await aceptar(gymA, tokenOwnerA, socio).expect(201);
+    const estado = await aceptar(gymA, tokenOwnerA, socio).expect(200);
     expect(estado.body.accepted).toBe(true);
     expect(estado.body.currentVersion).toBe(VERSION);
 
@@ -252,6 +252,47 @@ describe('con texto legal, hace falta que el socio lo acepte', () => {
     // Ante una reclamacion hay que poder demostrar bajo que texto se recogio
     // CADA dato, no solo que hubo un consentimiento alguna vez.
     expect(medida.body.consentVersion).toBe(VERSION);
+  });
+
+  it('aceptar dos veces la misma version NO crea una segunda fila', async () => {
+    // En el mostrador se pulsa dos veces. Duplicar la aceptacion no mejora la
+    // prueba: ante una autoridad hay que poder decir CUANDO acepto esta persona
+    // esta version, no ofrecer dos fechas para lo mismo.
+    conVersion(VERSION);
+    const socio = await altaSocio(gymA, tokenOwnerA, 'DobleAcepta');
+
+    const primera = await aceptar(gymA, tokenOwnerA, socio).expect(200);
+    const segunda = await aceptar(gymA, tokenOwnerA, socio).expect(200);
+
+    expect(segunda.body.accepted).toBe(true);
+    expect(segunda.body.acceptedAt).toBe(primera.body.acceptedAt);
+
+    const filas = await owner.execute<{ n: string }>(
+      sql`SELECT count(*) AS n FROM consents
+          WHERE member_id = ${socio}::uuid AND purpose = 'health_data' AND revoked_at IS NULL`,
+    );
+    expect(Number(filas.rows[0]!.n)).toBe(1);
+  });
+
+  it('tras revocar, se puede volver a aceptar la MISMA version', async () => {
+    // El indice es parcial sobre las no revocadas justo para permitir esto: la
+    // fila revocada queda como historial y la nueva no choca.
+    conVersion(VERSION);
+    const socio = await altaSocio(gymA, tokenOwnerA, 'RevocaYVuelve');
+    await aceptar(gymA, tokenOwnerA, socio).expect(200);
+
+    await http()
+      .delete(`/v1/gyms/${gymA}/members/${socio}/health-consent`)
+      .set(conSesion(tokenOwnerA))
+      .expect(200);
+
+    await aceptar(gymA, tokenOwnerA, socio).expect(200);
+    await registrarPeso(gymA, tokenOwnerA, socio).expect(201);
+
+    const total = await owner.execute<{ n: string }>(
+      sql`SELECT count(*) AS n FROM consents WHERE member_id = ${socio}::uuid`,
+    );
+    expect(Number(total.rows[0]!.n)).toBe(2);
   });
 
   it('no se puede aceptar una version distinta de la vigente', async () => {
@@ -269,7 +310,7 @@ describe('con texto legal, hace falta que el socio lo acepte', () => {
     conVersion(VERSION);
     const socio = await altaSocio(gymA, tokenOwnerA, 'SinCuenta');
 
-    await aceptar(gymA, tokenOwnerA, socio).expect(201);
+    await aceptar(gymA, tokenOwnerA, socio).expect(200);
     await registrarPeso(gymA, tokenOwnerA, socio).expect(201);
   });
 });
@@ -281,7 +322,7 @@ describe('cambiar la version exige aceptar de nuevo', () => {
     // acordarse de invalidarlo.
     conVersion(VERSION);
     const socio = await altaSocio(gymA, tokenOwnerA, 'CambioVersion');
-    await aceptar(gymA, tokenOwnerA, socio).expect(201);
+    await aceptar(gymA, tokenOwnerA, socio).expect(200);
     await registrarPeso(gymA, tokenOwnerA, socio).expect(201);
 
     conVersion('2027-01-01');
@@ -290,7 +331,7 @@ describe('cambiar la version exige aceptar de nuevo', () => {
     expect(res.body.code).toBe('CONSENT_REQUIRED');
 
     // Y aceptando la nueva, vuelve a funcionar.
-    await aceptar(gymA, tokenOwnerA, socio, '2027-01-01').expect(201);
+    await aceptar(gymA, tokenOwnerA, socio, '2027-01-01').expect(200);
     const nueva = await registrarPeso(gymA, tokenOwnerA, socio).expect(201);
     expect(nueva.body.consentVersion).toBe('2027-01-01');
   });
@@ -300,7 +341,7 @@ describe('cambiar la version exige aceptar de nuevo', () => {
     // consultable para poder atender una peticion de acceso o de borrado.
     conVersion(VERSION);
     const socio = await altaSocio(gymA, tokenOwnerA, 'Revoca');
-    await aceptar(gymA, tokenOwnerA, socio).expect(201);
+    await aceptar(gymA, tokenOwnerA, socio).expect(200);
     await registrarPeso(gymA, tokenOwnerA, socio).expect(201);
 
     await http()
@@ -339,7 +380,7 @@ describe('la puerta esta en el servicio, no en el controlador', () => {
       .expect(403);
     expect(bloqueado.body.code).toBe('CONSENT_REQUIRED');
 
-    await aceptar(gymA, tokenOwnerA, memberId).expect(201);
+    await aceptar(gymA, tokenOwnerA, memberId).expect(200);
 
     await http()
       .post('/v1/me/progress')
@@ -354,7 +395,7 @@ describe('la puerta esta en el servicio, no en el controlador', () => {
   it('borrar una medicion tambien exige consentimiento vigente', async () => {
     conVersion(VERSION);
     const socio = await altaSocio(gymA, tokenOwnerA, 'BorraMedida');
-    await aceptar(gymA, tokenOwnerA, socio).expect(201);
+    await aceptar(gymA, tokenOwnerA, socio).expect(200);
     const medida = await registrarPeso(gymA, tokenOwnerA, socio).expect(201);
 
     conVersion(undefined);
@@ -393,7 +434,7 @@ describe('quien puede ver datos de salud', () => {
       .set(conSesion(tokenOwnerA))
       .send({ memberId: ajeno })
       .expect(201);
-    await aceptar(gymA, tokenOwnerA, mio).expect(201);
+    await aceptar(gymA, tokenOwnerA, mio).expect(200);
 
     await registrarPeso(gymA, tokenEntrenador1, mio).expect(201);
 
@@ -406,7 +447,7 @@ describe('quien puede ver datos de salud', () => {
   it('el gimnasio B no ve los datos de un socio de A', async () => {
     conVersion(VERSION);
     const socio = await altaSocio(gymA, tokenOwnerA, 'DeA');
-    await aceptar(gymA, tokenOwnerA, socio).expect(201);
+    await aceptar(gymA, tokenOwnerA, socio).expect(200);
     await registrarPeso(gymA, tokenOwnerA, socio).expect(201);
 
     await http()
@@ -421,7 +462,7 @@ describe('el dato', () => {
     // `numeric` y no coma flotante: 72,45 debe volver siendo 72,45.
     conVersion(VERSION);
     const socio = await altaSocio(gymA, tokenOwnerA, 'Decimales');
-    await aceptar(gymA, tokenOwnerA, socio).expect(201);
+    await aceptar(gymA, tokenOwnerA, socio).expect(200);
 
     await registrarPeso(gymA, tokenOwnerA, socio, 72.45).expect(201);
 
@@ -432,10 +473,33 @@ describe('el dato', () => {
     expect(historial.body[0].weightKg).toBe(72.45);
   });
 
+  it('una medicion fechada en el futuro no se acepta', async () => {
+    // Una medida de manana no existe: solo puede ser un error de teclado. Mismo
+    // criterio que la fecha de nacimiento en `members`.
+    conVersion(VERSION);
+    const socio = await altaSocio(gymA, tokenOwnerA, 'Futuro');
+    await aceptar(gymA, tokenOwnerA, socio).expect(200);
+
+    const manana = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    await http()
+      .post(`/v1/gyms/${gymA}/members/${socio}/progress`)
+      .set(conSesion(tokenOwnerA))
+      .send({ weightKg: 70, measuredAt: manana })
+      .expect(400);
+
+    // El pasado si: el entrenador apunta el lunes lo del sabado.
+    const anteayer = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+    await http()
+      .post(`/v1/gyms/${gymA}/members/${socio}/progress`)
+      .set(conSesion(tokenOwnerA))
+      .send({ weightKg: 70, measuredAt: anteayer })
+      .expect(201);
+  });
+
   it('una medicion vacia no se acepta', async () => {
     conVersion(VERSION);
     const socio = await altaSocio(gymA, tokenOwnerA, 'Vacia');
-    await aceptar(gymA, tokenOwnerA, socio).expect(201);
+    await aceptar(gymA, tokenOwnerA, socio).expect(200);
 
     await http()
       .post(`/v1/gyms/${gymA}/members/${socio}/progress`)
@@ -449,7 +513,7 @@ describe('el dato', () => {
     // contrario que con los pagos. Los datos de salud se van.
     conVersion(VERSION);
     const socio = await altaSocio(gymA, tokenOwnerA, 'Olvido');
-    await aceptar(gymA, tokenOwnerA, socio).expect(201);
+    await aceptar(gymA, tokenOwnerA, socio).expect(200);
     await registrarPeso(gymA, tokenOwnerA, socio).expect(201);
 
     await http()

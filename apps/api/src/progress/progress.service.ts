@@ -202,6 +202,28 @@ export class ProgressService {
       );
     }
 
+    // IDEMPOTENTE: aceptar dos veces la misma version no crea una segunda fila.
+    //
+    // En el mostrador se pulsa dos veces, y duplicar la aceptacion no mejora la
+    // prueba: la empeora. Ante una autoridad hay que poder decir CUANDO acepto
+    // esta persona esta version, no ofrecer tres fechas para lo mismo. El indice
+    // unico parcial lo impide ademas en la base de datos; esto evita el error.
+    const [ya] = await tx
+      .select({ id: consents.id })
+      .from(consents)
+      .where(
+        and(
+          eq(consents.gymId, gymId),
+          eq(consents.memberId, memberId),
+          eq(consents.purpose, 'health_data'),
+          eq(consents.version, vigente),
+          isNull(consents.revokedAt),
+        ),
+      )
+      .limit(1);
+
+    if (ya) return this.healthConsentStatus(gymId, memberId);
+
     await tx.insert(consents).values({
       gymId,
       memberId,

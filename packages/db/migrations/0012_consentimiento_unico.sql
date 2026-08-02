@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "consents_vigente_key" ON "consents" USING btree ("gym_id","member_id","purpose","version") WHERE revoked_at IS NULL AND member_id IS NOT NULL;

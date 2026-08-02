@@ -7,6 +7,7 @@ import {
   pgTable,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
 import { primaryId, tenantId, timestamps } from './_helpers';
@@ -85,6 +86,22 @@ export const consents = pgTable(
     index('consents_gym_user_idx').on(t.gymId, t.userId),
     index('consents_gym_member_idx').on(t.gymId, t.memberId),
     index('consents_purpose_idx').on(t.purpose),
+    /**
+     * Una sola aceptacion VIGENTE por socio, finalidad y version.
+     *
+     * Sin esto, pulsar dos veces en el mostrador creaba dos filas identicas. No
+     * rompia nada —la comprobacion mira la mas reciente— pero un registro de
+     * consentimientos con duplicados es peor prueba, no mejor: ante una
+     * autoridad hay que poder decir cuando acepto esta persona esta version, no
+     * ofrecer tres fechas distintas para lo mismo.
+     *
+     * PARCIAL sobre las no revocadas, y eso es lo que permite el camino
+     * legitimo: si alguien revoca y mas adelante vuelve a aceptar la MISMA
+     * version, la fila revocada se queda como historial y la nueva no choca.
+     */
+    uniqueIndex('consents_vigente_key')
+      .on(t.gymId, t.memberId, t.purpose, t.version)
+      .where(sql`revoked_at IS NULL AND member_id IS NOT NULL`),
     foreignKey({
       columns: [t.gymId, t.memberId],
       foreignColumns: [members.gymId, members.id],
