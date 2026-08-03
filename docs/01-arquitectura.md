@@ -208,22 +208,55 @@ Con repos separados, el mismo cambio son tres PRs y una ventana de incoherencia.
 
 Cada módulo posee sus tablas. Nadie lee las tablas de otro: se pide al servicio.
 
-| Módulo | Responsabilidad | Tablas principales |
-|---|---|---|
-| `identity` | Usuarios, sesiones, roles, pertenencia a gimnasio | `users`, `memberships`, `sessions` |
-| `organization` | Organización, gimnasios, sedes, ajustes | `organizations`, `gyms` |
-| `members` | Socios: ficha, estado, documentos | `members`, `member_notes` |
-| `staff` | Entrenadores y recepción, asignaciones | `staff_profiles`, `trainer_assignments` |
-| `billing` | Planes del gimnasio, suscripciones de socios, cobros registrados | `plans`, `member_subscriptions`, `payments` |
-| `training` | Ejercicios, plantillas, rutinas asignadas, sesiones | `exercises`, `routines`, `routine_assignments`, `workout_logs` |
-| `progress` | Peso y medidas (**datos de salud, art. 9 RGPD**) | `body_metrics` |
-| `access` | Tokens QR, registro de entradas | `access_tokens`, `access_events` |
-| `analytics` | Métricas del dashboard | vistas materializadas |
-| `platform` | Facturación GYMLAB, superadmin, feature flags | `gym_subscriptions` |
+> Actualizada tras cerrar la Fase 1. Antes describía el plan; ahora describe lo
+> que hay. Tres filas no coincidían con el código, y era el documento que se lee
+> para mapear el proyecto.
+
+| Módulo | Responsabilidad | Tablas | Estado |
+|---|---|---|---|
+| `identity` | Usuarios, sesiones, roles, pertenencia | `users`, `memberships`, `sessions`, `verifications`, `accounts` | ✅ |
+| `organization` | Organización, gimnasios y sus ajustes | `organizations`, `gyms` | ✅ |
+| `members` | Socios: ficha, estado, notas internas | `members`, `member_notes`, `member_counters` | ✅ |
+| `trainers` | Entrenadores y asignación de socios | `trainers`, `trainer_assignments` | ✅ |
+| `billing` | Planes, cuotas y pagos registrados | `plans`, `member_subscriptions`, `payments` | ✅ |
+| `training` | Ejercicios, rutinas y su asignación | `exercise_templates`, `exercises`, `routines`, `routine_items`, `routine_assignments` | ✅ |
+| `progress` | Peso y medidas (**datos de salud, art. 9**) | `body_metrics` | ✅ |
+| `access` | Tokens QR y registro de entradas | `access_tokens`, `access_events` | ✅ |
+| `dashboard` | Métricas del panel del dueño | **ninguna** | ✅ |
+| `invitations` | Invitaciones al gimnasio | `invitations` | ✅ |
+| `compliance` | Consentimientos RGPD | `consents` | ✅ |
+| `platform` | Facturación GYMLAB, superadmin | `gym_subscriptions` | Fase 2+ |
+
+**Tres correcciones sobre lo que este documento decía antes**, y conviene saber
+por qué cambiaron:
+
+- **`staff` se llamó `trainers`** y sus tablas son `trainers` / `trainer_assignments`.
+  Recepción no necesitó perfil propio: es un rol en `memberships`, nada más.
+- **`workout_logs` no existe.** Registrar series hechas quedó fuera del MVP; lo
+  que sí apareció fue `routine_items` —los ejercicios de cada rutina— y
+  `exercise_templates`, el catálogo de plataforma que introdujo ADR-0012.
+- **`analytics` no usa vistas materializadas.** El módulo se llama `dashboard`, no
+  tiene ni una tabla y consulta en vivo: cada módulo calcula sus propias métricas
+  y el panel compone. Es el único módulo sin esquema propio.
+
+**La consecuencia que sí conviene recordar:** consultar en vivo funciona a escala
+de piloto, pero la asistencia depende de `access_events`, que se purga por
+retención. Los agregados históricos hay que calcularlos **antes** de esa purga.
 
 **Regla de oro:** `training` **no** importa el repositorio de `members`. Pide
 `membersService.getById()`. Es la única disciplina que hace que la extracción futura
 de un módulo sea posible.
+
+**Y ahora hay un test que lo comprueba.** Durante la Fase 1 esta regla se
+incumplió en cuatro de siete módulos sin que nada se pusiera en rojo —no rompe
+nada, por eso duró meses— hasta que la encontró una auditoría manual.
+`fronteras.test.ts` declara qué tablas puede tocar cada módulo y falla si alguien
+cruza. Una regla que solo vive en un documento es una recomendación.
+
+**La excepción declarada:** `auth` e `invitations` sí tocan `users`, `memberships`
+y `sessions`, porque `identity` no expone servicio de aplicación. Está escrita en
+el propio guardarraíl para que sea una decisión vigilada y no un olvido. Cerrarla
+—dándole servicio a `identity`— queda pendiente de decisión.
 
 ---
 
