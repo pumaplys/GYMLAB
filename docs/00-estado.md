@@ -121,6 +121,7 @@ extensión es una clase dedicada y sin dependencias hacia quien lo invoca.**
 |---|---|---|
 | **Textos de consentimiento sin redactar** | `HEALTH_CONSENT_VERSION` no tiene valor, así que el módulo 6 está **entregado y bloqueado**: no acepta ni un dato de salud. No es técnico | **Antes de cualquier piloto que use progreso** |
 | **`trust proxy` sin configurar** | Detrás del proxy del hosting, `x-forwarded-for` no será fiable y el límite de intentos perderá precisión | **Antes de producción** |
+| **Un solo origen en producción** 🔒 | **Requisito de despliegue, no preferencia:** frontend y API deben servirse bajo el mismo dominio. El modelo de sesión se apoya en una cookie de primera parte; con orígenes separados, Safari la bloquea y el portal del socio deja de funcionar en la puerta del gimnasio. Comprobar que el hosting lo permite **antes de contratarlo** | **Al elegir hosting** |
 | **Agregados de asistencia** ⏳ | `access_events` se purga según la retención de cada gimnasio (12 meses por defecto). **Es la única deuda irreversible de la lista:** pasada la purga, el detalle no vuelve, así que no es una optimización sino un requisito previo | **Antes de la primera purga real** |
 | **`slug` es el UUID del gimnasio** | La columna existe para URLs legibles y hoy no aporta nada | Cuando haya URLs públicas |
 | **Un rol por persona y gimnasio** | Un dueño que además entrene no puede tener socios asignados | Si un piloto lo pide |
