@@ -1,0 +1,155 @@
+/*
+ * Fundamentos visuales del panel.
+ *
+ * Sobrio a proposito: es una herramienta de trabajo que recepcion mira ocho
+ * horas al dia. Gris neutro, un solo color de acento, bordes de un pixel y
+ * mucho aire. Nada que llame la atencion sobre el dato, que es lo que la gente
+ * viene a leer.
+ *
+ * Los valores viven aqui como variables y no repartidos por los modulos: el dia
+ * que haya un segundo consumidor, este fichero es lo que se extrae a
+ * `packages/ui` — y hasta que lo haya, no se extrae nada.
+ */
+
+:root {
+  color-scheme: light;
+
+  /* Superficies, de la mas al fondo a la mas cercana */
+  --fondo: #ffffff;
+  --fondo-sutil: #f7f8fa;
+  --fondo-hover: #f0f1f4;
+  --fondo-activo: #e9ebef;
+
+  --borde: #e4e6eb;
+  --borde-fuerte: #cfd3da;
+
+  /* Texto. Tres niveles bastan; con mas, la jerarquia deja de leerse */
+  --texto: #14161a;
+  --texto-sutil: #5c6169;
+  --texto-tenue: #8c9198;
+
+  --acento: #2a5bd7;
+  --acento-hover: #2049b8;
+  --acento-suave: #eef2fe;
+  --sobre-acento: #ffffff;
+
+  --peligro: #b42318;
+  --peligro-suave: #fef3f2;
+  --exito: #067647;
+  --exito-suave: #ecfdf3;
+
+  /* Escala de espacio. Multiplos de 4: si algo no encaja, encaja mal */
+  --e1: 0.25rem;
+  --e2: 0.5rem;
+  --e3: 0.75rem;
+  --e4: 1rem;
+  --e5: 1.5rem;
+  --e6: 2rem;
+  --e7: 3rem;
+
+  --radio: 8px;
+  --radio-s: 6px;
+  --sombra: 0 1px 2px rgb(16 24 40 / 4%), 0 1px 3px rgb(16 24 40 / 6%);
+
+  --ancho-maximo: 72rem;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--fondo-sutil);
+  color: var(--texto);
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Arial,
+    sans-serif;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+p,
+figure {
+  margin: 0;
+}
+
+h1 {
+  font-size: 1.375rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+h2 {
+  font-size: 1.0625rem;
+  font-weight: 600;
+}
+
+a {
+  color: var(--acento);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+/*
+ * El anillo de foco es innegociable.
+ *
+ * Recepcion trabaja con el teclado —tabulador entre campos, enter para guardar—
+ * y quitarlo "porque queda mas limpio" convierte el panel en inutilizable sin
+ * raton. `:focus-visible` lo muestra a quien navega con teclado y no a quien
+ * acaba de hacer clic.
+ */
+:focus-visible {
+  outline: 2px solid var(--acento);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Para texto que solo debe leer un lector de pantalla. */
+.solo-lectores {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

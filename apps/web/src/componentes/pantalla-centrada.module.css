@@ -1,0 +1,37 @@
+.pantalla {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100dvh;
+  padding: var(--e5);
+}
+
+.tarjeta {
+  width: 100%;
+  max-width: 24rem;
+  padding: var(--e6);
+  background: var(--fondo);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  box-shadow: var(--sombra);
+}
+
+.marca {
+  margin-bottom: var(--e5);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--texto-tenue);
+  text-transform: uppercase;
+}
+
+.titulo {
+  margin-bottom: var(--e2);
+}
+
+.entradilla {
+  margin-bottom: var(--e5);
+  color: var(--texto-sutil);
+  font-size: 0.875rem;
+}
