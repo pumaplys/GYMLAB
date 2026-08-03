@@ -1,7 +1,15 @@
 # Fase 2 — Del MVP a un producto usable
 
-> Estado: **por planificar**. Fecha: 2026-08-02.
-> Punto de partida: Fase 1 cerrada, siete módulos y 266 tests en verde.
+> Estado: **planificada**. Última actualización: 2026-08-03.
+> Punto de partida: Fase 1 cerrada, siete módulos y 277 tests en verde.
+>
+> **El objetivo es uno solo:** que tres gimnasios usen el producto a diario y den
+> feedback real, antes de plantear ninguna funcionalidad nueva.
+>
+> La primera decisión ya está cerrada:
+> [ADR-0013](adr/0013-el-qr-se-genera-desde-la-web-del-socio.md) — el QR lo genera
+> el socio desde la web, no desde una app. Eso convierte la fase en **frontend**,
+> no en más backend.
 
 ---
 
@@ -18,12 +26,16 @@ Todo lo que sigue se ordena por esa vara: **¿acerca esto a que un gimnasio real
 lo abra por la mañana?**
 
 ---
-
 ## Imprescindible
 
 Sin esto no hay piloto.
 
-### 1. Panel web para el gimnasio
+> **El backend deja de crecer.** La Fase 1 entregó siete módulos completos y
+> probados; lo que falta no es funcionalidad, es que alguien pueda usarla. A
+> partir de aquí solo se toca el backend si el frontend descubre una necesidad
+> real, y esa necesidad se argumenta antes de escribirla.
+
+### 1. Panel web para el personal
 
 Lo que hace falta para operar: alta y búsqueda de socios, cobrar y registrar
 pagos, ver quién debe, y el escáner de QR en el mostrador. **No** hace falta que
@@ -31,54 +43,63 @@ cubra los siete módulos desde el primer día — recepción vive en tres pantal
 
 Es lo más grande de la fase y lo primero que hay que empezar.
 
-### 2. Los textos legales
+### 2. Portal web del socio
 
-Consentimiento de datos de salud, política de privacidad y condiciones del
-servicio, con su versión. **Bloquea el módulo 6 por completo**: hoy no acepta ni
-un peso, a propósito.
+Ver su cuota, **generar su QR de acceso** y consultar su rutina.
 
-No es trabajo de desarrollo, y por eso conviene empezarlo ya: depende de terceros.
+Es lo que estrena el módulo 4, hoy funcionalidad muerta. Por
+[ADR-0013](adr/0013-el-qr-se-genera-desde-la-web-del-socio.md) el QR se genera
+aquí y no en una app nativa: **no requiere ni un cambio en el backend** y quita
+del camino crítico la revisión de una tienda, que era la única fecha del proyecto
+que no dependía de nosotros.
 
-### 3. Puesta en producción
+Mismo stack, misma sesión y mismos contratos que el panel, así que sale a la vez.
+
+### 3. Textos legales y consentimiento
+
+Consentimiento de datos de salud, política de privacidad y condiciones, con su
+versión. **Bloquea el módulo 6 por completo**: hoy no acepta ni un peso, a
+propósito. Y la política de privacidad hará falta en cuanto el panel trate datos
+personales, así que no es solo cosa del módulo 6.
+
+No es trabajo de desarrollo y depende de terceros: conviene empezarlo ya.
+
+### 4. Agregados de asistencia ⏳
+
+**Está aquí por irreversibilidad, no por importancia.**
+
+`access_events` se purga según la retención de cada gimnasio, doce meses por
+defecto. Todo lo demás de esta lista espera sin degradarse; esto no: pasada la
+primera purga, el detalle no vuelve y ningún trabajo posterior lo recupera.
+
+No es urgente en semanas —hace falta un gimnasio con doce meses de historia—,
+pero sí antes de que eso ocurra.
+
+### 5. Preparación para producción
 
 Hosting, dominio, TLS, copias de seguridad **con restauración probada** —una copia
 que nunca se ha restaurado no es una copia—, `trust proxy`, y Sentry para
 enterarse de los fallos antes que el cliente.
 
-### 4. Agregados de asistencia ⏳
+### 6. App móvil — solo con evidencia
 
-**Sube a imprescindible por irreversibilidad, no por importancia.**
+**No se construye por defecto.** Por ADR-0013 es una optimización de experiencia,
+no un requisito para validar el producto.
 
-`access_events` se purga según la retención de cada gimnasio, doce meses por
-defecto. Todo lo demás de esta lista espera sin degradarse; esto no: pasada la
-primera purga, el detalle no vuelve y ninguna cantidad de trabajo posterior lo
-recupera. Deja de ser una optimización y pasa a ser un requisito previo.
-
-No es urgente en semanas —hace falta un gimnasio con doce meses de historia—,
-pero sí antes de que eso ocurra, y por eso no puede quedar en la lista de «ya se
-verá».
-
-### 5. App móvil del socio, mínima
-
-Ver su cuota, generar el QR y consultar su rutina.
-
-**Su posición depende de una decisión de producto que sigue abierta:** hoy el QR
-solo se genera desde el móvil del socio, así que sin app el módulo 4 es
-funcionalidad muerta. Si el QR resulta ser el gancho comercial, esto sube al
-nivel del panel web; si el piloto puede arrancar sin control de acceso, baja.
-Antes de decidirlo conviene saber si el código puede generarse desde el propio
-panel o por otra vía temporal.
+Se construye si el piloto aporta el dato: fallos de escaneo atribuibles al brillo
+de pantalla o al rendimiento del navegador, o socios que no adoptan la web. Sin
+ese dato, es una preferencia.
 
 ---
 
 ## Necesario, pero no el primer día
 
-### 6. Onboarding del gimnasio
+### 7. Onboarding del gimnasio
 
 Hoy el alta exige un código de plataforma y crear todo a mano. Para el tercer o
 cuarto cliente, eso deja de escalar.
 
-### 7. Informes exportables
+### 8. Informes exportables
 
 Un gestor va a pedir los pagos del trimestre en algo que abra Excel.
 
