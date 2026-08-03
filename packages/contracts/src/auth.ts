@@ -20,12 +20,29 @@ export type Role = z.infer<typeof roleSchema>;
  * la gente hacia 'Password1!' y a reutilizarla. La longitud aporta mas.
  */
 export const passwordSchema = z
-  .string()
+  .string({ error: 'Obligatorio' })
   .min(10, 'La contrasena debe tener al menos 10 caracteres')
   .max(200);
 
-export const emailSchema = z.string().email().max(254).toLowerCase().trim();
-const nameSchema = z.string().trim().min(1).max(120);
+/**
+ * Los mensajes se escriben aqui, no en el formulario.
+ *
+ * Es el mismo motivo por el que el esquema vive en `contracts`: el panel valida
+ * antes de enviar y el servidor vuelve a validar sin fiarse, y las dos veces
+ * debe decir lo mismo. Sin mensaje propio, Zod responde en ingles y con su
+ * jerga ("Too small: expected string to have >=1 characters"), que es lo que
+ * acabaria leyendo recepcion.
+ */
+export const emailSchema = z
+  // El mensaje del constructor cubre el caso "no ha llegado nada", que es el que
+  // se da cuando un formulario envia el campo vacio. Sin el, Zod responde
+  // "Invalid input: expected string, received undefined".
+  .string({ error: 'Obligatorio' })
+  .email('Introduce un correo electronico valido')
+  .max(254)
+  .toLowerCase()
+  .trim();
+const nameSchema = z.string({ error: 'Obligatorio' }).trim().min(1, 'Obligatorio').max(120);
 
 // --- Alta de gimnasio ---------------------------------------------------
 
@@ -44,7 +61,10 @@ export type RegisterGymInput = z.infer<typeof registerGymSchema>;
 
 export const loginSchema = z.object({
   email: emailSchema,
-  password: z.string().min(1),
+  // Sin minimo de longitud a proposito: al entrar no se comprueba la politica de
+  // contrasenas, solo que se haya escrito algo. Exigir aqui los 10 caracteres
+  // delataria la regla y, peor, dejaria fuera a quien tenga una anterior.
+  password: z.string({ error: 'Obligatorio' }).min(1, 'Obligatorio'),
 });
 export type LoginInput = z.infer<typeof loginSchema>;
 
