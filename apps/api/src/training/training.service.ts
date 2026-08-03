@@ -19,7 +19,6 @@ import {
   sql,
   type Exercise as ExerciseRow,
   type Routine as RoutineRow,
-  type Transaction,
 } from '@gymlab/db';
 import type {
   AssignedRoutine,
@@ -57,28 +56,9 @@ export class TrainingService {
 
   // --- La biblioteca del gimnasio ------------------------------------------
 
-  /**
-   * Copia el catalogo de la plataforma a un gimnasio recien creado (ADR-0012).
-   *
-   * RECIBE LA TRANSACCION explicitamente, igual que el hook de invitaciones y
-   * por el mismo motivo: se llama desde el alta del gimnasio, que ocurre fuera
-   * del ciclo normal de peticion autenticada y no tiene contexto que consultar.
-   * Pasarla obliga ademas a que la siembra viva dentro de la misma transaccion
-   * que crea el gimnasio: o hay gimnasio con biblioteca, o no hay gimnasio.
-   *
-   * `ON CONFLICT DO NOTHING` sobre (gym_id, name) la hace idempotente: si se
-   * llamara dos veces, el gimnasio no acaba con la biblioteca duplicada.
-   */
-  async seedFromTemplates(gymId: string, transaccion?: Transaction): Promise<number> {
-    const tx = transaccion ?? requireTransaction();
-    const resultado = await tx.execute(sql`
-      INSERT INTO exercises (gym_id, template_id, name, muscle_group, equipment)
-      SELECT ${gymId}, t.id, t.name, t.muscle_group, t.equipment
-      FROM exercise_templates t
-      ON CONFLICT (gym_id, name) DO NOTHING
-    `);
-    return resultado.rowCount ?? 0;
-  }
+  // La siembra de la biblioteca al crear un gimnasio vive en
+  // `GymExerciseSeeder`, que implementa el punto de extension de alta de
+  // gimnasio. Estaba aqui, y obligaba a que `auth` inyectara este servicio.
 
   async listExercises(gymId: string): Promise<Exercise[]> {
     const tx = requireTransaction();

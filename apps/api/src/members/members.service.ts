@@ -13,6 +13,7 @@ import {
   desc,
   eq,
   ilike,
+  inArray,
   isNotNull,
   memberNotes,
   members,
@@ -162,6 +163,52 @@ export class MembersService implements OnModuleInit {
 
   async getById(gymId: string, id: string): Promise<Member> {
     return memberToDto(await this.buscar(gymId, id));
+  }
+
+  /**
+   * Como `getById`, pero devuelve `null` en vez de lanzar.
+   *
+   * Existe para quien necesita distinguir "no existe" de un error: el QR, por
+   * ejemplo, tiene que responder `UNKNOWN_MEMBER` y registrar el intento, no
+   * propagar un 404.
+   */
+  async findById(gymId: string, id: string): Promise<Member | null> {
+    const tx = requireTransaction();
+    const [fila] = await tx
+      .select()
+      .from(members)
+      .where(and(eq(members.gymId, gymId), eq(members.id, id)))
+      .limit(1);
+
+    return fila ? memberToDto(fila) : null;
+  }
+
+  /**
+   * Varias fichas de una vez, ordenadas por apellido.
+   *
+   * ┌──────────────────────────────────────────────────────────────────────────┐
+   * │ EXISTE PARA QUE NADIE MAS TENGA QUE HACER JOIN CONTRA `members`.          │
+   * │                                                                          │
+   * │ Quien necesita las fichas de una lista —los socios de un entrenador, por  │
+   * │ ejemplo— tenia dos salidas malas: unir contra la tabla ajena, saltandose  │
+   * │ ADR-0006, o pedirlas de una en una, que es N+1. Con esto son dos          │
+   * │ consultas y ninguna frontera cruzada.                                     │
+   * └──────────────────────────────────────────────────────────────────────────┘
+   *
+   * Una lista vacia devuelve vacio sin consultar: `inArray` con cero elementos
+   * genera SQL invalido en algunos dialectos, y aqui no hay nada que preguntar.
+   */
+  async byIds(gymId: string, ids: string[]): Promise<Member[]> {
+    if (ids.length === 0) return [];
+    const tx = requireTransaction();
+
+    const filas = await tx
+      .select()
+      .from(members)
+      .where(and(eq(members.gymId, gymId), inArray(members.id, ids)))
+      .orderBy(members.lastName, members.firstName);
+
+    return filas.map((f) => memberToDto(f));
   }
 
   async update(gymId: string, id: string, input: UpdateMemberInput): Promise<Member> {

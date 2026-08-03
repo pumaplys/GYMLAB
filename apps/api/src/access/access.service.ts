@@ -6,7 +6,6 @@ import {
   count,
   desc,
   eq,
-  members,
   sql,
   type AccessDecision,
   type AccessReason,
@@ -352,21 +351,15 @@ export class AccessService {
     };
   }
 
+  /**
+   * Se pide a `members`, no se lee su tabla (ADR-0006).
+   *
+   * `findById` existe precisamente para esto: aqui hace falta distinguir "no
+   * existe" para poder responder `UNKNOWN_MEMBER` y dejar registrado el intento,
+   * en lugar de propagar un 404 que lo dejaria sin rastro.
+   */
   private async buscarFicha(gymId: string, memberId: string): Promise<FichaMinima | null> {
-    const tx = requireTransaction();
-    const [fila] = await tx
-      .select({
-        id: members.id,
-        memberNumber: members.memberNumber,
-        firstName: members.firstName,
-        lastName: members.lastName,
-        status: members.status,
-      })
-      .from(members)
-      .where(and(eq(members.gymId, gymId), eq(members.id, memberId)))
-      .limit(1);
-
-    return fila ?? null;
+    return this.members.findById(gymId, memberId);
   }
 
   // --- Historial -----------------------------------------------------------
@@ -380,20 +373,8 @@ export class AccessService {
 
     const [filas, [total]] = await Promise.all([
       tx
-        .select({
-          id: accessEvents.id,
-          memberId: accessEvents.memberId,
-          firstName: members.firstName,
-          lastName: members.lastName,
-          decision: accessEvents.decision,
-          reason: accessEvents.reason,
-          isRetry: accessEvents.isRetry,
-          occurredAt: accessEvents.occurredAt,
-        })
+        .select()
         .from(accessEvents)
-        // `left`: los intentos con token invalido no tienen socio, y son justo
-        // los que mas interesa mirar.
-        .leftJoin(members, eq(members.id, accessEvents.memberId))
         .where(where)
         .orderBy(desc(accessEvents.occurredAt))
         .limit(query.pageSize)
@@ -401,11 +382,21 @@ export class AccessService {
       tx.select({ n: count() }).from(accessEvents).where(where),
     ]);
 
+    // El nombre se pide a `members` en lugar de unir contra su tabla (ADR-0006).
+    // Una sola consulta para toda la pagina, no una por fila.
+    //
+    // Los intentos con token invalido no tienen socio —y son justo los que mas
+    // interesa mirar—, asi que su nombre queda a null en lugar de excluirlos.
+    const ids = [...new Set(filas.map((f) => f.memberId).filter((id): id is string => id !== null))];
+    const nombres = new Map(
+      (await this.members.byIds(gymId, ids)).map((m) => [m.id, `${m.firstName} ${m.lastName}`]),
+    );
+
     return {
       items: filas.map((f) => ({
         id: f.id,
         memberId: f.memberId,
-        memberName: f.firstName ? `${f.firstName} ${f.lastName}` : null,
+        memberName: f.memberId ? (nombres.get(f.memberId) ?? null) : null,
         decision: f.decision,
         reason: f.reason,
         isRetry: f.isRetry,

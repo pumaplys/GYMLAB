@@ -7,7 +7,6 @@ import {
   desc,
   eq,
   isNull,
-  members,
   type BodyMetric as BodyMetricRow,
 } from '@gymlab/db';
 import type {
@@ -188,7 +187,7 @@ export class ProgressService {
   ): Promise<HealthConsentStatus> {
     const tx = requireTransaction();
     const { userId: actorUserId } = requireRequestContext();
-    const socio = await this.members.getById(gymId, memberId);
+    await this.members.getById(gymId, memberId);
 
     const vigente = env.HEALTH_CONSENT_VERSION;
     if (!vigente) {
@@ -226,11 +225,15 @@ export class ProgressService {
 
     await tx.insert(consents).values({
       gymId,
+      // SOLO `member_id`, y no tambien la cuenta.
+      //
+      // El sujeto del consentimiento es la ficha: el socio consiente que **su
+      // gimnasio** trate sus datos, y dentro de un gimnasio la identidad es la
+      // ficha, no la cuenta global. Guardar ademas `user_id` era redundante y
+      // obligaba a este modulo a leer `members` para averiguarlo, saltandose
+      // ADR-0006 por un dato que no aporta: quien registro la aceptacion ya
+      // queda en `audit_log`.
       memberId,
-      // Se guarda tambien la cuenta si la tiene: no sustituye a la ficha, la
-      // completa. Un socio sin cuenta consiente igual, y era justo el caso que
-      // el modelo anterior no sabia representar.
-      userId: socio.hasAccount ? await this.userIdDe(gymId, memberId) : null,
       purpose: 'health_data',
       version: vigente,
       ipAddress: ip,
@@ -335,15 +338,6 @@ export class ProgressService {
     await this.members.getById(gymId, memberId);
   }
 
-  private async userIdDe(gymId: string, memberId: string): Promise<string | null> {
-    const tx = requireTransaction();
-    const [fila] = await tx
-      .select({ userId: members.userId })
-      .from(members)
-      .where(and(eq(members.gymId, gymId), eq(members.id, memberId)))
-      .limit(1);
-    return fila?.userId ?? null;
-  }
 
   private aTexto(valor: number | undefined): string | null {
     return valor === undefined ? null : String(valor);

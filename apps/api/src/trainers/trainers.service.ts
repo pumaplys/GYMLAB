@@ -4,7 +4,6 @@ import {
   auditLog,
   eq,
   isNull,
-  members,
   sql,
   trainerAssignments,
   trainers,
@@ -13,13 +12,12 @@ import {
 } from '@gymlab/db';
 import type {
   AssignedMember,
-  Member,
   Trainer,
   TrainerAssignment,
   UpdateTrainerInput,
 } from '@gymlab/contracts';
 import { requireRequestContext, requireTransaction } from '../common/request-context';
-import { memberToDto } from '../members/member.mapper';
+import { MembersService } from '../members/members.service';
 
 /**
  * Entrenadores y sus asignaciones.
@@ -39,6 +37,18 @@ import { memberToDto } from '../members/member.mapper';
  */
 @Injectable()
 export class TrainersService {
+  /**
+   * `trainers -> members`, y solo en esa direccion.
+   *
+   * Se pide a su servicio en lugar de leer su tabla (ADR-0006). Antes habia un
+   * JOIN y un SELECT directos contra `members`; funcionaban, pero saltaban la
+   * frontera que sostiene la estructura del proyecto.
+   *
+   * No cierra ciclo: quien implementa el punto de extension de invitaciones por
+   * parte de este modulo es `TrainerProfileLink`, que no depende de nada.
+   */
+  constructor(private readonly members: MembersService) {}
+
   // --- Vista del personal --------------------------------------------------
 
   async list(gymId: string): Promise<Trainer[]> {
@@ -170,13 +180,8 @@ export class TrainersService {
       throw new BadRequestException('Ese entrenador esta de baja.');
     }
 
-    const [socio] = await tx
-      .select({ status: members.status })
-      .from(members)
-      .where(and(eq(members.gymId, gymId), eq(members.id, memberId)))
-      .limit(1);
-
-    if (!socio) throw new NotFoundException('Socio no encontrado.');
+    // `getById` ya responde 404 si no existe o si es de otro gimnasio.
+    const socio = await this.members.getById(gymId, memberId);
     if (socio.status !== 'active') {
       throw new BadRequestException('Ese socio esta de baja.');
     }
@@ -367,26 +372,41 @@ export class TrainersService {
       eq(trainerAssignments.gymId, gymId),
       eq(trainerAssignments.trainerId, trainerId),
       isNull(trainerAssignments.endedAt),
-      eq(members.status, 'active'),
     ];
     if (memberId) condiciones.push(eq(trainerAssignments.memberId, memberId));
 
-    const filas = await tx
+    // DOS CONSULTAS Y NINGUN JOIN CONTRA `members`, y es deliberado.
+    //
+    // Aqui habia un `innerJoin` contra la tabla de otro modulo, que es justo lo
+    // que ADR-0006 prohibe: se pide a su servicio, no se lee su tabla. La
+    // alternativa ingenua —pedirlas de una en una— habria sido N+1; `byIds`
+    // existe para que no haya que elegir entre saltarse la frontera o pagarla.
+    const asignaciones = await tx
       .select({
-        socio: members,
+        memberId: trainerAssignments.memberId,
         assignmentId: trainerAssignments.id,
         assignedAt: trainerAssignments.assignedAt,
       })
       .from(trainerAssignments)
-      .innerJoin(members, eq(members.id, trainerAssignments.memberId))
-      .where(and(...condiciones))
-      .orderBy(members.lastName, members.firstName);
+      .where(and(...condiciones));
 
-    return filas.map((f) => ({
-      ...(memberToDto(f.socio) satisfies Member),
-      assignmentId: f.assignmentId,
-      assignedAt: f.assignedAt.toISOString(),
-    }));
+    const fichas = await this.members.byIds(
+      gymId,
+      asignaciones.map((a) => a.memberId),
+    );
+    const porAsignacion = new Map(asignaciones.map((a) => [a.memberId, a]));
+
+    // El filtro de socio activo se aplica sobre el DTO: `status` es parte del
+    // contrato publico de la ficha, asi que no hace falta mirar la tabla.
+    // `byIds` ya devuelve ordenado por apellido.
+    return fichas
+      .filter((ficha) => ficha.status === 'active')
+      .flatMap((ficha) => {
+        const a = porAsignacion.get(ficha.id);
+        return a
+          ? [{ ...ficha, assignmentId: a.assignmentId, assignedAt: a.assignedAt.toISOString() }]
+          : [];
+      });
   }
 
   private async buscar(gymId: string, id: string): Promise<TrainerRow> {
