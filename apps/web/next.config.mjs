@@ -31,7 +31,7 @@ const nextConfig = {
 
   // Los paquetes internos se compilan como parte de la app, no como dependencia
   // externa ya construida. Evita problemas de ESM/CJS dentro del monorepo.
-  transpilePackages: ['@gymlab/contracts'],
+  transpilePackages: ['@gymlab/contracts', '@gymlab/api-client'],
 };
 
 export default nextConfig;

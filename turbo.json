@@ -6,7 +6,12 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**", ".next/**", "!.next/cache/**", "out/**"]
+      "outputs": ["dist/**", ".next/**", "!.next/cache/**", "out/**"],
+      // El panel se exporta estatico, asi que esto NO se lee en produccion: se
+      // incrusta en el paquete al construirlo. Por eso su valor por defecto es
+      // la ruta relativa `/v1` — el mismo origen, que es el requisito de
+      // despliegue— y no un dominio que habria que acertar en cada entorno.
+      "env": ["NEXT_PUBLIC_API_URL"]
     },
     "dev": {
       "dependsOn": ["^build"],
@@ -24,7 +29,8 @@
         "WEB_APP_URL",
         "CORS_ORIGINS",
         "RESEND_API_KEY",
-        "EMAIL_FROM"
+        "EMAIL_FROM",
+        "NEXT_PUBLIC_API_URL"
       ]
     },
     "typecheck": {

@@ -12,10 +12,12 @@
     "clean": "rimraf .next out .turbo"
   },
   "dependencies": {
+    "@gymlab/api-client": "workspace:*",
     "@gymlab/contracts": "workspace:*",
     "next": "^16.2.11",
     "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "react-dom": "^19.2.8",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@gymlab/config": "workspace:*",
