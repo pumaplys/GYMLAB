@@ -134,6 +134,39 @@ cargar y recibirá 403 de la API. Se resuelve redirigiendo por rol al entrar —
 una pantalla, no un problema de seguridad, porque la autorización siempre está en
 el servidor.
 
+### Requisito de despliegue
+
+> **Producción debe servir el frontend y la API bajo el mismo origen.**
+>
+> No es una preferencia de configuración: es el supuesto sobre el que se apoya el
+> modelo de sesión. Un despliegue que separe los orígenes rompe el portal del
+> socio en Safari, y lo hará en la puerta del gimnasio, no en desarrollo.
+>
+> Va aquí y en `00-estado.md` porque es lo que hay que comprobar **antes** de
+> contratar hosting, no después.
+
+### Plan B — si el hosting no permite un solo origen
+
+Puede ocurrir: no todos los proveedores dejan montar rutas de un dominio contra
+dos destinos, y quizá el elegido no lo haga. La salida acordada, para que no haya
+que improvisarla con el piloto encima:
+
+**Token `Bearer` únicamente para el portal del socio, con sesiones cortas.**
+
+- El **panel del personal** se queda con cookie: es el que maneja datos de todos
+  los socios, se usa desde un ordenador del gimnasio y no depende de Safari móvil.
+  Si el proxy no llega para dos rutas, casi siempre llega para una.
+- El **portal del socio** pasa a token, que funciona en todos los navegadores sin
+  depender de cookies de terceros.
+- **Y la sesión de socio se acorta.** Hoy son 90 días porque vive en una cookie
+  `httpOnly` que un XSS no puede leer; un token accesible desde JavaScript con esa
+  duración es otra cosa. Con token, esa sesión baja a horas o pocos días, aunque
+  eso signifique que el socio tenga que volver a entrar más a menudo.
+
+Es peor que la opción B en las dos dimensiones que importan —seguridad y comodidad
+del socio— y por eso es plan B y no alternativa equivalente. Queda escrito para
+que la decisión, si toca tomarla, sea rápida y con las consecuencias delante.
+
 ---
 
 ## 4. Estructura de aplicaciones
@@ -189,7 +222,8 @@ vergonzoso.
 
 1. Las cuatro recomendaciones, o las que no convenzan.
 2. **Si el hosting elegido permite el proxy inverso de un solo origen.** Es el
-   único supuesto externo de todo el documento; si no lo permitiera, la opción A
-   vuelve a la mesa y habría que acortar la sesión del socio.
+   único supuesto externo de todo el documento, y hay que comprobarlo **antes de
+   contratar**, no al desplegar. Si no lo permitiera, se aplica el plan B ya
+   escrito: token solo para el portal del socio, con sesión corta.
 3. Si el portal del socio nace ya como instalable (PWA) o eso se decide con el
    piloto delante. Recomiendo lo segundo: es un manifiesto, se añade en una tarde.
