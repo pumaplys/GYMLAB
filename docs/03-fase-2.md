@@ -45,19 +45,33 @@ Hosting, dominio, TLS, copias de seguridad **con restauración probada** —una 
 que nunca se ha restaurado no es una copia—, `trust proxy`, y Sentry para
 enterarse de los fallos antes que el cliente.
 
-### 4. App móvil del socio, mínima
+### 4. Agregados de asistencia ⏳
 
-Ver su cuota, generar el QR y consultar su rutina. Sin esto el QR no sirve de
-nada: es la mitad del flujo que más ilusión hace al gimnasio.
+**Sube a imprescindible por irreversibilidad, no por importancia.**
+
+`access_events` se purga según la retención de cada gimnasio, doce meses por
+defecto. Todo lo demás de esta lista espera sin degradarse; esto no: pasada la
+primera purga, el detalle no vuelve y ninguna cantidad de trabajo posterior lo
+recupera. Deja de ser una optimización y pasa a ser un requisito previo.
+
+No es urgente en semanas —hace falta un gimnasio con doce meses de historia—,
+pero sí antes de que eso ocurra, y por eso no puede quedar en la lista de «ya se
+verá».
+
+### 5. App móvil del socio, mínima
+
+Ver su cuota, generar el QR y consultar su rutina.
+
+**Su posición depende de una decisión de producto que sigue abierta:** hoy el QR
+solo se genera desde el móvil del socio, así que sin app el módulo 4 es
+funcionalidad muerta. Si el QR resulta ser el gancho comercial, esto sube al
+nivel del panel web; si el piloto puede arrancar sin control de acceso, baja.
+Antes de decidirlo conviene saber si el código puede generarse desde el propio
+panel o por otra vía temporal.
 
 ---
 
 ## Necesario, pero no el primer día
-
-### 5. Agregados de asistencia
-
-Antes de que la primera purga se lleve el detalle de `access_events`. Es la única
-deuda con **fecha de caducidad real**: pasada, el dato no vuelve.
 
 ### 6. Onboarding del gimnasio
 
