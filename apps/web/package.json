@@ -9,7 +9,7 @@
     "start": "next start --port 3000",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src",
-    "clean": "rimraf .next .turbo"
+    "clean": "rimraf .next out .turbo"
   },
   "dependencies": {
     "@gymlab/contracts": "workspace:*",

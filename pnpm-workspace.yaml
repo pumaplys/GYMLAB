@@ -10,7 +10,10 @@ packages:
 allowBuilds:
   '@swc/core': true # compilador nativo; vitest lo necesita para emitDecoratorMetadata
   esbuild: true # binario nativo del bundler que usa tsup
-  sharp: true # binario nativo de optimizacion de imagenes de Next.js
+  # sharp ya NO hace falta: con `output: 'export'` en apps/web la optimizacion de
+  # imagenes esta desactivada. Se deja autorizado por si Expo lo pide en el
+  # futuro; ninguna dependencia lo instala hoy, asi que la entrada es inerte.
+  sharp: true # binario nativo de optimizacion de imagenes
 
 # Version unica para las dependencias compartidas por varios workspaces. Se
 # referencian con "catalog:" en cada package.json, de modo que el numero de

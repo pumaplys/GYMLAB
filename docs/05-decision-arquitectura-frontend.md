@@ -29,11 +29,48 @@ día hay app nativa será React Native, y tener React en los dos sitios permite
 compartir criterio y personas. No compartirá código —React Native no comparte
 componentes con la web— pero sí forma de pensar.
 
-### Recomendación: **Vite + React + TypeScript**
+### Decisión final: **Next.js con exportación estática**
 
-Ninguna necesidad actual justifica un servidor de frontend. El día que haga falta
-SSR —una página pública de un gimnasio, por ejemplo— será para otra aplicación
-distinta de estas dos, y se decide entonces.
+> **Corrección.** La primera versión de este documento recomendaba Vite y
+> descartaba Next.js, y lo hacía **omitiendo un dato decisivo**: `apps/web` ya
+> existía como esqueleto de Next.js desde la Fase 0, integrado en el monorepo, en
+> CI, con `transpilePackages: ['@gymlab/contracts']` configurado y con `sharp`
+> autorizado en `pnpm-workspace.yaml` por su causa.
+>
+> El análisis se escribió como si la elección fuera desde cero. No lo era, y eso
+> cambia el balance: la opción descartada ya estaba implantada y la recomendada
+> exigía deshacerla.
+
+El único argumento sólido contra Next.js era **el runtime de Node que hay que
+operar**. Y eso se elimina con `output: 'export'`: Next.js genera ficheros
+estáticos y queda como herramienta de construcción, no como proceso en producción.
+
+Sin ese argumento, cambiar a Vite sería desmontar algo que funciona para llegar al
+mismo sitio. Los demás motivos siguen siendo ciertos —no hay SEO en un panel
+privado ni datos que renderizar en servidor— pero ninguno **exige** cambiar de
+herramienta: exigen no usar sus funciones de servidor, que es lo que hace la
+exportación estática.
+
+**Lo que esto NO cambia:** las otras tres decisiones de este documento —cliente
+tipado, un solo origen con cookie, dos aplicaciones— son independientes del
+framework y quedan igual.
+
+**Señal para revisarlo:** si alguna pantalla llegara a necesitar renderizado en
+servidor de verdad, `output: 'export'` deja de servir y volvería a haber un
+proceso que operar. Ese sería el momento de decidir, no antes.
+
+**Consecuencia práctica al escribir pantallas:** no hay funciones de servidor.
+Nada de `getServerSideProps`, rutas de API de Next, Server Actions ni middleware.
+Los datos vienen de la API propia, que es lo que ya estaba decidido. Está anotado
+también en `next.config.mjs`, que es donde se leerá.
+
+### Y `apps/mobile`
+
+Existe desde la Fase 0 como esqueleto de Expo (una pantalla, 34 líneas). Por
+ADR-0013 la app baja a «solo con evidencia del piloto», así que **se deja como
+está**: no se invierte tiempo en ella y tampoco se retira, porque el día que los
+pilotos la justifiquen el andamiaje ya estará puesto. Sigue en `typecheck` y
+`lint` de CI, que es lo que garantiza que no se pudra en silencio.
 
 ---
 
@@ -177,7 +214,8 @@ que la decisión, si toca tomarla, sea rápida y con las consecuencias delante.
 socio, en la puerta del gimnasio, el mismo paquete que contiene el panel entero.
 Se puede paliar con carga diferida por rutas; no se garantiza.
 
-**Dos aplicaciones.** `apps/panel` y `apps/socio`. El portal del socio se mantiene
+**Dos aplicaciones.** `apps/web` —el esqueleto que ya existe— como panel del
+personal, y `apps/socio` para el portal. El portal del socio se mantiene
 diminuto por construcción, no por disciplina. Y podrá declararse instalable
 —manifiesto, icono, pantalla completa— sin arrastrar al panel a esa decisión.
 
@@ -208,7 +246,7 @@ existe en el panel, ese día se extrae — y no antes.
 
 | Decisión | Recomendación |
 |---|---|
-| Stack | Vite + React + TypeScript, sin servidor de frontend |
+| Stack | **Next.js con `output: 'export'`** — se reutiliza `apps/web`, sin runtime en producción |
 | Contratos | Cliente tipado a mano en `packages/api-client`, que **valida** la respuesta |
 | Sesión | **Un solo origen tras un proxy + cookie `httpOnly`** |
 | Estructura | Dos aplicaciones; `packages/ui` solo cuando haya segundo consumidor |
