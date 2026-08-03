@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Inject,
   Injectable,
+  Optional,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -35,7 +36,7 @@ import type {
 import { ipDe } from '../common/http';
 import { env } from '../config/env';
 import { DATABASE } from '../database/database.module';
-import { TrainingService } from '../training/training.service';
+import { GYM_CREATED_HOOK, type GymCreatedHooks } from '../common/gym-hooks';
 import type { Auth } from './auth.instance';
 import { AUTH } from './auth.tokens';
 import { AuthThrottle } from './auth.throttle';
@@ -64,12 +65,16 @@ export class AuthService {
     @Inject(DATABASE) private readonly db: Database,
     private readonly throttle: AuthThrottle,
     /**
-     * Solo para sembrar la biblioteca de ejercicios al crear un gimnasio.
+     * Quienes reaccionan al alta de un gimnasio.
      *
-     * `auth -> training` y nunca al reves: `training` no sabe que existe la
-     * autenticacion, asi que no hay ciclo. Ver el comentario en `registerGym`.
+     * `auth` NO conoce ningun modulo de dominio: conoce una interfaz de
+     * `common`. Antes inyectaba `TrainingService` directamente, y eso hacia que
+     * el modulo mas global del sistema dependiera de uno de dominio y dejaba un
+     * ciclo latente. Ver `common/gym-hooks.ts`.
      */
-    private readonly training: TrainingService,
+    @Optional()
+    @Inject(GYM_CREATED_HOOK)
+    private readonly gymHooks: GymCreatedHooks = [],
   ) {}
 
   /**
@@ -113,18 +118,17 @@ export class AuthService {
         await tx.insert(gyms).values({ id: gymId, organizationId, name: input.gymName, slug: gymId });
         await tx.insert(memberships).values({ gymId, userId, role: 'owner' });
 
-        // La biblioteca de ejercicios nace con el gimnasio (ADR-0012).
+        // Quien tenga algo que hacer al crearse un gimnasio, lo hace aqui: hoy,
+        // sembrar su biblioteca de ejercicios (ADR-0012).
         //
         // DENTRO DE LA MISMA TRANSACCION: un gimnasio a medio crear, con
         // pertenencia pero sin ejercicios, dejaria el modulo de rutinas
         // inservible desde el primer dia y sin ningun error que lo delatase.
         //
-        // Se llama al servicio directamente y no por un punto de extension:
-        // aqui no hay ciclo que romper —`training` no sabe nada de `auth`— y
-        // con un solo interesado, la interfaz seria ceremonia. Si algun dia otro
-        // modulo necesita reaccionar al alta de un gimnasio, ese sera el momento
-        // de extraerla, como se hizo en ADR-0010.
-        await this.training.seedFromTemplates(gymId, tx);
+        // En serie, no en paralelo: todos escriben en esta misma transaccion.
+        for (const hook of this.gymHooks) {
+          await hook.onGymCreated({ gymId, ownerUserId: userId, tx });
+        }
       },
       { userId },
     );

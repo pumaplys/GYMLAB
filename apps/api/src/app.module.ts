@@ -9,6 +9,7 @@ import { TenantInterceptor } from './common/interceptors/tenant.interceptor';
 import { RequestContextMiddleware } from './common/middleware/request-context.middleware';
 import { DatabaseModule } from './database/database.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { GymHooksModule } from './gym-hooks.module';
 import { HealthController } from './health.controller';
 import { InvitationHooksModule } from './invitation-hooks.module';
 import { InvitationsModule } from './invitations/invitations.module';
@@ -59,6 +60,7 @@ import { TrainingModule } from './training/training.module';
     // los dos puntos de extension. Ver ADR-0010 y ADR-0011.
     InvitationHooksModule,
     PersonalDataModule,
+    GymHooksModule,
   ],
   controllers: [HealthController],
   providers: [

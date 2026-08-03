@@ -7,6 +7,7 @@ import {
   OwnRoutinesController,
   RoutinesController,
 } from './training.controller';
+import { GymExerciseSeeder } from './gym-exercise-seeder';
 import { TrainingService } from './training.service';
 
 /**
@@ -28,7 +29,7 @@ import { TrainingService } from './training.service';
     MemberRoutinesController,
     OwnRoutinesController,
   ],
-  providers: [TrainingService],
-  exports: [TrainingService],
+  providers: [TrainingService, GymExerciseSeeder],
+  exports: [TrainingService, GymExerciseSeeder],
 })
 export class TrainingModule {}
