@@ -1,0 +1,9 @@
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e4);
+}
+
+.enviar {
+  margin-top: var(--e2);
+}

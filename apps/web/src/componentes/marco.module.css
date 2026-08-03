@@ -1,0 +1,118 @@
+.marco {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.cabecera {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--fondo);
+  border-bottom: 1px solid var(--borde);
+}
+
+.fila {
+  display: flex;
+  align-items: center;
+  gap: var(--e4);
+  max-width: var(--ancho-maximo);
+  margin: 0 auto;
+  padding: var(--e3) var(--e5);
+}
+
+.marca {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--texto);
+}
+
+.separador {
+  color: var(--borde-fuerte);
+}
+
+.gimnasio {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.selector {
+  max-width: 14rem;
+  min-height: 1.875rem;
+  padding: 0 var(--e2);
+  background: var(--fondo);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-s);
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.derecha {
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+  margin-left: auto;
+}
+
+.persona {
+  text-align: right;
+  line-height: 1.25;
+}
+
+.nombre {
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.rol {
+  font-size: 0.75rem;
+  color: var(--texto-tenue);
+}
+
+.navegacion {
+  display: flex;
+  gap: var(--e1);
+  max-width: var(--ancho-maximo);
+  margin: 0 auto;
+  padding: 0 var(--e5);
+}
+
+.enlace {
+  padding: var(--e2) var(--e3);
+  border-bottom: 2px solid transparent;
+  color: var(--texto-sutil);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.enlace:hover {
+  color: var(--texto);
+  text-decoration: none;
+}
+
+.activo {
+  border-bottom-color: var(--acento);
+  color: var(--texto);
+}
+
+.contenido {
+  flex: 1;
+  width: 100%;
+  max-width: var(--ancho-maximo);
+  margin: 0 auto;
+  padding: var(--e6) var(--e5) var(--e7);
+}
+
+@media (max-width: 40rem) {
+  .fila,
+  .navegacion,
+  .contenido {
+    padding-left: var(--e4);
+    padding-right: var(--e4);
+  }
+
+  .persona {
+    display: none;
+  }
+}

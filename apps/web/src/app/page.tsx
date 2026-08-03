@@ -1,12 +1,30 @@
+'use client';
+
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { RutaPrivada } from '@/componentes/ruta-privada';
+
 /**
- * Placeholder de Fase 0. Sirve unicamente para verificar que el entorno
- * local levanta. Se sustituye en Fase 1 por el login y el dashboard.
+ * La raiz no tiene contenido propio: reparte.
+ *
+ * Va envuelta en `RutaPrivada` para no duplicar aqui los estados de sesion —sin
+ * conexion, sin gimnasios, elegir gimnasio—, que son los mismos. Cuando todo
+ * esta en orden, lleva a la primera seccion.
  */
-export default function HomePage() {
+export default function Inicio() {
   return (
-    <main style={{ fontFamily: 'system-ui, sans-serif', padding: '3rem' }}>
-      <h1>GYMLAB</h1>
-      <p>Panel de gestion — Fase 0: estructura del monorepo.</p>
-    </main>
+    <RutaPrivada>
+      <ALaPrimeraSeccion />
+    </RutaPrivada>
   );
+}
+
+function ALaPrimeraSeccion() {
+  const router = useRouter();
+
+  useEffect(() => {
+    router.replace('/socios');
+  }, [router]);
+
+  return null;
 }
