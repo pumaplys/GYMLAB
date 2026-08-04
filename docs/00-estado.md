@@ -71,10 +71,20 @@ suponiendo. Los tres intentos y lo que respondió `next build`:
 | `dynamicParams = true` | `cannot be used with "output: export"` |
 | `generateStaticParams()` devolviendo `[]` | El mismo error del primero: una lista vacía cuenta como no tenerlo |
 
-La única forma de tener esa ruta es **enumerar identificadores reales en
-construcción**, y ahí hay algo peor que lo incómodo: metería los identificadores
-de los socios de **todos los gimnasios** dentro del paquete estático que se
-sirve a cualquiera. Un artefacto de build filtrando datos de tenant.
+El motivo de fondo no es ninguno de esos mensajes, y conviene decirlo con
+precisión: **la única estrategia que la exportación estática ofrece para una
+ruta dinámica es generar sus páginas durante la construcción**, y esa estrategia
+no encaja con un sistema multi-tenant.
+
+No encaja por dos razones distintas, y basta cualquiera de las dos:
+
+- **El dato no existe cuando se construye.** Las fichas se crean, se dan de baja
+  y cambian a diario, y son de cada gimnasio. Un paquete construido el lunes no
+  puede contener las rutas de los socios dados de alta el martes.
+- **Y si se generaran, el paquete dejaría de ser neutral.** Pasaría a contener
+  la lista de identificadores de socios de todos los gimnasios, en un artefacto
+  que se sirve igual a cualquiera. La separación entre gimnasios es del servidor
+  —RLS y sesión—, y el frontend no debe cargar con material que la contradiga.
 
 La otra salida sería una reescritura en el hosting, lo que añadiría un **segundo
 requisito de despliegue** al que ya existe —un solo origen— a cambio de una URL
