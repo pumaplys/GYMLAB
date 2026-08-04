@@ -76,6 +76,14 @@
   white-space: nowrap;
 }
 
+.enlace {
+  color: var(--texto);
+}
+
+.enlace:hover {
+  color: var(--acento);
+}
+
 .tenue {
   color: var(--texto-tenue);
 }

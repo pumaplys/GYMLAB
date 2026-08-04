@@ -1,0 +1,144 @@
+.volver {
+  display: inline-block;
+  margin-bottom: var(--e4);
+  font-size: 0.875rem;
+}
+
+.encabezado {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--e4);
+  margin-bottom: var(--e5);
+}
+
+.identidad {
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+  flex-wrap: wrap;
+}
+
+.numero {
+  color: var(--texto-tenue);
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.etiqueta {
+  display: inline-block;
+  padding: 0.0625rem var(--e2);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.activo {
+  background: var(--exito-suave);
+  color: var(--exito);
+}
+
+.inactivo {
+  background: var(--fondo-activo);
+  color: var(--texto-sutil);
+}
+
+.acciones {
+  display: flex;
+  gap: var(--e2);
+  flex-wrap: wrap;
+}
+
+.avisos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+  margin-bottom: var(--e4);
+  max-width: 42rem;
+}
+
+.tarjeta {
+  max-width: 42rem;
+  padding: var(--e5) var(--e6);
+  background: var(--fondo);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+}
+
+/* Lista de definiciones: cada dato con su nombre, sin tabla. */
+.datos {
+  display: grid;
+  grid-template-columns: 10rem 1fr;
+  gap: var(--e3) var(--e4);
+  margin: 0;
+}
+
+.datos dt {
+  color: var(--texto-sutil);
+  font-size: 0.875rem;
+}
+
+.datos dd {
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+.vacio {
+  color: var(--texto-tenue);
+}
+
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e4);
+}
+
+.pareja {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--e4);
+}
+
+.pie {
+  display: flex;
+  gap: var(--e3);
+  padding-top: var(--e4);
+  border-top: 1px solid var(--borde);
+}
+
+.cargando {
+  padding: var(--e7) 0;
+  color: var(--texto-tenue);
+  font-size: 0.875rem;
+}
+
+.confirmar {
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+  padding: var(--e2) var(--e3);
+  background: var(--peligro-suave);
+  border: 1px solid color-mix(in srgb, var(--peligro) 25%, transparent);
+  border-radius: var(--radio-s);
+  font-size: 0.8125rem;
+  color: var(--peligro);
+}
+
+@media (max-width: 40rem) {
+  .encabezado {
+    flex-direction: column;
+  }
+
+  .datos {
+    grid-template-columns: 1fr;
+    gap: var(--e1) var(--e4);
+  }
+
+  .pareja {
+    grid-template-columns: 1fr;
+  }
+
+  .tarjeta {
+    padding: var(--e4);
+  }
+}
