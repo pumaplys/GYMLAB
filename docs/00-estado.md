@@ -16,7 +16,7 @@ siguiente paso. Se actualiza al final de cada sesión de trabajo.
 | Fase 1 — MVP, 7 módulos | ✅ **cerrada** |
 | Fase 2 — panel web | 🔵 **en marcha**: cliente de la API, autenticación y socios en `main` |
 
-**298 tests** (40 de aislamiento e integridad + 238 de la API + 20 del cliente de
+**302 tests** (40 de aislamiento e integridad + 238 de la API + 24 del cliente de
 la API). `build`, `typecheck`, `lint` y `test` en verde en local y en CI.
 **13 ADR**, y uno pendiente de escribir — ver la deuda.
 
@@ -48,8 +48,9 @@ usuario y contraseña, y recepción puede ver y dar de alta socios.
 
 ## El panel web
 
-Dos verticales completas: **entrar, aceptar una invitación, ver a los socios y
-dar de alta a uno.**
+Tres verticales completas: **entrar, aceptar una invitación, y el ciclo entero
+de un socio** — listar, abrir su ficha, editar, invitarle a crear cuenta, darle
+de baja y reactivarlo.
 
 | Pieza | Qué resolvió |
 |---|---|
@@ -57,6 +58,38 @@ dar de alta a uno.**
 | Sesión por cookie | `httpOnly`, así que el panel no puede leerla — un XSS tampoco. La consecuencia es que **no hay forma de saber si hay sesión sin preguntar al servidor** |
 | `RutaPrivada` | No protege nada, y está escrito así en el fichero: el panel son ficheros estáticos y cualquiera puede saltárselo. Lo que hace es no pintar pantallas que la API va a rechazar |
 | `/accept-invitation` | Los dos caminos de ADR-0010 **sin salir de la pantalla**: mandar a `/login` y volver obligaría a arrastrar el token de invitación por una URL de vuelta, y ese token es el que da acceso al gimnasio |
+| Ficha de socio | Las acciones que ya existían en la API y no tenían con qué llamarse. Solo se envían **los campos que cambian**, y vaciar uno se bloquea con una explicación en lugar de fingir que se guardó |
+
+### Por qué el detalle vive en `?id=` y no en `/socios/[id]`
+
+Es consecuencia de la exportación estática, y se comprobó construyendo en vez de
+suponiendo. Los tres intentos y lo que respondió `next build`:
+
+| Intento | Resultado |
+|---|---|
+| `/socios/[id]` a secas | `is missing "generateStaticParams()" so it cannot be used with "output: export"` |
+| `dynamicParams = true` | `cannot be used with "output: export"` |
+| `generateStaticParams()` devolviendo `[]` | El mismo error del primero: una lista vacía cuenta como no tenerlo |
+
+El motivo de fondo no es ninguno de esos mensajes, y conviene decirlo con
+precisión: **la única estrategia que la exportación estática ofrece para una
+ruta dinámica es generar sus páginas durante la construcción**, y esa estrategia
+no encaja con un sistema multi-tenant.
+
+No encaja por dos razones distintas, y basta cualquiera de las dos:
+
+- **El dato no existe cuando se construye.** Las fichas se crean, se dan de baja
+  y cambian a diario, y son de cada gimnasio. Un paquete construido el lunes no
+  puede contener las rutas de los socios dados de alta el martes.
+- **Y si se generaran, el paquete dejaría de ser neutral.** Pasaría a contener
+  la lista de identificadores de socios de todos los gimnasios, en un artefacto
+  que se sirve igual a cualquiera. La separación entre gimnasios es del servidor
+  —RLS y sesión—, y el frontend no debe cargar con material que la contradiga.
+
+La otra salida sería una reescritura en el hosting, lo que añadiría un **segundo
+requisito de despliegue** al que ya existe —un solo origen— a cambio de una URL
+más bonita. La dirección con `?id=` sigue siendo compartible y marcable, que es
+lo que se quería de verdad.
 
 **Dos fallos que solo aparecieron al ejecutarlo**, y que conviene recordar
 porque ninguno lo habría visto una lectura del código:
@@ -198,8 +231,10 @@ extensión es una clase dedicada y sin dependencias hacia quien lo invoca.**
 | **Agregados de asistencia** ⏳ | `access_events` se purga según la retención de cada gimnasio (12 meses por defecto). **Es la única deuda irreversible de la lista:** pasada la purga, el detalle no vuelve, así que no es una optimización sino un requisito previo | **Antes de la primera purga real** |
 | **`slug` es el UUID del gimnasio** | La columna existe para URLs legibles y hoy no aporta nada | Cuando haya URLs públicas |
 | **Un rol por persona y gimnasio** | Un dueño que además entrene no puede tener socios asignados | Si un piloto lo pide |
-| **El panel cubre dos verticales, no el producto** | Entrar, aceptar invitaciones, listar socios y dar de alta. Ficha, edición, baja, invitar desde el panel, cuotas, rutinas, progreso y panel del dueño existen en la API y no tienen pantalla | Según vayan haciendo falta |
-| **Invitar solo se puede por API** | La pantalla de *aceptar* ya existe; la de *crear* la invitación, no. El personal no puede invitar a nadie desde el panel | Con la ficha de socio o con una pantalla de personal |
+| **El panel cubre el módulo de socios, no el producto** | Cuotas, rutinas, progreso, accesos y panel del dueño existen en la API y no tienen pantalla | Según vayan haciendo falta |
+| **Invitar al personal solo se puede por API** | Desde la ficha se invita a un *socio*. Para dar de alta a una recepcionista o a un entrenador sigue haciendo falta llamar a la API a mano | Con una pantalla de personal |
+| **Notas, exportación RGPD y borrado sin pantalla** | Tienen endpoint desde la Fase 1. El borrado es irreversible y la exportación es un flujo legal: cada uno merece su propia vertical, no un botón de más en la ficha | Cuando toque, y por separado |
+| **No se puede vaciar un campo de la ficha** | `updateMemberSchema` hace los campos opcionales, **no anulables**: omitir uno significa «no lo toques» y no hay forma de decir «bórralo». El panel lo bloquea con una explicación en vez de fingir que se guardó | Es una decisión del backend, y el frontend ya la ha topado |
 | **El socio aterriza en una pantalla que no es suya** | Al aceptar, un `member` acaba en `/socios` y lee «esta sección no es para tu rol». Es correcto —la autorización manda— pero su portal no existe todavía | Cuando llegue `apps/socio` |
 | **ADR-0014 sin escribir** | `docs/05-decision-arquitectura-frontend.md` sigue siendo un documento de decisión. Sus cuatro decisiones ya están aplicadas en el código, así que el documento se ha quedado por detrás de la realidad | Ya, y el fichero desaparece al convertirse |
 | **`typecheck` de `apps/web` no puede correr a la vez que su `build`** | Su `tsconfig` incluye `.next/types/**`, que genera `next build`. En un `turbo run build typecheck` **en la misma invocación**, `tsc` lee ese directorio a medias y falla con `Cannot find module './routes.js'`. CI no lo sufre porque son pasos separados, y por eso llevaba ahí sin verse | Cuando alguien encadene las dos tareas en un solo comando |
@@ -212,9 +247,13 @@ nuevo. El dueño se da de alta, invita a su gente, y esa gente entra por su
 cuenta: si no tenía cuenta la crea, y si ya la tenía —porque trabaja en otro
 gimnasio— añade el nuevo sin tocar su contraseña.
 
+Y **el módulo de socios está entero**: recepción puede dar de alta, buscar,
+abrir la ficha, corregir un dato, invitar a crear cuenta y dar de baja sin salir
+del panel. Es el primer módulo del que se puede decir eso.
+
 Lo que falta para un piloto ya no es poder usarlo, es **cuánto** se puede hacer:
-el panel cubre socios, y las cuotas, las rutinas, el progreso, los accesos y el
-panel del dueño siguen siendo API sin pantalla.
+las cuotas, las rutinas, el progreso, los accesos y el panel del dueño siguen
+siendo API sin pantalla.
 
 Y queda un detalle que conviene no perder de vista: **el socio todavía no tiene
 sitio propio.** Acepta su invitación, entra, y se encuentra con que el panel no
