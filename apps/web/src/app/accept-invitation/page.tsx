@@ -14,6 +14,8 @@ import { useFormulario } from '@/lib/formulario';
 import { useSesion } from '@/lib/sesion';
 import estilos from './aceptar.module.css';
 
+type Flujo = 'ninguno' | 'entrando' | 'cerrando';
+
 /**
  * Aceptar una invitacion. Los dos caminos de ADR-0010, en una sola pantalla.
  *
@@ -56,6 +58,34 @@ function AceptarInvitacion() {
   /** Lo que falla al vincular. Vive aqui porque sobrevive al cambio de pantalla. */
   const [aviso, setAviso] = useState<string | null>(null);
 
+  /**
+   * En que punto va el recorrido, que NO es lo mismo que si hay sesion.
+   *
+   * ┌──────────────────────────────────────────────────────────────────────┐
+   * │ SIN ESTO SE PINTABA UNA PANTALLA QUE YA NO TOCA, Y SE PODIA PULSAR.  │
+   * │                                                                      │
+   * │ Iniciar sesion y vincular son dos pasos del mismo recorrido, pero la │
+   * │ sesion aparece entre uno y otro. Esta pantalla, que decidia mirando  │
+   * │ solo "¿hay sesion?", cambiaba a "Anadir este gimnasio" con su boton  │
+   * │ ACTIVO mientras el vinculado seguia en vuelo. Medido en local: 241   │
+   * │ ms al principio y 98 ms tras un primer intento de arreglarlo tarde.  │
+   * │                                                                      │
+   * │ Quien pulsara en esa ventana lanzaba un SEGUNDO `link` con el mismo  │
+   * │ token y recibia "la invitacion ya se uso" justo despues de que todo  │
+   * │ hubiera funcionado. Con mala conexion la ventana es mayor.           │
+   * │                                                                      │
+   * │ La cura no es acertar con el instante: es que la pantalla deje de    │
+   * │ deducir el paso a partir de la sesion y lo sepa.                     │
+   * └──────────────────────────────────────────────────────────────────────┘
+   *
+   * - `entrando`: hay un inicio de sesion en marcha que terminara vinculando.
+   *   Aunque aparezca la sesion, la pantalla NO cambia: sigue siendo la del
+   *   formulario, que asi conserva lo escrito si las credenciales fallan.
+   * - `cerrando`: la invitacion ya se consumio. No queda nada que decidir ni
+   *   nada que pulsar, solo esperar al cambio de pantalla.
+   */
+  const [flujo, setFlujo] = useState<Flujo>('ninguno');
+
   if (!token) {
     return (
       <PantallaCentrada
@@ -64,6 +94,8 @@ function AceptarInvitacion() {
       />
     );
   }
+
+  if (flujo === 'cerrando') return <Cargando texto="Entrando…" />;
 
   if (estado.fase === 'cargando') return <Cargando texto="Comprobando tu sesion…" />;
 
@@ -84,7 +116,10 @@ function AceptarInvitacion() {
 
   // Ya hay sesion: no se pide nada, se vincula. Es el caso de quien abre el
   // enlace desde el mismo navegador en el que ya estaba dentro.
-  if (estado.fase === 'identificado') {
+  //
+  // `flujo !== 'entrando'` es lo que impide que esta pantalla se cuele en
+  // mitad del otro recorrido, donde la sesion aparece a la mitad.
+  if (estado.fase === 'identificado' && flujo !== 'entrando') {
     return (
       <Vincular
         token={token}
@@ -97,14 +132,15 @@ function AceptarInvitacion() {
         // —el formulario de entrar no puede crear la cuenta que falta— y ahi se
         // quedaba encallado quien todavia no tenia ninguna.
         onOtraCuenta={() => setModo('crear')}
+        onFlujo={setFlujo}
       />
     );
   }
 
   return modo === 'crear' ? (
-    <CrearCuenta token={token} onCuentaExistente={() => setModo('entrar')} />
+    <CrearCuenta token={token} onCuentaExistente={() => setModo('entrar')} onFlujo={setFlujo} />
   ) : (
-    <IniciarSesion token={token} onAviso={setAviso} />
+    <IniciarSesion token={token} onAviso={setAviso} onFlujo={setFlujo} />
   );
 }
 
@@ -112,9 +148,11 @@ function AceptarInvitacion() {
 function CrearCuenta({
   token,
   onCuentaExistente,
+  onFlujo,
 }: {
   token: string;
   onCuentaExistente: () => void;
+  onFlujo: (flujo: Flujo) => void;
 }) {
   const { revisar } = useSesion();
   const router = useRouter();
@@ -136,6 +174,8 @@ function CrearCuenta({
         }
         throw error;
       }
+      // La cuenta ya existe y la sesion esta abierta: desde aqui no se vuelve.
+      onFlujo('cerrando');
       // La sesion queda abierta y con el gimnasio activo puesto por el servidor.
       await revisar();
       router.replace('/socios');
@@ -191,19 +231,41 @@ function CrearCuenta({
  * Se inicia sesion y se vincula, sin tocar la contrasena. Es literalmente
  * imposible tocarla desde aqui: `link-invitation` no la acepta en su contrato.
  */
-function IniciarSesion({ token, onAviso }: { token: string; onAviso: (aviso: string) => void }) {
+function IniciarSesion({
+  token,
+  onAviso,
+  onFlujo,
+}: {
+  token: string;
+  onAviso: (aviso: string) => void;
+  onFlujo: (flujo: Flujo) => void;
+}) {
   const { entrar } = useSesion();
-  const vincular = useVincular();
+  const vincular = useVincular(onFlujo);
 
   const formulario = useFormulario({
     esquema: loginSchema,
     iniciales: { email: '', password: '' },
     enviar: async (datos) => {
-      await entrar(datos);
-      // Al abrirse la sesion, esta pantalla se sustituye por la de vincular. Si
-      // el vinculado falla —por ejemplo, porque la invitacion era para otra
-      // direccion— el aviso se guarda arriba y lo pinta la siguiente.
-      await vincular(token).catch((error: unknown) => onAviso(mensajeDeError(error)));
+      // Se marca ANTES de entrar, no despues: la sesion aparece en mitad de
+      // este recorrido y sin esto la pantalla cambiaria sola bajo los pies.
+      onFlujo('entrando');
+      try {
+        await entrar(datos);
+      } catch (error) {
+        // Credenciales malas o servidor caido: se vuelve al punto de partida y
+        // el formulario pinta el error CON lo que ya estaba escrito, porque no
+        // ha llegado a desmontarse.
+        onFlujo('ninguno');
+        throw error;
+      }
+      // Si el vinculado falla —por ejemplo, porque la invitacion era para otra
+      // direccion— el aviso se guarda arriba y lo pinta la pantalla siguiente,
+      // que para entonces ya es la de vincular.
+      await vincular(token).catch((error: unknown) => {
+        onFlujo('ninguno');
+        onAviso(mensajeDeError(error));
+      });
     },
   });
 
@@ -211,17 +273,21 @@ function IniciarSesion({ token, onAviso }: { token: string; onAviso: (aviso: str
     <PantallaCentrada
       titulo="Ya tienes cuenta"
       entradilla="Ese correo ya esta registrado en GYMLAB. Inicia sesion y anadimos el gimnasio a tu cuenta."
+      // A esta pantalla se llega SUSTITUYENDO la anterior tras un envio, asi
+      // que el foco tiene que venir aqui: sin esto se queda en un boton que ya
+      // no existe y nadie anuncia que la pantalla ha cambiado. Por eso el
+      // primer campo tampoco lleva `foco`: robaria el anuncio del titulo.
+      enfocarTitulo
     >
       <form className={estilos.formulario} onSubmit={formulario.alEnviar} noValidate>
-        <Aviso tono="informacion">Tu contrasena no cambia. Solo se anade el gimnasio nuevo.</Aviso>
-
         {formulario.errorGeneral && <Aviso>{formulario.errorGeneral}</Aviso>}
+
+        <Aviso tono="informacion">Tu contrasena no cambia. Solo se anade el gimnasio nuevo.</Aviso>
 
         <Campo
           etiqueta="Correo electronico"
           tipo="email"
           autoComplete="username"
-          foco
           valor={formulario.valores.email}
           error={formulario.errores.email}
           alCambiar={(valor) => formulario.cambiar('email', valor)}
@@ -259,15 +325,17 @@ function Vincular({
   aviso,
   onAviso,
   onOtraCuenta,
+  onFlujo,
 }: {
   token: string;
   yo: Me;
   aviso: string | null;
   onAviso: (aviso: string | null) => void;
   onOtraCuenta: () => void;
+  onFlujo: (flujo: Flujo) => void;
 }) {
   const { salir } = useSesion();
-  const vincular = useVincular();
+  const vincular = useVincular(onFlujo);
   const [trabajando, setTrabajando] = useState(false);
 
   const confirmar = () => {
@@ -322,13 +390,22 @@ function Vincular({
  * donde opera es la persona— pero aqui acaba de decirlo pulsando el enlace de
  * ese gimnasio. Por eso se cambia, y con el endpoint de siempre.
  */
-function useVincular(): (token: string) => Promise<void> {
+function useVincular(onFlujo: (flujo: Flujo) => void): (token: string) => Promise<void> {
   const { elegirGimnasio } = useSesion();
   const router = useRouter();
 
   return async (token: string) => {
     const { gymId } = await api.auth.linkInvitation({ token });
-    await elegirGimnasio(gymId);
+
+    // La invitacion ya esta consumida: a partir de aqui no hay vuelta atras y
+    // no debe quedar nada que pulsar.
+    onFlujo('cerrando');
+
+    // La pertenencia ya existe. Si el cambio de gimnasio fallara —un corte de
+    // red entre una llamada y la siguiente— no es grave: el panel preguntara a
+    // cual entrar. Lo que no puede pasar es quedarse aqui, porque reintentar
+    // daria "la invitacion ya se uso" sobre algo que si funciono.
+    await elegirGimnasio(gymId).catch(() => undefined);
     router.replace('/socios');
   };
 }
