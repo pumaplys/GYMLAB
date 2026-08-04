@@ -16,7 +16,7 @@ siguiente paso. Se actualiza al final de cada sesión de trabajo.
 | Fase 1 — MVP, 7 módulos | ✅ **cerrada** |
 | Fase 2 — panel web | 🔵 **en marcha**: cliente de la API, autenticación y socios en `main` |
 
-**294 tests** (40 de aislamiento e integridad + 238 de la API + 16 del cliente de
+**298 tests** (40 de aislamiento e integridad + 238 de la API + 20 del cliente de
 la API). `build`, `typecheck`, `lint` y `test` en verde en local y en CI.
 **13 ADR**, y uno pendiente de escribir — ver la deuda.
 
@@ -48,14 +48,28 @@ usuario y contraseña, y recepción puede ver y dar de alta socios.
 
 ## El panel web
 
-Existe desde esta sesión, y con él la primera vertical completa: **entrar, ver a
-los socios y dar de alta a uno.**
+Dos verticales completas: **entrar, aceptar una invitación, ver a los socios y
+dar de alta a uno.**
 
 | Pieza | Qué resolvió |
 |---|---|
 | `packages/api-client` | Ata cada URL con el tipo de su respuesta y **la valida en ejecución**. Era el hueco de ADR-0003: los tipos existían para las *formas*, no para las *llamadas* |
 | Sesión por cookie | `httpOnly`, así que el panel no puede leerla — un XSS tampoco. La consecuencia es que **no hay forma de saber si hay sesión sin preguntar al servidor** |
 | `RutaPrivada` | No protege nada, y está escrito así en el fichero: el panel son ficheros estáticos y cualquiera puede saltárselo. Lo que hace es no pintar pantallas que la API va a rechazar |
+| `/accept-invitation` | Los dos caminos de ADR-0010 **sin salir de la pantalla**: mandar a `/login` y volver obligaría a arrastrar el token de invitación por una URL de vuelta, y ese token es el que da acceso al gimnasio |
+
+**Dos fallos que solo aparecieron al ejecutarlo**, y que conviene recordar
+porque ninguno lo habría visto una lectura del código:
+
+- Entre iniciar sesión y vincular hay una ventana en la que la sesión ya existe
+  pero el vinculado sigue en vuelo. La pantalla, que decidía mirando solo «¿hay
+  sesión?», ofrecía un botón que lanzaba un segundo intento con el mismo token.
+  Medido con un observador en el navegador: **241 ms**. Un primer arreglo lo
+  dejó en 98, que es la prueba de que acertar con el instante no era la
+  solución; la cura fue que la pantalla **sepa** en qué paso está.
+- Al sustituirse una pantalla por otra tras un envío, **el foco se quedaba en un
+  botón que ya no existe**. Con teclado se vuelve al principio del documento;
+  con lector de pantalla, nadie anuncia el cambio.
 
 **El origen de la API es una ruta relativa (`/v1`) por defecto.** No es
 comodidad: es el requisito de un solo origen convertido en código. Un dominio
@@ -67,6 +81,10 @@ Comprobado contra la API real, no solo compilado: credenciales malas y buenas,
 servidor, salir, y la vuelta a `/socios` sin sesión. Un entrenador ve una
 pantalla que se lo explica, y **la misma petición hecha por fuera del panel
 responde 403**, que es donde de verdad vive la autorización.
+
+Y la garantía de ADR-0010, comprobada de extremo a extremo y no solo en los
+tests: se intentó fijar una contraseña nueva sobre una cuenta existente usando
+su invitación, y después se entró con **la contraseña original**. Intacta.
 
 ---
 
@@ -180,17 +198,28 @@ extensión es una clase dedicada y sin dependencias hacia quien lo invoca.**
 | **Agregados de asistencia** ⏳ | `access_events` se purga según la retención de cada gimnasio (12 meses por defecto). **Es la única deuda irreversible de la lista:** pasada la purga, el detalle no vuelve, así que no es una optimización sino un requisito previo | **Antes de la primera purga real** |
 | **`slug` es el UUID del gimnasio** | La columna existe para URLs legibles y hoy no aporta nada | Cuando haya URLs públicas |
 | **Un rol por persona y gimnasio** | Un dueño que además entrene no puede tener socios asignados | Si un piloto lo pide |
-| **`/accept-invitation` no existe** 🔒 | **El correo de invitación ya apunta ahí.** Hoy la única forma de aceptar una invitación es llamar a la API a mano, así que **nadie puede darse de alta como socio ni como personal por su cuenta** | Es la siguiente pantalla, antes que ninguna otra |
-| **El panel cubre una vertical, no el producto** | Entrar, listar socios y dar de alta. Ficha, edición, baja, invitar, cuotas, rutinas, progreso y panel del dueño existen en la API y no tienen pantalla | Según vayan haciendo falta |
+| **El panel cubre dos verticales, no el producto** | Entrar, aceptar invitaciones, listar socios y dar de alta. Ficha, edición, baja, invitar desde el panel, cuotas, rutinas, progreso y panel del dueño existen en la API y no tienen pantalla | Según vayan haciendo falta |
+| **Invitar solo se puede por API** | La pantalla de *aceptar* ya existe; la de *crear* la invitación, no. El personal no puede invitar a nadie desde el panel | Con la ficha de socio o con una pantalla de personal |
+| **El socio aterriza en una pantalla que no es suya** | Al aceptar, un `member` acaba en `/socios` y lee «esta sección no es para tu rol». Es correcto —la autorización manda— pero su portal no existe todavía | Cuando llegue `apps/socio` |
 | **ADR-0014 sin escribir** | `docs/05-decision-arquitectura-frontend.md` sigue siendo un documento de decisión. Sus cuatro decisiones ya están aplicadas en el código, así que el documento se ha quedado por detrás de la realidad | Ya, y el fichero desaparece al convertirse |
+| **`typecheck` de `apps/web` no puede correr a la vez que su `build`** | Su `tsconfig` incluye `.next/types/**`, que genera `next build`. En un `turbo run build typecheck` **en la misma invocación**, `tsc` lee ese directorio a medias y falla con `Cannot find module './routes.js'`. CI no lo sufre porque son pasos separados, y por eso llevaba ahí sin verse | Cuando alguien encadene las dos tareas en un solo comando |
 | **`ignoreDeprecations: "6.0"`** | `tsup` inyecta un `baseUrl` propio al generar los `.d.ts` | Al actualizar `tsup` |
 
 ### Lo que hay que tener presente
 
-**El producto ya se puede abrir**, que es lo que cambió esta sesión. Pero solo
-por quien ya tenga cuenta: sin la pantalla de aceptar invitaciones, dar de alta a
-la primera recepcionista de un gimnasio piloto exige llamar a la API a mano. Es
-la deuda que hay entre esto y enseñárselo a alguien.
+**Un gimnasio se puede poner en marcha entero desde el producto**, y eso es lo
+nuevo. El dueño se da de alta, invita a su gente, y esa gente entra por su
+cuenta: si no tenía cuenta la crea, y si ya la tenía —porque trabaja en otro
+gimnasio— añade el nuevo sin tocar su contraseña.
+
+Lo que falta para un piloto ya no es poder usarlo, es **cuánto** se puede hacer:
+el panel cubre socios, y las cuotas, las rutinas, el progreso, los accesos y el
+panel del dueño siguen siendo API sin pantalla.
+
+Y queda un detalle que conviene no perder de vista: **el socio todavía no tiene
+sitio propio.** Acepta su invitación, entra, y se encuentra con que el panel no
+es para él. Es correcto y es honesto, pero es media experiencia hasta que exista
+su portal.
 
 ---
 
