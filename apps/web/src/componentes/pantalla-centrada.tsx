@@ -6,7 +6,8 @@ interface Props {
   entradilla?: ReactNode;
   /** Ancho de la tarjeta. `ancha` para listas, como la de gimnasios. */
   ancha?: boolean;
-  children: ReactNode;
+  /** Opcional: hay callejones sin salida donde no queda nada que ofrecer. */
+  children?: ReactNode;
 }
 
 /**
