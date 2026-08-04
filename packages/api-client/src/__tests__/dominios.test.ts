@@ -35,6 +35,37 @@ describe('auth', () => {
     expect(yo.memberships[0]?.role).toBe('owner');
   });
 
+  it('aceptar una invitacion abre sesion; vincularla dice a que gimnasio', async () => {
+    const { fetch, llamadas } = servidor(({ url }) =>
+      url.endsWith('/auth/link-invitation')
+        ? json({ ok: true, gymId: GYM })
+        : json({ token: 't', activeGymId: GYM }),
+    );
+    const api = createApiClient({ baseUrl: '/v1', fetch });
+
+    await api.auth.acceptInvitation({ token: 'tk', name: 'Ana', password: 'contrasena-larga' });
+    const vinculada = await api.auth.linkInvitation({ token: 'tk' });
+
+    expect(llamadas.map((l) => `${l.init.method} ${l.url}`)).toEqual([
+      'POST /v1/auth/accept-invitation',
+      'POST /v1/auth/link-invitation',
+    ]);
+    // El gimnasio del token, que es el que hara falta para ofrecer el cambio:
+    // `link` no toca el gimnasio activo a proposito.
+    expect(vinculada.gymId).toBe(GYM);
+  });
+
+  it('vincular no manda credenciales, porque el contrato no las tiene', async () => {
+    const { fetch, llamadas } = servidor(() => json({ ok: true, gymId: GYM }));
+    const api = createApiClient({ baseUrl: '/v1', fetch });
+
+    await api.auth.linkInvitation({ token: 'tk' });
+
+    // La garantia de ADR-0010 es estructural: al no existir el dato en el
+    // contrato, este camino no puede cambiar una contrasena ni por error.
+    expect(JSON.parse(String(llamadas[0]?.init.body))).toEqual({ token: 'tk' });
+  });
+
   it('logout no manda la sesion en el cuerpo: la cookie ya la lleva', async () => {
     const { fetch, llamadas } = servidor(() => json({ ok: true }));
     const api = createApiClient({ baseUrl: '/v1', fetch });

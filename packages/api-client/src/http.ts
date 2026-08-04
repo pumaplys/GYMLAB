@@ -161,6 +161,7 @@ function errorDeLaApi(status: number, cuerpo: unknown): ApiError {
   const objeto = (typeof cuerpo === 'object' && cuerpo !== null ? cuerpo : {}) as {
     message?: unknown;
     issues?: unknown;
+    code?: unknown;
   };
 
   const mensaje =
@@ -170,7 +171,12 @@ function errorDeLaApi(status: number, cuerpo: unknown): ApiError {
         // es mejor que un texto inventado que sugiera una causa que no consta.
         `La API respondio ${status}.`;
 
-  return new ApiError(status, mensaje, issuesDe(objeto.issues));
+  return new ApiError(
+    status,
+    mensaje,
+    issuesDe(objeto.issues),
+    typeof objeto.code === 'string' ? objeto.code : null,
+  );
 }
 
 function issuesDe(valor: unknown): FieldIssue[] {

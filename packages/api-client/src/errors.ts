@@ -32,6 +32,16 @@ export class ApiError extends ApiClientError {
     message: string,
     /** Errores por campo de un 400 de validacion. Vacio en los demas casos. */
     readonly issues: readonly FieldIssue[] = [],
+    /**
+     * Codigo estable del contrato, cuando la API lo da. Hoy solo `ACCOUNT_EXISTS`.
+     *
+     * Existe porque la alternativa es peor por los dos lados: mirar el texto del
+     * mensaje se rompe en cuanto alguien reescribe una frase, y dar por hecho
+     * que un 409 solo puede significar una cosa se rompe el dia que aparezca el
+     * segundo conflicto. El codigo lo exporta `@gymlab/contracts`, asi que
+     * cliente y servidor comparan la misma constante.
+     */
+    readonly code: string | null = null,
   ) {
     super(message);
     // Literal y no `new.target.name`: el minificador de produccion renombra las
