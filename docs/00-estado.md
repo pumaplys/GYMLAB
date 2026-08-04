@@ -16,7 +16,7 @@ siguiente paso. Se actualiza al final de cada sesión de trabajo.
 | Fase 1 — MVP, 7 módulos | ✅ **cerrada** |
 | Fase 2 — panel web | 🔵 **en marcha**: cliente de la API, autenticación y socios en `main` |
 
-**302 tests** (40 de aislamiento e integridad + 238 de la API + 24 del cliente de
+**307 tests** (40 de aislamiento e integridad + 240 de la API + 27 del cliente de
 la API). `build`, `typecheck`, `lint` y `test` en verde en local y en CI.
 **13 ADR**, y uno pendiente de escribir — ver la deuda.
 
@@ -48,9 +48,10 @@ usuario y contraseña, y recepción puede ver y dar de alta socios.
 
 ## El panel web
 
-Tres verticales completas: **entrar, aceptar una invitación, y el ciclo entero
-de un socio** — listar, abrir su ficha, editar, invitarle a crear cuenta, darle
-de baja y reactivarlo.
+Cuatro verticales completas: **entrar, aceptar una invitación, el ciclo entero
+de un socio** —listar, abrir su ficha, editar, invitarle a crear cuenta, darle
+de baja y reactivarlo— **y su cuota**: ver el estado, darle de alta una, cobrar
+y consultar el historial.
 
 | Pieza | Qué resolvió |
 |---|---|
@@ -59,6 +60,7 @@ de baja y reactivarlo.
 | `RutaPrivada` | No protege nada, y está escrito así en el fichero: el panel son ficheros estáticos y cualquiera puede saltárselo. Lo que hace es no pintar pantallas que la API va a rechazar |
 | `/accept-invitation` | Los dos caminos de ADR-0010 **sin salir de la pantalla**: mandar a `/login` y volver obligaría a arrastrar el token de invitación por una URL de vuelta, y ese token es el que da acceso al gimnasio |
 | Ficha de socio | Las acciones que ya existían en la API y no tenían con qué llamarse. Solo se envían **los campos que cambian**, y vaciar uno se bloquea con una explicación en lugar de fingir que se guardó |
+| Cuota en la ficha | El estado **se pregunta, no se deduce**: «al corriente» o «vencida» los calcula el servidor en la zona del gimnasio. Y el dinero no pasa por coma flotante — `Number('19.99') * 100` da `1998.9999999999998` |
 
 ### Por qué el detalle vive en `?id=` y no en `/socios/[id]`
 
@@ -90,6 +92,37 @@ La otra salida sería una reescritura en el hosting, lo que añadiría un **segu
 requisito de despliegue** al que ya existe —un solo origen— a cambio de una URL
 más bonita. La dirección con `?id=` sigue siendo compartible y marcable, que es
 lo que se quería de verdad.
+
+### Cuando el frontend descubre algo del backend
+
+La vertical de cuotas destapó dos cosas que llevaban desde la Fase 1 sin verse,
+y de ahí sale la regla de trabajo para lo que queda de proyecto.
+
+**Un contrato que no describía la realidad.** `POST payments` devuelve
+`{payment, dues}` y no un pago suelto — deliberado, porque con una deuda de
+varios meses cobrar uno *no* pone al corriente y el mostrador tiene que verlo en
+ese momento. Pero `contracts` no lo decía. Nadie se había dado cuenta porque el
+único consumidor eran los tests, **que leen el cuerpo sin validarlo**. Lo delató
+el cliente del panel, con los diez campos a `undefined` y la ruta exacta.
+
+**Un flujo imposible por permisos.** Recepción podía dar de alta una cuota pero
+no leer el catálogo de planes del que sale el `planId`: podía ejecutar la acción
+y no elegir. El catálogo estaba cerrado a `owner` junto con crear y editar.
+
+> **La regla, y se mantiene:**
+>
+> 1. Si el frontend encuentra un **contrato incompleto**, primero se demuestra
+>    el problema y después se propone la modificación mínima. Se corrige
+>    `contracts` para que describa lo que el backend ya hace; **nunca** se
+>    adapta el cliente a un comportamiento implícito.
+> 2. Si necesita un **permiso** que no existe, primero se demuestra que el flujo
+>    queda bloqueado —con la petición real y su 403—, se propone el cambio
+>    mínimo y **se consulta antes de tocar la autorización**.
+> 3. **Nada de ampliar el backend por anticipación.**
+
+Esto es lo que `packages/api-client` vino a comprar. Si el frontend tapara estos
+casos adaptándose, el paquete dejaría de servir para lo único que justifica su
+existencia.
 
 **Dos fallos que solo aparecieron al ejecutarlo**, y que conviene recordar
 porque ninguno lo habría visto una lectura del código:
@@ -231,7 +264,9 @@ extensión es una clase dedicada y sin dependencias hacia quien lo invoca.**
 | **Agregados de asistencia** ⏳ | `access_events` se purga según la retención de cada gimnasio (12 meses por defecto). **Es la única deuda irreversible de la lista:** pasada la purga, el detalle no vuelve, así que no es una optimización sino un requisito previo | **Antes de la primera purga real** |
 | **`slug` es el UUID del gimnasio** | La columna existe para URLs legibles y hoy no aporta nada | Cuando haya URLs públicas |
 | **Un rol por persona y gimnasio** | Un dueño que además entrene no puede tener socios asignados | Si un piloto lo pide |
-| **El panel cubre el módulo de socios, no el producto** | Cuotas, rutinas, progreso, accesos y panel del dueño existen en la API y no tienen pantalla | Según vayan haciendo falta |
+| **El panel cubre socios y sus cuotas, no el producto** | Rutinas, progreso, accesos y panel del dueño existen en la API y no tienen pantalla | Según vayan haciendo falta |
+| **Planes: se leen, no se gestionan** | Recepción y dueño ven el catálogo para cobrar, pero **crear, editar y archivar planes sigue siendo solo por API**. Un gimnasio nuevo no puede montar sus precios desde el panel | Pantalla de planes, del dueño |
+| **Congelar, cancelar y anular** | Congelar una cuota por lesión, cancelarla y anular un pago mal apuntado tienen endpoint y no tienen pantalla. Anular es del dueño y es corrección contable | Cada uno con su vertical |
 | **Invitar al personal solo se puede por API** | Desde la ficha se invita a un *socio*. Para dar de alta a una recepcionista o a un entrenador sigue haciendo falta llamar a la API a mano | Con una pantalla de personal |
 | **Notas, exportación RGPD y borrado sin pantalla** | Tienen endpoint desde la Fase 1. El borrado es irreversible y la exportación es un flujo legal: cada uno merece su propia vertical, no un botón de más en la ficha | Cuando toque, y por separado |
 | **No se puede vaciar un campo de la ficha** | `updateMemberSchema` hace los campos opcionales, **no anulables**: omitir uno significa «no lo toques» y no hay forma de decir «bórralo». El panel lo bloquea con una explicación en vez de fingir que se guardó | Es una decisión del backend, y el frontend ya la ha topado |
@@ -247,13 +282,13 @@ nuevo. El dueño se da de alta, invita a su gente, y esa gente entra por su
 cuenta: si no tenía cuenta la crea, y si ya la tenía —porque trabaja en otro
 gimnasio— añade el nuevo sin tocar su contraseña.
 
-Y **el módulo de socios está entero**: recepción puede dar de alta, buscar,
-abrir la ficha, corregir un dato, invitar a crear cuenta y dar de baja sin salir
-del panel. Es el primer módulo del que se puede decir eso.
+Y **recepción ya tiene su jornada cubierta de punta a punta**: dar de alta a
+alguien, buscarlo, corregir un dato, invitarle a crear cuenta, ponerle su cuota,
+cobrarle y darle de baja. Sin salir del panel y sin llamar al dueño.
 
 Lo que falta para un piloto ya no es poder usarlo, es **cuánto** se puede hacer:
-las cuotas, las rutinas, el progreso, los accesos y el panel del dueño siguen
-siendo API sin pantalla.
+las rutinas, el progreso, los accesos y el panel del dueño siguen siendo API sin
+pantalla, y los precios todavía se montan a mano.
 
 Y queda un detalle que conviene no perder de vista: **el socio todavía no tiene
 sitio propio.** Acepta su invitación, entra, y se encuentra con que el panel no
