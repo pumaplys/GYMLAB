@@ -66,6 +66,35 @@ describe('transporte', () => {
     });
   });
 
+  it('conserva el codigo del contrato cuando la API lo da', async () => {
+    // Es lo que permite distinguir "ese correo ya tiene cuenta" de cualquier
+    // otro conflicto. Sin el codigo habria que mirar el texto del mensaje —que
+    // se rompe al reescribir una frase— o dar por hecho que un 409 solo puede
+    // significar una cosa, que se rompe con el segundo conflicto que aparezca.
+    const { fetch } = servidor(() =>
+      json({ statusCode: 409, code: 'ACCOUNT_EXISTS', message: 'Ya existe una cuenta.' }, 409),
+    );
+    const http = createHttp({ baseUrl: '/v1', fetch });
+
+    const error = await http({ method: 'POST', path: '/x', schema: memberSchema, body: {} }).catch(
+      (e: unknown) => e,
+    );
+
+    expect(error).toMatchObject({ status: 409, code: 'ACCOUNT_EXISTS' });
+  });
+
+  it('sin codigo en el cuerpo, el codigo es null y no una cadena vacia', async () => {
+    // `null` obliga a comprobar; '' se cuela en una comparacion descuidada.
+    const { fetch } = servidor(() => json({ statusCode: 403, message: 'No puedes.' }, 403));
+    const http = createHttp({ baseUrl: '/v1', fetch });
+
+    const error = await http({ method: 'GET', path: '/x', schema: memberSchema }).catch(
+      (e: unknown) => e,
+    );
+
+    expect((error as ApiError).code).toBeNull();
+  });
+
   it('sobrevive a un error que no viene en JSON', async () => {
     // Un 502 del proxy devuelve HTML. Reventar al parsear esconderia el codigo
     // de estado, que es el unico dato que explica lo que ha pasado.

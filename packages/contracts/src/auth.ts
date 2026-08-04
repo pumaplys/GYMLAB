@@ -186,6 +186,20 @@ export const linkInvitationSchema = z.object({
 });
 export type LinkInvitationInput = z.infer<typeof linkInvitationSchema>;
 
+/**
+ * Respuesta de `link-invitation`.
+ *
+ * Devuelve el gimnasio al que se acaba de entrar, y hace falta: el endpoint
+ * **no** cambia el gimnasio activo de la sesion —quien decide donde opera es la
+ * persona, con `switch-gym`— asi que quien vincula necesita saber cual es para
+ * poder ofrecerselo. Sin este dato, el cliente acabaria adivinandolo.
+ */
+export const linkInvitationResponseSchema = z.object({
+  ok: z.literal(true),
+  gymId: z.string().uuid(),
+});
+export type LinkInvitationResponse = z.infer<typeof linkInvitationResponseSchema>;
+
 /** Codigo que devuelve `accept-invitation` cuando el email ya tiene cuenta. */
 export const ACCOUNT_EXISTS = 'ACCOUNT_EXISTS' as const;
 
