@@ -8,8 +8,11 @@ import { NOMBRE_DEL_ROL } from '@/lib/roles';
 import { useSesion } from '@/lib/sesion';
 import estilos from './marco.module.css';
 
-/** Las secciones del panel. Hoy una; la lista es el sitio donde crecera. */
-const SECCIONES = [{ href: '/socios', texto: 'Socios' }] as const;
+/** Las secciones del panel. La lista es el sitio donde crece. */
+const SECCIONES = [
+  { href: '/socios', texto: 'Socios' },
+  { href: '/personal', texto: 'Personal' },
+] as const;
 
 /**
  * La cabecera y la navegacion del panel.
