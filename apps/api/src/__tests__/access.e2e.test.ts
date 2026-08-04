@@ -97,6 +97,33 @@ async function segundaSesion(quien: string): Promise<string> {
   return res.body.token as string;
 }
 
+/**
+ * Mueve el vencimiento de la cuota N dias respecto de HOY EN EL GIMNASIO.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ NO ES `now()::date`, Y LA DIFERENCIA COSTO UN CI EN ROJO.                 │
+ * │                                                                          │
+ * │ `now()::date` es la fecha del SERVIDOR. El servicio calcula los dias que │
+ * │ faltan en la zona del GIMNASIO, que es lo correcto y esta puesto asi a   │
+ * │ proposito (`billing.service.ts`). Con el servidor en UTC y el gimnasio   │
+ * │ en Europe/Madrid, entre las 22:00 y las 24:00 UTC de verano el gimnasio  │
+ * │ ya esta en el dia siguiente: la prueba escribia "+2" y el servicio leia  │
+ * │ 1.                                                                       │
+ * │                                                                          │
+ * │ Es decir, el test estuvo DOS HORAS AL DIA en rojo desde la Fase 1 sin    │
+ * │ que nadie lo viera, porque CI casi nunca corre a esa hora. Lo delato una │
+ * │ ejecucion a las 22:25 UTC.                                               │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ */
+async function venceEn(memberId: string, dias: number) {
+  await owner.execute(sql`
+    UPDATE member_subscriptions s
+    SET current_period_end = (now() AT TIME ZONE g.timezone)::date + ${dias}::int
+    FROM gyms g
+    WHERE g.id = s.gym_id AND s.member_id = ${memberId}::uuid
+  `);
+}
+
 /** Socio con cuenta, ficha y cuota al corriente. Devuelve su sesion y su ficha. */
 async function socioAlCorriente(gymId: string, tokenStaff: string, planId: string, quien: string) {
   const tokenSocio = await altaPersonal(gymId, tokenStaff, 'member', quien);
@@ -127,10 +154,7 @@ async function socioAlCorriente(gymId: string, tokenStaff: string, planId: strin
 }
 
 async function generarQr(tokenSocio: string): Promise<string> {
-  const res = await http()
-    .post('/v1/me/access/token')
-    .set(conSesion(tokenSocio))
-    .expect(201);
+  const res = await http().post('/v1/me/access/token').set(conSesion(tokenSocio)).expect(201);
   return res.body.token as string;
 }
 
@@ -259,7 +283,9 @@ describe('camino feliz', () => {
     await generarQr(socio.tokenSocio);
     await generarQr(socio.tokenSocio);
 
-    const despues = await owner.execute<{ n: string }>(sql`SELECT count(*) AS n FROM access_tokens`);
+    const despues = await owner.execute<{ n: string }>(
+      sql`SELECT count(*) AS n FROM access_tokens`,
+    );
     expect(Number(despues.rows[0]!.n)).toBe(Number(antes.rows[0]!.n));
   });
 });
@@ -508,10 +534,7 @@ describe('estado del socio y de su cuota', () => {
 
   it('con la cuota vencida no entra', async () => {
     const socio = await socioAlCorriente(gymA, tokenOwnerA, planA, 'vencido');
-    await owner.execute(
-      sql`UPDATE member_subscriptions SET current_period_end = now()::date - 1
-          WHERE member_id = ${socio.memberId}::uuid`,
-    );
+    await venceEn(socio.memberId, -1);
 
     const res = await verificar(gymA, escaner1, await generarQr(socio.tokenSocio)).expect(201);
     expect(res.body.decision).toBe('DENY');
@@ -520,10 +543,7 @@ describe('estado del socio y de su cuota', () => {
 
   it('a punto de vencer entra con aviso y los dias que faltan', async () => {
     const socio = await socioAlCorriente(gymA, tokenOwnerA, planA, 'porvencer');
-    await owner.execute(
-      sql`UPDATE member_subscriptions SET current_period_end = now()::date + 2
-          WHERE member_id = ${socio.memberId}::uuid`,
-    );
+    await venceEn(socio.memberId, 2);
 
     const res = await verificar(gymA, escaner1, await generarQr(socio.tokenSocio)).expect(201);
     expect(res.body.decision).toBe('WARN');
@@ -538,10 +558,7 @@ describe('estado del socio y de su cuota', () => {
       .set(conSesion(tokenOwnerA))
       .send({ graceDays: 5 })
       .expect(200);
-    await owner.execute(
-      sql`UPDATE member_subscriptions SET current_period_end = now()::date - 2
-          WHERE member_id = ${socio.memberId}::uuid`,
-    );
+    await venceEn(socio.memberId, -2);
 
     const res = await verificar(gymA, escaner1, await generarQr(socio.tokenSocio)).expect(201);
     expect(res.body.decision).toBe('WARN');

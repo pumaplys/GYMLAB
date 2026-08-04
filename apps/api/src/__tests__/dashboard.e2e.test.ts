@@ -78,6 +78,24 @@ async function altaPersonal(gymId: string, staff: string, rol: string, quien: st
   return res.body.token as string;
 }
 
+/**
+ * Mueve el vencimiento de la cuota N dias respecto de HOY EN EL GIMNASIO.
+ *
+ * No es `now()::date`: esa es la fecha del servidor, y el panel reparte las
+ * cuotas —al corriente, por vencer, vencidas— usando la zona del gimnasio. Con
+ * el servidor en UTC y el gimnasio en Europe/Madrid, las dos ultimas horas del
+ * dia UTC caen ya en el dia siguiente del gimnasio y el reparto se desplaza un
+ * dia. Ver el comentario largo en `access.e2e.test.ts`, que es donde delato.
+ */
+async function venceEn(memberId: string, dias: number) {
+  await owner.execute(sql`
+    UPDATE member_subscriptions s
+    SET current_period_end = (now() AT TIME ZONE g.timezone)::date + ${dias}::int
+    FROM gyms g
+    WHERE g.id = s.gym_id AND s.member_id = ${memberId}::uuid
+  `);
+}
+
 /** Socio con cuenta, ficha, cuota pagada y sesion propia. */
 async function socioCompleto(quien: string) {
   const tokenSocio = await altaPersonal(gymA, tokenOwnerA, 'member', quien);
@@ -170,10 +188,25 @@ afterAll(async () => {
       sql`SELECT DISTINCT organization_id FROM gyms WHERE id IN (${ids})`,
     );
     for (const t of [
-      'body_metrics','consents','routine_assignments','routine_items','routines','exercises',
-      'access_events','access_tokens','payments','member_subscriptions','plans',
-      'trainer_assignments','trainers','member_notes','members','member_counters',
-      'invitations','audit_log','memberships',
+      'body_metrics',
+      'consents',
+      'routine_assignments',
+      'routine_items',
+      'routines',
+      'exercises',
+      'access_events',
+      'access_tokens',
+      'payments',
+      'member_subscriptions',
+      'plans',
+      'trainer_assignments',
+      'trainers',
+      'member_notes',
+      'members',
+      'member_counters',
+      'invitations',
+      'audit_log',
+      'memberships',
     ]) {
       await owner.execute(sql`DELETE FROM ${sql.raw(t)} WHERE gym_id IN (${ids})`);
     }
@@ -279,10 +312,7 @@ describe('lo que NO debe contar', () => {
 
   it('un acceso denegado no suma asistencia, pero si aparece aparte', async () => {
     const socio = await socioCompleto('denegado');
-    await owner.execute(
-      sql`UPDATE member_subscriptions SET current_period_end = now()::date - 30
-          WHERE member_id = ${socio.memberId}::uuid`,
-    );
+    await venceEn(socio.memberId, -30);
 
     const antes = await panel().expect(200);
     const res = await entrar(socio.tokenSocio);
@@ -317,19 +347,13 @@ describe('cuotas', () => {
     expect(base.body.cuotas.alCorriente).toBeGreaterThan(0);
 
     // Se acerca al vencimiento: pasa de "al corriente" a "por vencer".
-    await owner.execute(
-      sql`UPDATE member_subscriptions SET current_period_end = now()::date + 3
-          WHERE member_id = ${socio.memberId}::uuid`,
-    );
+    await venceEn(socio.memberId, 3);
     const cerca = await panel().expect(200);
     expect(cerca.body.cuotas.porVencer).toBe(base.body.cuotas.porVencer + 1);
     expect(cerca.body.cuotas.alCorriente).toBe(base.body.cuotas.alCorriente - 1);
 
     // Y vencida.
-    await owner.execute(
-      sql`UPDATE member_subscriptions SET current_period_end = now()::date - 3
-          WHERE member_id = ${socio.memberId}::uuid`,
-    );
+    await venceEn(socio.memberId, -3);
     const vencida = await panel().expect(200);
     expect(vencida.body.cuotas.vencidas).toBe(base.body.cuotas.vencidas + 1);
   });
@@ -388,9 +412,7 @@ describe('la ventana de asistencia', () => {
 
     const corta = await panel(7).expect(200);
     expect(corta.body.diasDeAsistencia).toBe(7);
-    expect(corta.body.asistencia.entradas).toBeLessThanOrEqual(
-      porDefecto.body.asistencia.entradas,
-    );
+    expect(corta.body.asistencia.entradas).toBeLessThanOrEqual(porDefecto.body.asistencia.entradas);
   });
 
   it('se rechaza una ventana mayor de 90 dias', async () => {
