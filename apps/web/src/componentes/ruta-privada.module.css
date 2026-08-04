@@ -1,0 +1,59 @@
+.esperando {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100dvh;
+  color: var(--texto-tenue);
+  font-size: 0.875rem;
+}
+
+.gimnasios {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+}
+
+.gimnasio {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e3);
+  padding: var(--e3) var(--e4);
+  background: var(--fondo);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-s);
+  text-align: left;
+  cursor: pointer;
+}
+
+.gimnasio:hover:not(:disabled) {
+  background: var(--fondo-hover);
+  border-color: var(--borde-fuerte);
+}
+
+.gimnasio:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+
+.nombre {
+  font-weight: 500;
+}
+
+.rol {
+  color: var(--texto-sutil);
+  font-size: 0.8125rem;
+}
+
+.acciones {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+  margin-top: var(--e5);
+}
+
+.pie {
+  margin-top: var(--e5);
+  color: var(--texto-sutil);
+  font-size: 0.8125rem;
+}

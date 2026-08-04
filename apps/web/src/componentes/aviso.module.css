@@ -1,0 +1,26 @@
+.aviso {
+  display: flex;
+  gap: var(--e2);
+  padding: var(--e3) var(--e4);
+  border: 1px solid;
+  border-radius: var(--radio-s);
+  font-size: 0.875rem;
+}
+
+.error {
+  background: var(--peligro-suave);
+  border-color: color-mix(in srgb, var(--peligro) 25%, transparent);
+  color: var(--peligro);
+}
+
+.exito {
+  background: var(--exito-suave);
+  border-color: color-mix(in srgb, var(--exito) 25%, transparent);
+  color: var(--exito);
+}
+
+.informacion {
+  background: var(--acento-suave);
+  border-color: color-mix(in srgb, var(--acento) 20%, transparent);
+  color: var(--acento-hover);
+}

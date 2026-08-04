@@ -1,0 +1,136 @@
+.encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e4);
+  margin-bottom: var(--e5);
+}
+
+.herramientas {
+  display: flex;
+  gap: var(--e3);
+  margin-bottom: var(--e4);
+}
+
+.buscador {
+  width: 100%;
+  max-width: 22rem;
+  min-height: 2.25rem;
+  padding: 0 var(--e3);
+  background: var(--fondo);
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radio-s);
+  font-size: 0.875rem;
+}
+
+.panel {
+  background: var(--fondo);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  overflow: hidden;
+}
+
+.desplazable {
+  overflow-x: auto;
+}
+
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.tabla th {
+  padding: var(--e3) var(--e4);
+  border-bottom: 1px solid var(--borde);
+  color: var(--texto-sutil);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.tabla td {
+  padding: var(--e3) var(--e4);
+  border-bottom: 1px solid var(--borde);
+  vertical-align: middle;
+}
+
+.tabla tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.tabla tbody tr:hover {
+  background: var(--fondo-sutil);
+}
+
+.numero {
+  color: var(--texto-tenue);
+  font-variant-numeric: tabular-nums;
+}
+
+.nombre {
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.tenue {
+  color: var(--texto-tenue);
+}
+
+.etiqueta {
+  display: inline-block;
+  padding: 0.0625rem var(--e2);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.activo {
+  background: var(--exito-suave);
+  color: var(--exito);
+}
+
+.inactivo {
+  background: var(--fondo-activo);
+  color: var(--texto-sutil);
+}
+
+.vacio {
+  padding: var(--e7) var(--e4);
+  text-align: center;
+}
+
+.vacioTitulo {
+  margin-bottom: var(--e2);
+  font-weight: 500;
+}
+
+.vacioTexto {
+  color: var(--texto-sutil);
+  font-size: 0.875rem;
+}
+
+.cargando {
+  padding: var(--e7) var(--e4);
+  color: var(--texto-tenue);
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+/* Mientras llega una pagina nueva, la anterior se atenua en lugar de
+   desaparecer: la tabla no da un salto y no se pierde la referencia. */
+.refrescando {
+  opacity: 0.55;
+  transition: opacity 0.12s ease;
+}
+
+@media (max-width: 40rem) {
+  .encabezado {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

@@ -13,7 +13,7 @@ export const MEMBER_STATUSES = ['active', 'inactive'] as const;
 export const memberStatusSchema = z.enum(MEMBER_STATUSES);
 export type MemberStatus = z.infer<typeof memberStatusSchema>;
 
-const nameSchema = z.string().trim().min(1, 'Obligatorio').max(120);
+const nameSchema = z.string({ error: 'Obligatorio' }).trim().min(1, 'Obligatorio').max(120);
 
 /**
  * Telefono con validacion deliberadamente laxa.
