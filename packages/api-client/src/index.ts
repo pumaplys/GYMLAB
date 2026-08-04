@@ -38,12 +38,14 @@
  */
 
 import { createAuthApi, type AuthApi } from './auth';
+import { createBillingApi, type BillingApi } from './billing';
 import { createHttp, type ApiClientOptions } from './http';
 import { createMembersApi, type MembersApi } from './members';
 
 export interface ApiClient {
   auth: AuthApi;
   members: MembersApi;
+  billing: BillingApi;
 }
 
 export function createApiClient(options: ApiClientOptions): ApiClient {
@@ -51,11 +53,13 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
   return {
     auth: createAuthApi(http),
     members: createMembersApi(http),
+    billing: createBillingApi(http),
   };
 }
 
 export type { AuthApi } from './auth';
 export type { MembersApi } from './members';
+export type { BillingApi } from './billing';
 export type { ApiClientOptions, Fetch, Http, RequestOptions } from './http';
 export {
   ApiClientError,

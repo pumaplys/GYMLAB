@@ -14,6 +14,7 @@ import { mensajeDeError } from '@/lib/errores';
 import { comoFecha } from '@/lib/formato';
 import { ROLES_DEL_PANEL } from '@/lib/roles';
 import { esSesionCaducada, useSesion } from '@/lib/sesion';
+import { Cuota } from './cuota';
 import estilos from './ficha.module.css';
 
 /**
@@ -144,6 +145,13 @@ function Ficha() {
           <Datos socio={socio} />
         )}
       </div>
+
+      {/*
+        La cuota va debajo de la ficha y no en otra pantalla: recepcion abre
+        esto para responder "¿este puede entrar?" y "¿me debe algo?", y esas dos
+        preguntas viven juntas.
+      */}
+      <Cuota memberId={socio.id} />
     </>
   );
 }

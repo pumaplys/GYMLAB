@@ -42,9 +42,7 @@ const centsSchema = z
   .min(0)
   .max(100_000_00, 'Importe fuera de rango; revisa si sobran ceros');
 
-const isoDateSchema = z
-  .string()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato esperado AAAA-MM-DD');
+const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato esperado AAAA-MM-DD');
 
 // --- Planes --------------------------------------------------------------
 
@@ -187,3 +185,28 @@ export const paymentSchema = z.object({
   voidReason: z.string().nullable(),
 });
 export type Payment = z.infer<typeof paymentSchema>;
+
+/**
+ * Lo que devuelve registrar un pago: el pago **y el estado resultante**.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ NO ES UN PAGO SUELTO, Y ESO ES EL DISENO, NO UN EXTRA.                   │
+ * │                                                                          │
+ * │ Cada pago cubre exactamente un periodo, encadenado desde el vencimiento  │
+ * │ anterior. Con una deuda de varios meses, cobrar uno **no** pone al       │
+ * │ corriente: el socio sigue vencido. El mostrador tiene que verlo en ese   │
+ * │ momento, no descubrirlo cuando la persona no pase el QR.                 │
+ * │                                                                          │
+ * │ Por eso la respuesta trae el estado ya recalculado por el servidor. El   │
+ * │ cliente no lo deduce ni lo vuelve a pedir.                               │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * ESTE ESQUEMA LO DESCUBRIO EL PANEL: la API ya respondia asi desde la Fase 1
+ * y el contrato no lo describia. Nadie se habia dado cuenta porque hasta ahora
+ * el unico consumidor eran los tests, que leen el cuerpo sin validarlo.
+ */
+export const registerPaymentResponseSchema = z.object({
+  payment: paymentSchema,
+  dues: duesStatusSchema,
+});
+export type RegisterPaymentResponse = z.infer<typeof registerPaymentResponseSchema>;

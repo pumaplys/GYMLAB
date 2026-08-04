@@ -163,6 +163,106 @@ describe('socios', () => {
     expect(llamadas[0]?.url).toBe('/v1/gyms/..%2F..%2Fauth%2Fme/members?page=1&pageSize=25');
   });
 
+  it('la cuota se pregunta, no se deduce de la suscripcion', async () => {
+    const { fetch, llamadas } = servidor(() =>
+      json({
+        estado: 'POR_VENCER',
+        puedeAcceder: true,
+        diasRestantes: 3,
+        hasta: '2026-08-07',
+        planName: 'Mensual',
+      }),
+    );
+    const api = createApiClient({ baseUrl: '/v1', fetch });
+
+    const cuota = await api.billing.dues(GYM, SOCIO.id);
+
+    expect(llamadas[0]?.url).toBe(`/v1/gyms/${GYM}/members/${SOCIO.id}/dues`);
+    // El estado no es una columna: lo calcula el servidor comparando el fin de
+    // periodo con hoy EN LA ZONA DEL GIMNASIO. Deducirlo aqui daria otra cosa.
+    expect(cuota.estado).toBe('POR_VENCER');
+    expect(cuota.diasRestantes).toBe(3);
+  });
+
+  it('registrar un pago devuelve el estado resultante, no solo el pago', async () => {
+    // Lo descubrio el panel: la API respondia {payment, dues} desde la Fase 1 y
+    // el contrato no lo describia. El cliente pedia un pago suelto y la
+    // validacion lo delato con todos los campos a undefined.
+    //
+    // Y la forma es el diseno: con una deuda de varios meses, cobrar uno NO
+    // pone al corriente. El mostrador tiene que verlo en ese momento.
+    const { fetch } = servidor(() =>
+      json({
+        payment: {
+          id: '55555555-5555-4555-8555-555555555555',
+          concept: 'subscription',
+          amountCents: 3500,
+          currency: 'EUR',
+          method: 'cash',
+          paidOn: '2026-08-04',
+          note: null,
+          recordedByUserId: null,
+          voidedAt: null,
+          voidReason: null,
+        },
+        dues: {
+          estado: 'VENCIDA',
+          puedeAcceder: false,
+          diasRestantes: -40,
+          hasta: '2026-06-25',
+          planName: 'Mensual',
+        },
+      }),
+    );
+    const api = createApiClient({ baseUrl: '/v1', fetch });
+
+    const resultado = await api.billing.registerPayment(GYM, SOCIO.id, {
+      concept: 'subscription',
+      amountCents: 3500,
+      method: 'cash',
+    });
+
+    expect(resultado.payment.amountCents).toBe(3500);
+    expect(resultado.dues.estado).toBe('VENCIDA');
+  });
+
+  it('un importe con decimales no cumple el contrato y se rechaza al volver', async () => {
+    // El dinero viaja en centimos enteros. Si la API devolviera 19.99, la
+    // pantalla lo pintaria tan feliz; con validacion, es un error localizado.
+    const { fetch } = servidor(() =>
+      json({
+        payment: {
+          id: '55555555-5555-4555-8555-555555555555',
+          concept: 'subscription',
+          amountCents: 19.99,
+          currency: 'EUR',
+          method: 'cash',
+          paidOn: '2026-08-04',
+          note: null,
+          recordedByUserId: null,
+          voidedAt: null,
+          voidReason: null,
+        },
+        dues: {
+          estado: 'AL_CORRIENTE',
+          puedeAcceder: true,
+          diasRestantes: 30,
+          hasta: '2026-09-04',
+          planName: 'Mensual',
+        },
+      }),
+    );
+    const api = createApiClient({ baseUrl: '/v1', fetch });
+
+    await expect(
+      api.billing.registerPayment(GYM, SOCIO.id, {
+        concept: 'subscription',
+        amountCents: 1999,
+        method: 'cash',
+      }),
+    ).rejects.toThrow(/amountCents/);
+  });
+
   it('y el id de la ficha tambien, que viene de la URL del navegador', async () => {
     const { fetch, llamadas } = servidor(() => json(SOCIO));
     const api = createApiClient({ baseUrl: '/v1', fetch });
