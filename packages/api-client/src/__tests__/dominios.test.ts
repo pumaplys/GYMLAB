@@ -98,6 +98,60 @@ describe('socios', () => {
     expect(socio.id).toBe(SOCIO.id);
   });
 
+  it('cada accion sobre una ficha usa su ruta y su metodo', async () => {
+    const { fetch, llamadas } = servidor(({ url }) =>
+      url.endsWith('/invite')
+        ? json({
+            id: '44444444-4444-4444-8444-444444444444',
+            email: 'ana@ejemplo.test',
+            role: 'member',
+            expiresAt: '2026-08-11T10:00:00.000Z',
+            acceptedAt: null,
+            revokedAt: null,
+          })
+        : json(SOCIO),
+    );
+    const api = createApiClient({ baseUrl: '/v1', fetch });
+
+    await api.members.getById(GYM, SOCIO.id);
+    await api.members.update(GYM, SOCIO.id, { phone: '600111222' });
+    await api.members.deactivate(GYM, SOCIO.id);
+    await api.members.reactivate(GYM, SOCIO.id);
+    await api.members.invite(GYM, SOCIO.id);
+
+    const base = `/v1/gyms/${GYM}/members/${SOCIO.id}`;
+    expect(llamadas.map((l) => `${l.init.method} ${l.url}`)).toEqual([
+      `GET ${base}`,
+      `PATCH ${base}`,
+      `POST ${base}/deactivate`,
+      `POST ${base}/reactivate`,
+      `POST ${base}/invite`,
+    ]);
+  });
+
+  it('la edicion manda solo lo que se le pasa', async () => {
+    const { fetch, llamadas } = servidor(() => json(SOCIO));
+    const api = createApiClient({ baseUrl: '/v1', fetch });
+
+    await api.members.update(GYM, SOCIO.id, { phone: '600111222' });
+
+    // Omitir un campo significa "no lo toques". Mandar el resto de la ficha
+    // sin querer sobreescribiria con valores viejos lo que otro acabe de tocar.
+    expect(JSON.parse(String(llamadas[0]?.init.body))).toEqual({ phone: '600111222' });
+  });
+
+  it('baja y alta no llevan cuerpo: la accion la dice la ruta', async () => {
+    const { fetch, llamadas } = servidor(() => json({ ...SOCIO, status: 'inactive' }));
+    const api = createApiClient({ baseUrl: '/v1', fetch });
+
+    const socio = await api.members.deactivate(GYM, SOCIO.id);
+
+    expect(llamadas[0]?.init.body).toBeUndefined();
+    // Devuelve la ficha ya actualizada, asi que la pantalla no tiene que
+    // volver a pedirla ni suponer como quedo.
+    expect(socio.status).toBe('inactive');
+  });
+
   it('el gimnasio de la ruta se codifica: no se pega en crudo en la URL', async () => {
     const { fetch, llamadas } = servidor(() =>
       json({ items: [], total: 0, page: 1, pageSize: 25 }),
@@ -107,5 +161,17 @@ describe('socios', () => {
     await api.members.list('../../auth/me', { page: 1, pageSize: 25 });
 
     expect(llamadas[0]?.url).toBe('/v1/gyms/..%2F..%2Fauth%2Fme/members?page=1&pageSize=25');
+  });
+
+  it('y el id de la ficha tambien, que viene de la URL del navegador', async () => {
+    const { fetch, llamadas } = servidor(() => json(SOCIO));
+    const api = createApiClient({ baseUrl: '/v1', fetch });
+
+    await api.members.getById(GYM, '../../../auth/me');
+
+    // Sin codificar, ese id saldria de la ruta de socios y apuntaria a otro
+    // endpoint. No abriria nada —el servidor decide igual— pero el cliente
+    // estaria construyendo una URL que no es la que declara.
+    expect(llamadas[0]?.url).toBe(`/v1/gyms/${GYM}/members/..%2F..%2F..%2Fauth%2Fme`);
   });
 });
