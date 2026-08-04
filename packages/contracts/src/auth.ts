@@ -93,14 +93,24 @@ export const verifyEmailSchema = z.object({ token: z.string().min(1) });
 export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>;
 
 /**
+ * Respuesta de las operaciones que no devuelven datos.
+ *
+ * Existe como esquema y no como `void` porque el cliente valida TODA respuesta:
+ * si `logout` empezara a devolver otra cosa, hay que enterarse igual que con
+ * cualquier otro campo.
+ */
+export const okResponseSchema = z.object({
+  ok: z.literal(true),
+});
+export type OkResponse = z.infer<typeof okResponseSchema>;
+
+/**
  * Respuesta de los flujos que envian un correo.
  *
  * No devuelve el token en ningun entorno: el correo se encola en pg-boss y el
  * token viaja en el, nunca en la respuesta HTTP.
  */
-export const emailFlowResponseSchema = z.object({
-  ok: z.literal(true),
-});
+export const emailFlowResponseSchema = okResponseSchema;
 export type EmailFlowResponse = z.infer<typeof emailFlowResponseSchema>;
 
 // --- Invitaciones -------------------------------------------------------
