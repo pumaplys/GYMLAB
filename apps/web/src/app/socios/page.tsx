@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import type { MemberList } from '@gymlab/contracts';
 import { Aviso } from '@/componentes/aviso';
 import { BotonEnlace } from '@/componentes/boton';
@@ -153,7 +154,18 @@ function Socios() {
                       <tr key={socio.id}>
                         <td className={estilos.numero}>{socio.memberNumber}</td>
                         <td className={estilos.nombre}>
-                          {socio.firstName} {socio.lastName}
+                          {/*
+                            El nombre es el enlace, no una fila entera pinchable:
+                            asi se puede abrir en otra pestana, se navega con el
+                            tabulador y un lector de pantalla lo anuncia como lo
+                            que es.
+                          */}
+                          <Link
+                            className={estilos.enlace}
+                            href={`/socios/ficha?id=${encodeURIComponent(socio.id)}`}
+                          >
+                            {socio.firstName} {socio.lastName}
+                          </Link>
                         </td>
                         <td>{socio.email ?? <span className={estilos.tenue}>—</span>}</td>
                         <td>{socio.phone ?? <span className={estilos.tenue}>—</span>}</td>
