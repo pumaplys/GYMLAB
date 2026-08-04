@@ -37,6 +37,8 @@ const gimnasiosCreados: string[] = [];
 let gymA: string;
 let tokenOwnerA: string;
 let tokenRecepcionA: string;
+/** Existe solo para comprobar quien NO llega al catalogo de planes. */
+let tokenEntrenadorA: string;
 let gymB: string;
 let tokenOwnerB: string;
 /** Plan mensual del gimnasio A, creado una vez para toda la bateria. */
@@ -156,6 +158,7 @@ beforeAll(async () => {
   gymB = b.gymId;
 
   tokenRecepcionA = await altaPersonal(gymA, tokenOwnerA, 'receptionist', 'recepcion-a');
+  tokenEntrenadorA = await altaPersonal(gymA, tokenOwnerA, 'trainer', 'entrenador-a');
 
   const plan = await http()
     .post(`/v1/gyms/${gymA}/plans`)
@@ -229,6 +232,30 @@ describe('planes', () => {
       .set(conSesion(tokenRecepcionA))
       .send({ priceCents: 1 })
       .expect(403);
+
+    await http()
+      .post(`/v1/gyms/${gymA}/plans/${planMensual}/archive`)
+      .set(conSesion(tokenRecepcionA))
+      .expect(403);
+  });
+
+  it('pero SI puede leerlos, porque los necesita para dar de alta una cuota', async () => {
+    // Lo descubrio el panel: recepcion podia contratar —`POST subscription` la
+    // admite— y no podia ver el catalogo del que sale el `planId`. Podia
+    // ejecutar la accion y no elegir el plan.
+    //
+    // La separacion no es "los planes son del dueno", sino "los PRECIOS los
+    // decide el dueno". Consultarlos para cobrar es trabajo de mostrador.
+    const res = await http()
+      .get(`/v1/gyms/${gymA}/plans`)
+      .set(conSesion(tokenRecepcionA))
+      .expect(200);
+
+    expect(res.body.some((p: { id: string }) => p.id === planMensual)).toBe(true);
+  });
+
+  it('el entrenador NO ve el catalogo: los importes son dato economico', async () => {
+    await http().get(`/v1/gyms/${gymA}/plans`).set(conSesion(tokenEntrenadorA)).expect(403);
   });
 
   it('un plan archivado no se puede contratar, y las cuotas vivas no cambian', async () => {
@@ -513,9 +540,7 @@ describe('congelar la cuota', () => {
       .expect(200);
 
     expect(despues.body.pausedDays).toBe(10);
-    expect(despues.body.currentPeriodEnd).toBe(
-      await masDias(antes.body.currentPeriodEnd, 10),
-    );
+    expect(despues.body.currentPeriodEnd).toBe(await masDias(antes.body.currentPeriodEnd, 10));
     expect(despues.body.status).toBe('active');
   });
 
@@ -769,4 +794,3 @@ describe('exportacion RGPD (ADR-0011)', () => {
     expect(cuotas.rows).toHaveLength(0);
   });
 });
-

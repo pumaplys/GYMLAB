@@ -27,11 +27,13 @@ import { ZodBody } from '../common/zod.pipe';
 import { BillingService } from './billing.service';
 
 /**
- * Planes del gimnasio. Solo el dueno.
+ * Planes del gimnasio.
  *
- * Recepcion cobra y da de alta cuotas, pero no decide los precios: eso es del
+ * Recepcion cobra y da de alta cuotas, pero **no decide los precios**: eso es del
  * negocio, y quien esta en el mostrador no deberia poder cambiarlo entre dos
- * clientes.
+ * clientes. Por eso crear, editar y archivar son del dueno.
+ *
+ * Leer el catalogo es otra cosa, y va aparte: ver los planes no es decidirlos.
  */
 @Controller('gyms/:gymId/plans')
 @Roles('owner')
@@ -46,6 +48,27 @@ export class PlansController {
     return this.billing.createPlan(this.gym(gymId), body);
   }
 
+  /**
+   * El catalogo, tambien para recepcion.
+   *
+   * ┌──────────────────────────────────────────────────────────────────────┐
+   * │ LO DESCUBRIO EL PANEL, Y ERA UN FLUJO IMPOSIBLE.                     │
+   * │                                                                      │
+   * │ Recepcion ya podia dar de alta la cuota de un socio —`POST           │
+   * │ subscription` la admite— pero esa llamada necesita un `planId`, y el │
+   * │ catalogo estaba cerrado a `owner` junto con crear y editar. Es decir: │
+   * │ podia ejecutar la accion y no podia elegir el plan, salvo sabiendose  │
+   * │ los identificadores de memoria.                                      │
+   * │                                                                      │
+   * │ La separacion correcta no es "planes son del dueno", sino "los        │
+   * │ PRECIOS los decide el dueno". Consultarlos para cobrar es el trabajo  │
+   * │ de mostrador.                                                        │
+   * └──────────────────────────────────────────────────────────────────────┘
+   *
+   * El entrenador sigue fuera: los importes son dato economico y no le hacen
+   * falta para entrenar a nadie.
+   */
+  @Roles('owner', 'receptionist')
   @Get()
   list(@Param('gymId', ParseUUIDPipe) gymId: string) {
     return this.billing.listPlans(this.gym(gymId));
