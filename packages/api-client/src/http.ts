@@ -104,9 +104,16 @@ export function createHttp({ baseUrl, fetch: fetchInyectado }: ApiClientOptions)
         signal,
       });
     } catch (causa) {
-      // Cancelar no es fallar: se propaga el AbortError tal cual para que quien
+      // Cancelar no es fallar: se propaga el motivo tal cual para que quien
       // cancelo pueda reconocerlo y no pinte un aviso de "sin conexion".
-      if (esAbortada(causa)) throw causa;
+      //
+      // Se le pregunta al SIGNAL, no al error. `fetch` rechaza con
+      // `signal.reason`, que es lo que haya pasado quien llamara a
+      // `abort(motivo)`: puede ser cualquier cosa y no tiene por que llamarse
+      // 'AbortError'. Mirar solo el nombre funciona mientras nadie de un motivo
+      // propio, que es exactamente el tipo de comprobacion que alguien acaba
+      // olvidando.
+      if (signal?.aborted || esAbortada(causa)) throw causa;
       throw new NetworkError(method, url, causa);
     }
 
@@ -176,6 +183,11 @@ function issuesDe(valor: unknown): FieldIssue[] {
   });
 }
 
+/**
+ * Respaldo para cancelaciones que no vienen de nuestro `signal`: un
+ * `AbortSignal.timeout()`, o una senal compuesta mas arriba. Ahi no hay nada
+ * que preguntar y lo unico que queda es el nombre del error.
+ */
 function esAbortada(causa: unknown): boolean {
   return (
     typeof causa === 'object' &&
