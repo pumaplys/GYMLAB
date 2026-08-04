@@ -75,6 +75,58 @@ describe('auth', () => {
   });
 });
 
+describe('invitaciones', () => {
+  const INVITACION = {
+    id: '66666666-6666-4666-8666-666666666666',
+    email: 'recepcion@ejemplo.test',
+    role: 'receptionist',
+    expiresAt: '2026-08-11T10:00:00.000Z',
+    acceptedAt: null,
+    revokedAt: null,
+  };
+
+  it('listar, invitar y revocar usan su ruta y su metodo', async () => {
+    const { fetch, llamadas } = servidor(({ init }) =>
+      init.method === 'GET'
+        ? json([INVITACION])
+        : init.method === 'DELETE'
+          ? json({ ok: true })
+          : json(INVITACION, 201),
+    );
+    const api = createApiClient({ baseUrl: '/v1', fetch });
+
+    await api.invitations.list(GYM);
+    await api.invitations.create(GYM, { email: 'recepcion@ejemplo.test', role: 'receptionist' });
+    await api.invitations.revoke(GYM, INVITACION.id);
+
+    const base = `/v1/gyms/${GYM}/invitations`;
+    expect(llamadas.map((l) => `${l.init.method} ${l.url}`)).toEqual([
+      `GET ${base}`,
+      `POST ${base}`,
+      `DELETE ${base}/${INVITACION.id}`,
+    ]);
+  });
+
+  it('revocar no manda cuerpo: la invitacion la dice la ruta', async () => {
+    const { fetch, llamadas } = servidor(() => json({ ok: true }));
+    const api = createApiClient({ baseUrl: '/v1', fetch });
+
+    await api.invitations.revoke(GYM, INVITACION.id);
+
+    expect(llamadas[0]?.init.body).toBeUndefined();
+  });
+
+  it('un rol que no existe en el contrato se rechaza al volver', async () => {
+    // La matriz de quien invita a quien es el control de escalada de
+    // privilegios. Si la API devolviera un rol que el contrato no conoce, la
+    // pantalla lo pintaria sin saber que significa.
+    const { fetch } = servidor(() => json([{ ...INVITACION, role: 'superadmin' }]));
+    const api = createApiClient({ baseUrl: '/v1', fetch });
+
+    await expect(api.invitations.list(GYM)).rejects.toThrow(/role/);
+  });
+});
+
 describe('socios', () => {
   it('lista con paginacion y filtros', async () => {
     const { fetch, llamadas } = servidor(() =>
