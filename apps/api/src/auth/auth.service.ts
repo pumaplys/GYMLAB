@@ -18,6 +18,7 @@ import {
   gyms,
   isNull,
   memberships,
+  ne,
   organizations,
   sessions,
   users,
@@ -29,6 +30,7 @@ import {
 import type {
   EmailFlowResponse,
   ForgotPasswordInput,
+  GymStaffMember,
   LoginInput,
   Me,
   RegisterGymInput,
@@ -246,6 +248,51 @@ export class AuthService {
     // o alargar la sesion segun corresponda.
     await this.applySessionPolicy({ id: sessionId }, gymId, destino.role);
     return { token: '', activeGymId: gymId };
+  }
+
+  /**
+   * Quien forma parte del gimnasio ahora mismo.
+   *
+   * NO es un listado de pertenencias: es el personal. Los socios quedan fuera
+   * porque `member` es una forma de pertenecer al gimnasio, no de trabajar en
+   * el, y mezclarlos convertiria esta lista en la de socios con otro nombre.
+   *
+   * Lo ven dueno y recepcion: saber quien trabaja aqui es operativa diaria y
+   * evita reinvitar a alguien que ya esta. Retirar el acceso, en cambio, es
+   * solo del dueno — ver la lista no da poder sobre ella.
+   *
+   * Ordenado por rol y despues por nombre. El orden del enum es el de la
+   * jerarquia (dueno, recepcion, entrenador), asi que sale solo.
+   */
+  async listStaff(gymId: string): Promise<GymStaffMember[]> {
+    const filas = await withTenant(this.db, gymId, (tx) =>
+      tx
+        .select({
+          userId: memberships.userId,
+          name: users.name,
+          email: users.email,
+          role: memberships.role,
+          joinedAt: memberships.createdAt,
+        })
+        .from(memberships)
+        .innerJoin(users, eq(users.id, memberships.userId))
+        .where(
+          and(
+            eq(memberships.gymId, gymId),
+            isNull(memberships.endedAt),
+            ne(memberships.role, 'member'),
+          ),
+        )
+        .orderBy(memberships.role, users.name),
+    );
+
+    return filas.map((f) => ({
+      userId: f.userId,
+      name: f.name,
+      email: f.email,
+      role: f.role,
+      joinedAt: f.joinedAt.toISOString(),
+    }));
   }
 
   /**

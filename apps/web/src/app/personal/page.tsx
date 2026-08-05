@@ -1,7 +1,13 @@
 'use client';
 
 import { useEffect, useId, useState } from 'react';
-import { CAN_INVITE, createInvitationSchema, type Invitation, type Role } from '@gymlab/contracts';
+import {
+  CAN_INVITE,
+  createInvitationSchema,
+  type GymStaffMember,
+  type Invitation,
+  type Role,
+} from '@gymlab/contracts';
 import { Aviso } from '@/componentes/aviso';
 import { Boton } from '@/componentes/boton';
 import { Campo } from '@/componentes/campo';
@@ -15,25 +21,27 @@ import { esSesionCaducada, useSesion } from '@/lib/sesion';
 import estilos from './personal.module.css';
 
 /**
- * El personal del gimnasio: a quien se ha invitado y en que ha quedado.
+ * El personal del gimnasio.
  *
  * ┌──────────────────────────────────────────────────────────────────────────┐
- * │ ES UNA PANTALLA DE INVITACIONES, NO UN CENSO — Y ESO ES DELIBERADO.      │
+ * │ DOS SECCIONES, Y LA SEPARACION ES LO QUE COSTO ENTENDER.                 │
  * │                                                                          │
- * │ La API no tiene ningun endpoint que liste el personal de un gimnasio:    │
- * │ `memberships` no se expone (ADR-0006: `identity` no tiene servicio de    │
- * │ aplicacion). Comprobado pidiendo las rutas plausibles —memberships,      │
- * │ staff, personal, users—: 404 las cuatro.                                 │
+ * │   Personal activo -> un HECHO: quien tiene acceso ahora mismo.          │
+ * │   Invitaciones    -> PROMESAS: pueden caducar, revocarse o no aceptarse. │
  * │                                                                          │
- * │ Lo que si se puede seguir entero es el ciclo de la invitacion, y resulta │
- * │ que basta: quien acepta aparece aqui como "aceptada", con su fecha. No   │
- * │ es la misma pantalla que un censo, pero responde la pregunta que hoy     │
- * │ obliga a llamar a la API a mano.                                        │
+ * │ No son la misma lista con distinto filtro. Alguien puede tener una       │
+ * │ invitacion "aceptada" y ya no trabajar aqui, porque se le retiro el      │
+ * │ acceso despues. Deducir el presente a partir del historial de            │
+ * │ invitaciones era justo el error que dejaba al panel sin saber a quien    │
+ * │ retirar: `invitationSchema` ni siquiera lleva `userId`.                  │
  * └──────────────────────────────────────────────────────────────────────────┘
  *
- * Los socios NO salen aqui aunque compartan tabla: se les invita desde su
- * ficha, que ademas vincula la invitacion con ella. Mezclarlos llenaria esta
- * lista de gente que no es personal.
+ * Los socios no salen en ninguna de las dos: se les invita desde su ficha, que
+ * ademas vincula la invitacion con ella. Mezclarlos llenaria la pantalla de
+ * gente que no es personal.
+ *
+ * Retirar el acceso solo se le ofrece al dueno. El servidor lo impone igual con
+ * un 403; aqui solo se evita ensenar un boton que va a fallar.
  */
 const ROLES_DE_PERSONAL: readonly Role[] = ['owner', 'receptionist', 'trainer'];
 
@@ -50,15 +58,20 @@ export default function PersonalPage() {
 function Personal() {
   const { gymId, rol, revisar } = useSesion();
 
+  const [personal, setPersonal] = useState<GymStaffMember[] | null>(null);
   const [invitaciones, setInvitaciones] = useState<Invitation[] | null>(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reciente, setReciente] = useState<Invitation | null>(null);
 
-  /** Recarga tras invitar o revocar. La primera carga la hace el efecto. */
+  /** Recarga tras invitar o retirar. La primera carga la hace el efecto. */
   const cargar = async () => {
     if (!gymId) return;
-    const todas = await api.invitations.list(gymId);
+    const [quienEsta, todas] = await Promise.all([
+      api.staff.list(gymId),
+      api.invitations.list(gymId),
+    ]);
+    setPersonal(quienEsta);
     // Solo personal: los socios se invitan desde su ficha.
     setInvitaciones(todas.filter((i) => ROLES_DE_PERSONAL.includes(i.role)));
   };
@@ -69,9 +82,12 @@ function Personal() {
     setCargando(true);
     setError(null);
 
-    api.invitations
-      .list(gymId, { signal: control.signal })
-      .then((todas) => {
+    Promise.all([
+      api.staff.list(gymId, { signal: control.signal }),
+      api.invitations.list(gymId, { signal: control.signal }),
+    ])
+      .then(([quienEsta, todas]) => {
+        setPersonal(quienEsta);
         setInvitaciones(todas.filter((i) => ROLES_DE_PERSONAL.includes(i.role)));
         setCargando(false);
       })
@@ -96,8 +112,8 @@ function Personal() {
         <div>
           <h1>Personal</h1>
           <p className={estilos.entradilla}>
-            Aqui se invita al personal y se ve en que ha quedado cada invitacion. Los socios se
-            invitan desde su ficha.
+            Quien trabaja en el gimnasio y a quien has invitado. Los socios no salen aqui: se les
+            invita desde su ficha.
           </p>
         </div>
       </div>
@@ -124,14 +140,29 @@ function Personal() {
 
       {cargando ? (
         <p className={estilos.cargando} role="status">
-          Cargando invitaciones…
+          Cargando…
         </p>
       ) : (
-        <Listado
-          gymId={gymId}
-          invitaciones={invitaciones ?? []}
-          onCambio={() => void cargar().catch((p: unknown) => setError(mensajeDeError(p)))}
-        />
+        <>
+          {/*
+            Dos secciones, y la separacion es la que costo entender: una
+            invitacion es una PROMESA —puede caducar, revocarse o no aceptarse—
+            y el personal activo es un HECHO. Alguien puede tener una invitacion
+            aceptada y ya no trabajar aqui.
+          */}
+          <PersonalActivo
+            gymId={gymId}
+            personal={personal ?? []}
+            puedeRetirar={rol === 'owner'}
+            onCambio={() => void cargar().catch((p: unknown) => setError(mensajeDeError(p)))}
+          />
+
+          <Listado
+            gymId={gymId}
+            invitaciones={invitaciones ?? []}
+            onCambio={() => void cargar().catch((p: unknown) => setError(mensajeDeError(p)))}
+          />
+        </>
       )}
     </>
   );
@@ -252,6 +283,112 @@ function Invitar({
   );
 }
 
+/**
+ * Quien forma parte del gimnasio ahora mismo.
+ *
+ * `puedeRetirar` NO es la autorizacion: el servidor rechaza con 403 a quien no
+ * sea el dueno. Aqui solo evita ofrecer un boton que va a fallar — recepcion ve
+ * la lista, que es lo que necesita para no reinvitar a alguien que ya esta.
+ */
+function PersonalActivo({
+  gymId,
+  personal,
+  puedeRetirar,
+  onCambio,
+}: {
+  gymId: string;
+  personal: GymStaffMember[];
+  puedeRetirar: boolean;
+  onCambio: () => void;
+}) {
+  const [retirando, setRetirando] = useState<string | null>(null);
+  const [confirmando, setConfirmando] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const retirar = (userId: string) => {
+    setRetirando(userId);
+    setError(null);
+    void api.staff
+      .revoke(gymId, userId)
+      .then(onCambio)
+      .catch((problema: unknown) => setError(mensajeDeError(problema)))
+      .finally(() => {
+        setRetirando(null);
+        setConfirmando(null);
+      });
+  };
+
+  return (
+    <section className={estilos.seccion}>
+      <h2 className={estilos.tituloSeccion}>Personal activo</h2>
+      <p className={estilos.explicacion}>
+        Quien tiene acceso al gimnasio ahora mismo.{' '}
+        {puedeRetirar
+          ? 'Al retirar el acceso, esa persona deja de entrar de inmediato.'
+          : 'Retirar el acceso es cosa del propietario.'}
+      </p>
+
+      {error && (
+        <div className={estilos.avisos}>
+          <Aviso>{error}</Aviso>
+        </div>
+      )}
+
+      <div className={estilos.panel}>
+        <table className={estilos.tabla}>
+          <thead>
+            <tr>
+              <th scope="col">Nombre</th>
+              <th scope="col">Correo</th>
+              <th scope="col">Rol</th>
+              <th scope="col">Desde</th>
+              <th scope="col">
+                <span className="solo-lectores">Acciones</span>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {personal.map((persona) => (
+              <tr key={persona.userId}>
+                <td className={estilos.nombre}>{persona.name}</td>
+                <td className={estilos.correo}>{persona.email}</td>
+                <td>{NOMBRE_DEL_ROL[persona.role]}</td>
+                <td className={estilos.desde}>{comoFecha(persona.joinedAt)}</td>
+                <td className={estilos.acciones}>
+                  {puedeRetirar &&
+                    (confirmando === persona.userId ? (
+                      <span className={estilos.confirmar}>
+                        ¿Retirar el acceso?
+                        <Boton
+                          variante="sutil"
+                          cargando={retirando === persona.userId}
+                          onClick={() => retirar(persona.userId)}
+                        >
+                          Si
+                        </Boton>
+                        <Boton variante="sutil" onClick={() => setConfirmando(null)}>
+                          No
+                        </Boton>
+                      </span>
+                    ) : (
+                      <Boton
+                        variante="sutil"
+                        disabled={retirando !== null}
+                        onClick={() => setConfirmando(persona.userId)}
+                      >
+                        Retirar acceso
+                      </Boton>
+                    ))}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
 /** En que ha quedado cada invitacion. El orden importa: revocada gana a caducada. */
 function estadoDe(invitacion: Invitation): { texto: string; clase: string | undefined } {
   if (invitacion.revokedAt) return { texto: 'Revocada', clase: estilos.revocada };
@@ -274,16 +411,29 @@ function Listado({
   const [confirmando, setConfirmando] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const cabecera = (
+    <>
+      <h2 className={estilos.tituloSeccion}>Invitaciones</h2>
+      <p className={estilos.explicacion}>
+        Lo que has enviado y en qué ha quedado. Una invitación aceptada no significa que esa persona
+        siga aquí: eso lo dice la lista de arriba.
+      </p>
+    </>
+  );
+
   if (invitaciones.length === 0) {
     return (
-      <div className={estilos.panel}>
-        <div className={estilos.vacio}>
-          <p className={estilos.vacioTitulo}>Todavia no has invitado a nadie</p>
-          <p className={estilos.vacioTexto}>
-            Las invitaciones que envies apareceran aqui con su estado.
-          </p>
+      <section className={estilos.seccion}>
+        {cabecera}
+        <div className={estilos.panel}>
+          <div className={estilos.vacio}>
+            <p className={estilos.vacioTitulo}>Todavia no has invitado a nadie</p>
+            <p className={estilos.vacioTexto}>
+              Las invitaciones que envies apareceran aqui con su estado.
+            </p>
+          </div>
         </div>
-      </div>
+      </section>
     );
   }
 
@@ -301,7 +451,9 @@ function Listado({
   };
 
   return (
-    <>
+    <section className={estilos.seccion}>
+      {cabecera}
+
       {error && (
         <div className={estilos.avisos}>
           <Aviso>{error}</Aviso>
@@ -371,6 +523,6 @@ function Listado({
           </tbody>
         </table>
       </div>
-    </>
+    </section>
   );
 }

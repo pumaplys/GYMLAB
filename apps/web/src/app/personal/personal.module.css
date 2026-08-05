@@ -75,6 +75,30 @@
   overflow: hidden;
 }
 
+.seccion {
+  max-width: 44rem;
+  margin-bottom: var(--e6);
+}
+
+.tituloSeccion {
+  margin-bottom: var(--e2);
+}
+
+.explicacion {
+  margin-bottom: var(--e3);
+  color: var(--texto-sutil);
+  font-size: 0.875rem;
+}
+
+.nombre {
+  font-weight: 500;
+}
+
+.desde {
+  color: var(--texto-tenue);
+  white-space: nowrap;
+}
+
 .tabla {
   width: 100%;
   border-collapse: collapse;

@@ -1,4 +1,4 @@
-import { Controller, Delete, ForbiddenException, Param, ParseUUIDPipe } from '@nestjs/common';
+import { Controller, Delete, ForbiddenException, Get, Param, ParseUUIDPipe } from '@nestjs/common';
 import { Roles } from '../common/decorators/roles.decorator';
 import { requireRequestContext } from '../common/request-context';
 import { AuthService } from './auth.service';
@@ -28,6 +28,19 @@ import { AuthService } from './auth.service';
 export class StaffController {
   constructor(private readonly auth: AuthService) {}
 
+  /**
+   * Quien forma parte del gimnasio ahora mismo.
+   *
+   * Dueno **y recepcion**: saber quien trabaja aqui es operativa diaria y evita
+   * reinvitar a alguien que ya esta. Ver la lista no da poder sobre ella — el
+   * `DELETE` de abajo sigue siendo solo del dueno.
+   */
+  @Roles('owner', 'receptionist')
+  @Get()
+  list(@Param('gymId', ParseUUIDPipe) gymId: string) {
+    return this.auth.listStaff(this.gym(gymId));
+  }
+
   @Roles('owner')
   @Delete(':userId')
   revoke(
@@ -35,15 +48,21 @@ export class StaffController {
     @Param('userId', ParseUUIDPipe) userId: string,
   ) {
     const ctx = requireRequestContext();
+    return this.auth.revokeAccess(this.gym(gymId), ctx.userId, userId);
+  }
 
-    // El gimnasio de la ruta se compara con el de la sesion, que es el que
-    // manda. Sin esto, el dueno de A podria escribir el id de B en la URL: RLS
-    // lo frenaria despues, pero devolviendo un error de base de datos en lugar
-    // de un 403 (ADR-0007).
-    if (ctx.gymId !== gymId) {
+  /**
+   * El `gymId` de la ruta se compara con el de la sesion, que es el que manda.
+   *
+   * Sin esto, el dueno de A podria escribir el id de B en la URL. RLS lo
+   * frenaria despues, pero devolviendo un error de base de datos en lugar de un
+   * 403 — y descansar en eso es lo que ADR-0007 queria evitar.
+   */
+  private gym(gymIdRuta: string): string {
+    const ctx = requireRequestContext();
+    if (ctx.gymId !== gymIdRuta) {
       throw new ForbiddenException('El gimnasio de la ruta no es el activo de tu sesion.');
     }
-
-    return this.auth.revokeAccess(ctx.gymId, ctx.userId, userId);
+    return ctx.gymId;
   }
 }

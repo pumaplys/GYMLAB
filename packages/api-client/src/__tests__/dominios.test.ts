@@ -127,6 +127,60 @@ describe('invitaciones', () => {
   });
 });
 
+describe('personal', () => {
+  const PERSONA = {
+    userId: '77777777-7777-4777-8777-777777777777',
+    name: 'Sonia Mostrador',
+    email: 'sonia@ejemplo.test',
+    role: 'receptionist',
+    joinedAt: '2026-03-01T09:00:00.000Z',
+  };
+
+  it('listar y retirar usan su ruta y su metodo', async () => {
+    const { fetch, llamadas } = servidor(({ init }) =>
+      init.method === 'GET' ? json([PERSONA]) : json({ ok: true }),
+    );
+    const api = createApiClient({ baseUrl: '/v1', fetch });
+
+    const personal = await api.staff.list(GYM);
+    await api.staff.revoke(GYM, PERSONA.userId);
+
+    const base = `/v1/gyms/${GYM}/staff`;
+    expect(llamadas.map((l) => `${l.init.method} ${l.url}`)).toEqual([
+      `GET ${base}`,
+      `DELETE ${base}/${PERSONA.userId}`,
+    ]);
+    expect(personal[0]?.role).toBe('receptionist');
+  });
+
+  it('retirar no manda cuerpo: a quien se retira lo dice la ruta', async () => {
+    const { fetch, llamadas } = servidor(() => json({ ok: true }));
+    const api = createApiClient({ baseUrl: '/v1', fetch });
+
+    await api.staff.revoke(GYM, PERSONA.userId);
+
+    expect(llamadas[0]?.init.body).toBeUndefined();
+  });
+
+  it('un campo de mas en la respuesta no llega a la pantalla', async () => {
+    // El contrato expone lo justo para pintar la lista y retirar el acceso. Si
+    // el servidor empezara a mandar la fila entera, Zod la recorta aqui en vez
+    // de dejar que datos que nadie pidio acaben en el navegador.
+    const { fetch } = servidor(() => json([{ ...PERSONA, endedByUserId: 'algo', gymId: 'otro' }]));
+    const api = createApiClient({ baseUrl: '/v1', fetch });
+
+    const personal = await api.staff.list(GYM);
+
+    expect(Object.keys(personal[0]!).sort()).toEqual([
+      'email',
+      'joinedAt',
+      'name',
+      'role',
+      'userId',
+    ]);
+  });
+});
+
 describe('socios', () => {
   it('lista con paginacion y filtros', async () => {
     const { fetch, llamadas } = servidor(() =>
