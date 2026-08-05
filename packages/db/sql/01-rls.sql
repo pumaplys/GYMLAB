@@ -56,6 +56,10 @@ ALTER TABLE gyms ENABLE ROW LEVEL SECURITY;
 --
 -- No abre ninguna via: solo deja ver los gimnasios a los que uno pertenece.
 -- Y `app.user_id` lo fija el servidor desde la sesion, nunca la peticion.
+--
+-- `ended_at IS NULL` NO es un detalle: sin el, a quien se le retira el acceso
+-- le seguiria constando este gimnasio. La pertenencia terminada se conserva
+-- para el historial, pero no debe abrir ninguna puerta.
 DROP POLICY IF EXISTS tenant_isolation ON gyms;
 DROP POLICY IF EXISTS tenant_isolation_read ON gyms;
 CREATE POLICY tenant_isolation_read ON gyms
@@ -63,7 +67,10 @@ CREATE POLICY tenant_isolation_read ON gyms
   TO gymlab_app
   USING (
     id = app_current_gym_id()
-    OR id IN (SELECT gym_id FROM memberships WHERE user_id = app_current_user_id())
+    OR id IN (
+      SELECT gym_id FROM memberships
+      WHERE user_id = app_current_user_id() AND ended_at IS NULL
+    )
   );
 
 -- Escritura: estrictamente el gimnasio activo. El INSERT de register-gym

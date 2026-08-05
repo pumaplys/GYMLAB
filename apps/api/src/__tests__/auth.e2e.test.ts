@@ -166,6 +166,32 @@ async function tokenEncolado(cola: string, destinatario: string): Promise<string
   return token;
 }
 
+/**
+ * Invita a alguien al gimnasio A y acepta la invitacion.
+ *
+ * Devuelve su sesion y su `userId`, que es lo que identifica a una persona en
+ * la ruta de retirar el acceso.
+ */
+async function invitarYAceptar(quien: string, rol: string) {
+  await http()
+    .post(`/v1/gyms/${gymA}/invitations`)
+    .set(conSesion(tokenOwnerA))
+    .send({ email: email(quien), role: rol })
+    .expect(201);
+
+  const alta = await http()
+    .post('/v1/auth/accept-invitation')
+    .send({
+      token: await tokenEncolado(EMAIL_QUEUES.invitation, email(quien)),
+      name: quien,
+      password: PASSWORD,
+    })
+    .expect(201);
+
+  const yo = await http().get('/v1/auth/me').set(conSesion(alta.body.token)).expect(200);
+  return { token: alta.body.token as string, userId: yo.body.user.id as string };
+}
+
 async function contarTrabajos(cola: string): Promise<number> {
   const res = await owner.execute<{ n: number }>(
     sql`SELECT count(*)::int AS n FROM pgboss.job WHERE name = ${cola}`,
@@ -479,6 +505,146 @@ describe('endurecimiento de la sesion', () => {
     expect(dias).toBeGreaterThan(80);
   });
 
+  it('retirar el acceso expulsa en la SIGUIENTE peticion, sin tocar la sesion', async () => {
+    // Es el caso que motivo todo esto: un empleado que se va. Lo que importa no
+    // es que no pueda volver a entrar, sino que la sesion que YA tiene abierta
+    // deje de servir sin esperar a que caduque.
+    const recepcion = await invitarYAceptar('despedida', 'receptionist');
+
+    // Antes: dentro, y viendo los socios del gimnasio.
+    await http().get(`/v1/gyms/${gymA}/members`).set(conSesion(recepcion.token)).expect(200);
+
+    await http()
+      .delete(`/v1/gyms/${gymA}/staff/${recepcion.userId}`)
+      .set(conSesion(tokenOwnerA))
+      .expect(200);
+
+    // Despues: la MISMA sesion, sin cerrarla ni caducarla, ya no vale.
+    await http().get(`/v1/gyms/${gymA}/members`).set(conSesion(recepcion.token)).expect(401);
+    await http().get('/v1/auth/me').set(conSesion(recepcion.token)).expect(401);
+
+    // Y si vuelve a entrar, el gimnasio ha desaparecido de su cuenta: no puede
+    // volver con `switch-gym`. La pertenencia terminada existe, pero no cuenta.
+    const otraVez = await http()
+      .post('/v1/auth/login')
+      .send({ email: email('despedida'), password: PASSWORD })
+      .expect(201);
+    const yo = await http().get('/v1/auth/me').set(conSesion(otraVez.body.token)).expect(200);
+
+    expect(yo.body.memberships).toEqual([]);
+    await http()
+      .post('/v1/auth/switch-gym')
+      .set(conSesion(otraVez.body.token))
+      .send({ gymId: gymA })
+      .expect(403);
+  });
+
+  it('la pertenencia NO se borra: queda con su fecha y quien la termino', async () => {
+    const entrenador = await invitarYAceptar('historial', 'trainer');
+    await http()
+      .delete(`/v1/gyms/${gymA}/staff/${entrenador.userId}`)
+      .set(conSesion(tokenOwnerA))
+      .expect(200);
+
+    const filas = await owner.execute<{ role: string; ended_at: Date; ended_by_user_id: string }>(
+      sql`SELECT role, ended_at, ended_by_user_id FROM memberships
+          WHERE gym_id = ${gymA}::uuid AND user_id = ${entrenador.userId}::uuid`,
+    );
+
+    // "Quien fue entrenador entre marzo y julio" sigue siendo respondible.
+    expect(filas.rows).toHaveLength(1);
+    expect(filas.rows[0]!.role).toBe('trainer');
+    expect(filas.rows[0]!.ended_at).not.toBeNull();
+    expect(filas.rows[0]!.ended_by_user_id).not.toBeNull();
+  });
+
+  it('se le puede volver a contratar, y quedan las DOS etapas', async () => {
+    // El indice unico es parcial —solo entre las vigentes— justo para esto: con
+    // uno total habria que reutilizar la fila y el periodo anterior se perderia.
+    const persona = await invitarYAceptar('vuelve', 'trainer');
+    await http()
+      .delete(`/v1/gyms/${gymA}/staff/${persona.userId}`)
+      .set(conSesion(tokenOwnerA))
+      .expect(200);
+
+    // Volver a invitarle NO debe chocar con la pertenencia terminada.
+    await http()
+      .post(`/v1/gyms/${gymA}/invitations`)
+      .set(conSesion(tokenOwnerA))
+      .send({ email: email('vuelve'), role: 'receptionist' })
+      .expect(201);
+
+    const login = await http()
+      .post('/v1/auth/login')
+      .send({ email: email('vuelve'), password: PASSWORD })
+      .expect(201);
+    await http()
+      .post('/v1/auth/link-invitation')
+      .set(conSesion(login.body.token))
+      .send({ token: await tokenEncolado(EMAIL_QUEUES.invitation, email('vuelve')) })
+      .expect(201);
+
+    const filas = await owner.execute<{ role: string; ended_at: Date | null }>(
+      sql`SELECT role, ended_at FROM memberships
+          WHERE gym_id = ${gymA}::uuid AND user_id = ${persona.userId}::uuid
+          ORDER BY created_at`,
+    );
+
+    expect(filas.rows).toHaveLength(2);
+    expect(filas.rows[0]!.ended_at).not.toBeNull();
+    expect(filas.rows[1]!.ended_at).toBeNull();
+    // Y vuelve con el rol nuevo, no con el de antes.
+    expect(filas.rows[1]!.role).toBe('receptionist');
+  });
+
+  it('un dueno NO puede retirarse a si mismo', async () => {
+    // La regla que impide que un gimnasio se quede sin propietarios, sin contar
+    // propietarios: el ultimo que quede no puede irse.
+    const yo = await http().get('/v1/auth/me').set(conSesion(tokenOwnerA)).expect(200);
+
+    await http()
+      .delete(`/v1/gyms/${gymA}/staff/${yo.body.user.id}`)
+      .set(conSesion(tokenOwnerA))
+      .expect(400);
+
+    // Y sigue dentro.
+    await http().get('/v1/auth/me').set(conSesion(tokenOwnerA)).expect(200);
+  });
+
+  it('recepcion NO puede retirar el acceso a nadie', async () => {
+    // Invitar y retirar no son simetricos: recepcion incorpora entrenadores,
+    // pero cortar un acceso ya concedido es decision de direccion.
+    const jefa = await invitarYAceptar('recepcion-poder', 'receptionist');
+    const victima = await invitarYAceptar('victima', 'trainer');
+
+    await http()
+      .delete(`/v1/gyms/${gymA}/staff/${victima.userId}`)
+      .set(conSesion(jefa.token))
+      .expect(403);
+
+    // La victima sigue dentro.
+    await http().get('/v1/auth/me').set(conSesion(victima.token)).expect(200);
+  });
+
+  it('el dueno de B no puede retirar a nadie de A', async () => {
+    const alguien = await invitarYAceptar('ajeno', 'trainer');
+
+    await http()
+      .delete(`/v1/gyms/${gymA}/staff/${alguien.userId}`)
+      .set(conSesion(tokenOwnerB))
+      .expect(403);
+
+    await http().get('/v1/auth/me').set(conSesion(alguien.token)).expect(200);
+  });
+
+  it('retirar dos veces da 404, no un exito silencioso', async () => {
+    const persona = await invitarYAceptar('dos-veces', 'trainer');
+    const ruta = `/v1/gyms/${gymA}/staff/${persona.userId}`;
+
+    await http().delete(ruta).set(conSesion(tokenOwnerA)).expect(200);
+    await http().delete(ruta).set(conSesion(tokenOwnerA)).expect(404);
+  });
+
   it('restablecer la contrasena cierra las sesiones abiertas', async () => {
     // Es el gesto de quien sospecha que le han robado la sesion. Si no expulsa
     // al intruso, da una falsa sensacion de haber recuperado el control.
@@ -489,7 +655,10 @@ describe('endurecimiento de la sesion', () => {
 
     await http().get('/v1/auth/me').set(conSesion(antes.body.token)).expect(200);
 
-    await http().post('/v1/auth/forgot-password').send({ email: email('owner-b') }).expect(201);
+    await http()
+      .post('/v1/auth/forgot-password')
+      .send({ email: email('owner-b') })
+      .expect(201);
     const token = await tokenEncolado(EMAIL_QUEUES.resetPassword, email('owner-b'));
     await http()
       .post('/v1/auth/reset-password')
@@ -621,7 +790,10 @@ describe('outbox transaccional', () => {
     // su cuenta— pero el correo tiene que encolarse de todos modos.
     const antes = await contarTrabajos(EMAIL_QUEUES.resetPassword);
 
-    await http().post('/v1/auth/forgot-password').send({ email: email('owner-a') }).expect(201);
+    await http()
+      .post('/v1/auth/forgot-password')
+      .send({ email: email('owner-a') })
+      .expect(201);
 
     expect(await contarTrabajos(EMAIL_QUEUES.resetPassword)).toBe(antes + 1);
   });
@@ -642,7 +814,10 @@ describe('restablecer contrasena', () => {
   });
 
   it('el token permite cambiar la contrasena una sola vez', async () => {
-    await http().post('/v1/auth/forgot-password').send({ email: email('owner-b') }).expect(201);
+    await http()
+      .post('/v1/auth/forgot-password')
+      .send({ email: email('owner-b') })
+      .expect(201);
 
     // El token llega por la cola, no por la respuesta.
     const token = await tokenEncolado(EMAIL_QUEUES.resetPassword, email('owner-b'));
@@ -762,7 +937,10 @@ describe('usuarios', () => {
     const me = await http().get('/v1/auth/me').set(conSesion(res.body.token)).expect(200);
     expect(me.body.user.isPlatformAdmin).toBe(false);
 
-    const fila = await owner.select().from(users).where(eq(users.email, email('escalada')));
+    const fila = await owner
+      .select()
+      .from(users)
+      .where(eq(users.email, email('escalada')));
     expect(fila[0]?.isPlatformAdmin).toBe(false);
   });
 });

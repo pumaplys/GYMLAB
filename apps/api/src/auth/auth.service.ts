@@ -11,9 +11,12 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import {
+  and,
   authEvents,
+  auditLog,
   eq,
   gyms,
+  isNull,
   memberships,
   organizations,
   sessions,
@@ -115,7 +118,9 @@ export class AuthService {
       gymId,
       async (tx) => {
         await tx.insert(organizations).values({ id: organizationId, name: input.organizationName });
-        await tx.insert(gyms).values({ id: gymId, organizationId, name: input.gymName, slug: gymId });
+        await tx
+          .insert(gyms)
+          .values({ id: gymId, organizationId, name: input.gymName, slug: gymId });
         await tx.insert(memberships).values({ gymId, userId, role: 'owner' });
 
         // Quien tenga algo que hacer al crearse un gimnasio, lo hace aqui: hoy,
@@ -244,6 +249,78 @@ export class AuthService {
   }
 
   /**
+   * Retira el acceso de una persona a este gimnasio.
+   *
+   * ┌──────────────────────────────────────────────────────────────────────┐
+   * │ NO BORRA: TERMINA. La fila se queda con su rol y sus fechas, porque  │
+   * │ «quien fue recepcion entre marzo y julio» hace falta despues.        │
+   * │                                                                      │
+   * │ Surte efecto en la SIGUIENTE peticion de esa persona: `AuthGuard`    │
+   * │ consulta la pertenencia vigente en cada una, y al no encontrarla     │
+   * │ responde 401. No hay que invalidar sesiones ni esperar a que caduquen.│
+   * └──────────────────────────────────────────────────────────────────────┘
+   *
+   * DOS REGLAS, y las dos son de producto:
+   *
+   * 1. **Nadie puede retirarse a si mismo.** Es una linea, y con ella un
+   *    gimnasio no puede quedarse sin propietarios: el ultimo que quede no
+   *    puede irse. No hace falta contar propietarios ni casos especiales.
+   * 2. **Solo el dueno retira.** Recepcion puede deshacer sus errores
+   *    revocando invitaciones pendientes; cortarle el acceso a alguien ya
+   *    incorporado es decision de direccion. El rol lo comprueba `RolesGuard`.
+   *
+   * LO QUE NO HACE, y es deliberado: si esa persona era entrenador, sus socios
+   * asignados se quedan sin entrenador efectivo. Se prefiere eso a que un
+   * gimnasio no pueda cortarle el acceso a un exempleado por no haber
+   * reasignado antes a dos socios.
+   */
+  async revokeAccess(gymId: string, actorUserId: string, userId: string): Promise<{ ok: true }> {
+    if (actorUserId === userId) {
+      throw new BadRequestException(
+        'No puedes retirarte el acceso a ti mismo. Si te vas, nombra antes a otro propietario.',
+      );
+    }
+
+    const terminadas = await withTenant(
+      this.db,
+      gymId,
+      async (tx) => {
+        const filas = await tx
+          .update(memberships)
+          .set({ endedAt: new Date(), endedByUserId: actorUserId, updatedAt: new Date() })
+          .where(
+            and(
+              eq(memberships.gymId, gymId),
+              eq(memberships.userId, userId),
+              // Condicionado: retirar dos veces no vuelve a escribir la fecha,
+              // y la segunda vez da 404 en lugar de un exito silencioso.
+              isNull(memberships.endedAt),
+            ),
+          )
+          .returning({ role: memberships.role });
+
+        if (filas[0]) {
+          await tx.insert(auditLog).values({
+            gymId,
+            actorUserId,
+            action: 'membership.revoked',
+            entityType: 'membership',
+            entityId: userId,
+            metadata: { role: filas[0].role },
+          });
+        }
+        return filas;
+      },
+      { userId: actorUserId },
+    );
+
+    if (!terminadas[0]) {
+      throw new NotFoundException('Esa persona no tiene acceso vigente a este gimnasio.');
+    }
+    return { ok: true };
+  }
+
+  /**
    * Solicita restablecer la contrasena.
    *
    * Responde `ok` siempre, exista el email o no. Distinguirlo permitiria
@@ -310,7 +387,18 @@ export class AuthService {
           .select({ gymId: memberships.gymId, role: memberships.role, gymName: gyms.name })
           .from(memberships)
           .innerJoin(gyms, eq(gyms.id, memberships.gymId))
-          .where(eq(memberships.userId, userId)),
+          /**
+           * Solo las vigentes.
+           *
+           * REDUNDANTE A PROPOSITO: la politica RLS de `gyms` ya filtra por
+           * `ended_at IS NULL`, asi que el `innerJoin` de arriba descarta la
+           * fila aunque este `where` no estuviera — se comprobo quitandolo y
+           * los tests seguian en verde. Se deja porque decir la intencion en el
+           * codigo vale mas que depender del efecto lateral de un JOIN: el dia
+           * que alguien cambie ese join por un `leftJoin`, esto sigue siendo
+           * correcto.
+           */
+          .where(and(eq(memberships.userId, userId), isNull(memberships.endedAt))),
       { userId },
     );
     return filas.map((f) => ({ gymId: f.gymId, role: f.role, gymName: f.gymName ?? '' }));
@@ -359,7 +447,13 @@ export class AuthService {
    * gimnasio, porque todavia no se sabe quien lo intenta (ADR-0007).
    */
   private async recordAuthEvent(
-    eventType: 'login_success' | 'login_failure' | 'logout' | 'password_reset_requested' | 'password_reset_completed' | 'email_verified',
+    eventType:
+      | 'login_success'
+      | 'login_failure'
+      | 'logout'
+      | 'password_reset_requested'
+      | 'password_reset_completed'
+      | 'email_verified',
     userId: string | null,
     email: string | null,
     headers: Headers,
@@ -374,5 +468,4 @@ export class AuthService {
       }),
     );
   }
-
 }

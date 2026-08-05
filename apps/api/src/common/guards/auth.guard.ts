@@ -8,7 +8,7 @@ import {
 import { Reflector } from '@nestjs/core';
 // Los operadores vienen de @gymlab/db, nunca de drizzle-orm directamente.
 // Ver el comentario en packages/db/src/index.ts.
-import { and, eq, memberships, withTenant, type Database } from '@gymlab/db';
+import { and, eq, isNull, memberships, withTenant, type Database } from '@gymlab/db';
 import type { Request } from 'express';
 import { AUTH } from '../../auth/auth.tokens';
 import type { Auth } from '../../auth/auth.instance';
@@ -74,18 +74,33 @@ export class AuthGuard implements CanActivate {
    * La alternativa seria desnormalizar el rol en la fila de sesion, pero
    * entonces quitarle permisos a alguien no tendria efecto hasta que volviera a
    * entrar. Preferimos pagar una consulta indexada que tener permisos rancios.
+   *
+   * ┌──────────────────────────────────────────────────────────────────────┐
+   * │ `ended_at IS NULL` ES LO QUE HACE QUE RETIRAR EL ACCESO SIRVA.       │
+   * │                                                                      │
+   * │ La pertenencia terminada se conserva para el historial, asi que sin  │
+   * │ este filtro seguiria encontrandose y la persona entraria igual. Con  │
+   * │ el, la revocacion surte efecto en la SIGUIENTE peticion: no hay que  │
+   * │ invalidar sesiones ni esperar a que caduquen.                        │
+   * └──────────────────────────────────────────────────────────────────────┘
    */
   private async resolveRole(gymId: string, userId: string) {
     const filas = await withTenant(this.db, gymId, (tx) =>
       tx
         .select({ role: memberships.role })
         .from(memberships)
-        .where(and(eq(memberships.gymId, gymId), eq(memberships.userId, userId)))
+        .where(
+          and(
+            eq(memberships.gymId, gymId),
+            eq(memberships.userId, userId),
+            isNull(memberships.endedAt),
+          ),
+        )
         .limit(1),
     );
 
-    // Sin pertenencia no hay gimnasio activo valido: puede que se la hayan
-    // retirado mientras la sesion seguia viva.
+    // Sin pertenencia vigente no hay gimnasio activo valido: puede que se la
+    // hayan retirado mientras la sesion seguia viva.
     if (!filas[0]) {
       throw new UnauthorizedException('No perteneces al gimnasio activo de esta sesion.');
     }

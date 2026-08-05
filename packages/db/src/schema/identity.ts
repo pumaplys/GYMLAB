@@ -150,6 +150,18 @@ export const verifications = pgTable(
  * Tabla de tenant: lleva `gym_id` y politica RLS.
  *
  * Restriccion de v1: un usuario tiene **un** rol por gimnasio.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ LA PERTENENCIA NO SE BORRA: SE TERMINA.                                  │
+ * │                                                                          │
+ * │ Retirarle el acceso a alguien pone `ended_at`. La fila se queda, con su  │
+ * │ rol y sus fechas, porque «quien fue recepcion entre marzo y julio» es    │
+ * │ informacion que un gimnasio necesita despues — y borrarla no se puede    │
+ * │ reconstruir.                                                            │
+ * │                                                                          │
+ * │ Es el mismo idioma que `members.left_at`, `payments.voided_at` y         │
+ * │ `trainer_assignments.ended_at`: en este esquema nada desaparece.         │
+ * └──────────────────────────────────────────────────────────────────────────┘
  */
 export const memberships = pgTable(
   'memberships',
@@ -160,10 +172,24 @@ export const memberships = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
     role: membershipRole('role').notNull(),
+    /** Cuando se le retiro el acceso. `null` = sigue dentro. */
+    endedAt: timestamp('ended_at', { withTimezone: true }),
+    /** Quien se lo retiro. Se conserva aunque esa persona se vaya despues. */
+    endedByUserId: uuid('ended_by_user_id').references(() => users.id, { onDelete: 'set null' }),
     ...timestamps,
   },
   (t) => [
-    uniqueIndex('memberships_gym_user_key').on(t.gymId, t.userId),
+    /**
+     * Unico solo entre las VIGENTES.
+     *
+     * Parcial y no total, y esa es la diferencia que permite volver a
+     * contratar: cada etapa de una persona en el gimnasio es una fila propia,
+     * asi que quedan todas. Con un unico total habria que reutilizar la fila y
+     * el periodo anterior se perderia.
+     */
+    uniqueIndex('memberships_gym_user_key')
+      .on(t.gymId, t.userId)
+      .where(sql`ended_at IS NULL`),
     index('memberships_gym_id_idx').on(t.gymId),
     index('memberships_user_id_idx').on(t.userId),
   ],
