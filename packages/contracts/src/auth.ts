@@ -98,6 +98,36 @@ export const sessionResponseSchema = z.object({
 });
 export type SessionResponse = z.infer<typeof sessionResponseSchema>;
 
+// --- El personal del gimnasio -------------------------------------------
+
+/**
+ * Alguien que **forma parte** del gimnasio ahora mismo.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ NO ES UNA INVITACION, Y NO ES UN LISTADO DE PERTENENCIAS.                │
+ * │                                                                          │
+ * │ Una invitacion es una promesa: puede caducar, revocarse o no aceptarse   │
+ * │ nunca. Esto es el hecho: quien tiene acceso hoy. Reutilizar una para lo  │
+ * │ otro obligaria a deducir el presente a partir del historial.             │
+ * │                                                                          │
+ * │ Y solo lleva lo que el panel necesita para pintar la lista y retirar el  │
+ * │ acceso. Nada de exponer la fila de pertenencia entera.                    │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * Los socios NO salen aqui: `member` es una forma de pertenecer al gimnasio,
+ * no de trabajar en el.
+ */
+export const gymStaffMemberSchema = z.object({
+  /** Con esto se le retira el acceso. Es el unico identificador que hace falta. */
+  userId: z.string().uuid(),
+  name: z.string(),
+  email: z.string(),
+  role: roleSchema,
+  /** Desde cuando forma parte del gimnasio. */
+  joinedAt: z.string(),
+});
+export type GymStaffMember = z.infer<typeof gymStaffMemberSchema>;
+
 // --- Contrasena y verificacion -----------------------------------------
 
 export const forgotPasswordSchema = z.object({ email: emailSchema });

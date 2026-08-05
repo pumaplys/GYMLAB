@@ -505,6 +505,61 @@ describe('endurecimiento de la sesion', () => {
     expect(dias).toBeGreaterThan(80);
   });
 
+  it('el listado de personal trae lo justo, y NO incluye a los socios', async () => {
+    // Es un listado de PERSONAL, no de pertenencias: `member` es una forma de
+    // pertenecer al gimnasio, no de trabajar en el. Mezclarlos convertiria esto
+    // en la lista de socios con otro nombre.
+    const entrenador = await invitarYAceptar('staff-entrena', 'trainer');
+    await invitarYAceptar('staff-socio', 'member');
+
+    const res = await http().get(`/v1/gyms/${gymA}/staff`).set(conSesion(tokenOwnerA)).expect(200);
+
+    const correos = res.body.map((p: { email: string }) => p.email);
+    expect(correos).toContain(email('staff-entrena'));
+    expect(correos).not.toContain(email('staff-socio'));
+
+    const ficha = res.body.find((p: { userId: string }) => p.userId === entrenador.userId);
+    // Solo los cinco campos que el panel necesita. Nada de la fila entera.
+    expect(Object.keys(ficha).sort()).toEqual(['email', 'joinedAt', 'name', 'role', 'userId']);
+  });
+
+  it('recepcion VE el personal pero NO puede retirarlo', async () => {
+    // Ver la lista es operativa diaria; retirar un acceso es de direccion.
+    const jefa = await invitarYAceptar('ve-pero-no-toca', 'receptionist');
+    const victima = await invitarYAceptar('intocable', 'trainer');
+
+    await http().get(`/v1/gyms/${gymA}/staff`).set(conSesion(jefa.token)).expect(200);
+    await http()
+      .delete(`/v1/gyms/${gymA}/staff/${victima.userId}`)
+      .set(conSesion(jefa.token))
+      .expect(403);
+  });
+
+  it('quien pierde el acceso desaparece del listado', async () => {
+    const persona = await invitarYAceptar('desaparece', 'trainer');
+
+    const antes = await http()
+      .get(`/v1/gyms/${gymA}/staff`)
+      .set(conSesion(tokenOwnerA))
+      .expect(200);
+    expect(antes.body.map((p: { userId: string }) => p.userId)).toContain(persona.userId);
+
+    await http()
+      .delete(`/v1/gyms/${gymA}/staff/${persona.userId}`)
+      .set(conSesion(tokenOwnerA))
+      .expect(200);
+
+    const despues = await http()
+      .get(`/v1/gyms/${gymA}/staff`)
+      .set(conSesion(tokenOwnerA))
+      .expect(200);
+    expect(despues.body.map((p: { userId: string }) => p.userId)).not.toContain(persona.userId);
+  });
+
+  it('el personal de A no se ve desde B', async () => {
+    await http().get(`/v1/gyms/${gymA}/staff`).set(conSesion(tokenOwnerB)).expect(403);
+  });
+
   it('retirar el acceso expulsa en la SIGUIENTE peticion, sin tocar la sesion', async () => {
     // Es el caso que motivo todo esto: un empleado que se va. Lo que importa no
     // es que no pueda volver a entrar, sino que la sesion que YA tiene abierta
