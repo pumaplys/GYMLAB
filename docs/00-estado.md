@@ -16,7 +16,7 @@ siguiente paso. Se actualiza al final de cada sesión de trabajo.
 | Fase 1 — MVP, 7 módulos | ✅ **cerrada** |
 | Fase 2 — panel web | 🔵 **en marcha**: cliente de la API, autenticación y socios en `main` |
 
-**310 tests** (40 de aislamiento e integridad + 240 de la API + 30 del cliente de
+**324 tests** (40 de aislamiento e integridad + 251 de la API + 33 del cliente de
 la API). `build`, `typecheck`, `lint` y `test` en verde en local y en CI.
 **13 ADR**, y uno pendiente de escribir — ver la deuda.
 
@@ -51,10 +51,11 @@ usuario y contraseña, y recepción puede ver y dar de alta socios.
 > **El valor de negocio de cada vertical vive en [`02-producto.md`](02-producto.md)**,
 > que es la referencia comercial. Este documento es el estado técnico.
 
-Cinco verticales completas: **entrar, aceptar una invitación, el ciclo entero
-de un socio** —listar, abrir su ficha, editar, invitarle a crear cuenta, darle
-de baja y reactivarlo—, **su cuota** —estado, alta, cobro e historial— y **el
-personal**: invitar, ver en qué quedó cada invitación y revocar las pendientes.
+Seis verticales completas: **entrar, aceptar una invitación, el ciclo entero de
+un socio** —listar, abrir su ficha, editar, invitarle a crear cuenta, darle de
+baja y reactivarlo—, **su cuota** —estado, alta, cobro e historial— y **el
+personal**: invitar, ver quién trabaja aquí, revocar invitaciones pendientes y
+**retirarle el acceso a alguien que ya está dentro**.
 
 | Pieza | Qué resolvió |
 |---|---|
@@ -65,6 +66,26 @@ personal**: invitar, ver en qué quedó cada invitación y revocar las pendiente
 | Ficha de socio | Las acciones que ya existían en la API y no tenían con qué llamarse. Solo se envían **los campos que cambian**, y vaciar uno se bloquea con una explicación en lugar de fingir que se guardó |
 | Cuota en la ficha | El estado **se pregunta, no se deduce**: «al corriente» o «vencida» los calcula el servidor en la zona del gimnasio. Y el dinero no pasa por coma flotante — `Number('19.99') * 100` da `1998.9999999999998` |
 | Personal | El desplegable de roles se pinta con `CAN_INVITE`, **la misma matriz que aplica el servidor**. Comprobado por los dos lados: recepción solo ve «entrenador», y la misma petición por fuera del panel responde 403 |
+| Retirar el acceso | La pertenencia **se termina, no se borra**, y el índice único es **parcial** —solo entre las vigentes— para que volver a contratar cree una etapa nueva sin perder la anterior. Surte efecto en la siguiente petición: `AuthGuard` comprueba la pertenencia vigente en cada una |
+
+### Personal activo e invitaciones son dos listas, no una
+
+Es la distinción que costó entender, y explica por qué el panel estuvo un PR
+entero sin poder retirar a nadie:
+
+| | |
+|---|---|
+| **Invitación** | Una **promesa**. Puede caducar, revocarse o no aceptarse nunca. Va dirigida a un correo |
+| **Personal activo** | Un **hecho**. Quién tiene acceso ahora mismo. Va referido a una persona con cuenta |
+
+`invitationSchema` ni siquiera lleva `userId` — no puede, porque cuando se crea
+la invitación esa cuenta puede no existir. Deducir el presente a partir del
+historial de invitaciones era el error de modelo que dejaba al panel sin saber a
+quién retirar.
+
+Se ve en pantalla: al retirarle el acceso a alguien, **desaparece de «Personal
+activo» y su invitación sigue figurando como «Aceptada»**. Las dos cosas son
+ciertas a la vez.
 
 ### Por qué el detalle vive en `?id=` y no en `/socios/[id]`
 
@@ -271,7 +292,7 @@ extensión es una clase dedicada y sin dependencias hacia quien lo invoca.**
 | **El panel cubre socios y sus cuotas, no el producto** | Rutinas, progreso, accesos y panel del dueño existen en la API y no tienen pantalla | Según vayan haciendo falta |
 | **Planes: se leen, no se gestionan** | Recepción y dueño ven el catálogo para cobrar, pero **crear, editar y archivar planes sigue siendo solo por API**. Un gimnasio nuevo no puede montar sus precios desde el panel | Pantalla de planes, del dueño |
 | **Congelar, cancelar y anular** | Congelar una cuota por lesión, cancelarla y anular un pago mal apuntado tienen endpoint y no tienen pantalla. Anular es del dueño y es corrección contable | Cada uno con su vertical |
-| **No se puede retirar el acceso a nadie** 🔒 | Se revoca una invitación *pendiente*, no una *aceptada*. Dar de baja el perfil de un entrenador **no le quita el acceso** —comprobado, sigue entrando con su rol— y `memberships` no se expone en ninguna ruta. **Un gimnasio no puede echar a nadie del sistema** | **Antes de un piloto real:** pesa más que cualquier mejora de panel |
+| **Retirar a un entrenador deja a sus socios sin él** | La asignación sobrevive, así que esos socios apuntan a alguien que ya no entra. Fue una decisión consciente: es preferible a que un gimnasio no pueda cortar un acceso por no haber reasignado antes. Hoy **no hay pantalla que lo muestre** | Con la vertical de entrenadores |
 | **Notas, exportación RGPD y borrado sin pantalla** | Tienen endpoint desde la Fase 1. El borrado es irreversible y la exportación es un flujo legal: cada uno merece su propia vertical, no un botón de más en la ficha | Cuando toque, y por separado |
 | **No se puede vaciar un campo de la ficha** | `updateMemberSchema` hace los campos opcionales, **no anulables**: omitir uno significa «no lo toques» y no hay forma de decir «bórralo». El panel lo bloquea con una explicación en vez de fingir que se guardó | Es una decisión del backend, y el frontend ya la ha topado |
 | **El socio aterriza en una pantalla que no es suya** | Al aceptar, un `member` acaba en `/socios` y lee «esta sección no es para tu rol». Es correcto —la autorización manda— pero su portal no existe todavía | Cuando llegue `apps/socio` |
@@ -294,15 +315,34 @@ Lo que falta para un piloto ya no es poder usarlo, es **cuánto** se puede hacer
 las rutinas, el progreso, los accesos y el panel del dueño siguen siendo API sin
 pantalla, y los precios todavía se montan a mano.
 
-**Y hay una que no es de alcance sino de entregabilidad:** un gimnasio puede
-incorporar a su gente y **no puede echarla**. Mientras eso siga así, entregar el
-producto a un cliente real significa entregárselo sabiendo que el día que
-despida a alguien tendrá que llamarnos. Pesa más que cualquier pantalla nueva.
+**La deuda de entregabilidad que quedaba está cerrada:** un gimnasio ya puede
+incorporar a su gente **y echarla**. Quien pierde el acceso lo pierde en la
+siguiente pantalla que toque, sin esperar a que caduque su sesión.
 
 Y queda un detalle que conviene no perder de vista: **el socio todavía no tiene
 sitio propio.** Acepta su invitación, entra, y se encuentra con que el panel no
 es para él. Es correcto y es honesto, pero es media experiencia hasta que exista
 su portal.
+
+---
+
+## Fase final: terminar, no añadir
+
+> Desde el 5 de agosto de 2026 el criterio cambia. **Solo entran cambios que
+> hagan falta para poder entregar GYMLAB a un gimnasio piloto**: fallos, deudas
+> de entregabilidad, UX crítica y funcionalidades imprescindibles.
+>
+> Todo lo demás va al backlog, por bueno que parezca.
+
+Lo que sigue bloqueando una entrega real, en orden:
+
+1. **El envío de correo nunca se ha ejecutado.** El sistema encola bien, pero no
+   hay proveedor contratado y las invitaciones dependen de ello. Sin esto, un
+   piloto no puede incorporar a nadie.
+2. **No hay despliegue.** Ni hosting, ni dominio, ni comprobación de que el
+   proveedor permita el requisito de un solo origen.
+3. **Los precios se montan a mano.** Un gimnasio nuevo no puede cobrar sin que
+   le configuremos el catálogo.
 
 ---
 
