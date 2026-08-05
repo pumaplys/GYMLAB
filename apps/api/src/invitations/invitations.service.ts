@@ -137,11 +137,14 @@ export class InvitationsService implements OnModuleInit {
 
     const tx = requireTransaction();
 
+    // `isNull(endedAt)`: a quien se le retiro el acceso SE LE PUEDE volver a
+    // invitar. Sin este filtro, su pertenencia terminada —que se conserva para
+    // el historial— le cerraria la puerta para siempre.
     const yaEsMiembro = await tx
       .select({ id: memberships.id })
       .from(memberships)
       .innerJoin(users, eq(users.id, memberships.userId))
-      .where(and(eq(memberships.gymId, gymId), eq(users.email, email)))
+      .where(and(eq(memberships.gymId, gymId), eq(users.email, email), isNull(memberships.endedAt)))
       .limit(1);
     if (yaEsMiembro[0]) {
       throw new BadRequestException('Esa persona ya pertenece al gimnasio.');
@@ -393,10 +396,18 @@ export class InvitationsService implements OnModuleInit {
           throw new BadRequestException('La invitacion ya se uso.');
         }
 
+        // Solo la vigente: una pertenencia terminada no impide volver a entrar,
+        // y el indice unico parcial deja convivir la vieja con la nueva.
         const yaPertenece = await tx
           .select({ id: memberships.id })
           .from(memberships)
-          .where(and(eq(memberships.gymId, gymId), eq(memberships.userId, userId)))
+          .where(
+            and(
+              eq(memberships.gymId, gymId),
+              eq(memberships.userId, userId),
+              isNull(memberships.endedAt),
+            ),
+          )
           .limit(1);
 
         if (yaPertenece[0]) {

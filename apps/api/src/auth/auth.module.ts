@@ -7,6 +7,7 @@ import { createAuth } from './auth.instance';
 import { AuthService } from './auth.service';
 import { AUTH } from './auth.tokens';
 import { AuthThrottle } from './auth.throttle';
+import { StaffController } from './staff.controller';
 
 /**
  * Provee la instancia de Better Auth.
@@ -16,7 +17,7 @@ import { AuthThrottle } from './auth.throttle';
  */
 @Global()
 @Module({
-  controllers: [AuthController],
+  controllers: [AuthController, StaffController],
   providers: [
     {
       provide: AUTH,
