@@ -7,3 +7,14 @@
 .enviar {
   margin-top: var(--e2);
 }
+
+.olvidada {
+  align-self: center;
+  color: var(--texto-tenue);
+  font-size: 0.875rem;
+  text-decoration: underline;
+}
+
+.olvidada:hover {
+  color: var(--texto);
+}

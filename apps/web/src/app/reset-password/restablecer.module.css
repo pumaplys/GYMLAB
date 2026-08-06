@@ -1,0 +1,38 @@
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e4);
+}
+
+.enviar {
+  margin-top: var(--e2);
+}
+
+.acciones {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+}
+
+.enlace {
+  align-self: center;
+  color: var(--texto-tenue);
+  font-size: 0.875rem;
+  text-decoration: underline;
+}
+
+.enlace:hover {
+  color: var(--texto);
+}
+
+/* Dentro del aviso hereda su color: ahi el contraste ya lo fija el tono. */
+.enlaceEnAviso {
+  color: inherit;
+  font-weight: 500;
+  text-decoration: underline;
+}
+
+.esperando {
+  color: var(--texto-tenue);
+  font-size: 0.875rem;
+}

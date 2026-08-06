@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { loginSchema } from '@gymlab/contracts';
 import { Aviso } from '@/componentes/aviso';
@@ -70,6 +71,16 @@ export default function Entrar() {
         >
           Entrar
         </Boton>
+
+        {/*
+          Sin este enlace la pantalla de recuperacion no existe para quien la
+          necesita: el otro camino es el correo, y a ese solo se llega desde
+          aqui. Va debajo del boton a proposito — quien viene a entrar no debe
+          tropezarse antes con la salida de emergencia.
+        */}
+        <Link className={estilos.olvidada} href="/forgot-password">
+          He olvidado mi contrasena
+        </Link>
       </form>
     </PantallaCentrada>
   );
