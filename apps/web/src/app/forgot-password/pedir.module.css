@@ -1,0 +1,37 @@
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e4);
+}
+
+.enviar {
+  margin-top: var(--e2);
+}
+
+.acciones {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+}
+
+.explicacion {
+  color: var(--texto-tenue);
+  font-size: 0.875rem;
+}
+
+.correo {
+  color: var(--texto);
+  font-weight: 500;
+  word-break: break-all;
+}
+
+.enlace {
+  align-self: center;
+  color: var(--texto-tenue);
+  font-size: 0.875rem;
+  text-decoration: underline;
+}
+
+.enlace:hover {
+  color: var(--texto);
+}

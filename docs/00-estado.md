@@ -1,7 +1,7 @@
 # Estado del proyecto
 
-> Última actualización: **2026-08-04** · **Fase 2 en marcha** · La primera vertical
-> del panel está en `main`
+> Última actualización: **2026-08-06** · **Fase final en marcha** · Auditoría
+> hecha y el primer bloqueante cerrado
 
 Documento de continuidad: qué está hecho, qué está a medias y cuál es el
 siguiente paso. Se actualiza al final de cada sesión de trabajo.
@@ -15,8 +15,9 @@ siguiente paso. Se actualiza al final de cada sesión de trabajo.
 | Fase 0 — cimientos | ✅ cerrada |
 | Fase 1 — MVP, 7 módulos | ✅ **cerrada** |
 | Fase 2 — panel web | 🔵 **en marcha**: cliente de la API, autenticación y socios en `main` |
+| Fase final — cerrar para un piloto | 🔵 **en marcha**: auditoría hecha, B1 cerrado |
 
-**324 tests** (40 de aislamiento e integridad + 251 de la API + 33 del cliente de
+**327 tests** (40 de aislamiento e integridad + 251 de la API + 36 del cliente de
 la API). `build`, `typecheck`, `lint` y `test` en verde en local y en CI.
 **13 ADR**, y uno pendiente de escribir — ver la deuda.
 
@@ -51,11 +52,12 @@ usuario y contraseña, y recepción puede ver y dar de alta socios.
 > **El valor de negocio de cada vertical vive en [`02-producto.md`](02-producto.md)**,
 > que es la referencia comercial. Este documento es el estado técnico.
 
-Seis verticales completas: **entrar, aceptar una invitación, el ciclo entero de
-un socio** —listar, abrir su ficha, editar, invitarle a crear cuenta, darle de
-baja y reactivarlo—, **su cuota** —estado, alta, cobro e historial— y **el
-personal**: invitar, ver quién trabaja aquí, revocar invitaciones pendientes y
-**retirarle el acceso a alguien que ya está dentro**.
+Seis verticales completas: **entrar —y volver a entrar si se olvida la
+contraseña—, aceptar una invitación, el ciclo entero de un socio** —listar,
+abrir su ficha, editar, invitarle a crear cuenta, darle de baja y reactivarlo—,
+**su cuota** —estado, alta, cobro e historial— y **el personal**: invitar, ver
+quién trabaja aquí, revocar invitaciones pendientes y **retirarle el acceso a
+alguien que ya está dentro**.
 
 | Pieza | Qué resolvió |
 |---|---|
@@ -67,6 +69,7 @@ personal**: invitar, ver quién trabaja aquí, revocar invitaciones pendientes y
 | Cuota en la ficha | El estado **se pregunta, no se deduce**: «al corriente» o «vencida» los calcula el servidor en la zona del gimnasio. Y el dinero no pasa por coma flotante — `Number('19.99') * 100` da `1998.9999999999998` |
 | Personal | El desplegable de roles se pinta con `CAN_INVITE`, **la misma matriz que aplica el servidor**. Comprobado por los dos lados: recepción solo ve «entrenador», y la misma petición por fuera del panel responde 403 |
 | Retirar el acceso | La pertenencia **se termina, no se borra**, y el índice único es **parcial** —solo entre las vigentes— para que volver a contratar cree una etapa nueva sin perder la anterior. Surte efecto en la siguiente petición: `AuthGuard` comprueba la pertenencia vigente en cada una |
+| Recuperar la contraseña | La confirmación **no puede decir que se ha enviado un correo**: el servidor responde igual exista la cuenta o no, así que afirmarlo convertiría el formulario en un comprobador de quién está dado de alta. Dice «si ese correo tiene cuenta…», que es todo lo que consta |
 
 ### Personal activo e invitaciones son dos listas, no una
 
@@ -319,6 +322,10 @@ pantalla, y los precios todavía se montan a mano.
 incorporar a su gente **y echarla**. Quien pierde el acceso lo pierde en la
 siguiente pantalla que toque, sin esperar a que caduque su sesión.
 
+Y desde la auditoría, **quien pierde su contraseña puede volver.** Era el único
+bloqueo del que no se salía: sin pantalla de recuperación, un cliente legítimo
+se quedaba fuera de su gimnasio de forma definitiva.
+
 Y queda un detalle que conviene no perder de vista: **el socio todavía no tiene
 sitio propio.** Acepta su invitación, entra, y se encuentra con que el panel no
 es para él. Es correcto y es honesto, pero es media experiencia hasta que exista
@@ -334,15 +341,69 @@ su portal.
 >
 > Todo lo demás va al backlog, por bueno que parezca.
 
-Lo que sigue bloqueando una entrega real, en orden:
+### La auditoría (6 de agosto de 2026)
 
-1. **El envío de correo nunca se ha ejecutado.** El sistema encola bien, pero no
-   hay proveedor contratado y las invitaciones dependen de ello. Sin esto, un
-   piloto no puede incorporar a nadie.
-2. **No hay despliegue.** Ni hosting, ni dominio, ni comprobación de que el
-   proveedor permita el requisito de un solo origen.
-3. **Los precios se montan a mano.** Un gimnasio nuevo no puede cobrar sin que
-   le configuremos el catálogo.
+Hecha leyendo el código, no esta lista. La foto que la resume: **82 endpoints en
+la API, 9 pantallas en el panel.** La mayor parte de lo pendiente es eso.
+
+**Bloqueantes para un piloto**
+
+| # | Qué | Estado |
+|---|---|---|
+| B1 | **Recuperar la contraseña no tenía pantalla** | ✅ **cerrado** |
+| B2 | **El envío de correo nunca se ha ejecutado.** Sin `RESEND_API_KEY` el proceso **no arranca** en producción, y sin dominio verificado lo que salga acaba en spam | abierto |
+| B3 | **Nada sirve el panel bajo el mismo origen** | abierto, pendiente de comparar alternativas |
+| B4 | **Los precios se montan a mano.** Crear, editar y archivar planes sigue siendo solo por API | abierto |
+| B5 | **`trust proxy` sin configurar** | abierto |
+
+**Importantes, no bloqueantes** — pantalla de `/verify-email`, textos de
+consentimiento, congelar/cancelar/anular, notas y exportación RGPD, el
+entrenador retirado que deja socios apuntándole, campos que no se pueden vaciar,
+el socio que aterriza donde no le toca, ADR-0014, y el choque entre `typecheck`
+y `build`. Todos están arriba con su motivo.
+
+**Visión futura** — `apps/socio`, las pantallas de rutinas, progreso, accesos y
+panel del dueño, la app móvil, Stripe, varios roles por persona.
+
+### B3 no es «falta hosting»: es que la pieza no existe
+
+Conviene no confundirlo, porque cambia lo que hay que hacer:
+
+| | |
+|---|---|
+| `next build` deja ficheros estáticos en `out/` | **nadie los sirve** |
+| La API | **no sirve estáticos** — ni `ServeStaticModule`, ni `useStaticAssets` |
+| Despliegue | no hay `Dockerfile`; el único `docker-compose.yml` levanta el Postgres local |
+| Migraciones | no hay paso que las aplique al desplegar |
+
+Así que el requisito de un solo origen no está pendiente de contratar un sitio:
+está pendiente de decidir **qué** pone las dos cosas bajo el mismo dominio. Esa
+decisión manda sobre B2 y B5, porque el hosting condiciona las dos.
+
+### B1, cerrado: quien olvidaba su contraseña se quedaba fuera para siempre
+
+Lo encontró la auditoría, y no estaba en esta lista. La API construye
+`${WEB_APP_URL}/reset-password?token=...` desde la Fase 1 y **esa ruta no
+existía**: comprobado en ejecución, el enlace del correo respondía `404`.
+
+No era cosmético. `forgot-password` es la **única** vía de vuelta —nadie repone
+una contraseña desde el panel, ni el dueño del gimnasio—, así que un cliente
+legítimo que la olvidara perdía el acceso a su propio gimnasio de forma
+definitiva. Llevaba ahí sin verse porque los correos nunca se enviaron; el
+comentario de `env.ts` ya avisaba de que el enlace llevaba «a un sitio sin
+interfaz», se corrigió el enlace y la pantalla nunca se escribió.
+
+**Lo que la pantalla no puede decir.** El servidor responde `ok` exista la
+cuenta o no, y es deliberado: si respondiera distinto, el formulario sería un
+comprobador de quién está dado de alta en la plataforma. Como la respuesta no lo
+sabe, la pantalla tampoco puede afirmarlo — dice «si **ese correo** tiene cuenta
+en GYMLAB…», nunca «te hemos enviado un correo». Verificado por los dos lados:
+con una dirección inexistente sale la misma pantalla y **no se encola ningún
+envío**.
+
+Restablecer **no abre sesión**, porque quien abre el enlace puede no ser quien
+lo pidió. Y entrar después es la comprobación de que la contraseña quedó como se
+quería.
 
 ---
 

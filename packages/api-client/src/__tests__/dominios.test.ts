@@ -66,6 +66,45 @@ describe('auth', () => {
     expect(JSON.parse(String(llamadas[0]?.init.body))).toEqual({ token: 'tk' });
   });
 
+  it('pedir y restablecer la contrasena usan su ruta y su metodo', async () => {
+    const { fetch, llamadas } = servidor(() => json({ ok: true }));
+    const api = createApiClient({ baseUrl: '/v1', fetch });
+
+    await api.auth.forgotPassword({ email: 'ana@ejemplo.test' });
+    await api.auth.resetPassword({ token: 'tk', newPassword: 'contrasena-larga' });
+
+    expect(llamadas.map((l) => `${l.init.method} ${l.url}`)).toEqual([
+      'POST /v1/auth/forgot-password',
+      'POST /v1/auth/reset-password',
+    ]);
+  });
+
+  it('restablecer no manda a que cuenta: la dice el token', async () => {
+    const { fetch, llamadas } = servidor(() => json({ ok: true }));
+    const api = createApiClient({ baseUrl: '/v1', fetch });
+
+    await api.auth.resetPassword({ token: 'tk', newPassword: 'contrasena-larga' });
+
+    // Misma clase de garantia estructural que `link-invitation`: al no existir
+    // el correo en el contrato, un token no puede apuntarse a otra cuenta.
+    expect(JSON.parse(String(llamadas[0]?.init.body))).toEqual({
+      token: 'tk',
+      newPassword: 'contrasena-larga',
+    });
+  });
+
+  it('si el servidor delatara que la cuenta existe, no llegaria a la pantalla', async () => {
+    // `forgot-password` responde igual exista el correo o no: es lo que impide
+    // usarlo para averiguar quien esta dado de alta. El contrato solo tiene
+    // `ok`, asi que un campo de mas se queda aqui en lugar de acabar pintado.
+    const { fetch } = servidor(() => json({ ok: true, exists: false }));
+    const api = createApiClient({ baseUrl: '/v1', fetch });
+
+    const respuesta = await api.auth.forgotPassword({ email: 'nadie@ejemplo.test' });
+
+    expect(Object.keys(respuesta)).toEqual(['ok']);
+  });
+
   it('logout no manda la sesion en el cuerpo: la cookie ya la lleva', async () => {
     const { fetch, llamadas } = servidor(() => json({ ok: true }));
     const api = createApiClient({ baseUrl: '/v1', fetch });

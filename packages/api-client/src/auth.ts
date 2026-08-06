@@ -1,14 +1,18 @@
 import {
+  emailFlowResponseSchema,
   linkInvitationResponseSchema,
   meSchema,
   okResponseSchema,
   sessionResponseSchema,
   type AcceptInvitationInput,
+  type EmailFlowResponse,
+  type ForgotPasswordInput,
   type LinkInvitationInput,
   type LinkInvitationResponse,
   type LoginInput,
   type Me,
   type OkResponse,
+  type ResetPasswordInput,
   type SessionResponse,
   type SwitchGymInput,
 } from '@gymlab/contracts';
@@ -68,6 +72,38 @@ export interface AuthApi {
     input: LinkInvitationInput,
     options?: RequestOptions,
   ): Promise<LinkInvitationResponse>;
+
+  /**
+   * Pide el correo con el enlace para poner una contrasena nueva.
+   *
+   * ┌──────────────────────────────────────────────────────────────────────┐
+   * │ RESPONDE `ok` EXISTA LA CUENTA O NO, Y ESO NO ES UN DESCUIDO.        │
+   * │                                                                      │
+   * │ Distinguir los dos casos convertiria este endpoint en un comprobador │
+   * │ de quien esta dado de alta en la plataforma: se prueban correos uno  │
+   * │ a uno y el que responda distinto delata a un cliente.                │
+   * │                                                                      │
+   * │ Consecuencia para quien escriba la pantalla: **no se puede decir "te │
+   * │ hemos enviado un correo"**, porque puede que no se haya enviado      │
+   * │ ninguno. El texto tiene que ser condicional.                          │
+   * └──────────────────────────────────────────────────────────────────────┘
+   */
+  forgotPassword(
+    input: ForgotPasswordInput,
+    options?: RequestOptions,
+  ): Promise<EmailFlowResponse>;
+
+  /**
+   * Fija la contrasena nueva con el token que llego en el correo.
+   *
+   * No abre sesion: la respuesta no trae token de sesion, asi que despues hay
+   * que entrar por el camino de siempre. Es deliberado — quien restablece
+   * puede no ser quien pidio el enlace.
+   *
+   * Un token gastado, caducado o inventado son el mismo 400 con el mismo
+   * texto. Igual que arriba: separarlos diria si el enlace existio.
+   */
+  resetPassword(input: ResetPasswordInput, options?: RequestOptions): Promise<OkResponse>;
 }
 
 export function createAuthApi(http: Http): AuthApi {
@@ -110,6 +146,24 @@ export function createAuthApi(http: Http): AuthApi {
         path: '/auth/link-invitation',
         body: input,
         schema: linkInvitationResponseSchema,
+        ...options,
+      }),
+
+    forgotPassword: (input, options) =>
+      http({
+        method: 'POST',
+        path: '/auth/forgot-password',
+        body: input,
+        schema: emailFlowResponseSchema,
+        ...options,
+      }),
+
+    resetPassword: (input, options) =>
+      http({
+        method: 'POST',
+        path: '/auth/reset-password',
+        body: input,
+        schema: okResponseSchema,
         ...options,
       }),
   };
