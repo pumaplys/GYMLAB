@@ -380,6 +380,14 @@ Así que el requisito de un solo origen no está pendiente de contratar un sitio
 está pendiente de decidir **qué** pone las dos cosas bajo el mismo dominio. Esa
 decisión manda sobre B2 y B5, porque el hosting condiciona las dos.
 
+**Las tres alternativas están comparadas en
+[`06-despliegue.md`](06-despliegue.md)**, sin decidir ninguna. De ahí sale un
+matiz que corrige lo escrito antes en la tabla de deuda: con la configuración
+por defecto de Better Auth la cookie es `SameSite=Lax`, así que con orígenes
+separados **no la manda ningún navegador**, no solo Safari. Safari entra en
+escena si se fuerza `SameSite=None`, que es el remedio que convierte la sesión
+en una cookie de terceros.
+
 ### B1, cerrado: quien olvidaba su contraseña se quedaba fuera para siempre
 
 Lo encontró la auditoría, y no estaba en esta lista. La API construye
@@ -404,6 +412,17 @@ envío**.
 Restablecer **no abre sesión**, porque quien abre el enlace puede no ser quien
 lo pidió. Y entrar después es la comprobación de que la contraseña quedó como se
 quería.
+
+**Los dos fallos que salieron al recorrerla**, y que no se ven leyendo el
+código:
+
+| Qué pasaba | Por qué |
+|---|---|
+| Con `?token=%20` el botón **no hacía nada** — ni aviso, ni petición | `useFormulario` descarta los campos vacíos antes de validar, así que el esquema se quejaba de `token`, un campo que esa pantalla no pinta. El mensaje iba a parar donde nadie lo ve |
+| Restablecer estando dentro pasaba por `/socios`, que respondía 401 | Cambiar la contraseña cierra **todas** las sesiones, y el panel solo pregunta `me()` al abrirse: seguía creyéndose identificado. Ahora la pantalla lo dice en vez de dejar que se descubra por un rechazo |
+
+Es el mismo patrón que la carrera de 241 ms de `/accept-invitation`: **una
+pantalla que deduce el estado en lugar de saberlo.**
 
 ---
 

@@ -1,6 +1,6 @@
 # GYMLAB — El producto
 
-> Última actualización: **2026-08-05** · Tres verticales descritas: socios,
+> Última actualización: **2026-08-06** · Tres verticales descritas: socios,
 > cuotas y personal
 >
 > Este documento es la referencia **de negocio** del proyecto, igual que
@@ -281,3 +281,14 @@ que tratar datos de salud sin base legal.
 
 **Recepción no ve datos de salud.** No es una preferencia de producto: es
 minimización de datos, y está impuesta por rol y por base de datos.
+
+**Quien olvida su contraseña puede volver a entrar.** Nadie paga por esto —no
+es una función, es un suelo—, pero sin ello se pierde al cliente: no había forma
+de recuperar el acceso, y ni el dueño del gimnasio puede reponerle la contraseña
+a nadie. Hoy se pide un enlace desde la pantalla de entrada y llega por correo.
+
+Con un detalle que conviene saber explicar si alguien pregunta: **el sistema
+nunca dice si un correo tiene cuenta o no.** Responde igual en los dos casos, a
+propósito. Si respondiera distinto, cualquiera podría averiguar qué gimnasios y
+qué personas están dados de alta en la plataforma probando direcciones una a
+una.
