@@ -10,6 +10,7 @@ import { Campo } from '@/componentes/campo';
 import { PantallaCentrada } from '@/componentes/pantalla-centrada';
 import { api } from '@/lib/api';
 import { useFormulario } from '@/lib/formulario';
+import { useSesion } from '@/lib/sesion';
 import estilos from './restablecer.module.css';
 
 /**
@@ -42,7 +43,13 @@ function Restablecer() {
   const token = useSearchParams().get('token');
   const [hecho, setHecho] = useState(false);
 
-  if (!token) {
+  // `trim()` y no solo `!token`: un token en blanco —`?token=%20`, de un enlace
+  // que se rompio al copiarlo— NO es lo mismo que uno ausente para el
+  // formulario, y ahi el fallo era mudo. `useFormulario` descarta los campos
+  // vacios antes de validar, asi que el esquema se quejaba de `token`, un campo
+  // que esta pantalla no pinta: el aviso se guardaba donde nadie lo ve y el
+  // boton dejaba de responder sin decir por que. Comprobado en el navegador.
+  if (!token?.trim()) {
     return (
       <PantallaCentrada
         titulo="Falta el enlace"
@@ -61,6 +68,8 @@ function Restablecer() {
 }
 
 function Formulario({ token, onHecho }: { token: string; onHecho: () => void }) {
+  const { revisar } = useSesion();
+
   const formulario = useFormulario({
     esquema: resetPasswordSchema,
     // El token viaja como un valor mas del formulario, sin campo que lo pinte:
@@ -68,6 +77,24 @@ function Formulario({ token, onHecho }: { token: string; onHecho: () => void }) 
     iniciales: { token, newPassword: '' },
     enviar: async (datos) => {
       await api.auth.resetPassword(datos);
+
+      // ┌──────────────────────────────────────────────────────────────────┐
+      // │ CAMBIAR LA CONTRASENA CIERRA TODAS LAS SESIONES, INCLUIDA ESTA.  │
+      // │                                                                  │
+      // │ Quien restablece desde el mismo navegador en el que ya estaba    │
+      // │ dentro deja de tener sesion en este preciso instante, pero el    │
+      // │ panel sigue creyendo que la tiene: `me()` solo se pregunta al    │
+      // │ abrirlo. Sin esto, `/login` daba por identificada a esa persona  │
+      // │ y la mandaba a `/socios`, que respondia 401 y rebotaba de vuelta │
+      // │ al formulario. Medido en el navegador: dos peticiones rechazadas │
+      // │ y una pantalla que ya no es suya por el camino.                  │
+      // │                                                                  │
+      // │ Esta pantalla SABE que la sesion acaba de morir. Enterarse por   │
+      // │ un rechazo, pudiendo decirlo, es dejar que lo descubra el         │
+      // │ usuario. `revisar` no lanza: un 401 aqui es la respuesta         │
+      // │ esperada, no una incidencia.                                     │
+      // └──────────────────────────────────────────────────────────────────┘
+      await revisar();
       onHecho();
     },
   });
