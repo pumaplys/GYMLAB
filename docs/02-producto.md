@@ -1,6 +1,7 @@
 # GYMLAB — El producto
 
-> Última actualización: **2026-08-05**
+> Última actualización: **2026-08-05** · Tres verticales descritas: socios,
+> cuotas y personal
 >
 > Este documento es la referencia **de negocio** del proyecto, igual que
 > [`00-estado.md`](00-estado.md) lo es del estado técnico. De aquí salen la web
@@ -194,30 +195,45 @@ sin tocar nada de lo que ya tenía.
 
 Cada invitación queda a la vista con su estado, y las pendientes se revocan.
 
+**Y cuando alguien se va, se le retira el acceso.** Pierde la entrada en la
+siguiente pantalla que toque, sin esperar a que caduque su sesión. Su historial
+no se borra: queda constancia de que trabajó allí, de cuándo dejó de hacerlo y
+de quién lo decidió. Si vuelve meses después, se le invita otra vez y quedan las
+dos etapas.
+
 **Y hay un límite que el sistema impone, no sugiere:** recepción puede
 incorporar entrenadores, pero **no puede crear propietarios ni otras
-recepcionistas**. No es una opción escondida: el servidor rechaza la petición
-aunque alguien se salte la pantalla.
+recepcionistas**, ni retirarle el acceso a nadie. No es una opción escondida: el
+servidor rechaza la petición aunque alguien se salte la pantalla.
+
+Un detalle que evita un accidente caro: **un propietario no puede retirarse a sí
+mismo**, así que un gimnasio no puede quedarse sin nadie que mande.
 
 ### Qué cambia para cada uno
 
 | | |
 |---|---|
-| **Propietario** | Monta su equipo el mismo día, y sabe que quien está en el mostrador no puede ampliarse los permisos |
-| **Recepción** | Cubre el hueco cuando el dueño no está: incorpora entrenadores sin poder tocar la estructura del negocio |
+| **Propietario** | Monta su equipo el mismo día y lo desmonta cuando toca, sin llamar a nadie. Y sabe que quien está en el mostrador no puede ampliarse los permisos |
+| **Recepción** | Cubre el hueco cuando el dueño no está: incorpora entrenadores y ve quién trabaja allí, sin poder tocar la estructura del negocio |
 | **Entrenador** | Entra con su cuenta, no con una compartida |
 
 ### ¿Por qué pagaría un gimnasio por esto?
 
 Porque responde a un miedo concreto del dueño: **en un negocio donde recepción
-maneja el dinero y los datos de todos los socios, saber que no puede ascenderse
-sola vale dinero.**
+maneja el dinero y los datos de todos los socios, saber quién tiene acceso —y
+poder quitárselo el día que alguien se va— vale dinero.**
+
+La pregunta que lo resume: *«esta mañana he despedido a alguien que conocía los
+datos de todos mis socios. ¿Cuánto tarda en dejar de entrar?»* La respuesta es
+la siguiente vez que toque una pantalla.
 
 ### Limitaciones actuales
 
 **Ya implementado y verificado**
 - Invitar a propietario, recepción y entrenador, con la matriz de permisos
   aplicada en el servidor y reflejada en el panel.
+- Ver quién forma parte del gimnasio ahora mismo, con su rol y desde cuándo.
+- Retirar el acceso, solo el propietario y nunca a sí mismo.
 - Estado de cada invitación y revocación de las pendientes.
 - Aceptar creando cuenta nueva, o añadiendo el gimnasio a una cuenta existente
   sin tocar su contraseña.
@@ -225,32 +241,28 @@ sola vale dinero.**
 **Implementado en el servidor, sin pantalla todavía**
 - Perfil del entrenador, su baja, y asignarle socios.
 
-**No existe en ninguna capa — y hay que decirlo en voz alta**
-- **No se puede retirar el acceso a quien ya lo aceptó.** Se revoca una
-  invitación *pendiente*, no una *aceptada*. Dar de baja el perfil de un
-  entrenador **no le quita el acceso**: comprobado, sigue entrando con su rol.
-- No hay listado del personal actual: la pantalla muestra invitaciones, no un
-  censo.
+**No existe en ninguna capa**
+- **Cambiar el rol de alguien que ya está dentro.** Hoy hay que retirarle el
+  acceso y volver a invitarle con el rol nuevo.
+- **Ver qué socios se han quedado sin entrenador.** Al retirar a un entrenador
+  sus asignaciones sobreviven, así que esos socios apuntan a alguien que ya no
+  entra, y ninguna pantalla lo muestra. Fue una decisión consciente: es
+  preferible a que un gimnasio no pueda cortar un acceso por no haber
+  reasignado antes.
 
 **Visión**
-- Retirar y cambiar permisos de alguien que ya está dentro, con su auditoría.
-- Historial de quién hizo qué, visible para el propietario.
+- Historial de quién hizo qué dentro del gimnasio, visible para el propietario.
+- Permisos más finos que los cuatro roles actuales.
 
 ### Valor para el negocio
 
 | | |
 |---|---|
-| **Tiempo que ahorra** | Una contratación deja de ser un trámite con el proveedor |
-| **Errores que evita** | Contraseñas compartidas y accesos sin dueño conocido |
-| **Dependencia que elimina** | La nuestra: el gimnasio incorpora a su gente sin pedirnos nada |
-| **Riesgo que reduce** | Que alguien del mostrador se dé permisos que no le tocan |
-| **Ingresos que protege** | Indirecto: sostiene que cada acción quede atribuida a una persona |
-
-> **Lo que este bloque todavía NO puede prometer**, y conviene que quien venda lo
-> sepa antes que el cliente: *gestión de personal* suena a dar y quitar acceso.
-> Hoy se puede **dar, no quitar**. Es la limitación más urgente del producto para
-> un piloto real — un gimnasio vive sin gráficas, pero no con un exempleado que
-> sigue entrando.
+| **Tiempo que ahorra** | Una contratación —o una salida— deja de ser un trámite con el proveedor |
+| **Errores que evita** | Contraseñas compartidas, accesos sin dueño conocido, y el clásico «se fue hace meses y seguía entrando» |
+| **Dependencia que elimina** | La nuestra: el gimnasio gestiona su equipo entero sin pedirnos nada |
+| **Riesgo que reduce** | **El mayor de esta vertical:** un exempleado con acceso a los datos y los cobros de todos los socios. Y, del otro lado, que alguien del mostrador se dé permisos que no le tocan |
+| **Ingresos que protege** | Indirecto, pero real: un incidente de acceso indebido a datos de socios es el tipo de cosa que termina una relación comercial |
 
 ---
 
