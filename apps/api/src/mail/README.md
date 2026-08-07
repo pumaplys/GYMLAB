@@ -50,7 +50,7 @@ dirección que nunca va a funcionar llena el log de ruido y entierra la causa.
 Agotados los reintentos de un transitorio, el trabajo queda en estado `failed` en
 `pgboss.job`, que es consultable. No se pierde en silencio.
 
-La política vive en la **cola**, no en cada trabajo (`scripts/install-pgboss.ts`):
+La política vive en la **cola**, no en cada trabajo (`packages/db/src/deploy.ts`):
 así la heredan todos y no depende de que quien encola se acuerde. Los trabajos
 caducan a las 12 h — un correo más viejo que eso ya no sirve, porque los tokens
 de invitación y recuperación caducan antes o poco después.
