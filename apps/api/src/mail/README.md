@@ -50,10 +50,36 @@ dirección que nunca va a funcionar llena el log de ruido y entierra la causa.
 Agotados los reintentos de un transitorio, el trabajo queda en estado `failed` en
 `pgboss.job`, que es consultable. No se pierde en silencio.
 
-La política vive en la **cola**, no en cada trabajo (`packages/db/src/deploy.ts`):
-así la heredan todos y no depende de que quien encola se acuerde. Los trabajos
-caducan a las 12 h — un correo más viejo que eso ya no sirve, porque los tokens
-de invitación y recuperación caducan antes o poco después.
+La política vive en la **cola**, no en cada trabajo, y se declara en
+`packages/db/src/queues.ts` junto a los nombres: así la heredan todos y no
+depende de que quien encola se acuerde.
+
+### Un trabajo no debe sobrevivir al token que transporta
+
+Es la regla que fija los plazos, y **los dos de pg-boss no son lo que parecen**:
+
+| | Qué limita de verdad |
+|---|---|
+| `expireInSeconds` | Cuánto puede estar **en ejecución** antes de darlo por colgado |
+| `retentionSeconds` | Cuánto puede estar **esperando** en la cola antes de borrarse |
+
+Estaba puesto `expireInSeconds: 12h` con el comentario de que un correo más
+viejo que eso ya no sirve. Ese plazo no hacía eso: le daba doce horas a una
+llamada HTTP a Resend. Y el que sí controla la espera estaba **sin poner**, con
+su valor por defecto de **catorce días**.
+
+Con el proceso caído un rato, un correo de recuperación podía entregarse días
+después con un enlace que murió en una hora. Quien lo abriera leería «el enlace
+no es válido» sin haber hecho nada mal.
+
+| Cola | Espera máxima | Por qué |
+|---|---|---|
+| `email.reset-password` | 50 min | Su token dura 1 h. Deja sitio a los ~31 min de reintentos y caduca antes que el enlace |
+| `email.verify-email` | 50 min | Igual |
+| `email.invitation` | 12 h | Su token dura 7 días, así que aquí la espera no es la restricción |
+
+Es preferible que el trabajo caduque en la cola —y que la persona vuelva a
+pedirlo— a entregarle un enlace muerto.
 
 ## Los enlaces apuntan al panel, no a la API
 

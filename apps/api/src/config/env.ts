@@ -137,11 +137,77 @@ const schema = z.object({
   /**
    * Remitente. Debe ser un dominio verificado en Resend.
    *
-   * Obligatorio junto con la clave: enviar desde un dominio sin verificar acaba
-   * en la carpeta de spam, que es peor que no enviar — nadie se enteraria.
+   * El valor por defecto solo sirve para el transporte de consola. En cuanto
+   * hay `RESEND_API_KEY`, esta variable pasa a ser obligatoria y con dominio
+   * real — lo comprueba el `superRefine` de abajo.
    */
   EMAIL_FROM: z.string().min(1).default('GYMLAB <no-reply@localhost>'),
 });
+
+/**
+ * El esquema con las comprobaciones que cruzan variables.
+ *
+ * Va aparte del objeto porque `superRefine` devuelve otro tipo que ya no
+ * expone `.shape`, y de ahi salen `ENV_KEYS` — la lista que vigila el cableado
+ * con `turbo.json`.
+ */
+const schemaValidado = schema
+  /**
+   * ┌────────────────────────────────────────────────────────────────────────┐
+   * │ CON CLAVE DE RESEND, EL REMITENTE TIENE QUE SER DE VERDAD.             │
+   * │                                                                        │
+   * │ Sin esta comprobacion el proceso arrancaba PERFECTAMENTE con la clave  │
+   * │ puesta y el remitente por defecto, `no-reply@localhost`. Resend         │
+   * │ respondia `invalid_from_address`, que esta clasificado como error      │
+   * │ DEFINITIVO, asi que el trabajo se descartaba SIN REINTENTO y nadie     │
+   * │ recibia nada. Ni invitaciones ni recuperaciones de contrasena.         │
+   * │                                                                        │
+   * │ El unico rastro era una linea de ERROR en el log. Es el peor modo de   │
+   * │ fallo posible: todo parece en pie y el producto no funciona.           │
+   * │                                                                        │
+   * │ Mismo criterio que `MailModule` con la clave ausente: en produccion se │
+   * │ prefiere no arrancar a arrancar mintiendo.                             │
+   * └────────────────────────────────────────────────────────────────────────┘
+   */
+  .superRefine((valores, ctx) => {
+    if (!valores.RESEND_API_KEY) return;
+
+    const direccion = direccionDe(valores.EMAIL_FROM);
+    if (!direccion) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['EMAIL_FROM'],
+        message:
+          'Con RESEND_API_KEY, EMAIL_FROM debe llevar una direccion valida, ' +
+          'con la forma "GYMLAB <no-reply@tudominio.com>" o "no-reply@tudominio.com".',
+      });
+      return;
+    }
+
+    const dominio = direccion.split('@')[1]!;
+    // Un dominio sin punto —`localhost`, `localdomain`— no puede estar
+    // verificado en Resend ni existir en el DNS publico.
+    if (!dominio.includes('.')) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['EMAIL_FROM'],
+        message:
+          `El remitente apunta a "${dominio}", que no es un dominio real. ` +
+          'Con RESEND_API_KEY hace falta un dominio verificado en Resend: ' +
+          'enviar desde uno sin verificar acaba en spam, que es peor que no enviar.',
+      });
+    }
+  });
+
+/**
+ * La direccion de un remitente, admitiendo las dos formas que acepta Resend:
+ * `Nombre <a@b.c>` y `a@b.c`. Devuelve null si no hay ninguna.
+ */
+function direccionDe(remitente: string): string | null {
+  const entreAngulos = /<([^>]+)>/.exec(remitente);
+  const candidato = (entreAngulos ? entreAngulos[1]! : remitente).trim();
+  return /^[^\s@]+@[^\s@]+$/.test(candidato) ? candidato : null;
+}
 
 /**
  * Una variable VACIA es una variable AUSENTE.
@@ -162,11 +228,26 @@ const schema = z.object({
  * │ En el shell no hay diferencia entre "vacia" y "sin poner". Aqui tampoco. │
  * └──────────────────────────────────────────────────────────────────────────┘
  */
-const sinVacias = Object.fromEntries(
-  Object.entries(process.env).filter(([, valor]) => valor !== ''),
-);
+function sinVacias(valores: NodeJS.ProcessEnv): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(valores).filter(([, valor]) => valor !== ''),
+  ) as Record<string, string>;
+}
 
-const parsed = schema.safeParse(sinVacias);
+/**
+ * Valida un conjunto de variables y devuelve los problemas, uno por linea.
+ *
+ * Se exporta para poder comprobar la configuracion SIN arrancar el proceso:
+ * las reglas que cruzan variables —el remitente cuando hay clave de Resend—
+ * solo se pueden probar asi, porque el modulo valida al importarse.
+ */
+export function problemasDeEntorno(valores: NodeJS.ProcessEnv): string[] {
+  const resultado = schemaValidado.safeParse(sinVacias(valores));
+  if (resultado.success) return [];
+  return resultado.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`);
+}
+
+const parsed = schemaValidado.safeParse(sinVacias(process.env));
 
 if (!parsed.success) {
   const detalle = parsed.error.issues

@@ -17,7 +17,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { ENV_KEYS, ENV_KEYS_OBLIGATORIAS } from '../config/env';
+import { ENV_KEYS, ENV_KEYS_OBLIGATORIAS, problemasDeEntorno } from '../config/env';
 
 // `process.cwd()` y no `import.meta.url`: la API se compila a CommonJS, donde
 // `import.meta` es un error de compilacion. Vitest corre con el directorio del
@@ -40,6 +40,49 @@ describe('cableado de variables de entorno', () => {
     for (const clave of ENV_KEYS_OBLIGATORIAS) {
       expect(ci, `${clave} no tiene valor en ci.yml`).toContain(`${clave}:`);
     }
+  });
+
+  it('con clave de Resend, un remitente de mentira NO deja arrancar', () => {
+    // ┌──────────────────────────────────────────────────────────────────────┐
+    // │ ES EL FALLO CON PEOR FORMA QUE TENIA EL MODULO DE CORREO.            │
+    // │                                                                      │
+    // │ Con la clave puesta y `EMAIL_FROM` olvidado, el proceso arrancaba    │
+    // │ PERFECTAMENTE con el valor por defecto, `no-reply@localhost`. Resend │
+    // │ respondia `invalid_from_address`, que esta clasificado como error    │
+    // │ DEFINITIVO, asi que el trabajo se descartaba SIN REINTENTO y nadie   │
+    // │ recibia nada: ni invitaciones ni recuperaciones de contrasena.       │
+    // │                                                                      │
+    // │ El unico rastro era una linea de ERROR en el log.                    │
+    // └──────────────────────────────────────────────────────────────────────┘
+    const base = { ...process.env, RESEND_API_KEY: 're_una_clave_cualquiera' };
+
+    // El defecto de desarrollo, que es el que se cuela por olvido.
+    expect(problemasDeEntorno({ ...base, EMAIL_FROM: undefined }).join(' ')).toContain('EMAIL_FROM');
+    // Y cualquier otro dominio sin punto.
+    expect(problemasDeEntorno({ ...base, EMAIL_FROM: 'GYMLAB <no-reply@localhost>' })).not.toEqual(
+      [],
+    );
+    // Un remitente sin direccion tampoco vale.
+    expect(problemasDeEntorno({ ...base, EMAIL_FROM: 'GYMLAB' })).not.toEqual([]);
+  });
+
+  it('y las dos formas que acepta Resend si valen', () => {
+    const base = { ...process.env, RESEND_API_KEY: 're_una_clave_cualquiera' };
+
+    expect(problemasDeEntorno({ ...base, EMAIL_FROM: 'GYMLAB <no-reply@gymlab.test>' })).toEqual([]);
+    expect(problemasDeEntorno({ ...base, EMAIL_FROM: 'no-reply@gymlab.test' })).toEqual([]);
+  });
+
+  it('sin clave de Resend, el remitente de desarrollo sigue valiendo', () => {
+    // El transporte de consola no manda nada a ningun sitio, asi que exigir un
+    // dominio real ahi seria pedir una cuenta de Resend para trabajar en local.
+    expect(
+      problemasDeEntorno({
+        ...process.env,
+        RESEND_API_KEY: undefined,
+        EMAIL_FROM: 'GYMLAB <no-reply@localhost>',
+      }),
+    ).toEqual([]);
   });
 
   it('todas aparecen en .env.example', () => {
