@@ -1,4 +1,4 @@
-{
+﻿{
   "$schema": "https://turbo.build/schema.json",
   "ui": "tui",
   "globalDependencies": [".env", "packages/config/**"],
@@ -9,8 +9,8 @@
       "outputs": ["dist/**", ".next/**", "!.next/cache/**", "out/**"],
       // El panel se exporta estatico, asi que esto NO se lee en produccion: se
       // incrusta en el paquete al construirlo. Por eso su valor por defecto es
-      // la ruta relativa `/v1` — el mismo origen, que es el requisito de
-      // despliegue— y no un dominio que habria que acertar en cada entorno.
+      // la ruta relativa `/v1` â€” el mismo origen, que es el requisito de
+      // despliegueâ€” y no un dominio que habria que acertar en cada entorno.
       "env": ["NEXT_PUBLIC_API_URL"]
     },
     "dev": {
@@ -28,6 +28,7 @@
         "API_PORT",
         "WEB_APP_URL",
         "CORS_ORIGINS",
+        "TRUST_PROXY",
         "RESEND_API_KEY",
         "EMAIL_FROM",
         "NEXT_PUBLIC_API_URL"
@@ -65,6 +66,7 @@
         "API_PORT",
         "WEB_APP_URL",
         "CORS_ORIGINS",
+        "TRUST_PROXY",
         "RESEND_API_KEY",
         "EMAIL_FROM"
       ]

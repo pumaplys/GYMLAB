@@ -8,6 +8,9 @@ export default defineConfig({
     fileParallelism: false,
     sequence: { concurrent: false },
     include: ['src/**/*.test.ts'],
+    // Deja el contador POR IP a cero antes de cada test. El fichero explica
+    // por que hace falta: es una proteccion que hasta ahora estaba dormida.
+    setupFiles: ['src/__tests__/setup-throttle.ts'],
     testTimeout: 30_000,
     hookTimeout: 30_000,
   },
