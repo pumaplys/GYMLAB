@@ -5,7 +5,7 @@ consume únicamente `@gymlab/api`.
 
 Las colas viven aquí y no en `@gymlab/contracts` por dos motivos: el panel y la
 app nunca ven un nombre de cola —no forman parte del contrato con los clientes—
-y `db:migrate` no debe depender de haber compilado ningún paquete. Ver
+y quien las crea es el propio paso de migración, dentro de este paquete. Ver
 `src/queues.ts` y [ADR-0005](../../docs/adr/0005-monorepo.md).
 
 ---
@@ -54,7 +54,11 @@ pnpm db:studio     # explorador de datos
 pnpm --filter @gymlab/db test
 ```
 
-`migrate` encadena `drizzle-kit migrate`, `pnpm rls` y `pnpm boss:install`, los tres con el **rol propietario**. El orden importa: las tablas deben existir antes de habilitarles RLS, y pg-boss va al final porque hace DDL —crea su esquema y una partición por cola— que `gymlab_app` no puede ejecutar. Todo es idempotente y debe reaplicarse en cada despliegue.
+`migrate` ejecuta los tres pasos de `src/deploy.ts` con el **rol propietario**: migraciones, roles y políticas RLS, y colas de pg-boss. El orden importa —las tablas deben existir antes de habilitarles RLS, y pg-boss va al final porque hace DDL que `gymlab_app` no puede ejecutar— y todo es idempotente, porque debe reaplicarse en cada despliegue.
+
+**Es el mismo código que corre al desplegar.** El contenedor ejecuta `dist/deploy-cli.cjs` desde su entrypoint, y `pnpm db:migrate` llama a ese mismo módulo con `tsx`. Un camino para desarrollo y otro para producción es justo la clase de diferencia que no se descubre hasta el día del despliegue.
+
+Y por eso **no se usa `drizzle-kit` para migrar**: es una herramienta de desarrollo, y meterla en la imagen de producción sería desplegar el taller entero. El migrador de `drizzle-orm` —ya dependencia de producción— lee exactamente la misma contabilidad, `drizzle.__drizzle_migrations`. `drizzle-kit` se sigue usando para **generar** migraciones, que es trabajo de desarrollo.
 
 ---
 

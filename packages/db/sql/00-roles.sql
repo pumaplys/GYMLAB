@@ -1,8 +1,8 @@
 -- =============================================================================
 -- Permisos del rol de aplicacion
 -- =============================================================================
--- Idempotente. El rol `gymlab_app` lo crea antes `scripts/apply-rls.ts`, que es
--- quien maneja la contrasena (aqui no puede ir: este archivo se versiona).
+-- Idempotente. El rol `gymlab_app` lo crea antes `src/deploy.ts`, que es quien
+-- maneja la contrasena (aqui no puede ir: este archivo se versiona).
 --
 -- POR QUE HAY DOS ROLES
 --

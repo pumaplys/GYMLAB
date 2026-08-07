@@ -28,6 +28,7 @@ import {
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { AppModule } from '../app.module';
+import { MAX_POR_IP } from '../auth/auth.throttle';
 import { patchRequestContext, runWithRequestContext } from '../common/request-context';
 import { env } from '../config/env';
 import { DATABASE } from '../database/database.module';
@@ -722,6 +723,52 @@ describe('endurecimiento de la sesion', () => {
 
     // La sesion anterior ya no vale.
     await http().get('/v1/auth/me').set(conSesion(antes.body.token)).expect(401);
+  });
+
+  it('usar el producto con normalidad NO agota el limite del gimnasio', async () => {
+    // ┌──────────────────────────────────────────────────────────────────────┐
+    // │ UN GIMNASIO ENTERO SALE A INTERNET POR UNA SOLA IP.                  │
+    // │                                                                      │
+    // │ El contador por IP subia con cada peticion, acertara o no, y no se   │
+    // │ limpiaba al acertar. Medido antes del arreglo: 24 inicios de sesion  │
+    // │ CORRECTOS seguidos daban 20 aceptados y 4 rechazados, y a partir de  │
+    // │ ahi cualquier otra persona del mismo gimnasio recibia 429 con su     │
+    // │ contrasena buena.                                                    │
+    // │                                                                      │
+    // │ Aqui se hacen MAS del umbral (20) a proposito: si el descuento de    │
+    // │ `limpiar` desapareciera, este test se pone rojo en el intento 21.    │
+    // └──────────────────────────────────────────────────────────────────────┘
+    for (let i = 0; i < MAX_POR_IP + 5; i++) {
+      await http()
+        .post('/v1/auth/login')
+        .send({ email: email('owner-a'), password: PASSWORD })
+        .expect(201);
+    }
+  });
+
+  it('pero el relleno de credenciales SIGUE bloqueandose', async () => {
+    // ┌──────────────────────────────────────────────────────────────────────┐
+    // │ LA MITAD QUE NO SE PUEDE PERDER AL ARREGLAR LA OTRA.                 │
+    // │                                                                      │
+    // │ Probar una contrasena filtrada contra MUCHAS cuentas es lo que el    │
+    // │ umbral por IP existe para frenar, y el contador por email+IP no lo   │
+    // │ ve: cada cuenta recibe un solo intento, muy por debajo de 5.         │
+    // │                                                                      │
+    // │ Estos intentos fallan, asi que no se descuentan y el contador sube.  │
+    // │ Medido contra el proceso real: 30 cuentas se frenan en la vigesima.  │
+    // └──────────────────────────────────────────────────────────────────────┘
+    const estados: number[] = [];
+    for (let i = 0; i < 26; i++) {
+      const res = await http()
+        .post('/v1/auth/login')
+        .send({ email: `relleno-${i}-${sufijo}@prueba.test`, password: 'Password123!' });
+      estados.push(res.status);
+    }
+
+    // Ninguna de esas cuentas existe, asi que lo que no se bloquea da 401.
+    expect(estados.filter((s) => s === 429).length).toBeGreaterThan(0);
+    // Y el corte llega por el umbral de IP, no antes: hasta el se prueban.
+    expect(estados.filter((s) => s === 401).length).toBe(MAX_POR_IP);
   });
 
   it('bloquea tras varios intentos fallidos seguidos', async () => {
