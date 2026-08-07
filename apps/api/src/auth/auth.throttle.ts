@@ -32,7 +32,20 @@ import { DATABASE } from '../database/database.module';
  * estrecho es por pareja (email, IP) y hay otro mas alto por IP suelta. Alguien
  * desde otra IP no puede dejarte fuera de tu cuenta.
  *
- * DOS LIMITES CONOCIDOS, ambos asumidos:
+ * El de IP no es prescindible, aunque lo parezca: es el UNICO que ve el relleno
+ * de credenciales —una contrasena filtrada probada contra muchas cuentas—,
+ * porque ahi cada cuenta recibe un solo intento y el umbral por email nunca se
+ * alcanza. Medido: 30 cuentas distintas desde una IP se frenan en la vigesima.
+ *
+ * LO QUE CUENTA CADA UNO
+ *
+ * Los dos suman ANTES de verificar la contrasena, que es la garantia frente a
+ * concurrencia. La diferencia esta en lo que pasa despues: al acertar, el de
+ * email+IP se borra y el de IP se DESCUENTA (ver `limpiar`). Asi el de IP mide
+ * intentos que no salieron bien, y no simple trafico — que es lo que convertia
+ * la IP compartida de un gimnasio en un punto unico de bloqueo.
+ *
+ * TRES LIMITES CONOCIDOS, los tres asumidos:
  *
  * - Un ataque distribuido desde muchas IPs lo esquiva. Mitigarlo exige
  *   reputacion de IP o un captcha, y a esta escala no compensa.
@@ -41,14 +54,26 @@ import { DATABASE } from '../database/database.module';
  *   reaparece el bloqueo dirigido. Se acepta: preferimos un bloqueo de 15
  *   minutos a dejar la puerta abierta. En produccion, detras del proxy del
  *   proveedor, la cabecera existe siempre.
+ *
+ * - ⏳ DEUDA: la senal real del relleno no es "muchos intentos desde una IP"
+ *   sino "muchas CUENTAS DISTINTAS desde una IP". En los datos medidos, un
+ *   ataque toca 30 correos y un gimnasio toca los suyos. Contar correos
+ *   distintos separaria los dos casos sin depender de un umbral de trafico,
+ *   pero exige otra forma de tabla y decidir que hace la ventana. El descuento
+ *   de arriba resuelve el bloqueo del gimnasio; esto seria hacerlo bien.
  */
 
 /** Ventana de observacion. */
 const VENTANA = '15 minutes';
 /** Intentos permitidos para la misma pareja email + IP. */
 const MAX_POR_EMAIL_E_IP = 5;
-/** Intentos permitidos desde una IP, sumando todas las cuentas. */
-const MAX_POR_IP = 20;
+/**
+ * Intentos FALLIDOS permitidos desde una IP, sumando todas las cuentas.
+ *
+ * Se exporta para que los tests afirmen la relacion con el umbral y no un
+ * numero suelto: si algun dia se ajusta, siguen midiendo lo que dicen medir.
+ */
+export const MAX_POR_IP = 20;
 
 @Injectable()
 export class AuthThrottle {
@@ -72,11 +97,47 @@ export class AuthThrottle {
     return false;
   }
 
-  /** Un login correcto limpia el contador: a quien acierta no se le penaliza. */
+  /**
+   * Un login correcto no debe dejar rastro en ninguno de los dos contadores.
+   *
+   * ┌──────────────────────────────────────────────────────────────────────────┐
+   * │ EL DESCUENTO POR IP ES LO QUE IMPIDE QUE UN GIMNASIO SE BLOQUEE SOLO.    │
+   * │                                                                          │
+   * │ Antes solo se borraba la clave de email+IP. El contador por IP seguia    │
+   * │ subiendo con CADA peticion, acertara o no, asi que un gimnasio entero    │
+   * │ —que sale a internet por una sola direccion— agotaba el presupuesto      │
+   * │ usando el producto con normalidad.                                       │
+   * │                                                                          │
+   * │ Medido antes del cambio: 24 inicios de sesion CORRECTOS seguidos, con    │
+   * │ credenciales validas siempre, daban 20 aceptados y 4 rechazados. Y a     │
+   * │ partir de ahi cualquier OTRA persona del gimnasio recibia 429 aunque su  │
+   * │ contrasena fuera buena.                                                  │
+   * │                                                                          │
+   * │ El arreglo no es subir el umbral —eso solo traslada el problema a un     │
+   * │ gimnasio mas grande—, sino que el contador mida lo que debe medir. Un    │
+   * │ intento acertado queda NETO A CERO: +1 antes de comprobar la contrasena, │
+   * │ -1 aqui. Lo que se acumula son los que no salieron bien.                 │
+   * │                                                                          │
+   * │ Y se hace asi, descontando despues, en lugar de contar solo los fallos:  │
+   * │ el incremento tiene que seguir ocurriendo ANTES de verificar la          │
+   * │ contrasena. Mover el conteo detras reabriria la ventana de ~100 ms entre │
+   * │ comprobar y actuar por la que llegaron a pasar 30 peticiones simultaneas.│
+   * └──────────────────────────────────────────────────────────────────────────┘
+   */
   async limpiar(email: string, ip: string | null): Promise<void> {
-    await withoutTenant(this.db, (tx) =>
-      tx.delete(authThrottle).where(eq(authThrottle.key, `login:${email}:${ip ?? 'sin-ip'}`)),
-    );
+    await withoutTenant(this.db, async (tx) => {
+      await tx.delete(authThrottle).where(eq(authThrottle.key, `login:${email}:${ip ?? 'sin-ip'}`));
+
+      if (!ip) return;
+      // `GREATEST(..., 0)` porque la ventana puede haber expirado entre el
+      // incremento y este descuento: sin el, el contador quedaria negativo y
+      // regalaria intentos a quien viniera despues.
+      await tx.execute(sql`
+        UPDATE auth_throttle
+        SET attempts = GREATEST(attempts - 1, 0)
+        WHERE key = ${`login:${ip}`}
+      `);
+    });
   }
 
   /**
