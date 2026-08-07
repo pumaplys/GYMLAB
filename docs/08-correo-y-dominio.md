@@ -51,6 +51,10 @@ Serán de tres tipos:
 | **TXT (SPF)** | Autoriza a los servidores de Resend a enviar en nombre de tu dominio | Resend |
 | **MX** | Recibe los rebotes, para que Resend sepa qué direcciones no existen | Resend |
 
+**Cópialos tal cual a un sitio antes de salir de esa pantalla.** La clave DKIM
+es larga y se puede volver a consultar, pero tenerla a mano ahorra idas y
+venidas al crear los registros.
+
 ## 2. Crearlos en Hostinger
 
 ```
@@ -84,16 +88,23 @@ haya ninguno.
 Botón **Verify** en la misma pantalla. Suele tardar minutos, aunque el DNS
 puede llegar a la hora.
 
-Mientras tanto se puede comprobar desde fuera si los registros ya se ven:
+**Antes de pulsarlo**, conviene comprobar desde fuera que los registros ya se
+ven. Hay un script para eso:
 
 ```bash
-dig +short TXT resend._domainkey.envios.TUDOMINIO
-dig +short TXT envios.TUDOMINIO
-dig +short MX envios.TUDOMINIO
+.\scripts\comprobar-dns.ps1 -Dominio envios.TUDOMINIO
 ```
 
-Si `dig` no devuelve nada, aún no ha propagado o el nombre quedó mal escrito —
-y el fallo más frecuente es el del recuadro de arriba.
+Comprueba los cuatro registros y **busca explícitamente la trampa del recuadro
+de arriba**: si encuentra el DKIM con el dominio repetido, lo dice con nombre y
+apellidos en lugar de limitarse a informar de que falta.
+
+> Usa `Resolve-DnsName` y no `dig` **porque `dig` no viene con Windows** —
+> comprobado en el equipo desde el que se despliega. Una guía con `dig` falla en
+> el primer comando.
+
+Si un registro sale como `[FALTA]`, o no ha propagado todavía —de minutos a una
+hora— o el nombre quedó mal escrito.
 
 ## 4. DMARC
 
