@@ -235,4 +235,49 @@ describe('politica de reintentos de las colas', () => {
       expect(fila.retry_backoff, `${fila.name} sin espera creciente`).toBe(true);
     }
   });
+
+  it('un trabajo no sobrevive al token que transporta', async () => {
+    // ┌──────────────────────────────────────────────────────────────────────┐
+    // │ LOS DOS PLAZOS DE pg-boss NO SON LO QUE PARECEN.                     │
+    // │                                                                      │
+    // │   expire_seconds     cuanto puede estar EN EJECUCION.                │
+    // │   retention_seconds  cuanto puede estar ESPERANDO en la cola.        │
+    // │                                                                      │
+    // │ Estaba puesto `expireInSeconds: 12h` creyendo que limitaba la espera.│
+    // │ No lo hacia: daba doce horas a una llamada HTTP. Y el que si la      │
+    // │ limita estaba sin poner, con su valor por defecto de CATORCE DIAS.   │
+    // │                                                                      │
+    // │ Con el proceso caido un rato, un correo de recuperacion podia salir  │
+    // │ dias despues con un enlace que murio en una hora. Quien lo abriera   │
+    // │ leeria "el enlace no es valido" sin haber hecho nada mal.            │
+    // └──────────────────────────────────────────────────────────────────────┘
+    const res = await owner.execute<{
+      name: string;
+      retention_seconds: number;
+      expire_seconds: number;
+    }>(sql`SELECT name, retention_seconds, expire_seconds FROM pgboss.queue
+           WHERE name LIKE 'email.%' ORDER BY name`);
+
+    const porNombre = new Map(res.rows.map((f) => [f.name, f]));
+    const UNA_HORA = 60 * 60;
+
+    // Los tokens de recuperar y verificar duran una hora: la espera tiene que
+    // quedar por debajo o el correo llega muerto.
+    for (const cola of [EMAIL_QUEUES.resetPassword, EMAIL_QUEUES.verifyEmail]) {
+      const fila = porNombre.get(cola)!;
+      expect(fila.retention_seconds, `${cola} espera mas que su token`).toBeLessThan(UNA_HORA);
+      // Y por encima de los ~31 min de reintentos, o se borraria a mitad.
+      expect(fila.retention_seconds, `${cola} no da tiempo a reintentar`).toBeGreaterThan(35 * 60);
+    }
+
+    // La invitacion dura 7 dias, asi que aqui la espera no es la restriccion.
+    expect(porNombre.get(EMAIL_QUEUES.invitation)!.retention_seconds).toBeGreaterThan(UNA_HORA);
+
+    // Y enviar un correo es una llamada HTTP: si tarda minutos, esta colgada.
+    for (const fila of res.rows) {
+      expect(fila.expire_seconds, `${fila.name} tarda demasiado en darse por colgada`).toBeLessThan(
+        10 * 60,
+      );
+    }
+  });
 });

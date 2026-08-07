@@ -365,6 +365,23 @@ y `build`. Todos están arriba con su motivo.
 **Visión futura** — `apps/socio`, las pantallas de rutinas, progreso, accesos y
 panel del dueño, la app móvil, Stripe, varios roles por persona.
 
+### Lo que viene después de los bloqueantes: la fase de diseño
+
+> **Cerrado B2 y verificada la aplicación en producción, empieza oficialmente la
+> fase de diseño visual de GYMLAB.** A partir de ahí se deja de priorizar
+> backend.
+>
+> Y el primer paso **no** es una pantalla: es un **sistema visual general** —
+> identidad, tipografía, color, retícula, componentes, navegación y
+> comportamiento responsive. Sin él, cada pantalla improvisa su propio estilo y
+> lo que queda no parece un producto, sino varias pantallas seguidas.
+>
+> Después, pantalla por pantalla: layout, navegación, dashboard, tarjetas.
+
+Se anota aquí para que no se pierda mientras se cierra el backend. **No es
+decoración:** un gimnasio decide en los primeros diez segundos si el producto
+que le enseñan parece serio.
+
 ### B3, cerrado: el mismo origen deja de ser configuración
 
 Estrategia **A** de [`06-despliegue.md`](06-despliegue.md): la API sirve el panel

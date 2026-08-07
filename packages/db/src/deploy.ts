@@ -26,7 +26,7 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { Client, Pool } from 'pg';
 import { PgBoss } from 'pg-boss';
-import { ALL_QUEUES } from './queues';
+import { ALL_QUEUES, POLITICAS } from './queues';
 
 export interface OpcionesDespliegue {
   /**
@@ -132,23 +132,19 @@ async function instalarPgBoss(
   registrar('  esquema de pg-boss instalado o actualizado');
 
   for (const cola of ALL_QUEUES) {
-    // Politica de reintentos a nivel de COLA, no de trabajo: asi la heredan
-    // todos y no depende de que quien encola se acuerde. Espera creciente
-    // porque el fallo tipico de un proveedor de correo es transitorio.
-    const politica = {
-      retryLimit: 5,
-      retryDelay: 60,
-      retryBackoff: true,
-      // Un correo que lleva 12 h sin enviarse ya no sirve: los tokens de
-      // invitacion y de recuperacion caducan antes o poco despues.
-      expireInSeconds: 12 * 60 * 60,
-    };
+    // La politica se define a nivel de COLA, no de trabajo: asi la heredan
+    // todos y no depende de que quien encola se acuerde. Y vive en
+    // `queues.ts`, junto a los nombres, porque depende de cuanto dura el token
+    // que transporta cada cola.
+    const politica = POLITICAS[cola];
+    if (!politica) throw new Error(`[db] La cola "${cola}" no tiene politica declarada.`);
 
     await boss.createQueue(cola, politica);
     // `createQueue` no cambia la politica de una cola existente, asi que sin
-    // esto las creadas antes se quedarian con los valores por defecto.
+    // esto las creadas antes se quedarian con los valores anteriores. Este
+    // script debe poder reaplicarse y dejar el mismo estado siempre.
     await boss.updateQueue(cola, politica);
-    registrar(`  cola lista: ${cola}`);
+    registrar(`  cola lista: ${cola} (espera max ${politica.retentionSeconds}s)`);
   }
 
   await boss.stop({ graceful: true });
