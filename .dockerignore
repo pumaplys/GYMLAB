@@ -1,0 +1,29 @@
+# Lo que NO debe entrar en el contexto de construccion.
+#
+# `node_modules` es lo importante: sin esta linea, Docker copia cientos de
+# megas del arbol local —compilado para otro sistema operativo— y ademas
+# invalida la cache de la capa de dependencias en cada construccion.
+node_modules
+**/node_modules
+
+# Resultados de compilacion: la imagen los genera dentro, no los hereda.
+dist
+out
+.next
+.turbo
+**/dist
+**/out
+**/.next
+**/.turbo
+
+# Secretos. `.env` NUNCA entra en una imagen: las variables se inyectan al
+# ejecutar. Una imagen con credenciales dentro se acaba subiendo a un registro.
+.env
+.env.*
+!.env.example
+
+.git
+.github
+docs
+*.md
+!packages/db/README.md

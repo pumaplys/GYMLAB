@@ -1,0 +1,80 @@
+# =============================================================================
+# GYMLAB en un VPS. Dos servicios: la aplicacion y su base de datos.
+#
+#   docker compose -f docker/compose.produccion.yml --env-file .env up -d --build
+#
+# `--env-file .env` NO SOBRA. Compose busca el `.env` junto al FICHERO de
+# compose, no en el directorio desde el que se ejecuta. Este vive en `docker/`,
+# asi que sin esa opcion no lo encuentra y sustituye TODOS los secretos por
+# cadenas vacias, con un aviso por variable que es facil pasar por alto. La
+# aplicacion no llega a arrancar asi, pero Postgres si se levantaria con una
+# contrasena vacia.
+#
+# La aplicacion es UN SOLO contenedor que sirve la API y el panel bajo el mismo
+# origen. No hay servidor web repartiendo por ruta: quien termina TLS es Caddy, y
+# esa parte esta en la guia (docs/07-despliegue-vps.md) porque depende del
+# dominio.
+# =============================================================================
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    image: gymlab:latest
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      API_PORT: 3001
+
+      # El rol PROPIETARIO. Solo lo usa el paso de migraciones del arranque.
+      DATABASE_URL: postgresql://gymlab:${POSTGRES_PASSWORD}@postgres:5432/gymlab
+      # El rol de la APLICACION, sujeto a RLS. Es el que usa la API en marcha.
+      DATABASE_URL_APP: postgresql://gymlab_app:${APP_DB_PASSWORD}@postgres:5432/gymlab
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD}
+
+      AUTH_SECRET: ${AUTH_SECRET}
+      ACCESS_TOKEN_SECRET: ${ACCESS_TOKEN_SECRET}
+      PLATFORM_INVITE_CODE: ${PLATFORM_INVITE_CODE}
+
+      # El MISMO dominio para las dos, porque son el mismo origen. Si algun dia
+      # dejan de coincidir, la sesion deja de funcionar: es la senal de que
+      # alguien ha partido el despliegue en dos.
+      API_URL: ${DOMINIO}
+      WEB_APP_URL: ${DOMINIO}
+
+      # 1 = hay un Caddy delante. Ver .env.example antes de tocarlo: declarar
+      # mas saltos de los que hay vuelve a hacer creible lo que mande el cliente.
+      TRUST_PROXY: 1
+
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      EMAIL_FROM: ${EMAIL_FROM}
+
+      # Sin valor, el modulo de progreso no acepta ni un dato de salud, que es
+      # deliberado: falta redactar el texto legal. Vacia cuenta como sin poner.
+      HEALTH_CONSENT_VERSION: ${HEALTH_CONSENT_VERSION:-}
+    ports:
+      # Solo en el bucle local: quien atiende desde fuera es Caddy.
+      - '127.0.0.1:3001:3001'
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: gymlab
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: gymlab
+    volumes:
+      - gymlab-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U gymlab -d gymlab']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    # Sin `ports`: la base de datos NO se expone fuera del host. Para conectarse
+    # desde fuera, un tunel SSH.
+
+volumes:
+  gymlab-pgdata:

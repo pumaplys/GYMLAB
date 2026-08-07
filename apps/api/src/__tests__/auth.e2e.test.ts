@@ -742,6 +742,38 @@ describe('endurecimiento de la sesion', () => {
       .expect(429);
   });
 
+  it('rotar x-forwarded-for NO esquiva el limite', async () => {
+    // ┌──────────────────────────────────────────────────────────────────────┐
+    // │ ESTO SE PODIA HACER, Y SE MIDIO.                                     │
+    // │                                                                      │
+    // │ `ipDe` leia el PRIMER valor de `x-forwarded-for`, que es justo el que │
+    // │ escribe quien llama: un proxy no reemplaza esa cabecera, le anade lo  │
+    // │ suyo por la derecha. Cambiandola en cada peticion, cada intento       │
+    // │ parecia venir de una direccion distinta y el contador nunca subia.    │
+    // │ Contra el proceso real: 12 intentos, 12 pasaron.                      │
+    // │                                                                      │
+    // │ Ahora la direccion la decide Express segun `trust proxy`, que aqui    │
+    // │ vale 0 —no hay proxy delante—, asi que la cabecera es decorativa.     │
+    // │                                                                      │
+    // │ Si alguien vuelve a leer la cabecera a mano, este test se pone rojo.  │
+    // └──────────────────────────────────────────────────────────────────────┘
+    const victima = email('cabecera-rotatoria');
+
+    for (let i = 0; i < 5; i++) {
+      await http()
+        .post('/v1/auth/login')
+        .set('x-forwarded-for', `203.0.113.${i}`)
+        .send({ email: victima, password: `intento-${i}` })
+        .expect(401);
+    }
+
+    await http()
+      .post('/v1/auth/login')
+      .set('x-forwarded-for', '203.0.113.99')
+      .send({ email: victima, password: 'intento-6' })
+      .expect(429);
+  });
+
   it('el limite resiste 30 intentos SIMULTANEOS, no solo seguidos', async () => {
     // ESTE ES EL TEST DE CONCURRENCIA.
     //

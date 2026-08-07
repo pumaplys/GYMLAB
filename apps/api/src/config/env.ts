@@ -90,6 +90,32 @@ const schema = z.object({
     .transform((v) => v.split(',').map((o) => o.trim()).filter(Boolean)),
 
   /**
+   * Cuantos proxies de confianza hay DELANTE de este proceso.
+   *
+   * ┌──────────────────────────────────────────────────────────────────────────┐
+   * │ NO ES AFINAR UN REGISTRO: DE ESTO DEPENDE EL LIMITE DE INTENTOS.         │
+   * │                                                                          │
+   * │ `x-forwarded-for` la escribe QUIEN LLAMA. Un proxy no la reemplaza: le   │
+   * │ anade su valor por la derecha, asi que el primero de la cadena es el que │
+   * │ mando el cliente y se puede inventar en cada peticion.                   │
+   * │                                                                          │
+   * │ Medido contra este mismo proceso: con la cabecera fija, el sexto intento │
+   * │ fallido devuelve 429; rotandola, 12 de 12 pasaron. El limite por IP se   │
+   * │ esquivaba con una cabecera.                                              │
+   * │                                                                          │
+   * │ Con este numero, Express descarta tantos saltos por la derecha y deja en │
+   * │ `request.ip` la unica direccion que escribio alguien de confianza. Es la │
+   * │ que se usa (ver `toHeaders`).                                             │
+   * │                                                                          │
+   * │ 0 = no hay proxy y vale la del socket. Detras de Caddy, de Nginx o de la │
+   * │ mayoria de plataformas gestionadas: 1. Ponerlo MAS ALTO de lo que hay es │
+   * │ peor que dejarlo a 0, porque vuelve a hacer creible lo que mande el      │
+   * │ cliente.                                                                 │
+   * └──────────────────────────────────────────────────────────────────────────┘
+   */
+  TRUST_PROXY: z.coerce.number().int().min(0).max(10).default(0),
+
+  /**
    * URL del panel web. Es la BASE DE LOS ENLACES DE LOS CORREOS.
    *
    * Antes se usaba `API_URL`, que apuntaba a la API: los enlaces de invitacion y
@@ -117,7 +143,30 @@ const schema = z.object({
   EMAIL_FROM: z.string().min(1).default('GYMLAB <no-reply@localhost>'),
 });
 
-const parsed = schema.safeParse(process.env);
+/**
+ * Una variable VACIA es una variable AUSENTE.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ SIN ESTO, `RESEND_API_KEY=` IMPIDE ARRANCAR.                             │
+ * │                                                                          │
+ * │ Las opcionales se declaran `.min(1).optional()`: `optional` cubre que no │
+ * │ este, pero una cadena vacia SI esta y no llega a un caracter. El proceso │
+ * │ moria diciendo "expected string to have >=1 characters" sobre una        │
+ * │ variable que su propia documentacion describe como opcional.             │
+ * │                                                                          │
+ * │ Y no es rebuscado: es lo que produce cualquier plantilla de despliegue.  │
+ * │ `docker compose` sustituye `${VARIABLE:-}` por vacio, y una linea suelta │
+ * │ `RESEND_API_KEY=` en un `.env` hace lo mismo. Se descubrio levantando el │
+ * │ compose de produccion con `HEALTH_CONSENT_VERSION` sin valor.            │
+ * │                                                                          │
+ * │ En el shell no hay diferencia entre "vacia" y "sin poner". Aqui tampoco. │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ */
+const sinVacias = Object.fromEntries(
+  Object.entries(process.env).filter(([, valor]) => valor !== ''),
+);
+
+const parsed = schema.safeParse(sinVacias);
 
 if (!parsed.success) {
   const detalle = parsed.error.issues
