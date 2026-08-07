@@ -1,7 +1,7 @@
 # Estado del proyecto
 
-> Última actualización: **2026-08-06** · **Fase final en marcha** · Auditoría
-> hecha y el primer bloqueante cerrado
+> Última actualización: **2026-08-07** · **Fase final en marcha** · B1, B3 y B5
+> cerrados; el siguiente es el correo real
 
 Documento de continuidad: qué está hecho, qué está a medias y cuál es el
 siguiente paso. Se actualiza al final de cada sesión de trabajo.
@@ -15,9 +15,9 @@ siguiente paso. Se actualiza al final de cada sesión de trabajo.
 | Fase 0 — cimientos | ✅ cerrada |
 | Fase 1 — MVP, 7 módulos | ✅ **cerrada** |
 | Fase 2 — panel web | 🔵 **en marcha**: cliente de la API, autenticación y socios en `main` |
-| Fase final — cerrar para un piloto | 🔵 **en marcha**: auditoría hecha, B1 cerrado |
+| Fase final — cerrar para un piloto | 🔵 **en marcha**: B1, B3 y B5 cerrados |
 
-**327 tests** (40 de aislamiento e integridad + 251 de la API + 36 del cliente de
+**328 tests** (40 de aislamiento e integridad + 252 de la API + 36 del cliente de
 la API). `build`, `typecheck`, `lint` y `test` en verde en local y en CI.
 **13 ADR**, y uno pendiente de escribir — ver la deuda.
 
@@ -351,10 +351,10 @@ la API, 9 pantallas en el panel.** La mayor parte de lo pendiente es eso.
 | # | Qué | Estado |
 |---|---|---|
 | B1 | **Recuperar la contraseña no tenía pantalla** | ✅ **cerrado** |
-| B2 | **El envío de correo nunca se ha ejecutado.** Sin `RESEND_API_KEY` el proceso **no arranca** en producción, y sin dominio verificado lo que salga acaba en spam | abierto |
-| B3 | **Nada sirve el panel bajo el mismo origen** | abierto, pendiente de comparar alternativas |
+| B2 | **El envío de correo nunca se ha ejecutado.** Sin `RESEND_API_KEY` el proceso **no arranca** en producción, y sin dominio verificado lo que salga acaba en spam | abierto, **el siguiente** |
+| B3 | **Nada sirve el panel bajo el mismo origen** | ✅ **cerrado** — estrategia A |
 | B4 | **Los precios se montan a mano.** Crear, editar y archivar planes sigue siendo solo por API | abierto |
-| B5 | **`trust proxy` sin configurar** | abierto |
+| B5 | **`trust proxy` sin configurar** | ✅ **cerrado** con B3 |
 
 **Importantes, no bloqueantes** — pantalla de `/verify-email`, textos de
 consentimiento, congelar/cancelar/anular, notas y exportación RGPD, el
@@ -365,20 +365,43 @@ y `build`. Todos están arriba con su motivo.
 **Visión futura** — `apps/socio`, las pantallas de rutinas, progreso, accesos y
 panel del dueño, la app móvil, Stripe, varios roles por persona.
 
-### B3 no es «falta hosting»: es que la pieza no existe
+### B3, cerrado: el mismo origen deja de ser configuración
 
-Conviene no confundirlo, porque cambia lo que hay que hacer:
+Estrategia **A** de [`06-despliegue.md`](06-despliegue.md): la API sirve el panel
+exportado y todo viaja en un contenedor. La guía está en
+[`07-despliegue-vps.md`](07-despliegue-vps.md).
 
-| | |
+El argumento de fondo es el de siempre aquí: **una garantía estructural no se
+olvida.** No hay forma de desplegar mal el origen, porque es el mismo proceso —
+igual que RLS impide la fuga entre gimnasios sin depender de acordarse, y que
+`link-invitation` no puede tocar una contraseña porque no la lleva en su
+contrato.
+
+Verificado levantando la pila entera desde cero, no solo construyendo la imagen:
+Postgres propio, migraciones aplicadas al arrancar, RLS comprobado, panel
+servido, alta de gimnasio, y `GET /v1/auth/me` respondiendo 200 con su cookie.
+
+### Los tres fallos que solo aparecieron al desplegar
+
+Ninguno se ve leyendo el código, y el primero da miedo:
+
+| Qué | Por qué importa |
 |---|---|
-| `next build` deja ficheros estáticos en `out/` | **nadie los sirve** |
-| La API | **no sirve estáticos** — ni `ServeStaticModule`, ni `useStaticAssets` |
-| Despliegue | no hay `Dockerfile`; el único `docker-compose.yml` levanta el Postgres local |
-| Migraciones | no hay paso que las aplique al desplegar |
+| **`extensions: ['html']` no hace nada en Express 5** | `serve-static` 2.x dejó de reenviar esa opción —la palabra no aparece en su código— y la acepta sin quejarse. Como la exportación genera `socios.html` y no `socios/index.html`, **todas** las pantallas caían en el `index.html` de respaldo. `/socios` respondía 200 con la portada, que redirige a `/socios`, y parecía correcto. **`/reset-password?token=…` habría perdido el token**: B1 no habría funcionado en producción. Se descubrió comparando contenidos, no códigos de estado |
+| **El límite de intentos se esquivaba con una cabecera** | `ipDe` leía el primer valor de `x-forwarded-for`, que lo escribe quien llama. Medido: rotándola, **12 de 12 intentos fallidos pasaron**; con la cabecera fija, 429 al sexto. No se arreglaba solo en producción, porque los proxies **añaden** a esa cabecera en vez de reemplazarla |
+| **Una variable vacía no es una variable ausente** | Las opcionales son `.min(1).optional()`, y una cadena vacía sí está. `docker compose` sustituye `${VAR:-}` por vacío, así que `HEALTH_CONSENT_VERSION=` impedía arrancar. A `RESEND_API_KEY` le habría pasado igual — justo antes de B2 |
 
-Así que el requisito de un solo origen no está pendiente de contratar un sitio:
-está pendiente de decidir **qué** pone las dos cosas bajo el mismo dominio. Esa
-decisión manda sobre B2 y B5, porque el hosting condiciona las dos.
+**Y un efecto secundario que conviene tener presente:** el umbral por IP —20
+intentos en 15 minutos, sumando todas las cuentas— **nunca se aplicaba sin proxy
+delante**, porque sin `x-forwarded-for` no había IP. Ahora siempre la hay. Era
+una protección dormida, y al despertarla los tests se pusieron rojos porque
+hacen muchos más de 20 inicios de sesión desde la misma dirección.
+
+> ⚠️ **Queda sin decidir si 20 es el número correcto.** Un gimnasio entero sale a
+> internet por una sola IP, y ese contador **no se limpia al acertar la
+> contraseña**: 21 inicios de sesión legítimos del mostrador en 15 minutos
+> dejarían al gimnasio fuera. No se ha tocado el umbral porque es política de
+> seguridad y toca consultarlo.
 
 **Las tres alternativas están comparadas en
 [`06-despliegue.md`](06-despliegue.md)**, sin decidir ninguna. De ahí sale un
@@ -436,6 +459,25 @@ pnpm db:migrate           # migraciones + roles + RLS + colas + catálogo
 pnpm test
 pnpm dev                  # API en :3001, panel en :3000
 ```
+
+En desarrollo son **dos orígenes** —`next dev` en el 3000 y la API en el 3001—,
+y por eso sigue haciendo falta CORS. En producción es uno solo: la API sirve el
+panel exportado y CORS no interviene.
+
+## Cómo desplegarlo
+
+```bash
+docker compose -f docker/compose.produccion.yml --env-file .env up -d --build
+```
+
+Un contenedor con la API y el panel, más su Postgres. Las migraciones, las
+políticas RLS y las colas se aplican al arrancar, y los tres pasos son
+idempotentes. La guía completa —VPS, dominio, TLS con Caddy y las
+comprobaciones— está en [`07-despliegue-vps.md`](07-despliegue-vps.md).
+
+> `--env-file .env` no sobra: Compose busca ese fichero junto al de compose, que
+> vive en `docker/`. Sin la opción sustituye todos los secretos por cadenas
+> vacías.
 
 Para entrar al panel hace falta una cuenta, y todavía no hay pantalla que la
 cree. El primer gimnasio se da de alta contra la API:

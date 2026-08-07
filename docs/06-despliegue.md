@@ -3,7 +3,11 @@
 > **Documento de comparación. No decide nada.** Escrito el 6 de agosto de 2026
 > para poder elegir con criterio, no para justificar una elección ya tomada.
 >
-> Estado: **B3 abierto.** Nada de lo que sigue está implementado.
+> Estado: **B3 cerrado el 7 de agosto de 2026 con la opción A.** Lo implementado
+> está en `Dockerfile`, `docker/` y `apps/api/src/panel.ts`; la guía operativa,
+> en [`07-despliegue-vps.md`](07-despliegue-vps.md). Este documento se conserva
+> porque explica **por qué** se eligió, que es lo que hará falta el día que
+> alguien proponga cambiarlo.
 
 ---
 
