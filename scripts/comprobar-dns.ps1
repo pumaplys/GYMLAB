@@ -21,7 +21,11 @@
 #>
 param(
   [Parameter(Mandatory = $true)]
-  [string]$Dominio
+  [string]$Dominio,
+
+  # Subdominio de la ruta de retorno, donde Resend pide el SPF y el MX de
+  # rebotes. Es `send` salvo que se cambiara al dar de alta el dominio.
+  [string]$RutaDeRetorno = 'send'
 )
 
 $ErrorActionPreference = 'Continue'
@@ -78,13 +82,27 @@ $dkim = Mostrar -Etiqueta 'DKIM  (firma los correos)' `
   -Nombre "resend._domainkey.$Dominio" -Tipo TXT `
   -Pista 'En Hostinger el Nombre va SIN tu dominio: resend._domainkey.envios'
 
-$spf = Mostrar -Etiqueta 'SPF   (autoriza a Resend a enviar)' `
-  -Nombre $Dominio -Tipo TXT -Empieza 'v=spf1' `
-  -Pista 'Solo puede haber UN registro SPF por nombre'
+# ┌──────────────────────────────────────────────────────────────────────────┐
+# │ EL SPF Y EL MX NO VAN EN EL DOMINIO DE ENVIO, SINO EN SU RETURN-PATH.    │
+# │                                                                          │
+# │ Resend crea un subdominio aparte para la ruta de retorno —`send` por     │
+# │ defecto— y ahi es donde pide el SPF y el MX de rebotes. El correo sale   │
+# │ de `envios.midominio.com` pero los rebotes vuelven a                     │
+# │ `send.envios.midominio.com`.                                             │
+# │                                                                          │
+# │ Este script los buscaba en el dominio de envio y decia [FALTA] con todo  │
+# │ bien puesto. Se vio al dar de alta el dominio de verdad y comparar lo    │
+# │ que pedia Resend con lo que se estaba comprobando.                       │
+# └──────────────────────────────────────────────────────────────────────────┘
+$retorno = "$RutaDeRetorno.$Dominio"
+
+$spf = Mostrar -Etiqueta "SPF   (autoriza a Resend a enviar)" `
+  -Nombre $retorno -Tipo TXT -Empieza 'v=spf1' `
+  -Pista 'Va en la ruta de retorno, no en el dominio de envio'
 
 $mx = Mostrar -Etiqueta 'MX    (recoge los rebotes)' `
-  -Nombre $Dominio -Tipo MX `
-  -Pista 'Lo da Resend junto al resto'
+  -Nombre $retorno -Tipo MX `
+  -Pista 'Tambien en la ruta de retorno, con prioridad 10'
 
 $dmarc = Mostrar -Etiqueta 'DMARC (que hacer con lo que no firme)' `
   -Nombre "_dmarc.$Dominio" -Tipo TXT -Empieza 'v=DMARC1' `
