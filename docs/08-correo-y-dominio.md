@@ -45,11 +45,23 @@ pantalla.
 
 Serán de tres tipos:
 
-| Tipo | Para qué sirve | Quién da el valor |
+| Tipo | Nombre (relativo) | Para qué sirve |
 |---|---|---|
-| **TXT (DKIM)** | Firma criptográficamente cada correo. Es lo que prueba que salió de verdad de tu dominio | Resend |
-| **TXT (SPF)** | Autoriza a los servidores de Resend a enviar en nombre de tu dominio | Resend |
-| **MX** | Recibe los rebotes, para que Resend sepa qué direcciones no existen | Resend |
+| **TXT (DKIM)** | `resend._domainkey.envios` | Firma criptográficamente cada correo. Es lo que prueba que salió de verdad de tu dominio |
+| **TXT (SPF)** | `send.envios` | Autoriza a los servidores de Resend a enviar en tu nombre |
+| **MX** | `send.envios`, prioridad `10` | Recibe los rebotes, para que Resend sepa qué direcciones no existen |
+
+> ### El SPF y el MX NO van en el dominio de envío
+>
+> Van en **`send.envios`**, no en `envios`. Los correos salen de
+> `envios.TUDOMINIO`, pero los rebotes vuelven a `send.envios.TUDOMINIO`: Resend
+> usa un subdominio aparte para la **ruta de retorno**.
+>
+> Es fácil no darse cuenta y ponerlos un nivel más arriba. Entonces la
+> verificación no pasa y los registros «están puestos».
+
+**Y una buena noticia sobre la trampa de Hostinger:** Resend da los nombres ya
+recortados, en la forma relativa que Hostinger espera. **Se pegan tal cual.**
 
 **Cópialos tal cual a un sitio antes de salir de esa pantalla.** La clave DKIM
 es larga y se puede volver a consultar, pero tenerla a mano ahorra idas y
