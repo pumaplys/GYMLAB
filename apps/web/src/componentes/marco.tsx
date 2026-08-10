@@ -8,10 +8,17 @@ import { NOMBRE_DEL_ROL } from '@/lib/roles';
 import { useSesion } from '@/lib/sesion';
 import estilos from './marco.module.css';
 
-/** Las secciones del panel. La lista es el sitio donde crece. */
+/**
+ * Las secciones del panel. La lista es el sitio donde crece.
+ *
+ * `soloDueno` no protege nada —la autorizacion la impone el servidor— sino que
+ * evita ofrecer una pestana que responderia "esta seccion no es para tu rol".
+ * Los precios son decision del dueno; el mostrador solo los consulta al cobrar.
+ */
 const SECCIONES = [
-  { href: '/socios', texto: 'Socios' },
-  { href: '/personal', texto: 'Personal' },
+  { href: '/socios', texto: 'Socios', soloDueno: false },
+  { href: '/personal', texto: 'Personal', soloDueno: false },
+  { href: '/planes', texto: 'Planes', soloDueno: true },
 ] as const;
 
 /**
@@ -76,7 +83,7 @@ export function Marco({ children }: { children: ReactNode }) {
         </div>
 
         <nav className={estilos.navegacion} aria-label="Secciones">
-          {SECCIONES.map((seccion) => {
+          {SECCIONES.filter((seccion) => !seccion.soloDueno || rol === 'owner').map((seccion) => {
             const activo = ruta === seccion.href || ruta.startsWith(`${seccion.href}/`);
             return (
               <Link
