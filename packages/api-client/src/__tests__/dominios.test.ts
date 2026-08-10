@@ -308,6 +308,83 @@ describe('socios', () => {
     expect(llamadas[0]?.url).toBe('/v1/gyms/..%2F..%2Fauth%2Fme/members?page=1&pageSize=25');
   });
 
+  it('los planes: listar, crear, editar y archivar', async () => {
+    const PLAN = {
+      id: '88888888-8888-4888-8888-888888888888',
+      name: 'Mensual',
+      description: null,
+      priceCents: 3500,
+      currency: 'EUR',
+      period: 'monthly',
+      status: 'active',
+      activeSubscriptions: 0,
+    };
+    const { fetch, llamadas } = servidor(({ init }) =>
+      init.method === 'GET' ? json([PLAN]) : json(PLAN),
+    );
+    const api = createApiClient({ baseUrl: '/v1', fetch });
+
+    await api.billing.listPlans(GYM);
+    await api.billing.createPlan(GYM, { name: 'Mensual', priceCents: 3500, period: 'monthly' });
+    await api.billing.updatePlan(GYM, PLAN.id, { priceCents: 4000 });
+    await api.billing.archivePlan(GYM, PLAN.id);
+
+    const base = `/v1/gyms/${GYM}/plans`;
+    expect(llamadas.map((l) => `${l.init.method} ${l.url}`)).toEqual([
+      `GET ${base}`,
+      `POST ${base}`,
+      `PATCH ${base}/${PLAN.id}`,
+      `POST ${base}/${PLAN.id}/archive`,
+    ]);
+  });
+
+  it('editar un plan no puede cambiar su periodicidad', async () => {
+    // Cambiarla reescribiria lo que cubre cada pago ya registrado de las
+    // suscripciones vivas. La garantia es que el dato NO EXISTE en el contrato:
+    // aunque alguien lo cuele, no llega al servidor.
+    const { fetch, llamadas } = servidor(() =>
+      json({
+        id: '88888888-8888-4888-8888-888888888888',
+        name: 'Mensual',
+        description: null,
+        priceCents: 4000,
+        currency: 'EUR',
+        period: 'monthly',
+        status: 'active',
+        activeSubscriptions: 3,
+      }),
+    );
+    const api = createApiClient({ baseUrl: '/v1', fetch });
+
+    await api.billing.updatePlan(GYM, '88888888-8888-4888-8888-888888888888', {
+      priceCents: 4000,
+    } as never);
+
+    expect(JSON.parse(String(llamadas[0]?.init.body))).toEqual({ priceCents: 4000 });
+  });
+
+  it('archivar no manda cuerpo: el plan lo dice la ruta', async () => {
+    const { fetch, llamadas } = servidor(() =>
+      json({
+        id: '88888888-8888-4888-8888-888888888888',
+        name: 'Mensual',
+        description: null,
+        priceCents: 3500,
+        currency: 'EUR',
+        period: 'monthly',
+        status: 'archived',
+        activeSubscriptions: 0,
+      }),
+    );
+    const api = createApiClient({ baseUrl: '/v1', fetch });
+
+    const plan = await api.billing.archivePlan(GYM, '88888888-8888-4888-8888-888888888888');
+
+    expect(llamadas[0]?.init.body).toBeUndefined();
+    // Devuelve el plan ya archivado, asi que la pantalla no tiene que suponerlo.
+    expect(plan.status).toBe('archived');
+  });
+
   it('la cuota se pregunta, no se deduce de la suscripcion', async () => {
     const { fetch, llamadas } = servidor(() =>
       json({
