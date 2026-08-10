@@ -184,6 +184,9 @@ export class InvitationsService implements OnModuleInit {
       // Al PANEL WEB, no a la API: quien acepta necesita un formulario donde
       // elegir su contrasena.
       url: `${env.WEB_APP_URL}/accept-invitation?token=${encodeURIComponent(token)}`,
+      // Para que el correo hable de lo que esa persona va a hacer de verdad.
+      // Sin esto le prometia rutinas y progreso en el movil a un recepcionista.
+      role,
     });
 
     return this.toDto(fila!);

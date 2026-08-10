@@ -123,9 +123,29 @@ export const POLITICAS: Readonly<Record<string, PoliticaDeCola>> = {
   },
 };
 
+/**
+ * Los roles, otra vez, y a proposito.
+ *
+ * `@gymlab/contracts` los declara para la API, el panel y el movil. Aqui se
+ * repiten por el mismo motivo que los nombres de cola viven en este paquete: el
+ * paso de migracion no debe depender de haber compilado otro. Son cuatro
+ * valores estables desde la Fase 1 — si algun dia dejan de coincidir, el
+ * compilador no avisa, pero la plantilla cae en su texto neutro en lugar de
+ * mentir.
+ */
+export type RolInvitado = 'owner' | 'receptionist' | 'trainer' | 'member';
+
 export interface EmailJob {
   to: string;
   /** Token de un solo uso. Nunca se registra en logs de produccion. */
   token: string;
   url: string;
+  /**
+   * Para que sirve la invitacion. Solo lo lleva la cola de invitaciones.
+   *
+   * Sin este dato, el correo tenia que hablarle igual a todo el mundo — y
+   * hablaba como si el destinatario fuese un socio: le prometia rutinas y
+   * progreso en el movil a quien iba a atender el mostrador.
+   */
+  role?: RolInvitado;
 }

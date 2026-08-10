@@ -1,4 +1,4 @@
-import { EMAIL_QUEUES, type EmailJob } from '@gymlab/db';
+import { EMAIL_QUEUES, type EmailJob, type RolInvitado } from '@gymlab/db';
 import type { MailMessage } from './mailer';
 
 /**
@@ -34,10 +34,40 @@ function envoltura(titulo: string, cuerpo: string, boton: { texto: string; url: 
 </body></html>`;
 }
 
+/**
+ * Que va a poder hacer quien acepta, segun para que se le invita.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ SOLO SE DESCRIBE LO QUE EXISTE HOY.                                      │
+ * │                                                                          │
+ * │ Este correo le decia a TODO EL MUNDO que podria "consultar tus rutinas   │
+ * │ y tu progreso desde el movil". Se detecto al invitar a un recepcionista  │
+ * │ real en produccion: es lo primero que lee alguien al entrar en GYMLAB, y │
+ * │ le prometia dos cosas que no le tocan y una app que no existe.           │
+ * │                                                                          │
+ * │ Para entrenador y socio el texto es DELIBERADAMENTE ESCUETO: sus         │
+ * │ pantallas todavia no existen, asi que lo unico cierto es que la cuenta   │
+ * │ queda creada y vinculada. Cuando exista su portal, se amplia aqui.       │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ */
+const QUE_PODRA_HACER: Record<RolInvitado, string> = {
+  owner:
+    'Al aceptar crearas tu cuenta y podras gestionar el gimnasio: socios, cuotas y cobros, tu equipo y tus precios.',
+  receptionist:
+    'Al aceptar crearas tu cuenta y podras dar de alta socios, ponerles su cuota y registrar los cobros del mostrador.',
+  trainer: 'Al aceptar crearas tu cuenta y quedaras vinculado al gimnasio como entrenador.',
+  member: 'Al aceptar crearas tu cuenta y quedaras vinculado al gimnasio como socio.',
+};
+
+/** Cuando el trabajo viene sin rol — colas encoladas antes de este cambio. */
+const SIN_ROL = 'Al aceptar crearas tu cuenta y quedaras vinculado al gimnasio.';
+
 /** Invitacion a unirse a un gimnasio. */
 function invitacion(job: EmailJob): MailMessage {
+  const queHara = job.role ? QUE_PODRA_HACER[job.role] : SIN_ROL;
+
   const cuerpo = `<p>Te han invitado a unirte a un gimnasio en ${MARCA}.</p>
-    <p>Al aceptar crearas tu cuenta y podras consultar tus rutinas y tu progreso desde el movil.</p>
+    <p>${queHara}</p>
     <p><strong>La invitacion caduca en 7 dias.</strong></p>`;
 
   return {
@@ -49,6 +79,8 @@ function invitacion(job: EmailJob): MailMessage {
     }),
     text: [
       `Te han invitado a unirte a un gimnasio en ${MARCA}.`,
+      '',
+      queHara,
       '',
       'Acepta la invitacion y crea tu cuenta aqui:',
       job.url,
