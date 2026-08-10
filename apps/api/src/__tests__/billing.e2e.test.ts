@@ -258,6 +258,53 @@ describe('planes', () => {
     await http().get(`/v1/gyms/${gymA}/plans`).set(conSesion(tokenEntrenadorA)).expect(403);
   });
 
+  it('el catalogo dice cuantas cuotas dependen de cada plan', async () => {
+    // ┌──────────────────────────────────────────────────────────────────────┐
+    // │ ESTE NUMERO VALIA 0 SIEMPRE, Y NADA LO DELATABA.                     │
+    // │                                                                      │
+    // │ La subconsulta interpolaba la columna con `${plans.id}`, y Drizzle   │
+    // │ la rinde SIN CUALIFICAR: `"id"` a secas. Dentro de la subconsulta    │
+    // │ eso resuelve a `member_subscriptions`, no a `plans`, asi que la      │
+    // │ condicion quedaba `s.plan_id = s.id` — un identificador comparado    │
+    // │ consigo mismo, que nunca es cierto.                                  │
+    // │                                                                      │
+    // │ Lo destapo la pantalla de planes: la confirmacion antes de archivar  │
+    // │ avisa de cuantas cuotas usan el plan, y nunca podia avisar de nada.  │
+    // └──────────────────────────────────────────────────────────────────────┘
+    const socio = await http()
+      .post(`/v1/gyms/${gymA}/members`)
+      .set(conSesion(tokenOwnerA))
+      .send({ firstName: 'Cuenta', lastName: 'Planes' })
+      .expect(201);
+
+    const plan = await http()
+      .post(`/v1/gyms/${gymA}/plans`)
+      .set(conSesion(tokenOwnerA))
+      .send({ name: `Contador ${sufijo}`, priceCents: 1500, period: 'monthly' })
+      .expect(201);
+
+    // Recien creado no lo usa nadie.
+    const antes = await http().get(`/v1/gyms/${gymA}/plans`).set(conSesion(tokenOwnerA)).expect(200);
+    expect(antes.body.find((p: { id: string }) => p.id === plan.body.id).activeSubscriptions).toBe(
+      0,
+    );
+
+    await http()
+      .post(`/v1/gyms/${gymA}/members/${socio.body.id}/subscription`)
+      .set(conSesion(tokenOwnerA))
+      .send({ planId: plan.body.id })
+      .expect(201);
+
+    const despues = await http()
+      .get(`/v1/gyms/${gymA}/plans`)
+      .set(conSesion(tokenOwnerA))
+      .expect(200);
+
+    expect(
+      despues.body.find((p: { id: string }) => p.id === plan.body.id).activeSubscriptions,
+    ).toBe(1);
+  });
+
   it('un plan archivado no se puede contratar, y las cuotas vivas no cambian', async () => {
     const plan = await http()
       .post(`/v1/gyms/${gymA}/plans`)

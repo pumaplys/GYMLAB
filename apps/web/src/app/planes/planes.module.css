@@ -1,0 +1,245 @@
+.encabezado {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--e4);
+  margin-bottom: var(--e5);
+}
+
+.entradilla {
+  margin-top: var(--e2);
+  max-width: 44rem;
+  color: var(--texto-sutil);
+  font-size: 0.875rem;
+}
+
+.avisos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+  margin-bottom: var(--e4);
+  max-width: 44rem;
+}
+
+.tarjeta {
+  max-width: 44rem;
+  margin-bottom: var(--e5);
+  padding: var(--e5) var(--e6);
+  background: var(--fondo);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+}
+
+.tituloSeccion {
+  margin-bottom: var(--e4);
+}
+
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e4);
+}
+
+.pareja {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--e4);
+  align-items: start;
+}
+
+.campoSelector {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+}
+
+.etiquetaCampo {
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.selector {
+  min-height: 2.25rem;
+  max-width: 16rem;
+  padding: 0 var(--e2);
+  background: var(--fondo);
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radio-s);
+  font-size: 0.875rem;
+}
+
+.ayudaPeriodo {
+  max-width: 40rem;
+  color: var(--texto-sutil);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.pie {
+  display: flex;
+}
+
+.panel {
+  max-width: 52rem;
+  background: var(--fondo);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  overflow: hidden;
+}
+
+.avisoTabla {
+  padding: var(--e4) var(--e5) 0;
+}
+
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.tabla th {
+  padding: var(--e3) var(--e5);
+  border-bottom: 1px solid var(--borde);
+  color: var(--texto-sutil);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.tabla td {
+  padding: var(--e3) var(--e5);
+  border-bottom: 1px solid var(--borde);
+  vertical-align: middle;
+}
+
+.tabla tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.nombre {
+  font-weight: 500;
+}
+
+.descripcion {
+  margin-top: 0.125rem;
+  color: var(--texto-sutil);
+  font-size: 0.8125rem;
+}
+
+.importe {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Un plan archivado sigue en la lista: hay cuotas que lo usan. Se atenua para
+   que no compita con los que si se pueden elegir. */
+.archivado td {
+  color: var(--texto-tenue);
+}
+
+.etiqueta {
+  display: inline-block;
+  margin-top: var(--e2);
+  padding: 0.0625rem var(--e2);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.etiquetaArchivado {
+  background: var(--fondo-activo);
+  color: var(--texto-sutil);
+}
+
+.acciones {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.confirmar {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--e2);
+  color: var(--peligro);
+  font-size: 0.8125rem;
+}
+
+.filaEdicion td {
+  background: var(--fondo-sutil);
+}
+
+.edicion {
+  display: grid;
+  grid-template-columns: 2fr 1fr 2fr;
+  gap: var(--e4);
+  align-items: start;
+  margin-bottom: var(--e4);
+}
+
+.periodoFijo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e1, 0.25rem);
+  grid-column: 1 / -1;
+}
+
+.periodoValor {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.periodoNota {
+  color: var(--texto-sutil);
+  font-size: 0.8125rem;
+}
+
+.accionesEdicion {
+  display: flex;
+  gap: var(--e3);
+}
+
+.vacio {
+  padding: var(--e7) var(--e5);
+  text-align: center;
+}
+
+.vacioTitulo {
+  margin-bottom: var(--e2);
+  font-weight: 500;
+}
+
+.vacioTexto {
+  color: var(--texto-sutil);
+  font-size: 0.875rem;
+}
+
+.cargando {
+  padding: var(--e7) 0;
+  color: var(--texto-tenue);
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+@media (max-width: 48rem) {
+  .encabezado {
+    flex-direction: column;
+  }
+
+  .pareja,
+  .edicion {
+    grid-template-columns: 1fr;
+  }
+
+  .tarjeta {
+    padding: var(--e4);
+  }
+
+  .tabla th,
+  .tabla td {
+    padding-left: var(--e4);
+    padding-right: var(--e4);
+  }
+}

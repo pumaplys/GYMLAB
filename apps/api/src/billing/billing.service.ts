@@ -105,9 +105,23 @@ export class BillingService {
     const filas = await tx
       .select({
         plan: plans,
+        // ┌──────────────────────────────────────────────────────────────────┐
+        // │ `plans.id` VA ESCRITO, NO INTERPOLADO. NO ES UN DESCUIDO.        │
+        // │                                                                  │
+        // │ Con `${plans.id}`, Drizzle rinde la columna SIN CUALIFICAR —     │
+        // │ `"id"` a secas—. Dentro de esta subconsulta eso ya no apunta a   │
+        // │ `plans` sino a `member_subscriptions`, asi que la condicion      │
+        // │ quedaba `s.plan_id = s.id`: un identificador de suscripcion      │
+        // │ comparado consigo mismo. Nunca es cierto.                        │
+        // │                                                                  │
+        // │ El contador daba 0 SIEMPRE, en todos los planes y todos los      │
+        // │ gimnasios, y sin ningun error que lo delatara. Se vio al montar  │
+        // │ la pantalla de planes: la confirmacion antes de archivar avisa   │
+        // │ de cuantas cuotas dependen del plan, y nunca podia avisar.       │
+        // └──────────────────────────────────────────────────────────────────┘
         activas: sql<number>`(
           SELECT count(*) FROM member_subscriptions s
-          WHERE s.plan_id = ${plans.id} AND s.status IN ('active', 'paused')
+          WHERE s.plan_id = plans.id AND s.status IN ('active', 'paused')
         )::int`,
       })
       .from(plans)

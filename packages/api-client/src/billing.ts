@@ -4,6 +4,7 @@ import {
   planSchema,
   registerPaymentResponseSchema,
   subscriptionSchema,
+  type CreatePlanInput,
   type CreateSubscriptionInput,
   type DuesStatus,
   type Payment,
@@ -11,6 +12,7 @@ import {
   type RegisterPaymentInput,
   type RegisterPaymentResponse,
   type Subscription,
+  type UpdatePlanInput,
 } from '@gymlab/contracts';
 import { z } from 'zod';
 import type { Http, RequestOptions } from './http';
@@ -30,10 +32,50 @@ export interface BillingApi {
    * El catalogo de planes del gimnasio.
    *
    * Lo leen dueno y recepcion: hace falta para elegir el plan al dar de alta
-   * una cuota. Crearlos y cambiarles el precio sigue siendo solo del dueno, y
-   * esta pantalla no lo ofrece.
+   * una cuota. Crearlos y cambiarles el precio sigue siendo solo del dueno.
    */
   listPlans(gymId: string, options?: RequestOptions): Promise<Plan[]>;
+
+  /**
+   * Crea un plan. Solo el dueno.
+   *
+   * Sin esto, un gimnasio nuevo **no puede cobrar a nadie**: nace con el
+   * catalogo vacio, y dar de alta una cuota exige un `planId`.
+   */
+  createPlan(gymId: string, input: CreatePlanInput, options?: RequestOptions): Promise<Plan>;
+
+  /**
+   * Cambia nombre, descripcion o precio.
+   *
+   * ┌──────────────────────────────────────────────────────────────────────┐
+   * │ LA PERIODICIDAD NO ESTA, Y NO ES UN OLVIDO.                          │
+   * │                                                                      │
+   * │ `updatePlanSchema` no la admite: cambiarla reescribiria lo que cubre │
+   * │ cada pago ya registrado de las suscripciones vivas. Quien pago un    │
+   * │ mes pasaria a haber pagado un trimestre, retroactivamente.           │
+   * │                                                                      │
+   * │ Para cambiarla se crea otro plan y se archiva el viejo, y asi el     │
+   * │ historial de quien pago que sigue en pie. Igual que en otras partes  │
+   * │ del proyecto, la garantia es que el dato NO EXISTE en el contrato.   │
+   * └──────────────────────────────────────────────────────────────────────┘
+   *
+   * Cambiar el precio **no** toca las suscripciones ya cobradas: los pagos
+   * guardan su importe.
+   */
+  updatePlan(
+    gymId: string,
+    planId: string,
+    input: UpdatePlanInput,
+    options?: RequestOptions,
+  ): Promise<Plan>;
+
+  /**
+   * Archiva un plan: deja de ofrecerse para cuotas nuevas.
+   *
+   * No lo borra. Las suscripciones que ya lo usan siguen vivas — de ahi que el
+   * catalogo traiga `activeSubscriptions`, que es lo que hay que mirar antes.
+   */
+  archivePlan(gymId: string, planId: string, options?: RequestOptions): Promise<Plan>;
 
   /**
    * El estado de la cuota de un socio.
@@ -73,13 +115,29 @@ export interface BillingApi {
 export function createBillingApi(http: Http): BillingApi {
   const socio = (gymId: string, memberId: string) =>
     `/gyms/${encodeURIComponent(gymId)}/members/${encodeURIComponent(memberId)}`;
+  const planes = (gymId: string) => `/gyms/${encodeURIComponent(gymId)}/plans`;
 
   return {
     listPlans: (gymId, options) =>
+      http({ method: 'GET', path: planes(gymId), schema: z.array(planSchema), ...options }),
+
+    createPlan: (gymId, input, options) =>
+      http({ method: 'POST', path: planes(gymId), body: input, schema: planSchema, ...options }),
+
+    updatePlan: (gymId, planId, input, options) =>
       http({
-        method: 'GET',
-        path: `/gyms/${encodeURIComponent(gymId)}/plans`,
-        schema: z.array(planSchema),
+        method: 'PATCH',
+        path: `${planes(gymId)}/${encodeURIComponent(planId)}`,
+        body: input,
+        schema: planSchema,
+        ...options,
+      }),
+
+    archivePlan: (gymId, planId, options) =>
+      http({
+        method: 'POST',
+        path: `${planes(gymId)}/${encodeURIComponent(planId)}/archive`,
+        schema: planSchema,
         ...options,
       }),
 

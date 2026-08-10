@@ -1,7 +1,7 @@
 # Estado del proyecto
 
 > Última actualización: **2026-08-07** · **Fase final en marcha** · B1, B3 y B5
-> cerrados; el siguiente es el correo real
+> cerrados y B2 cerrado técnicamente; falta ejecutar el envío real
 
 Documento de continuidad: qué está hecho, qué está a medias y cuál es el
 siguiente paso. Se actualiza al final de cada sesión de trabajo.
@@ -15,9 +15,9 @@ siguiente paso. Se actualiza al final de cada sesión de trabajo.
 | Fase 0 — cimientos | ✅ cerrada |
 | Fase 1 — MVP, 7 módulos | ✅ **cerrada** |
 | Fase 2 — panel web | 🔵 **en marcha**: cliente de la API, autenticación y socios en `main` |
-| Fase final — cerrar para un piloto | 🔵 **en marcha**: B1, B3 y B5 cerrados |
+| Fase final — cerrar para un piloto | 🔵 **en marcha**: B1, B3, B5 y B2 (técnico) cerrados |
 
-**328 tests** (40 de aislamiento e integridad + 252 de la API + 36 del cliente de
+**334 tests** (40 de aislamiento e integridad + 258 de la API + 36 del cliente de
 la API). `build`, `typecheck`, `lint` y `test` en verde en local y en CI.
 **13 ADR**, y uno pendiente de escribir — ver la deuda.
 
@@ -351,7 +351,7 @@ la API, 9 pantallas en el panel.** La mayor parte de lo pendiente es eso.
 | # | Qué | Estado |
 |---|---|---|
 | B1 | **Recuperar la contraseña no tenía pantalla** | ✅ **cerrado** |
-| B2 | **El envío de correo nunca se ha ejecutado.** Sin `RESEND_API_KEY` el proceso **no arranca** en producción, y sin dominio verificado lo que salga acaba en spam | abierto, **el siguiente** |
+| B2 | **El envío de correo nunca se ha ejecutado** | 🟡 **cerrado técnicamente** — falta ejecutarlo |
 | B3 | **Nada sirve el panel bajo el mismo origen** | ✅ **cerrado** — estrategia A |
 | B4 | **Los precios se montan a mano.** Crear, editar y archivar planes sigue siendo solo por API | abierto |
 | B5 | **`trust proxy` sin configurar** | ✅ **cerrado** con B3 |
@@ -361,6 +361,39 @@ consentimiento, congelar/cancelar/anular, notas y exportación RGPD, el
 entrenador retirado que deja socios apuntándole, campos que no se pueden vaciar,
 el socio que aterriza donde no le toca, ADR-0014, y el choque entre `typecheck`
 y `build`. Todos están arriba con su motivo.
+
+### B2, cerrado técnicamente: lo que falta ya no es código
+
+**Todo lo que se podía cerrar sin dominio ni proveedor está cerrado.** Lo que
+queda es ejecutarlo, y depende de datos que no se inventan.
+
+Auditado sin enviar un solo correo, y salieron dos fallos que no habrían dado la
+cara hasta el piloto:
+
+| Qué pasaba | Por qué era grave |
+|---|---|
+| **Con la clave puesta, el remitente podía ser de mentira** | El defecto era `no-reply@localhost`. El proceso arrancaba **perfectamente**; Resend respondía `invalid_from_address`, clasificado como definitivo, así que el trabajo se descartaba **sin reintento** y nadie recibía nada. Único rastro: una línea de `ERROR` |
+| **Un trabajo podía sobrevivir 14 días al token que llevaba** | `expireInSeconds` limita la **ejecución**, no la espera. El que limita la espera estaba sin poner. Con el proceso caído un rato, un correo de recuperación salía días después con un enlace muerto |
+
+De ahí sale la regla que ahora fija los plazos: **un trabajo no debe sobrevivir
+al token que transporta.** Es preferible que caduque en la cola —y que la
+persona vuelva a pedirlo— a entregar un enlace muerto.
+
+Y un tercer hallazgo que **confirma** algo de la auditoría: `verify-email` tiene
+endpoint, plantilla y cola, pero **nadie llama nunca a `sendVerificationEmail`**
+y `requireEmailVerification` es `false`. Por eso que falte su pantalla no
+bloquea el piloto — y por eso no debe activarse sin escribirla antes, o los
+correos apuntarán a un 404.
+
+**Lo que falta para cerrarlo del todo**, y no es código:
+
+1. Dominio en Hostinger y subdominio de envío (`envios.…`).
+2. Cuenta de Resend y verificación del dominio: SPF, DKIM y DMARC.
+3. La prueba controlada: recuperación de contraseña e invitación de personal,
+   **desde el dominio real**, comprobando que llegan y no caen en spam.
+
+Los tres pasos, con los registros DNS y la trampa del panel de Hostinger que se
+come a todo el mundo, están en [`08-correo-y-dominio.md`](08-correo-y-dominio.md).
 
 **Visión futura** — `apps/socio`, las pantallas de rutinas, progreso, accesos y
 panel del dueño, la app móvil, Stripe, varios roles por persona.
