@@ -11,6 +11,7 @@
 import { randomUUID } from 'node:crypto';
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
+import { ROLES } from '@gymlab/contracts';
 import { EMAIL_QUEUES, closeDatabase, createDatabase, sql, type Database } from '@gymlab/db';
 import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
@@ -19,6 +20,7 @@ import { env } from '../config/env';
 import { EmailWorker } from '../jobs/email.worker';
 import { MAILER } from '../mail/mail.tokens';
 import { MailError, type Mailer, type MailMessage } from '../mail/mailer';
+import { renderizar } from '../mail/templates';
 
 /** Transporte falso: guarda lo enviado y puede simular fallos. */
 class MailerDePrueba implements Mailer {
@@ -159,6 +161,65 @@ describe('correo de invitacion', () => {
 
     expect(job.url.startsWith(env.WEB_APP_URL)).toBe(true);
     expect(job.url).toContain('/accept-invitation?token=');
+  });
+
+  it('NINGUNA invitacion promete lo que todavia no existe', async () => {
+    // ┌──────────────────────────────────────────────────────────────────────┐
+    // │ ESTE CORREO PROMETIA UNA APP MOVIL QUE NO EXISTE.                    │
+    // │                                                                      │
+    // │ El texto era el mismo para todos los roles y decia "podras consultar │
+    // │ tus rutinas y tu progreso desde el movil". Se vio invitando a un     │
+    // │ recepcionista REAL en produccion: es lo primero que lee alguien al   │
+    // │ entrar en GYMLAB, y le prometia dos cosas que no le tocan y una app  │
+    // │ que no esta escrita.                                                 │
+    // │                                                                      │
+    // │ Se comprueban los CUATRO roles y las dos partes del correo, HTML y   │
+    // │ texto plano, porque la promesa vivia solo en el HTML y el texto      │
+    // │ plano no la tenia: mirar una sola mitad no habria bastado.           │
+    // └──────────────────────────────────────────────────────────────────────┘
+    const PROHIBIDAS = [/rutina/i, /progreso/i, /\bmovil\b/i, /\bapp\b/i, /descarga/i];
+
+    for (const role of ROLES) {
+      const mensaje = renderizar(EMAIL_QUEUES.invitation, {
+        to: 'quien.sea@ejemplo.test',
+        token: 'tk',
+        url: 'https://ejemplo.test/accept-invitation?token=tk',
+        role,
+      });
+
+      for (const prohibida of PROHIBIDAS) {
+        expect(mensaje.html, `el HTML de la invitacion de ${role} promete ${prohibida}`).not.toMatch(
+          prohibida,
+        );
+        expect(mensaje.text, `el texto de la invitacion de ${role} promete ${prohibida}`).not.toMatch(
+          prohibida,
+        );
+      }
+
+      // Y que diga algo util: no vale vaciarlo para pasar el control.
+      expect(mensaje.text.length).toBeGreaterThan(80);
+    }
+  });
+
+  it('y cada rol lee lo que va a hacer de verdad', async () => {
+    const recepcion = renderizar(EMAIL_QUEUES.invitation, {
+      to: 'r@ejemplo.test',
+      token: 'tk',
+      url: 'https://ejemplo.test/x',
+      role: 'receptionist',
+    });
+    const dueno = renderizar(EMAIL_QUEUES.invitation, {
+      to: 'd@ejemplo.test',
+      token: 'tk',
+      url: 'https://ejemplo.test/x',
+      role: 'owner',
+    });
+
+    expect(recepcion.text).toMatch(/socios/i);
+    expect(recepcion.text).toMatch(/cobro|cuota/i);
+    // Los precios son del dueno: al mostrador no se le anuncia que los fija.
+    expect(recepcion.text).not.toMatch(/precio/i);
+    expect(dueno.text).toMatch(/precio/i);
   });
 });
 
