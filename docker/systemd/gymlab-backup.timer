@@ -1,0 +1,19 @@
+[Unit]
+Description=Copia diaria de GYMLAB
+
+[Timer]
+# A las 03:30, hora del servidor. De madrugada y sin coincidir con la hora en
+# punto, que es cuando arranca todo lo demas.
+OnCalendar=*-*-* 03:30:00
+
+# Si el servidor estaba apagado a esa hora, la copia se hace al arrancar en
+# lugar de perderse. Es la diferencia con un cron, y aqui importa: un dia sin
+# copia por un reinicio no deberia pasar desapercibido ni perderse.
+Persistent=true
+
+# Hasta cinco minutos de desfase aleatorio. No es por carga —esto no la tiene—
+# sino para no coincidir clavado con cualquier otra tarea nocturna.
+RandomizedDelaySec=300
+
+[Install]
+WantedBy=timers.target

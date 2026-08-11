@@ -1,11 +1,10 @@
-# Copias de seguridad (propuesta)
+# Copias de seguridad
 
-> **Nada de esto está implementado.** Es la propuesta para revisar antes de
-> escribir una línea.
+> **Escrito, pendiente de instalar en el servidor.** El código está en
+> `docker/backup.sh`, `docker/alerta-backup.sh` y `docker/systemd/`. Los pasos
+> para ponerlo en marcha están al final, y **no hay copias hasta ejecutarlos**.
 >
-> Estado actual: **no hay ninguna copia de seguridad, de ningún tipo.** Lo único
-> que existe es un `pg_dump` de ejemplo en [`07-despliegue-vps.md`](07-despliegue-vps.md),
-> para ejecutar a mano.
+> Aprobado en el PR #47.
 
 ---
 
@@ -30,6 +29,29 @@ la del servidor. Una versión más antigua se niega a volcar.
 Se ejecuta con un **temporizador de systemd** en el anfitrión, no con un cron
 dentro de un contenedor. El motivo es el punto 5: systemd sabe si la orden falló
 y puede reaccionar; un `sleep` dentro de un contenedor no se lo cuenta a nadie.
+
+> **Se usa el CLI de B2 que ya está en el servidor**, no `rclone` como decía la
+> propuesta. Una pieza menos que instalar y mantener. El script prueba primero
+> la sintaxis de la versión 4 (`b2 file upload`) y cae a la de la 3
+> (`b2 upload-file`), en lugar de fijar una y romperse el día de la
+> actualización.
+
+### El detalle que decide si la copia sirve
+
+El volcado va por una tubería: `pg_dump | gzip | age`. **El código de salida de
+una tubería es el del último comando**, así que si `pg_dump` muere a mitad,
+`age` cifra lo poco que llegó y termina con éxito.
+
+Sin `set -o pipefail`, eso sube un fichero cifrado, válido y casi vacío — y el
+interruptor de hombre muerto avisa de que todo fue bien. Medido:
+
+| | Código de salida | Qué pasa |
+|---|---|---|
+| Con `pipefail` | **1** | Se corta, salta el aviso de fallo |
+| Sin `pipefail` | **0** | Se sube una copia truncada de **37 bytes** como buena |
+
+Es el peor fallo posible en un sistema de copias: no se nota hasta el día que
+hay que restaurar. Por eso además se comprueba el tamaño del fichero cifrado.
 
 ```
 gymlab-backup.timer     →  todos los días a las 03:30
@@ -232,10 +254,70 @@ necesita poder tocar sus propias copias.
 
 ---
 
-## Orden que propongo
+---
 
-1. Volcado diario en el propio servidor. Media hora, y ya protege del error
-   humano, que es el fallo más frecuente.
-2. Cifrado y subida fuera. Es el que protege de perder la máquina.
+## Instalación en el servidor
+
+Todo lo anterior está escrito. Esto es lo que falta para que funcione.
+
+**1 · Las dos herramientas que el script necesita**
+
+```bash
+sudo apt update && sudo apt install -y age jq curl
+```
+
+`age` cifra, `jq` escapa el JSON del aviso —el diario trae comillas y saltos de
+línea que romperían el cuerpo si se pegaran a mano— y `curl` habla con Resend y
+con el interruptor de hombre muerto.
+
+**2 · El destinatario de los avisos y el interruptor**
+
+Crear un *check* en healthchecks.io (nivel gratuito), periodicidad diaria con
+una hora de margen, y añadir al `.env.backup`:
+
+```bash
+cd /opt/gymlab && cat >> .env.backup <<'EOF'
+ALERTA_EMAIL=tu-correo@ejemplo.com
+HEALTHCHECK_URL=https://hc-ping.com/tu-uuid
+EOF
+```
+
+Sin `HEALTHCHECK_URL` el script sigue funcionando, pero **nadie se entera si un
+día deja de ejecutarse**, que es justo el fallo que más tarda en descubrirse.
+
+**3 · Permisos y unidades**
+
+```bash
+cd /opt/gymlab && chmod +x docker/backup.sh docker/alerta-backup.sh
+sudo cp docker/systemd/gymlab-backup.service docker/systemd/gymlab-backup.timer \
+        docker/systemd/gymlab-backup-alerta@.service /etc/systemd/system/
+sudo systemctl daemon-reload
+```
+
+**4 · La primera copia, a mano y mirando**
+
+```bash
+sudo systemctl start gymlab-backup.service
+sudo journalctl -u gymlab-backup.service -n 30 --no-pager
+```
+
+Tiene que verse `volcando`, `cifrado N bytes`, `subido diario/…` y `terminado`.
+
+**5 · Y solo entonces, activar el temporizador**
+
+```bash
+sudo systemctl enable --now gymlab-backup.timer
+systemctl list-timers gymlab-backup.timer
+```
+
+Activarlo antes de haber visto una copia correcta es programar un fallo diario
+del que se avisa por correo.
+
+---
+
+## El orden importa
+
+1. Volcado diario. Protege del error humano, que es el fallo más frecuente.
+2. Cifrado y subida fuera. Protege de perder la máquina.
 3. Retención y avisos.
 4. **Restauración probada.** Hasta aquí no hay copias de seguridad: hay ficheros.

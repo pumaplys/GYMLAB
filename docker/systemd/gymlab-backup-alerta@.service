@@ -1,0 +1,16 @@
+[Unit]
+Description=Aviso de que la copia de GYMLAB ha fallado (%i)
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/gymlab
+
+# `ALERTA_EMAIL` vive aqui; la clave de Resend la lee el propio script del
+# `.env` de la aplicacion.
+EnvironmentFile=/opt/gymlab/.env.backup
+
+# `%i` es la unidad que fallo, que systemd pasa al instanciar esta plantilla.
+ExecStart=/opt/gymlab/docker/alerta-backup.sh %i
+
+User=root
+UMask=0077
