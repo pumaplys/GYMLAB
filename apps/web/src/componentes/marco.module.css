@@ -104,7 +104,7 @@
   padding: var(--e6) var(--e5) var(--e7);
 }
 
-@media (max-width: 40rem) {
+@media (max-width: 48rem) {
   .fila,
   .navegacion,
   .contenido {

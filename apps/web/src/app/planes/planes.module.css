@@ -48,8 +48,8 @@
   max-width: 16rem;
 }
 
+/* Sin ancho propio: ya lo limita la tarjeta que la contiene. */
 .ayudaPeriodo {
-  max-width: 40rem;
   color: var(--texto-sutil);
   font-size: var(--t-sm);
   line-height: 1.5;
@@ -59,8 +59,13 @@
   display: flex;
 }
 
+/*
+ * El mismo ancho que la tarjeta de alta, y ese es el arreglo: estaba en 52rem
+ * mientras la tarjeta de encima media 44, asi que los dos bloques no cuadraban
+ * por la derecha. Ahora la pantalla es una sola columna alineada.
+ */
 .panel {
-  max-width: 52rem;
+  max-width: var(--ancho-lectura);
 }
 
 .avisoTabla {

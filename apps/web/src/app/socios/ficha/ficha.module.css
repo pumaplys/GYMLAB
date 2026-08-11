@@ -36,11 +36,11 @@
   flex-direction: column;
   gap: var(--e3);
   margin-bottom: var(--e4);
-  max-width: 42rem;
+  max-width: var(--ancho-lectura);
 }
 
 .tarjeta {
-  max-width: 42rem;
+  max-width: var(--ancho-lectura);
   padding: var(--e5) var(--e6);
   background: var(--fondo);
   border: 1px solid var(--borde);
@@ -106,7 +106,7 @@
   color: var(--peligro);
 }
 
-@media (max-width: 40rem) {
+@media (max-width: 48rem) {
   .encabezado {
     flex-direction: column;
   }

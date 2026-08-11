@@ -80,7 +80,7 @@
   transition: opacity 0.12s ease;
 }
 
-@media (max-width: 40rem) {
+@media (max-width: 48rem) {
   .encabezado {
     flex-direction: column;
     align-items: stretch;

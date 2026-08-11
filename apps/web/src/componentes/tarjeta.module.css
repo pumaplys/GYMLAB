@@ -17,4 +17,22 @@
   .contenido {
     padding: var(--e4);
   }
+
+  /*
+   * ┌────────────────────────────────────────────────────────────────────────┐
+   * │ EN ESTRECHO, LA TABLA SE DESPLAZA DENTRO DE SU TARJETA.                │
+   * │                                                                        │
+   * │ Sin esto, una tabla de cinco columnas mide 434 px en una pantalla de    │
+   * │ 375 y quien desplaza no es ella: es LA PAGINA ENTERA. La cabecera y el │
+   * │ resto del contenido se van con ella, que es la peor forma de leer una  │
+   * │ lista en un movil.                                                     │
+   * │                                                                        │
+   * │ No es la solucion definitiva —esa es convertir cada fila en una        │
+   * │ tarjeta, y llega en la pasada de responsive—, pero deja el cuerpo de   │
+   * │ la pagina quieto desde ya en lugar de dejarlo roto hasta entonces.     │
+   * └────────────────────────────────────────────────────────────────────────┘
+   */
+  .lista {
+    overflow: auto;
+  }
 }
