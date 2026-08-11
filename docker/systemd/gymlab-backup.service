@@ -1,0 +1,28 @@
+[Unit]
+Description=Copia de seguridad de GYMLAB (volcar, cifrar y subir a B2)
+# El contenedor tiene que estar en pie: el volcado sale de el.
+After=docker.service
+Requires=docker.service
+# Si esto falla, avisa. Cubre la mitad del problema — la otra mitad, que ni
+# siquiera se ejecute, la cubre el interruptor de hombre muerto del script.
+OnFailure=gymlab-backup-alerta@%n.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/gymlab
+
+# Los secretos del almacen, aparte de los de la aplicacion: la aplicacion no
+# necesita poder tocar sus propias copias.
+EnvironmentFile=/opt/gymlab/.env.backup
+
+ExecStart=/opt/gymlab/docker/backup.sh
+
+# Una copia que tarda mas de veinte minutos esta colgada, no lenta.
+TimeoutStartSec=1200
+
+# El volcado y las claves solo los ve root.
+User=root
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

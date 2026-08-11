@@ -1,11 +1,14 @@
-# Copias de seguridad (propuesta)
+# Copias de seguridad
 
-> **Nada de esto está implementado.** Es la propuesta para revisar antes de
-> escribir una línea.
+> **En marcha en producción.** Copia diaria cifrada a Backblaze B2, con
+> temporizador activo, aviso de fallo e interruptor de hombre muerto.
 >
-> Estado actual: **no hay ninguna copia de seguridad, de ningún tipo.** Lo único
-> que existe es un `pg_dump` de ejemplo en [`07-despliegue-vps.md`](07-despliegue-vps.md),
-> para ejecutar a mano.
+> **Y con una restauración probada de verdad** sobre un contenedor limpio: es
+> lo que separa tener copias de tener ficheros. El punto 7 dice qué se comprobó
+> y con qué resultado.
+>
+> El código está en `docker/backup.sh`, `docker/alerta-backup.sh` y
+> `docker/systemd/`. Propuesta aprobada en el PR #47.
 
 ---
 
@@ -31,6 +34,29 @@ Se ejecuta con un **temporizador de systemd** en el anfitrión, no con un cron
 dentro de un contenedor. El motivo es el punto 5: systemd sabe si la orden falló
 y puede reaccionar; un `sleep` dentro de un contenedor no se lo cuenta a nadie.
 
+> **Se usa el CLI de B2 que ya está en el servidor**, no `rclone` como decía la
+> propuesta. Una pieza menos que instalar y mantener. El script prueba primero
+> la sintaxis de la versión 4 (`b2 file upload`) y cae a la de la 3
+> (`b2 upload-file`), en lugar de fijar una y romperse el día de la
+> actualización.
+
+### El detalle que decide si la copia sirve
+
+El volcado va por una tubería: `pg_dump | gzip | age`. **El código de salida de
+una tubería es el del último comando**, así que si `pg_dump` muere a mitad,
+`age` cifra lo poco que llegó y termina con éxito.
+
+Sin `set -o pipefail`, eso sube un fichero cifrado, válido y casi vacío — y el
+interruptor de hombre muerto avisa de que todo fue bien. Medido:
+
+| | Código de salida | Qué pasa |
+|---|---|---|
+| Con `pipefail` | **1** | Se corta, salta el aviso de fallo |
+| Sin `pipefail` | **0** | Se sube una copia truncada de **37 bytes** como buena |
+
+Es el peor fallo posible en un sistema de copias: no se nota hasta el día que
+hay que restaurar. Por eso además se comprueba el tamaño del fichero cifrado.
+
 ```
 gymlab-backup.timer     →  todos los días a las 03:30
 gymlab-backup.service   →  docker compose run --rm backup
@@ -39,17 +65,17 @@ gymlab-backup.service   →  docker compose run --rm backup
 `pg_dump` es consistente aunque la aplicación esté escribiendo —usa la
 instantánea de MVCC— así que **no hay que parar nada**.
 
-> **`pg_dump` NO guarda los roles.** El rol `gymlab_app` y su contraseña los crea
-> `db:migrate`, que corre en cada arranque y es idempotente. Es un detalle que
-> muerde justo en mitad de una restauración: sin él, la base restaurada está
-> completa y la aplicación no puede conectarse. Está contemplado en el punto 6.
+> **`pg_dump` NO guarda los roles**, y eso condiciona la restauración más de lo
+> que parece: las políticas RLS del volcado **nombran a `gymlab_app`**, así que
+> si el rol no existe, el restore falla al llegar a la primera. Hay que crearlo
+> **antes**. El punto 6 lo explica con el orden exacto.
 
 ## 2. Cifrado y fuera del VPS
 
 Dos pasos encadenados, sin escribir el volcado en claro en disco:
 
 ```
-pg_dump → gzip → age (cifra) → rclone (sube)
+pg_dump → gzip → age (cifra) → b2 (sube)
 ```
 
 **El cifrado va con `age` y clave pública.** El servidor solo guarda la clave
@@ -61,10 +87,9 @@ hacerse. La clave privada no vive en el servidor.
 > trasera. Va a un gestor de contraseñas y, mejor, a un segundo sitio fuera de
 > línea.
 
-**El destino** es almacenamiento compatible con S3. Backblaze B2 encaja: con
-este volumen entra en el nivel gratuito. Vale igualmente Cloudflare R2, Wasabi o
-S3 de AWS — `rclone` habla con todos y cambiar de proveedor es cambiar una
-sección de configuración.
+**El destino** es Backblaze B2: con este volumen entra en el nivel gratuito.
+Cambiar de proveedor —Cloudflare R2, Wasabi, S3— sería sustituir la función
+`subir` del script por su equivalente; el resto no se entera.
 
 ### La clave de escritura no puede borrar
 
@@ -143,52 +168,88 @@ no llega a su hora, el servicio manda el correo.
 
 ## 6. Procedimiento de restauración
 
-Los cinco pasos, en orden. Se descifra **fuera del servidor** siempre que se
-pueda, porque la clave privada no debe subir ahí.
+Se descifra **fuera del servidor** siempre que se pueda, porque la clave privada
+no debe subir ahí.
+
+> ### ⚠️ El rol se crea ANTES de restaurar, no después
+>
+> **Este documento decía lo contrario y era falso.** Lo destapó la primera
+> restauración de verdad, sobre un contenedor limpio.
+>
+> `pg_dump` no guarda los roles —eso sí era cierto— pero la conclusión estaba
+> mal: no basta con crearlo después. **Las 32 políticas RLS del volcado nombran
+> al rol** (`CREATE POLICY … TO gymlab_app`), así que si no existe, el restore
+> falla al llegar a la primera política.
+>
+> Y `db:migrate` tampoco vale como paso previo: además del rol crea todas las
+> tablas, y entonces el volcado chocaría con ellas.
+>
+> El orden correcto es: **rol → restore → `db:migrate`**.
 
 ```bash
 # 1. Traer la copia
-rclone copy b2:gymlab-copias/diario/gymlab-2026-08-11.sql.gz.age .
+b2 file download b2://gymlab-copias/diario/gymlab-2026-08-11.sql.gz.age .
 
-# 2. Descifrar (donde esté la clave privada, NO en el VPS)
+# 2. Descifrar, DONDE ESTE LA CLAVE PRIVADA — nunca en el VPS
 age -d -i clave-privada.txt gymlab-2026-08-11.sql.gz.age | gunzip > gymlab.sql
 
 # 3. Base limpia
-docker compose -f docker/compose.produccion.yml --env-file .env exec -T postgres \
-  psql -U gymlab -d postgres -c "CREATE DATABASE gymlab_restaurada OWNER gymlab;"
+psql -U gymlab -d postgres -c "CREATE DATABASE gymlab_restaurada OWNER gymlab;"
 
-# 4. Restaurar
-cat gymlab.sql | docker compose -f docker/compose.produccion.yml --env-file .env exec -T postgres \
-  psql -U gymlab -d gymlab_restaurada
+# 4. EL ROL, ANTES DE RESTAURAR. Sin contraseña todavia: solo tiene que
+#    existir para que las politicas del volcado puedan referirse a el.
+#    Los NO... son deliberados: gymlab_app jamas debe poder saltarse RLS.
+psql -U gymlab -d postgres -c "CREATE ROLE gymlab_app LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS;"
 
-# 5. Recrear el rol de la aplicación y las políticas
-#    pg_dump NO trae los roles. Este paso es idempotente y es el que crea
-#    gymlab_app con su contraseña.
-DATABASE_URL=...gymlab_restaurada pnpm db:migrate
+# 5. Restaurar, PARANDO AL PRIMER ERROR
+psql -U gymlab -d gymlab_restaurada -v ON_ERROR_STOP=1 -f gymlab.sql
+
+# 6. Dar al rol su contrasena y reafirmar roles, RLS y colas. Idempotente.
+DATABASE_URL=...gymlab_restaurada APP_DB_PASSWORD=... pnpm db:migrate
 ```
+
+**`-v ON_ERROR_STOP=1` no es opcional.** Sin él, `psql` sigue adelante tras un
+error y termina con código 0: se obtiene una base a medias que *parece*
+restaurada. Es el mismo modo de fallo que `pipefail` evita en la copia, en el
+otro extremo del proceso.
+
+El paso 6 sigue haciendo falta aunque el restore haya ido bien: el rol creado en
+el paso 4 **no tiene contraseña**, y sin ella la aplicación no puede conectarse.
 
 Para volver a producción de verdad, se apunta `DATABASE_URL` y `DATABASE_URL_APP`
 a la base restaurada y se levanta. **Nunca se restaura encima de la base viva:**
 se restaura al lado y se cambia el apuntador, que es reversible.
 
-## 7. Prueba de restauración, sin tocar producción
+## 7. Prueba de restauración
 
-Mensual, y sobre una base desechable con otro nombre. Es la única forma de saber
+Mensual, sobre una base desechable con otro nombre. Es la única forma de saber
 que la copia sirve.
 
-Qué se comprueba, y por qué cada cosa:
+### Lo que se comprobó de verdad, y con qué resultado
 
-| Comprobación | Qué detecta |
+Ejecutado sobre una copia real bajada de B2 y, en la segunda pasada, sobre un
+contenedor `postgres:16-alpine` **completamente limpio y con volumen nuevo** —
+que es lo que de verdad simula perder el servidor.
+
+| Comprobación | Resultado |
 |---|---|
-| Recuento de filas en `gyms`, `members`, `payments` frente a producción | Un volcado truncado o a medias |
-| `SELECT count(*) FROM pg_policies` | Que las **políticas RLS viajaron**. Sin ellas la base restaurada no aísla nada |
-| `pnpm db:migrate` termina bien | Que el rol de la aplicación se puede recrear |
-| Arrancar la aplicación contra ella y hacer login | Que es una base **usable**, no solo un fichero que importa |
+| Descifrado con la clave privada, fuera del VPS | ✅ |
+| Restore con `psql -v ON_ERROR_STOP=1` | ✅ **código 0, sin errores** |
+| Datos frente a producción | ✅ coincidieron exactamente |
+| `gymlab_app` puede conectarse | ✅ |
+| Tablas con RLS activo | ✅ **21** |
+| Políticas RLS | ✅ **31** |
 
-El último es el que de verdad cuenta. Los otros tres pueden pasar sobre una base
-que la aplicación no puede usar.
+Las dos últimas son las que importan más de lo que parece: una base restaurada
+sin políticas **arranca igual y deja de aislar a los gimnasios entre sí**. El
+recuento es la prueba de que el aislamiento viajó en la copia.
 
-Al terminar: `DROP DATABASE gymlab_restaurada`.
+La primera pasada, contra un Postgres que ya tenía el rol, pasó sin problema
+**y por eso no valía**: el contenedor limpio fue el que destapó que el rol tiene
+que existir antes.
+
+Al terminar: borrar la base, el contenedor y los ficheros temporales. El `.sql`
+descifrado son los datos de todos los socios en claro.
 
 ## 8. Coste
 
@@ -207,35 +268,87 @@ Con 7 diarias y 4 semanales, el total ronda las decenas de MB. Aun creciendo dos
 
 **En el repositorio**
 
-- `docker/backup.sh` — volcar, cifrar, subir, avisar. Nuevo.
-- `docker/compose.produccion.yml` — servicio `backup` bajo un *profile*, para que
-  `up -d` no lo levante como si fuera un servicio más.
-- `docker/systemd/gymlab-backup.service` y `.timer` — nuevos, para copiar al
-  servidor.
-- `.dockerignore` — añadir `.env.backup`.
-- Documentación: esta guía pasaría de propuesta a procedimiento.
+- `docker/backup.sh` — volcar, cifrar, subir, avisar.
+- `docker/alerta-backup.sh` — el correo de fallo, con las últimas líneas del
+  diario para no tener que entrar al servidor a saber por qué.
+- `docker/systemd/` — el servicio, el temporizador y la plantilla de aviso.
+
+**No hizo falta tocar `compose.produccion.yml`.** La propuesta hablaba de un
+servicio `backup` bajo un *profile*; al ejecutarlo desde systemd en el
+anfitrión, el volcado sale con `docker compose exec` del Postgres que ya está en
+pie y no hace falta un contenedor más.
 
 **En `.env`**
 
-Nada. Los secretos de la copia van en `/opt/gymlab/.env.backup`, aparte, para que
-la aplicación no tenga acceso a las credenciales del almacén. La aplicación no
-necesita poder tocar sus propias copias.
-
-**En el servidor**
-
-1. Instalar `age` y `rclone`.
-2. Crear el bucket y una clave **sin permiso de borrado**.
-3. Generar el par de claves de `age` — la privada **no se queda ahí**.
-4. Escribir `/opt/gymlab/.env.backup` con `chmod 600`.
-5. Instalar y activar el temporizador.
-6. Ejecutar la primera copia a mano y **restaurarla** antes de darla por buena.
+Nada. Los secretos de la copia viven en `/opt/gymlab/.env.backup`, aparte, para
+que la aplicación no tenga acceso a las credenciales del almacén: no necesita
+poder tocar sus propias copias. `.gitignore` y `.dockerignore` ya lo excluían
+por el patrón `.env.*`.
 
 ---
 
-## Orden que propongo
+## Instalación en el servidor
 
-1. Volcado diario en el propio servidor. Media hora, y ya protege del error
-   humano, que es el fallo más frecuente.
-2. Cifrado y subida fuera. Es el que protege de perder la máquina.
+Todo lo anterior está escrito. Esto es lo que falta para que funcione.
+
+**1 · Las dos herramientas que el script necesita**
+
+```bash
+sudo apt update && sudo apt install -y age jq curl
+```
+
+`age` cifra, `jq` escapa el JSON del aviso —el diario trae comillas y saltos de
+línea que romperían el cuerpo si se pegaran a mano— y `curl` habla con Resend y
+con el interruptor de hombre muerto.
+
+**2 · El destinatario de los avisos y el interruptor**
+
+Crear un *check* en healthchecks.io (nivel gratuito), periodicidad diaria con
+una hora de margen, y añadir al `.env.backup`:
+
+```bash
+cd /opt/gymlab && cat >> .env.backup <<'EOF'
+ALERTA_EMAIL=tu-correo@ejemplo.com
+HEALTHCHECK_URL=https://hc-ping.com/tu-uuid
+EOF
+```
+
+Sin `HEALTHCHECK_URL` el script sigue funcionando, pero **nadie se entera si un
+día deja de ejecutarse**, que es justo el fallo que más tarda en descubrirse.
+
+**3 · Permisos y unidades**
+
+```bash
+cd /opt/gymlab && chmod +x docker/backup.sh docker/alerta-backup.sh
+sudo cp docker/systemd/gymlab-backup.service docker/systemd/gymlab-backup.timer \
+        docker/systemd/gymlab-backup-alerta@.service /etc/systemd/system/
+sudo systemctl daemon-reload
+```
+
+**4 · La primera copia, a mano y mirando**
+
+```bash
+sudo systemctl start gymlab-backup.service
+sudo journalctl -u gymlab-backup.service -n 30 --no-pager
+```
+
+Tiene que verse `volcando`, `cifrado N bytes`, `subido diario/…` y `terminado`.
+
+**5 · Y solo entonces, activar el temporizador**
+
+```bash
+sudo systemctl enable --now gymlab-backup.timer
+systemctl list-timers gymlab-backup.timer
+```
+
+Activarlo antes de haber visto una copia correcta es programar un fallo diario
+del que se avisa por correo.
+
+---
+
+## El orden importa
+
+1. Volcado diario. Protege del error humano, que es el fallo más frecuente.
+2. Cifrado y subida fuera. Protege de perder la máquina.
 3. Retención y avisos.
 4. **Restauración probada.** Hasta aquí no hay copias de seguridad: hay ficheros.
