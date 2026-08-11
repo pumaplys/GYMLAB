@@ -23,35 +23,6 @@
   flex-wrap: wrap;
 }
 
-.etiqueta {
-  display: inline-block;
-  padding: 0.0625rem var(--e2);
-  border-radius: var(--radio-pastilla);
-  font-size: var(--t-xs);
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-.alCorriente {
-  background: var(--exito-suave);
-  color: var(--exito);
-}
-
-.aviso {
-  background: var(--aviso-suave);
-  color: var(--aviso);
-}
-
-.vencida {
-  background: var(--peligro-suave);
-  color: var(--peligro);
-}
-
-.neutro {
-  background: var(--fondo-activo);
-  color: var(--texto-sutil);
-}
-
 .cuerpo {
   padding: var(--e5) var(--e6);
 }

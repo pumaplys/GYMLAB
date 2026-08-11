@@ -25,24 +25,6 @@
   font-variant-numeric: var(--numeros);
 }
 
-.etiqueta {
-  display: inline-block;
-  padding: 0.0625rem var(--e2);
-  border-radius: var(--radio-pastilla);
-  font-size: var(--t-xs);
-  font-weight: 500;
-}
-
-.activo {
-  background: var(--exito-suave);
-  color: var(--exito);
-}
-
-.inactivo {
-  background: var(--fondo-activo);
-  color: var(--texto-sutil);
-}
-
 .acciones {
   display: flex;
   gap: var(--e2);

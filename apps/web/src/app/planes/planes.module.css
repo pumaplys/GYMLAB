@@ -1,33 +1,23 @@
-.encabezado {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--e4);
-  margin-bottom: var(--e5);
-}
-
-.entradilla {
-  margin-top: var(--e2);
-  max-width: 44rem;
-  color: var(--texto-sutil);
-  font-size: var(--t-base);
-}
+/*
+ * Solo lo que es de ESTA pantalla.
+ *
+ * El encabezado, la tarjeta, la tabla, el estado vacio, el cargando, la
+ * etiqueta, el selector y la confirmacion viven en `componentes/`: lo que queda
+ * aqui son anchos, la rejilla del formulario y los detalles propios de planes.
+ */
 
 .avisos {
   display: flex;
   flex-direction: column;
   gap: var(--e3);
   margin-bottom: var(--e4);
-  max-width: 44rem;
+  max-width: var(--ancho-lectura);
 }
 
+/* Ancho y separacion de la tarjeta de alta: es la pantalla quien los decide. */
 .tarjeta {
-  max-width: 44rem;
+  max-width: var(--ancho-lectura);
   margin-bottom: var(--e5);
-  padding: var(--e5) var(--e6);
-  background: var(--fondo);
-  border: 1px solid var(--borde);
-  border-radius: var(--radio);
 }
 
 .tituloSeccion {
@@ -53,19 +43,9 @@
   gap: var(--e2);
 }
 
-.etiquetaCampo {
-  font-size: var(--t-sm);
-  font-weight: 500;
-}
-
+/* El desplegable de periodicidad no necesita todo el ancho del formulario. */
 .selector {
-  min-height: 2.25rem;
   max-width: 16rem;
-  padding: 0 var(--e2);
-  background: var(--fondo);
-  border: 1px solid var(--borde-fuerte);
-  border-radius: var(--radio-s);
-  font-size: var(--t-base);
 }
 
 .ayudaPeriodo {
@@ -81,41 +61,10 @@
 
 .panel {
   max-width: 52rem;
-  background: var(--fondo);
-  border: 1px solid var(--borde);
-  border-radius: var(--radio);
-  overflow: hidden;
 }
 
 .avisoTabla {
   padding: var(--e4) var(--e5) 0;
-}
-
-.tabla {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: var(--t-base);
-}
-
-.tabla th {
-  padding: var(--e3) var(--e5);
-  border-bottom: 1px solid var(--borde);
-  color: var(--texto-sutil);
-  font-size: var(--t-xs);
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-align: left;
-  text-transform: uppercase;
-}
-
-.tabla td {
-  padding: var(--e3) var(--e5);
-  border-bottom: 1px solid var(--borde);
-  vertical-align: middle;
-}
-
-.tabla tbody tr:last-child td {
-  border-bottom: none;
 }
 
 .nombre {
@@ -139,32 +88,14 @@
   color: var(--texto-tenue);
 }
 
+/* La etiqueta va debajo del nombre, no a su lado. */
 .etiqueta {
-  display: inline-block;
   margin-top: var(--e2);
-  padding: 0.0625rem var(--e2);
-  border-radius: var(--radio-pastilla);
-  font-size: var(--t-xs);
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-.etiquetaArchivado {
-  background: var(--fondo-activo);
-  color: var(--texto-sutil);
 }
 
 .acciones {
   text-align: right;
   white-space: nowrap;
-}
-
-.confirmar {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--e2);
-  color: var(--peligro);
-  font-size: var(--t-sm);
 }
 
 .filaEdicion td {
@@ -182,8 +113,13 @@
 .periodoFijo {
   display: flex;
   flex-direction: column;
-  gap: var(--e1, 0.25rem);
+  gap: var(--e1);
   grid-column: 1 / -1;
+}
+
+.etiquetaCampo {
+  font-size: var(--t-sm);
+  font-weight: 500;
 }
 
 .periodoValor {
@@ -201,45 +137,9 @@
   gap: var(--e3);
 }
 
-.vacio {
-  padding: var(--e7) var(--e5);
-  text-align: center;
-}
-
-.vacioTitulo {
-  margin-bottom: var(--e2);
-  font-weight: 500;
-}
-
-.vacioTexto {
-  color: var(--texto-sutil);
-  font-size: var(--t-base);
-}
-
-.cargando {
-  padding: var(--e7) 0;
-  color: var(--texto-tenue);
-  font-size: var(--t-base);
-  text-align: center;
-}
-
 @media (max-width: 48rem) {
-  .encabezado {
-    flex-direction: column;
-  }
-
   .pareja,
   .edicion {
     grid-template-columns: 1fr;
-  }
-
-  .tarjeta {
-    padding: var(--e4);
-  }
-
-  .tabla th,
-  .tabla td {
-    padding-left: var(--e4);
-    padding-right: var(--e4);
   }
 }

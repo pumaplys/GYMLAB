@@ -1,12 +1,20 @@
 'use client';
 
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createPlanSchema, type Plan, type PlanPeriod } from '@gymlab/contracts';
 import { Aviso } from '@/componentes/aviso';
 import { Boton } from '@/componentes/boton';
 import { Campo } from '@/componentes/campo';
+import { Cargando } from '@/componentes/cargando';
+import { ConfirmacionEnLinea } from '@/componentes/confirmacion-en-linea';
+import { EncabezadoDePagina } from '@/componentes/encabezado-de-pagina';
+import { EstadoVacio } from '@/componentes/estado-vacio';
+import { Etiqueta } from '@/componentes/etiqueta';
 import { Marco } from '@/componentes/marco';
 import { RutaPrivada } from '@/componentes/ruta-privada';
+import { Selector } from '@/componentes/selector';
+import { Tabla } from '@/componentes/tabla';
+import { Tarjeta } from '@/componentes/tarjeta';
 import { api } from '@/lib/api';
 import { mensajeDeError } from '@/lib/errores';
 import { aCentimos, comoImporte } from '@/lib/formato';
@@ -83,15 +91,10 @@ function Planes() {
 
   return (
     <>
-      <div className={estilos.encabezado}>
-        <div>
-          <h1>Planes</h1>
-          <p className={estilos.entradilla}>
-            Lo que cobra el gimnasio y cada cuanto. Un plan no se puede usar en una cuota hasta que
-            existe, asi que esto es lo primero que hay que montar.
-          </p>
-        </div>
-      </div>
+      <EncabezadoDePagina
+        titulo="Planes"
+        entradilla="Lo que cobra el gimnasio y cada cuanto. Un plan no se puede usar en una cuota hasta que existe, asi que esto es lo primero que hay que montar."
+      />
 
       {error && (
         <div className={estilos.avisos}>
@@ -101,29 +104,24 @@ function Planes() {
 
       {gymId && <NuevoPlan gymId={gymId} onCreado={recargar} />}
 
-      <div className={estilos.panel}>
+      <Tarjeta variante="lista" className={estilos.panel}>
         {cargando ? (
-          <p className={estilos.cargando} role="status">
-            Cargando los planes…
-          </p>
+          <Cargando>Cargando los planes…</Cargando>
         ) : !planes || planes.length === 0 ? (
-          <div className={estilos.vacio}>
-            <p className={estilos.vacioTitulo}>Todavia no hay ningun plan</p>
-            <p className={estilos.vacioTexto}>
-              Hasta que crees el primero no se le puede poner cuota a ningun socio.
-            </p>
-          </div>
+          <EstadoVacio
+            titulo="Todavia no hay ningun plan"
+            texto="Hasta que crees el primero no se le puede poner cuota a ningun socio."
+          />
         ) : (
-          gymId && <Tabla gymId={gymId} planes={planes} onCambio={recargar} />
+          gymId && <TablaDePlanes gymId={gymId} planes={planes} onCambio={recargar} />
         )}
-      </div>
+      </Tarjeta>
     </>
   );
 }
 
 /** Alta de un plan. La periodicidad se elige AQUI y ya no se cambia. */
 function NuevoPlan({ gymId, onCreado }: { gymId: string; onCreado: () => Promise<void> }) {
-  const idPeriodo = useId();
   const [periodo, setPeriodo] = useState<PlanPeriod>('monthly');
   const [creado, setCreado] = useState<string | null>(null);
 
@@ -133,7 +131,7 @@ function NuevoPlan({ gymId, onCreado }: { gymId: string; onCreado: () => Promise
   });
 
   return (
-    <div className={estilos.tarjeta}>
+    <Tarjeta className={estilos.tarjeta}>
       <h2 className={estilos.tituloSeccion}>Nuevo plan</h2>
 
       <form className={estilos.formulario} onSubmit={formulario.alEnviar} noValidate>
@@ -171,21 +169,18 @@ function NuevoPlan({ gymId, onCreado }: { gymId: string; onCreado: () => Promise
         />
 
         <div className={estilos.campoSelector}>
-          <label className={estilos.etiquetaCampo} htmlFor={idPeriodo}>
-            Periodicidad
-          </label>
-          <select
-            id={idPeriodo}
+          <Selector
+            etiqueta="Periodicidad"
+            valor={periodo}
+            alCambiar={(valor) => setPeriodo(valor as PlanPeriod)}
             className={estilos.selector}
-            value={periodo}
-            onChange={(evento) => setPeriodo(evento.target.value as PlanPeriod)}
           >
             {Object.entries(NOMBRE_DEL_PERIODO).map(([valor, texto]) => (
               <option key={valor} value={valor}>
                 {texto}
               </option>
             ))}
-          </select>
+          </Selector>
           <p className={estilos.ayudaPeriodo}>
             <strong>No se podra cambiar despues.</strong> Cambiarla reescribiria lo que cubre cada
             pago ya registrado: quien pago un mes pasaria a haber pagado un trimestre. Para cambiarla
@@ -199,7 +194,7 @@ function NuevoPlan({ gymId, onCreado }: { gymId: string; onCreado: () => Promise
           </Boton>
         </div>
       </form>
-    </div>
+    </Tarjeta>
   );
 }
 
@@ -284,7 +279,7 @@ function useFormularioDePlan(
   };
 }
 
-function Tabla({
+function TablaDePlanes({
   gymId,
   planes,
   onCambio,
@@ -319,7 +314,7 @@ function Tabla({
         </div>
       )}
 
-      <table className={estilos.tabla}>
+      <Tabla>
         <thead>
           <tr>
             <th scope="col">Plan</th>
@@ -349,9 +344,9 @@ function Tabla({
                   <div className={estilos.nombre}>{plan.name}</div>
                   {plan.description && <div className={estilos.descripcion}>{plan.description}</div>}
                   {plan.status === 'archived' && (
-                    <span className={`${estilos.etiqueta} ${estilos.etiquetaArchivado}`}>
+                    <Etiqueta tono="neutro" className={estilos.etiqueta}>
                       Archivado
-                    </span>
+                    </Etiqueta>
                   )}
                 </td>
                 <td className={estilos.importe}>
@@ -362,21 +357,16 @@ function Tabla({
                 <td className={estilos.acciones}>
                   {plan.status === 'active' &&
                     (confirmando === plan.id ? (
-                      <span className={estilos.confirmar}>
-                        {plan.activeSubscriptions > 0
-                          ? `¿Archivar? ${plan.activeSubscriptions} cuota(s) siguen usandolo`
-                          : '¿Archivar?'}
-                        <Boton
-                          variante="sutil"
-                          cargando={trabajando === plan.id}
-                          onClick={() => archivar(plan.id)}
-                        >
-                          Si
-                        </Boton>
-                        <Boton variante="sutil" onClick={() => setConfirmando(null)}>
-                          No
-                        </Boton>
-                      </span>
+                      <ConfirmacionEnLinea
+                        pregunta={
+                          plan.activeSubscriptions > 0
+                            ? `¿Archivar? ${plan.activeSubscriptions} cuota(s) siguen usandolo`
+                            : '¿Archivar?'
+                        }
+                        confirmando={trabajando === plan.id}
+                        onConfirmar={() => archivar(plan.id)}
+                        onCancelar={() => setConfirmando(null)}
+                      />
                     ) : (
                       <>
                         <Boton
@@ -400,7 +390,7 @@ function Tabla({
             ),
           )}
         </tbody>
-      </table>
+      </Tabla>
     </>
   );
 }

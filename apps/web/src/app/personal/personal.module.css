@@ -1,33 +1,21 @@
-.encabezado {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--e4);
-  margin-bottom: var(--e5);
-}
-
-.entradilla {
-  margin-top: var(--e2);
-  max-width: 44rem;
-  color: var(--texto-sutil);
-  font-size: var(--t-base);
-}
+/*
+ * Solo lo que es de ESTA pantalla.
+ *
+ * Encabezado, tarjeta, tabla, estado vacio, cargando, etiquetas de estado,
+ * selector y confirmacion viven en `componentes/`.
+ */
 
 .avisos {
   display: flex;
   flex-direction: column;
   gap: var(--e3);
   margin-bottom: var(--e4);
-  max-width: 44rem;
+  max-width: var(--ancho-lectura);
 }
 
 .tarjeta {
-  max-width: 44rem;
+  max-width: var(--ancho-lectura);
   margin-bottom: var(--e5);
-  padding: var(--e5) var(--e6);
-  background: var(--fondo);
-  border: 1px solid var(--borde);
-  border-radius: var(--radio);
 }
 
 .formulario {
@@ -43,40 +31,17 @@
   align-items: start;
 }
 
-.campoSelector {
-  display: flex;
-  flex-direction: column;
-  gap: var(--e2);
-}
-
-.etiquetaCampo {
-  font-size: var(--t-sm);
-  font-weight: 500;
-}
-
-.selector {
-  min-height: 2.25rem;
-  padding: 0 var(--e2);
-  background: var(--fondo);
-  border: 1px solid var(--borde-fuerte);
-  border-radius: var(--radio-s);
-  font-size: var(--t-base);
-}
-
 .pie {
   display: flex;
 }
 
 .panel {
-  max-width: 44rem;
-  background: var(--fondo);
-  border: 1px solid var(--borde);
-  border-radius: var(--radio);
-  overflow: hidden;
+  max-width: var(--ancho-lectura);
 }
 
+/* Dos secciones —personal activo e invitaciones— una debajo de la otra. */
 .seccion {
-  max-width: 44rem;
+  max-width: var(--ancho-lectura);
   margin-bottom: var(--e6);
 }
 
@@ -94,70 +59,14 @@
   font-weight: 500;
 }
 
-.desde {
-  color: var(--texto-tenue);
-  white-space: nowrap;
-}
-
-.tabla {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: var(--t-base);
-}
-
-.tabla th {
-  padding: var(--e3) var(--e5);
-  border-bottom: 1px solid var(--borde);
-  color: var(--texto-sutil);
-  font-size: var(--t-xs);
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-align: left;
-  text-transform: uppercase;
-}
-
-.tabla td {
-  padding: var(--e3) var(--e5);
-  border-bottom: 1px solid var(--borde);
-  vertical-align: middle;
-}
-
-.tabla tbody tr:last-child td {
-  border-bottom: none;
-}
-
 .correo {
   font-weight: 500;
   word-break: break-all;
 }
 
-.etiqueta {
-  display: inline-block;
-  padding: 0.0625rem var(--e2);
-  border-radius: var(--radio-pastilla);
-  font-size: var(--t-xs);
-  font-weight: 500;
+.desde {
+  color: var(--texto-tenue);
   white-space: nowrap;
-}
-
-.pendiente {
-  background: var(--acento-suave);
-  color: var(--acento-hover);
-}
-
-.aceptada {
-  background: var(--exito-suave);
-  color: var(--exito);
-}
-
-.caducada {
-  background: var(--aviso-suave);
-  color: var(--aviso);
-}
-
-.revocada {
-  background: var(--fondo-activo);
-  color: var(--texto-sutil);
 }
 
 .acciones {
@@ -165,52 +74,8 @@
   white-space: nowrap;
 }
 
-.vacio {
-  padding: var(--e7) var(--e5);
-  text-align: center;
-}
-
-.vacioTitulo {
-  margin-bottom: var(--e2);
-  font-weight: 500;
-}
-
-.vacioTexto {
-  color: var(--texto-sutil);
-  font-size: var(--t-base);
-}
-
-.cargando {
-  padding: var(--e7) 0;
-  color: var(--texto-tenue);
-  font-size: var(--t-base);
-  text-align: center;
-}
-
-.confirmar {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--e2);
-  font-size: var(--t-sm);
-  color: var(--peligro);
-}
-
-@media (max-width: 40rem) {
-  .encabezado {
-    flex-direction: column;
-  }
-
+@media (max-width: 48rem) {
   .pareja {
     grid-template-columns: 1fr;
-  }
-
-  .tarjeta {
-    padding: var(--e4);
-  }
-
-  .tabla th,
-  .tabla td {
-    padding-left: var(--e4);
-    padding-right: var(--e4);
   }
 }

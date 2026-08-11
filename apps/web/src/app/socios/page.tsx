@@ -5,9 +5,14 @@ import Link from 'next/link';
 import type { MemberList } from '@gymlab/contracts';
 import { Aviso } from '@/componentes/aviso';
 import { BotonEnlace } from '@/componentes/boton';
+import { Cargando } from '@/componentes/cargando';
+import { EncabezadoDePagina } from '@/componentes/encabezado-de-pagina';
+import { EstadoVacio } from '@/componentes/estado-vacio';
+import { Etiqueta } from '@/componentes/etiqueta';
 import { Marco } from '@/componentes/marco';
 import { Paginacion } from '@/componentes/paginacion';
 import { RutaPrivada } from '@/componentes/ruta-privada';
+import { Tarjeta } from '@/componentes/tarjeta';
 import { api } from '@/lib/api';
 import { mensajeDeError } from '@/lib/errores';
 import { comoFecha } from '@/lib/formato';
@@ -95,12 +100,15 @@ function Socios() {
 
   return (
     <>
-      <div className={estilos.encabezado}>
-        <h1>Socios</h1>
-        <BotonEnlace href="/socios/nuevo" variante="primario">
-          Nuevo socio
-        </BotonEnlace>
-      </div>
+      <EncabezadoDePagina
+        titulo="Socios"
+        alineacion="centro"
+        acciones={
+          <BotonEnlace href="/socios/nuevo" variante="primario">
+            Nuevo socio
+          </BotonEnlace>
+        }
+      />
 
       <div className={estilos.herramientas}>
         <label className="solo-lectores" htmlFor="buscar-socio">
@@ -118,22 +126,18 @@ function Socios() {
 
       {error && <Aviso>{error}</Aviso>}
 
-      <div className={estilos.panel}>
+      <Tarjeta variante="lista">
         {primeraCarga ? (
-          <p className={estilos.cargando} role="status">
-            Cargando socios…
-          </p>
+          <Cargando>Cargando socios…</Cargando>
         ) : lista && lista.items.length === 0 ? (
-          <div className={estilos.vacio}>
-            <p className={estilos.vacioTitulo}>
-              {buscando ? 'Ningun socio coincide con la busqueda' : 'Todavia no hay socios'}
-            </p>
-            <p className={estilos.vacioTexto}>
-              {buscando
+          <EstadoVacio
+            titulo={buscando ? 'Ningun socio coincide con la busqueda' : 'Todavia no hay socios'}
+            texto={
+              buscando
                 ? 'Prueba con otro nombre, con el email o con el numero de socio.'
-                : 'Cuando des de alta al primero aparecera aqui.'}
-            </p>
-          </div>
+                : 'Cuando des de alta al primero aparecera aqui.'
+            }
+          />
         ) : (
           lista && (
             <>
@@ -170,13 +174,9 @@ function Socios() {
                         <td>{socio.email ?? <span className={estilos.tenue}>—</span>}</td>
                         <td>{socio.phone ?? <span className={estilos.tenue}>—</span>}</td>
                         <td>
-                          <span
-                            className={`${estilos.etiqueta} ${
-                              socio.status === 'active' ? estilos.activo : estilos.inactivo
-                            }`}
-                          >
+                          <Etiqueta tono={socio.status === 'active' ? 'exito' : 'neutro'}>
                             {socio.status === 'active' ? 'Activo' : 'Inactivo'}
-                          </span>
+                          </Etiqueta>
                         </td>
                         <td className={estilos.tenue}>{comoFecha(socio.joinedAt)}</td>
                       </tr>
@@ -195,7 +195,7 @@ function Socios() {
             </>
           )
         )}
-      </div>
+      </Tarjeta>
     </>
   );
 }

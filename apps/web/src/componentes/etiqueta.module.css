@@ -1,0 +1,34 @@
+.etiqueta {
+  display: inline-block;
+  padding: 0.0625rem var(--e2);
+  border-radius: var(--radio-pastilla);
+  font-size: var(--t-xs);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.exito {
+  background: var(--exito-suave);
+  color: var(--exito);
+}
+
+.peligro {
+  background: var(--peligro-suave);
+  color: var(--peligro);
+}
+
+.aviso {
+  background: var(--aviso-suave);
+  color: var(--aviso);
+}
+
+/* Sin carga: archivado, revocado, dado de baja. Estados que no alarman. */
+.neutro {
+  background: var(--fondo-activo);
+  color: var(--texto-sutil);
+}
+
+.acento {
+  background: var(--acento-suave);
+  color: var(--acento-hover);
+}

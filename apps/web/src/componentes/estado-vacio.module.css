@@ -1,0 +1,21 @@
+.vacio {
+  padding: var(--e7) var(--e5);
+  text-align: center;
+}
+
+.titulo {
+  margin-bottom: var(--e2);
+  font-weight: 500;
+}
+
+.texto {
+  color: var(--texto-sutil);
+  font-size: var(--t-base);
+}
+
+@media (max-width: 48rem) {
+  .vacio {
+    padding-left: var(--e4);
+    padding-right: var(--e4);
+  }
+}

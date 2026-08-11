@@ -1,0 +1,7 @@
+.confirmar {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--e2);
+  color: var(--peligro);
+  font-size: var(--t-sm);
+}
