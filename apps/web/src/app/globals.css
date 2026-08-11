@@ -28,15 +28,36 @@
   --texto-sutil: #5c6169;
   --texto-tenue: #8c9198;
 
+  /*
+   * EL ACENTO ES SOLO PARA LO QUE SE PUEDE PULSAR.
+   *
+   * Accion primaria, enlaces, foco y pestana activa. Nada mas. La marca va en
+   * `--tinta`, no en azul: cuando el logotipo tambien es azul, el ojo deja de
+   * distinguir que es accionable, y eso cuesta tiempo en una herramienta que se
+   * usa ocho horas al dia.
+   */
   --acento: #2a5bd7;
   --acento-hover: #2049b8;
   --acento-suave: #eef2fe;
   --sobre-acento: #ffffff;
 
+  /** La identidad. Negro tinta, no color. */
+  --tinta: #14161a;
+
+  /*
+   * Estados. Cada uno significa algo; ninguno es decorativo.
+   *
+   * `--aviso` existia ya en el codigo escrito a mano —el mismo par de ambar,
+   * repetido en `personal` y en `cuota`— porque no habia token para el. El
+   * "por vencer" de una cuota y el "caducada" de una invitacion son el mismo
+   * concepto, y hasta ahora no lo sabian.
+   */
   --peligro: #b42318;
   --peligro-suave: #fef3f2;
   --exito: #067647;
   --exito-suave: #ecfdf3;
+  --aviso: #a15c07;
+  --aviso-suave: #fff8eb;
 
   /* Escala de espacio. Multiplos de 4: si algo no encaja, encaja mal */
   --e1: 0.25rem;
@@ -47,12 +68,58 @@
   --e6: 2rem;
   --e7: 3rem;
 
+  /*
+   * Escala tipografica.
+   *
+   * Son los tamanos que YA se usaban, sueltos y repetidos 73 veces por los
+   * modulos. Ponerles nombre no cambia nada en pantalla; lo que cambia es que a
+   * partir de ahora hay una lista cerrada en lugar de un valor a ojo.
+   */
+  --t-xs: 0.75rem; /* cabeceras de tabla, etiquetas de estado */
+  --t-sm: 0.8125rem; /* ayudas, metadatos */
+  --t-base: 0.875rem; /* texto de trabajo: tablas y formularios */
+  --t-md: 0.9375rem; /* cuerpo de lectura */
+  --t-lg: 1.0625rem; /* titulo de seccion */
+  --t-xl: 1.375rem; /* titulo de pantalla */
+
+  /*
+   * Numeros tabulares, y no es un detalle de gusto.
+   *
+   * Importes, fechas y numeros de socio se alinean por digito. Sin esto, en una
+   * tabla de pagos las cifras bailan y comparar de un vistazo es imposible.
+   */
+  --numeros: tabular-nums;
+
   --radio: 8px;
   --radio-s: 6px;
-  --sombra: 0 1px 2px rgb(16 24 40 / 4%), 0 1px 3px rgb(16 24 40 / 6%);
+  --radio-l: 12px;
+  /* Pastillas de estado. Se escribia `999px` a mano en cada etiqueta. */
+  --radio-pastilla: 999px;
 
+  /* Dos niveles de elevacion y ni uno mas. */
+  --sombra: 0 1px 2px rgb(16 24 40 / 4%), 0 1px 3px rgb(16 24 40 / 6%);
+  --sombra-elevada: 0 4px 6px -2px rgb(16 24 40 / 3%), 0 12px 16px -4px rgb(16 24 40 / 8%);
+
+  /* Ancho de una linea comoda de leer: formularios y texto seguido. */
+  --ancho-lectura: 44rem;
+  /* Ancho de trabajo: listados y tablas. */
   --ancho-maximo: 72rem;
 }
+
+/*
+ * PUNTOS DE RUPTURA — 48rem y 64rem.
+ *
+ * Van como comentario y no como variables porque `@media` no admite
+ * `var()`: no es una decision, es una limitacion de CSS. Se anotan aqui para
+ * que exista UNA lista y nadie invente un tercero, que es justo lo que paso —
+ * hoy conviven 34rem, 40rem y 48rem.
+ *
+ *   < 48rem   movil     una columna; las tablas dejan de ser tablas
+ *   < 64rem   tableta   navegacion en cajon
+ *   >= 64rem  escritorio
+ *
+ * Unificarlos es trabajo del paso de responsive, no de este.
+ */
 
 *,
 *::before,
@@ -78,7 +145,7 @@ body {
     'Helvetica Neue',
     Arial,
     sans-serif;
-  font-size: 0.9375rem;
+  font-size: var(--t-md);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
@@ -92,13 +159,13 @@ figure {
 }
 
 h1 {
-  font-size: 1.375rem;
+  font-size: var(--t-xl);
   font-weight: 600;
   letter-spacing: -0.01em;
 }
 
 h2 {
-  font-size: 1.0625rem;
+  font-size: var(--t-lg);
   font-weight: 600;
 }
 

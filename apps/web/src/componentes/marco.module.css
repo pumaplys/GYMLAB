@@ -22,7 +22,7 @@
 }
 
 .marca {
-  font-size: 0.8125rem;
+  font-size: var(--t-sm);
   font-weight: 700;
   letter-spacing: 0.08em;
   color: var(--texto);
@@ -33,7 +33,7 @@
 }
 
 .gimnasio {
-  font-size: 0.875rem;
+  font-size: var(--t-base);
   font-weight: 500;
 }
 
@@ -44,7 +44,7 @@
   background: var(--fondo);
   border: 1px solid var(--borde);
   border-radius: var(--radio-s);
-  font-size: 0.875rem;
+  font-size: var(--t-base);
   cursor: pointer;
 }
 
@@ -61,12 +61,12 @@
 }
 
 .nombre {
-  font-size: 0.8125rem;
+  font-size: var(--t-sm);
   font-weight: 500;
 }
 
 .rol {
-  font-size: 0.75rem;
+  font-size: var(--t-xs);
   color: var(--texto-tenue);
 }
 
@@ -82,7 +82,7 @@
   padding: var(--e2) var(--e3);
   border-bottom: 2px solid transparent;
   color: var(--texto-sutil);
-  font-size: 0.875rem;
+  font-size: var(--t-base);
   font-weight: 500;
 }
 

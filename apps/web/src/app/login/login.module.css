@@ -11,7 +11,7 @@
 .olvidada {
   align-self: center;
   color: var(--texto-tenue);
-  font-size: 0.875rem;
+  font-size: var(--t-base);
   text-decoration: underline;
 }
 

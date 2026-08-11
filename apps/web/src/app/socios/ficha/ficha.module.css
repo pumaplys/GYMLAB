@@ -1,7 +1,7 @@
 .volver {
   display: inline-block;
   margin-bottom: var(--e4);
-  font-size: 0.875rem;
+  font-size: var(--t-base);
 }
 
 .encabezado {
@@ -21,15 +21,15 @@
 
 .numero {
   color: var(--texto-tenue);
-  font-size: 0.875rem;
-  font-variant-numeric: tabular-nums;
+  font-size: var(--t-base);
+  font-variant-numeric: var(--numeros);
 }
 
 .etiqueta {
   display: inline-block;
   padding: 0.0625rem var(--e2);
-  border-radius: 999px;
-  font-size: 0.75rem;
+  border-radius: var(--radio-pastilla);
+  font-size: var(--t-xs);
   font-weight: 500;
 }
 
@@ -75,12 +75,12 @@
 
 .datos dt {
   color: var(--texto-sutil);
-  font-size: 0.875rem;
+  font-size: var(--t-base);
 }
 
 .datos dd {
   margin: 0;
-  font-size: 0.875rem;
+  font-size: var(--t-base);
 }
 
 .vacio {
@@ -109,7 +109,7 @@
 .cargando {
   padding: var(--e7) 0;
   color: var(--texto-tenue);
-  font-size: 0.875rem;
+  font-size: var(--t-base);
 }
 
 .confirmar {
@@ -120,7 +120,7 @@
   background: var(--peligro-suave);
   border: 1px solid color-mix(in srgb, var(--peligro) 25%, transparent);
   border-radius: var(--radio-s);
-  font-size: 0.8125rem;
+  font-size: var(--t-sm);
   color: var(--peligro);
 }
 

@@ -4,7 +4,7 @@
   padding: var(--e3) var(--e4);
   border: 1px solid;
   border-radius: var(--radio-s);
-  font-size: 0.875rem;
+  font-size: var(--t-base);
 }
 
 .error {

@@ -34,7 +34,7 @@
 .leyenda {
   padding: 0;
   margin-bottom: var(--e3);
-  font-size: 0.8125rem;
+  font-size: var(--t-sm);
   font-weight: 600;
   color: var(--texto-sutil);
 }
