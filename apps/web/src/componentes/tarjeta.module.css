@@ -1,0 +1,20 @@
+.tarjeta {
+  background: var(--fondo);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+}
+
+.contenido {
+  padding: var(--e5) var(--e6);
+}
+
+/* `overflow: hidden` para que una tabla no se salga de las esquinas. */
+.lista {
+  overflow: hidden;
+}
+
+@media (max-width: 48rem) {
+  .contenido {
+    padding: var(--e4);
+  }
+}

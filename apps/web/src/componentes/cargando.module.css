@@ -1,0 +1,6 @@
+.cargando {
+  padding: var(--e7) var(--e4);
+  color: var(--texto-tenue);
+  font-size: var(--t-base);
+  text-align: center;
+}

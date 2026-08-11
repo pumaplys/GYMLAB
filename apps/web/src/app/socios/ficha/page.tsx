@@ -7,6 +7,7 @@ import { updateMemberSchema, type Invitation, type Member } from '@gymlab/contra
 import { Aviso } from '@/componentes/aviso';
 import { Boton } from '@/componentes/boton';
 import { Campo } from '@/componentes/campo';
+import { Etiqueta } from '@/componentes/etiqueta';
 import { Marco } from '@/componentes/marco';
 import { RutaPrivada } from '@/componentes/ruta-privada';
 import { api } from '@/lib/api';
@@ -119,11 +120,9 @@ function Ficha() {
             {socio.firstName} {socio.lastName}
           </h1>
           <span className={estilos.numero}>N.º {socio.memberNumber}</span>
-          <span
-            className={`${estilos.etiqueta} ${socio.status === 'active' ? estilos.activo : estilos.inactivo}`}
-          >
+          <Etiqueta tono={socio.status === 'active' ? 'exito' : 'neutro'}>
             {socio.status === 'active' ? 'Activo' : 'De baja'}
-          </span>
+          </Etiqueta>
         </div>
 
         {!editando && (

@@ -1,0 +1,34 @@
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--t-base);
+}
+
+.tabla th {
+  padding: var(--e3) var(--e5);
+  border-bottom: 1px solid var(--borde);
+  color: var(--texto-sutil);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.tabla td {
+  padding: var(--e3) var(--e5);
+  border-bottom: 1px solid var(--borde);
+  vertical-align: middle;
+}
+
+.tabla tbody tr:last-child td {
+  border-bottom: none;
+}
+
+@media (max-width: 48rem) {
+  .tabla th,
+  .tabla td {
+    padding-left: var(--e4);
+    padding-right: var(--e4);
+  }
+}

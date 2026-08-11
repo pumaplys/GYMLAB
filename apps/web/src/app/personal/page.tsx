@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   CAN_INVITE,
   createInvitationSchema,
@@ -11,8 +11,16 @@ import {
 import { Aviso } from '@/componentes/aviso';
 import { Boton } from '@/componentes/boton';
 import { Campo } from '@/componentes/campo';
+import { Cargando } from '@/componentes/cargando';
+import { ConfirmacionEnLinea } from '@/componentes/confirmacion-en-linea';
+import { EncabezadoDePagina } from '@/componentes/encabezado-de-pagina';
+import { EstadoVacio } from '@/componentes/estado-vacio';
+import { Etiqueta, type TonoDeEtiqueta } from '@/componentes/etiqueta';
 import { Marco } from '@/componentes/marco';
 import { RutaPrivada } from '@/componentes/ruta-privada';
+import { Selector } from '@/componentes/selector';
+import { Tabla } from '@/componentes/tabla';
+import { Tarjeta } from '@/componentes/tarjeta';
 import { api } from '@/lib/api';
 import { mensajeDeError } from '@/lib/errores';
 import { comoFecha } from '@/lib/formato';
@@ -108,15 +116,10 @@ function Personal() {
 
   return (
     <>
-      <div className={estilos.encabezado}>
-        <div>
-          <h1>Personal</h1>
-          <p className={estilos.entradilla}>
-            Quien trabaja en el gimnasio y a quien has invitado. Los socios no salen aqui: se les
-            invita desde su ficha.
-          </p>
-        </div>
-      </div>
+      <EncabezadoDePagina
+        titulo="Personal"
+        entradilla="Quien trabaja en el gimnasio y a quien has invitado. Los socios no salen aqui: se les invita desde su ficha."
+      />
 
       <div className={estilos.avisos}>
         {error && <Aviso>{error}</Aviso>}
@@ -139,9 +142,7 @@ function Personal() {
       />
 
       {cargando ? (
-        <p className={estilos.cargando} role="status">
-          Cargando…
-        </p>
+        <Cargando>Cargando…</Cargando>
       ) : (
         <>
           {/*
@@ -185,7 +186,6 @@ function Invitar({
   rol: Role;
   onInvitado: (invitacion: Invitation) => void;
 }) {
-  const idRol = useId();
   const puedeInvitarA = CAN_INVITE[rol].filter((r) => ROLES_DE_PERSONAL.includes(r));
 
   const [email, setEmail] = useState('');
@@ -196,12 +196,12 @@ function Invitar({
 
   if (puedeInvitarA.length === 0) {
     return (
-      <div className={estilos.tarjeta}>
-        <p className={estilos.vacioTexto}>
+      <Tarjeta className={estilos.tarjeta}>
+        <p className={estilos.explicacion}>
           Tu rol no puede invitar a personal. Puedes ver las invitaciones, pero crearlas es del
           propietario.
         </p>
-      </div>
+      </Tarjeta>
     );
   }
 
@@ -229,7 +229,7 @@ function Invitar({
   };
 
   return (
-    <div className={estilos.tarjeta}>
+    <Tarjeta className={estilos.tarjeta}>
       <form
         className={estilos.formulario}
         noValidate
@@ -254,23 +254,17 @@ function Invitar({
             }}
           />
 
-          <div className={estilos.campoSelector}>
-            <label className={estilos.etiquetaCampo} htmlFor={idRol}>
-              Rol
-            </label>
-            <select
-              id={idRol}
-              className={estilos.selector}
-              value={rolElegido}
-              onChange={(evento) => setRolElegido(evento.target.value as Role)}
-            >
-              {puedeInvitarA.map((r) => (
-                <option key={r} value={r}>
-                  {NOMBRE_DEL_ROL[r]}
-                </option>
-              ))}
-            </select>
-          </div>
+          <Selector
+            etiqueta="Rol"
+            valor={rolElegido}
+            alCambiar={(valor) => setRolElegido(valor as Role)}
+          >
+            {puedeInvitarA.map((r) => (
+              <option key={r} value={r}>
+                {NOMBRE_DEL_ROL[r]}
+              </option>
+            ))}
+          </Selector>
         </div>
 
         <div className={estilos.pie}>
@@ -279,7 +273,7 @@ function Invitar({
           </Boton>
         </div>
       </form>
-    </div>
+    </Tarjeta>
   );
 }
 
@@ -334,8 +328,8 @@ function PersonalActivo({
         </div>
       )}
 
-      <div className={estilos.panel}>
-        <table className={estilos.tabla}>
+      <Tarjeta variante="lista" className={estilos.panel}>
+        <Tabla>
           <thead>
             <tr>
               <th scope="col">Nombre</th>
@@ -357,19 +351,12 @@ function PersonalActivo({
                 <td className={estilos.acciones}>
                   {puedeRetirar &&
                     (confirmando === persona.userId ? (
-                      <span className={estilos.confirmar}>
-                        ¿Retirar el acceso?
-                        <Boton
-                          variante="sutil"
-                          cargando={retirando === persona.userId}
-                          onClick={() => retirar(persona.userId)}
-                        >
-                          Si
-                        </Boton>
-                        <Boton variante="sutil" onClick={() => setConfirmando(null)}>
-                          No
-                        </Boton>
-                      </span>
+                      <ConfirmacionEnLinea
+                        pregunta="¿Retirar el acceso?"
+                        confirmando={retirando === persona.userId}
+                        onConfirmar={() => retirar(persona.userId)}
+                        onCancelar={() => setConfirmando(null)}
+                      />
                     ) : (
                       <Boton
                         variante="sutil"
@@ -383,19 +370,18 @@ function PersonalActivo({
               </tr>
             ))}
           </tbody>
-        </table>
-      </div>
+        </Tabla>
+      </Tarjeta>
     </section>
   );
 }
 
 /** En que ha quedado cada invitacion. El orden importa: revocada gana a caducada. */
-function estadoDe(invitacion: Invitation): { texto: string; clase: string | undefined } {
-  if (invitacion.revokedAt) return { texto: 'Revocada', clase: estilos.revocada };
-  if (invitacion.acceptedAt) return { texto: 'Aceptada', clase: estilos.aceptada };
-  if (new Date(invitacion.expiresAt) <= new Date())
-    return { texto: 'Caducada', clase: estilos.caducada };
-  return { texto: 'Pendiente', clase: estilos.pendiente };
+function estadoDe(invitacion: Invitation): { texto: string; tono: TonoDeEtiqueta } {
+  if (invitacion.revokedAt) return { texto: 'Revocada', tono: 'neutro' };
+  if (invitacion.acceptedAt) return { texto: 'Aceptada', tono: 'exito' };
+  if (new Date(invitacion.expiresAt) <= new Date()) return { texto: 'Caducada', tono: 'aviso' };
+  return { texto: 'Pendiente', tono: 'acento' };
 }
 
 function Listado({
@@ -425,14 +411,12 @@ function Listado({
     return (
       <section className={estilos.seccion}>
         {cabecera}
-        <div className={estilos.panel}>
-          <div className={estilos.vacio}>
-            <p className={estilos.vacioTitulo}>Todavia no has invitado a nadie</p>
-            <p className={estilos.vacioTexto}>
-              Las invitaciones que envies apareceran aqui con su estado.
-            </p>
-          </div>
-        </div>
+        <Tarjeta variante="lista" className={estilos.panel}>
+          <EstadoVacio
+            titulo="Todavia no has invitado a nadie"
+            texto="Las invitaciones que envies apareceran aqui con su estado."
+          />
+        </Tarjeta>
       </section>
     );
   }
@@ -460,8 +444,8 @@ function Listado({
         </div>
       )}
 
-      <div className={estilos.panel}>
-        <table className={estilos.tabla}>
+      <Tarjeta variante="lista" className={estilos.panel}>
+        <Tabla>
           <thead>
             <tr>
               <th scope="col">Correo</th>
@@ -483,7 +467,7 @@ function Listado({
                   <td className={estilos.correo}>{invitacion.email}</td>
                   <td>{NOMBRE_DEL_ROL[invitacion.role]}</td>
                   <td>
-                    <span className={`${estilos.etiqueta} ${estado.clase}`}>{estado.texto}</span>
+                    <Etiqueta tono={estado.tono}>{estado.texto}</Etiqueta>
                   </td>
                   <td>{comoFecha(invitacion.expiresAt)}</td>
                   <td className={estilos.acciones}>
@@ -494,19 +478,12 @@ function Listado({
                     */}
                     {pendiente &&
                       (confirmando === invitacion.id ? (
-                        <span className={estilos.confirmar}>
-                          ¿Revocar?
-                          <Boton
-                            variante="sutil"
-                            cargando={revocando === invitacion.id}
-                            onClick={() => revocar(invitacion.id)}
-                          >
-                            Si
-                          </Boton>
-                          <Boton variante="sutil" onClick={() => setConfirmando(null)}>
-                            No
-                          </Boton>
-                        </span>
+                        <ConfirmacionEnLinea
+                          pregunta="¿Revocar?"
+                          confirmando={revocando === invitacion.id}
+                          onConfirmar={() => revocar(invitacion.id)}
+                          onCancelar={() => setConfirmando(null)}
+                        />
                       ) : (
                         <Boton
                           variante="sutil"
@@ -521,8 +498,8 @@ function Listado({
               );
             })}
           </tbody>
-        </table>
-      </div>
+        </Tabla>
+      </Tarjeta>
     </section>
   );
 }

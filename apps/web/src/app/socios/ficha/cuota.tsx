@@ -11,6 +11,7 @@ import {
 import { Aviso } from '@/componentes/aviso';
 import { Boton } from '@/componentes/boton';
 import { Campo } from '@/componentes/campo';
+import { Etiqueta, type TonoDeEtiqueta } from '@/componentes/etiqueta';
 import { api } from '@/lib/api';
 import { mensajeDeError } from '@/lib/errores';
 import { aCentimos, comoFecha, comoImporte } from '@/lib/formato';
@@ -49,13 +50,13 @@ const NOMBRE_DEL_ESTADO: Record<DuesState, string> = {
  * aqui: si se anadiera uno, esto deja de compilar en lugar de pintarlo sin
  * color y sin nombre.
  */
-const TONO_DEL_ESTADO: Record<DuesState, string | undefined> = {
-  AL_CORRIENTE: estilos.alCorriente,
-  POR_VENCER: estilos.aviso,
-  EN_GRACIA: estilos.aviso,
-  VENCIDA: estilos.vencida,
-  PAUSADA: estilos.neutro,
-  SIN_SUSCRIPCION: estilos.neutro,
+const TONO_DEL_ESTADO: Record<DuesState, TonoDeEtiqueta> = {
+  AL_CORRIENTE: 'exito',
+  POR_VENCER: 'aviso',
+  EN_GRACIA: 'aviso',
+  VENCIDA: 'peligro',
+  PAUSADA: 'neutro',
+  SIN_SUSCRIPCION: 'neutro',
 };
 
 const NOMBRE_DEL_CONCEPTO: Record<PaymentConcept, string> = {
@@ -145,9 +146,9 @@ export function Cuota({ memberId }: { memberId: string }) {
         <div className={estilos.titulo}>
           <h2>Cuota</h2>
           {cuota && (
-            <span className={`${estilos.etiqueta} ${TONO_DEL_ESTADO[cuota.estado]}`}>
+            <Etiqueta tono={TONO_DEL_ESTADO[cuota.estado]}>
               {NOMBRE_DEL_ESTADO[cuota.estado]}
-            </span>
+            </Etiqueta>
           )}
         </div>
 
