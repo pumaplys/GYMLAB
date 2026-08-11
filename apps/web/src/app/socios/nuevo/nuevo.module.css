@@ -7,7 +7,7 @@
 }
 
 .tarjeta {
-  max-width: 34rem;
+  max-width: var(--ancho-lectura);
   padding: var(--e6);
   background: var(--fondo);
   border: 1px solid var(--borde);
@@ -54,10 +54,10 @@
 
 .aviso {
   margin-bottom: var(--e4);
-  max-width: 34rem;
+  max-width: var(--ancho-lectura);
 }
 
-@media (max-width: 34rem) {
+@media (max-width: 48rem) {
   .pareja {
     grid-template-columns: 1fr;
   }

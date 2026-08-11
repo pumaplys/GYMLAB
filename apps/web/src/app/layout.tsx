@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 import { ProveedorSesion } from '@/lib/sesion';
+import { inter } from '@/lib/tipografia';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -15,7 +16,9 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="es">
+    // La clase de la fuente va en <html> para que la variable `--fuente` este
+    // disponible tambien fuera de <body> y en cualquier portal que se monte.
+    <html lang="es" className={inter.variable}>
       <body>
         {/*
           La sesion se comprueba una vez, aqui arriba, y no en cada pantalla:

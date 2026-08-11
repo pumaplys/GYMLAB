@@ -1,5 +1,5 @@
 .bloque {
-  max-width: 42rem;
+  max-width: var(--ancho-lectura);
   margin-top: var(--e5);
   background: var(--fondo);
   border: 1px solid var(--borde);
@@ -156,7 +156,7 @@
   text-transform: uppercase;
 }
 
-@media (max-width: 40rem) {
+@media (max-width: 48rem) {
   .cabecera,
   .cuerpo {
     padding-left: var(--e4);
