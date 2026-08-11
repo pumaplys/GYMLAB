@@ -5,7 +5,7 @@
 }
 
 .etiqueta {
-  font-size: 0.8125rem;
+  font-size: var(--t-sm);
   font-weight: 500;
   color: var(--texto);
 }
@@ -22,7 +22,7 @@
   background: var(--fondo);
   border: 1px solid var(--borde-fuerte);
   border-radius: var(--radio-s);
-  font-size: 0.875rem;
+  font-size: var(--t-base);
 }
 
 .entrada::placeholder {
@@ -39,7 +39,7 @@
 }
 
 .ayuda {
-  font-size: 0.8125rem;
+  font-size: var(--t-sm);
   color: var(--texto-sutil);
 }
 
@@ -47,6 +47,6 @@
   display: flex;
   align-items: center;
   gap: var(--e1);
-  font-size: 0.8125rem;
+  font-size: var(--t-sm);
   color: var(--peligro);
 }

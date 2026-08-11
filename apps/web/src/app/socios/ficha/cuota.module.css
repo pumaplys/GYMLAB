@@ -26,8 +26,8 @@
 .etiqueta {
   display: inline-block;
   padding: 0.0625rem var(--e2);
-  border-radius: 999px;
-  font-size: 0.75rem;
+  border-radius: var(--radio-pastilla);
+  font-size: var(--t-xs);
   font-weight: 500;
   white-space: nowrap;
 }
@@ -38,8 +38,8 @@
 }
 
 .aviso {
-  background: #fff8eb;
-  color: #a15c07;
+  background: var(--aviso-suave);
+  color: var(--aviso);
 }
 
 .vencida {
@@ -65,17 +65,17 @@
 
 .resumen dt {
   color: var(--texto-sutil);
-  font-size: 0.875rem;
+  font-size: var(--t-base);
 }
 
 .resumen dd {
   margin: 0;
-  font-size: 0.875rem;
+  font-size: var(--t-base);
 }
 
 .sinCuota {
   color: var(--texto-sutil);
-  font-size: 0.875rem;
+  font-size: var(--t-base);
   margin-bottom: var(--e4);
 }
 
@@ -93,7 +93,7 @@
   background: var(--fondo);
   border: 1px solid var(--borde-fuerte);
   border-radius: var(--radio-s);
-  font-size: 0.875rem;
+  font-size: var(--t-base);
 }
 
 .campoSelector {
@@ -103,7 +103,7 @@
 }
 
 .etiquetaCampo {
-  font-size: 0.8125rem;
+  font-size: var(--t-sm);
   font-weight: 500;
 }
 
@@ -130,14 +130,14 @@
 .pagos {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.875rem;
+  font-size: var(--t-base);
 }
 
 .pagos th {
   padding: var(--e2) var(--e6);
   border-bottom: 1px solid var(--borde);
   color: var(--texto-sutil);
-  font-size: 0.75rem;
+  font-size: var(--t-xs);
   font-weight: 600;
   letter-spacing: 0.04em;
   text-align: left;
@@ -154,7 +154,7 @@
 }
 
 .importe {
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: var(--numeros);
   white-space: nowrap;
 }
 
@@ -166,20 +166,20 @@
 .motivo {
   display: block;
   color: var(--texto-tenue);
-  font-size: 0.75rem;
+  font-size: var(--t-xs);
   text-decoration: none;
 }
 
 .vacio {
   padding: var(--e5) var(--e6);
   color: var(--texto-tenue);
-  font-size: 0.875rem;
+  font-size: var(--t-base);
 }
 
 .subtitulo {
   padding: var(--e4) var(--e6) 0;
   color: var(--texto-sutil);
-  font-size: 0.75rem;
+  font-size: var(--t-xs);
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;

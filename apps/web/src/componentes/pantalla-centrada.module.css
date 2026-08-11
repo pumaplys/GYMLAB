@@ -19,7 +19,7 @@
 
 .marca {
   margin-bottom: var(--e5);
-  font-size: 0.8125rem;
+  font-size: var(--t-sm);
   font-weight: 600;
   letter-spacing: 0.08em;
   color: var(--texto-tenue);
@@ -33,5 +33,5 @@
 .entradilla {
   margin-bottom: var(--e5);
   color: var(--texto-sutil);
-  font-size: 0.875rem;
+  font-size: var(--t-base);
 }

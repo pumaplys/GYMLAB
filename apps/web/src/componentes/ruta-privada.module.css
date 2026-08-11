@@ -4,7 +4,7 @@
   justify-content: center;
   min-height: 100dvh;
   color: var(--texto-tenue);
-  font-size: 0.875rem;
+  font-size: var(--t-base);
 }
 
 .gimnasios {
@@ -42,7 +42,7 @@
 
 .rol {
   color: var(--texto-sutil);
-  font-size: 0.8125rem;
+  font-size: var(--t-sm);
 }
 
 .acciones {
@@ -55,5 +55,5 @@
 .pie {
   margin-top: var(--e5);
   color: var(--texto-sutil);
-  font-size: 0.8125rem;
+  font-size: var(--t-sm);
 }

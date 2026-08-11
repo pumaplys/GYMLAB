@@ -10,7 +10,7 @@
   margin-top: var(--e2);
   max-width: 44rem;
   color: var(--texto-sutil);
-  font-size: 0.875rem;
+  font-size: var(--t-base);
 }
 
 .avisos {
@@ -54,7 +54,7 @@
 }
 
 .etiquetaCampo {
-  font-size: 0.8125rem;
+  font-size: var(--t-sm);
   font-weight: 500;
 }
 
@@ -65,13 +65,13 @@
   background: var(--fondo);
   border: 1px solid var(--borde-fuerte);
   border-radius: var(--radio-s);
-  font-size: 0.875rem;
+  font-size: var(--t-base);
 }
 
 .ayudaPeriodo {
   max-width: 40rem;
   color: var(--texto-sutil);
-  font-size: 0.8125rem;
+  font-size: var(--t-sm);
   line-height: 1.5;
 }
 
@@ -94,14 +94,14 @@
 .tabla {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.875rem;
+  font-size: var(--t-base);
 }
 
 .tabla th {
   padding: var(--e3) var(--e5);
   border-bottom: 1px solid var(--borde);
   color: var(--texto-sutil);
-  font-size: 0.75rem;
+  font-size: var(--t-xs);
   font-weight: 600;
   letter-spacing: 0.04em;
   text-align: left;
@@ -125,11 +125,11 @@
 .descripcion {
   margin-top: 0.125rem;
   color: var(--texto-sutil);
-  font-size: 0.8125rem;
+  font-size: var(--t-sm);
 }
 
 .importe {
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: var(--numeros);
   white-space: nowrap;
 }
 
@@ -143,8 +143,8 @@
   display: inline-block;
   margin-top: var(--e2);
   padding: 0.0625rem var(--e2);
-  border-radius: 999px;
-  font-size: 0.75rem;
+  border-radius: var(--radio-pastilla);
+  font-size: var(--t-xs);
   font-weight: 500;
   white-space: nowrap;
 }
@@ -164,7 +164,7 @@
   align-items: center;
   gap: var(--e2);
   color: var(--peligro);
-  font-size: 0.8125rem;
+  font-size: var(--t-sm);
 }
 
 .filaEdicion td {
@@ -187,13 +187,13 @@
 }
 
 .periodoValor {
-  font-size: 0.875rem;
+  font-size: var(--t-base);
   font-weight: 500;
 }
 
 .periodoNota {
   color: var(--texto-sutil);
-  font-size: 0.8125rem;
+  font-size: var(--t-sm);
 }
 
 .accionesEdicion {
@@ -213,13 +213,13 @@
 
 .vacioTexto {
   color: var(--texto-sutil);
-  font-size: 0.875rem;
+  font-size: var(--t-base);
 }
 
 .cargando {
   padding: var(--e7) 0;
   color: var(--texto-tenue);
-  font-size: 0.875rem;
+  font-size: var(--t-base);
   text-align: center;
 }
 

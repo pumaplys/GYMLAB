@@ -20,7 +20,7 @@
   background: var(--fondo);
   border: 1px solid var(--borde-fuerte);
   border-radius: var(--radio-s);
-  font-size: 0.875rem;
+  font-size: var(--t-base);
 }
 
 .panel {
@@ -37,14 +37,14 @@
 .tabla {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.875rem;
+  font-size: var(--t-base);
 }
 
 .tabla th {
   padding: var(--e3) var(--e4);
   border-bottom: 1px solid var(--borde);
   color: var(--texto-sutil);
-  font-size: 0.75rem;
+  font-size: var(--t-xs);
   font-weight: 600;
   letter-spacing: 0.04em;
   text-align: left;
@@ -68,7 +68,7 @@
 
 .numero {
   color: var(--texto-tenue);
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: var(--numeros);
 }
 
 .nombre {
@@ -91,8 +91,8 @@
 .etiqueta {
   display: inline-block;
   padding: 0.0625rem var(--e2);
-  border-radius: 999px;
-  font-size: 0.75rem;
+  border-radius: var(--radio-pastilla);
+  font-size: var(--t-xs);
   font-weight: 500;
   white-space: nowrap;
 }
@@ -119,13 +119,13 @@
 
 .vacioTexto {
   color: var(--texto-sutil);
-  font-size: 0.875rem;
+  font-size: var(--t-base);
 }
 
 .cargando {
   padding: var(--e7) var(--e4);
   color: var(--texto-tenue);
-  font-size: 0.875rem;
+  font-size: var(--t-base);
   text-align: center;
 }
 
