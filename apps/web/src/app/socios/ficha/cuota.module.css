@@ -84,6 +84,15 @@
   text-decoration: line-through;
 }
 
+/* Concepto e importe en la misma linea del titulo, en la tarjeta estrecha. */
+.conceptoEnTarjeta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--e3);
+  width: 100%;
+}
+
 .motivo {
   display: block;
   color: var(--texto-tenue);

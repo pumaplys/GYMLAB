@@ -392,10 +392,8 @@ horizontal del cuerpo, y `prefers-reduced-motion` ya respetado.
 
 1. **El `h1` saltaba 4 px al cambiar de pantalla.** ✅ Resuelto en el paso 5.
 2. **`--texto-tenue` no llegaba al contraste mínimo.** ✅ Resuelto en el paso 5.
-3. **Las tablas siguen desplazándose en horizontal dentro de su tarjeta.** Es la
-   contención del paso 3, no la solución: la buena es convertir cada fila en
-   tarjeta por debajo de 48rem. Afecta a socios, personal (dos tablas), planes y
-   pagos: **paso 6**.
+3. **Las tablas siguen desplazándose en horizontal dentro de su tarjeta.**
+   ✅ Resuelto en el paso 6.
 
 ---
 
@@ -548,3 +546,70 @@ datos, permisos, RLS ni autenticación.
 No inventa pantallas. Dashboard, entrenadores, rutinas y ajustes **siguen sin
 existir** cuando esto termine: el sistema visual deja el terreno preparado para
 cuando se decidan, pero diseñarlas es otra conversación.
+
+# M · Paso 6 · Responsive profundo
+
+## La estrategia: dos estructuras, una visible
+
+Por debajo de **48rem** las cinco tablas del panel se sustituyen por una lista
+de filas apiladas. Las dos estructuras están en el DOM y se conmutan con
+`display: none` en una media query — **no** con `matchMedia`, porque el panel se
+exporta estático: una decisión en JavaScript tendría que esperar a la
+hidratación, y durante ese rato se vería la tabla y después daría un salto.
+
+`display: none` saca la rama escondida del árbol de accesibilidad, así que a
+cada anchura un lector de pantalla encuentra **una** lista, no dos.
+
+## Qué comparten las cinco tablas, y qué no
+
+Todas tienen la misma forma: un identificador, a veces una etiqueta de estado,
+unos cuantos pares dato/valor y a veces acciones. Eso es lo que hay en la
+primitiva.
+
+Lo que **no** comparten es lo único que cambia la semántica: en socios la fila
+entera abre una ficha y en las otras cuatro no. Y esa diferencia no puede ser
+una convención que alguien recuerde —un `<a>` con botones dentro es HTML
+inválido, y una tarjeta que parece pulsable y no lo es es peor que una fea—, así
+que `href` y `acciones` **se excluyen en el tipo**: pasar los dos no compila.
+
+| Lista | Título | Etiqueta | Datos | Acciones | Navegable |
+| --- | --- | --- | --- | --- | --- |
+| Socios | N.º + nombre | Activo/Inactivo | correo, teléfono, alta | — | **Sí** |
+| Personal activo | Nombre | — | correo, rol, desde | Retirar acceso | No |
+| Invitaciones | Correo | Pendiente/… | rol, caduca | Revocar | No |
+| Planes | Nombre + descripción | Archivado | precio, periodicidad, cuotas | Editar, archivar | No |
+| Pagos | Concepto + importe | — | fecha, método, anulado | — | No |
+
+El rol del personal **no** es una pastilla de estado: describe el puesto, no una
+situación que cambie. El de una invitación sí.
+
+## Lo que no se abstrajo
+
+- **Personal e invitaciones comparten primitiva pero no componente.** Una
+  invitación es una promesa y una persona activa es un hecho; forzarlas al mismo
+  renderizador para ahorrar diez líneas habría mezclado dos cosas distintas.
+- **La edición de un plan.** El formulario es el mismo en las dos vistas —un
+  `<td colSpan>` no cabe en un `<li>`, pero los campos sí—, así que se separó el
+  formulario de su envoltura. Lo que no se hizo es meterlo en la primitiva.
+- **Nada parecido a `<Tabla mobileCard mobileTitleColumn …>`.** La primitiva no
+  sabe nada de las tablas; cada pantalla compone la suya.
+
+## Bugs que aparecieron al medir
+
+1. **Planes se desplazaba en horizontal EN ESCRITORIO.** La tabla pedía 736 px
+   dentro de una tarjeta de 702. Lo causaba el `white-space: nowrap` que el paso
+   5 puso en todas las cabeceras: «Cuotas activas» no podía partirse. Ahora las
+   cabeceras numéricas sí se parten y los valores no, que es donde el `nowrap`
+   significa algo.
+2. **La descripción de un plan se pegaba a su nombre** en la tarjeta estrecha:
+   dentro del título va en un `<span>` y se leía «Mensual completaAcceso a
+   sala…».
+3. **El número de socio se anunciaba suelto.** En la tabla lo explica su
+   cabecera; en la tarjeta no hay cabecera, y un lector decía «nueve Elena
+   Bermúdez». Lleva una etiqueta que no se ve y solo oye quien la necesita.
+
+## El límite de 768 px
+
+Sigue habiendo **un solo punto de ruptura**. `max-width: 48rem` incluye el 768,
+así que a esa anchura exacta salen las tarjetas y a partir de 769 la tabla. Es
+la convención que ya tenía todo el código desde el paso 3.

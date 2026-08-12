@@ -13,6 +13,7 @@ import { Boton } from '@/componentes/boton';
 import { Campo } from '@/componentes/campo';
 import { Cargando } from '@/componentes/cargando';
 import { Etiqueta, type TonoDeEtiqueta } from '@/componentes/etiqueta';
+import { Dato, FilaApilada, ListaApilada } from '@/componentes/lista-apilada';
 import { Selector } from '@/componentes/selector';
 import { Tabla, celda } from '@/componentes/tabla';
 import { Tarjeta } from '@/componentes/tarjeta';
@@ -412,8 +413,9 @@ function Pagos({ pagos }: { pagos: Payment[] }) {
   }
 
   return (
-    <Tabla>
-      <thead>
+    <>
+      <Tabla conListaEstrecha>
+        <thead>
         <tr>
           <th scope="col">Fecha</th>
           <th scope="col">Concepto</th>
@@ -435,7 +437,38 @@ function Pagos({ pagos }: { pagos: Payment[] }) {
             </td>
           </tr>
         ))}
-      </tbody>
-    </Tabla>
+        </tbody>
+      </Tabla>
+
+      {/*
+        En estrecho, el importe sube al titulo de la tarjeta junto al concepto:
+        es lo que se busca al abrir el historial —cuanto y de que— y ponerlo
+        como un par mas obligaria a leer las cuatro lineas para encontrarlo.
+
+        Un pago anulado sigue en la lista, tachado y con su motivo: el historial
+        tiene que cuadrar con la contabilidad del gimnasio.
+      */}
+      <ListaApilada etiqueta="Pagos">
+        {pagos.map((pago) => (
+          <FilaApilada
+            key={pago.id}
+            titulo={
+              <span className={estilos.conceptoEnTarjeta}>
+                {NOMBRE_DEL_CONCEPTO[pago.concept]}
+                <span className={`${celda.numerica} ${pago.voidedAt ? estilos.anulado : ''}`}>
+                  {comoImporte(pago.amountCents, pago.currency)}
+                </span>
+              </span>
+            }
+          >
+            <Dato etiqueta="Fecha">{comoFecha(`${pago.paidOn}T00:00:00Z`)}</Dato>
+            <Dato etiqueta="Metodo">
+              {METODOS.find(([valor]) => valor === pago.method)?.[1] ?? pago.method}
+            </Dato>
+            {pago.voidedAt && <Dato etiqueta="Anulado">{pago.voidReason}</Dato>}
+          </FilaApilada>
+        ))}
+      </ListaApilada>
+    </>
   );
 }

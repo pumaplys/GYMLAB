@@ -10,6 +10,7 @@ import { ConfirmacionEnLinea } from '@/componentes/confirmacion-en-linea';
 import { EncabezadoDePagina } from '@/componentes/encabezado-de-pagina';
 import { EstadoVacio } from '@/componentes/estado-vacio';
 import { Etiqueta } from '@/componentes/etiqueta';
+import { Dato, FilaApilada, ListaApilada } from '@/componentes/lista-apilada';
 import { Marco } from '@/componentes/marco';
 import { RutaPrivada } from '@/componentes/ruta-privada';
 import { Selector } from '@/componentes/selector';
@@ -312,7 +313,7 @@ function TablaDePlanes({
         </div>
       )}
 
-      <Tabla>
+      <Tabla conListaEstrecha>
         <thead>
           <tr>
             <th scope="col">Plan</th>
@@ -393,26 +394,108 @@ function TablaDePlanes({
           )}
         </tbody>
       </Tabla>
+
+      {/*
+        En estrecho, cada plan es una tarjeta con los cuatro datos de la tabla:
+        ninguno se esconde. El precio y las cuotas activas mantienen los digitos
+        de ancho fijo, que es lo que deja comparar precios en vertical de un
+        vistazo — que es para lo que se abre esta pantalla.
+
+        Al editar, la tarjeta se sustituye por el formulario, igual que la fila
+        se sustituye por su version editable en la tabla. Es el mismo
+        componente: un `<td colSpan>` no cabe en un `<li>`, pero los campos si.
+      */}
+      <ListaApilada etiqueta="Planes">
+        {planes.map((plan) =>
+          editando === plan.id ? (
+            <li key={plan.id} className={estilos.editandoEnEstrecho}>
+              <Edicion
+                gymId={gymId}
+                plan={plan}
+                onFin={async (recargar) => {
+                  setEditando(null);
+                  if (recargar) await onCambio();
+                }}
+              />
+            </li>
+          ) : (
+            <FilaApilada
+              key={plan.id}
+              titulo={
+                <>
+                  <span className={plan.status === 'archived' ? celda.tenue : ''}>{plan.name}</span>
+                  {plan.description && (
+                    <span className={estilos.descripcion}>{plan.description}</span>
+                  )}
+                </>
+              }
+              etiqueta={
+                plan.status === 'archived' ? <Etiqueta tono="neutro">Archivado</Etiqueta> : undefined
+              }
+              acciones={
+                plan.status === 'active' &&
+                (confirmando === plan.id ? (
+                  <ConfirmacionEnLinea
+                    pregunta={
+                      plan.activeSubscriptions > 0
+                        ? `¿Archivar? ${plan.activeSubscriptions} cuota(s) siguen usandolo`
+                        : '¿Archivar?'
+                    }
+                    confirmando={trabajando === plan.id}
+                    onConfirmar={() => archivar(plan.id)}
+                    onCancelar={() => setConfirmando(null)}
+                  />
+                ) : (
+                  <>
+                    <Boton
+                      variante="sutil"
+                      disabled={trabajando !== null}
+                      onClick={() => setEditando(plan.id)}
+                    >
+                      Editar
+                    </Boton>
+                    <Boton
+                      variante="sutil"
+                      disabled={trabajando !== null}
+                      onClick={() => setConfirmando(plan.id)}
+                    >
+                      Archivar
+                    </Boton>
+                  </>
+                ))
+              }
+            >
+              <Dato etiqueta="Precio">
+                <span className={celda.numerica}>
+                  {comoImporte(plan.priceCents, plan.currency)}
+                </span>
+              </Dato>
+              <Dato etiqueta="Periodicidad">{NOMBRE_DEL_PERIODO[plan.period]}</Dato>
+              <Dato etiqueta="Cuotas activas">
+                <span className={celda.numerica}>{plan.activeSubscriptions}</span>
+              </Dato>
+            </FilaApilada>
+          ),
+        )}
+      </ListaApilada>
     </>
   );
 }
 
+interface PropsDeEdicion {
+  gymId: string;
+  plan: Plan;
+  onFin: (recargar: boolean) => Promise<void>;
+}
+
 /**
- * Edicion en la propia fila.
+ * Editar un plan sin salir del listado.
  *
  * La periodicidad se pinta como TEXTO, no como campo: no esta en
  * `updatePlanSchema` y no puede cambiarse. Enseñarla desactivada explicaria por
  * que mejor que ocultarla.
  */
-function FilaEditando({
-  gymId,
-  plan,
-  onFin,
-}: {
-  gymId: string;
-  plan: Plan;
-  onFin: (recargar: boolean) => Promise<void>;
-}) {
+function Edicion({ gymId, plan, onFin }: PropsDeEdicion) {
   const [nombre, setNombre] = useState(plan.name);
   const [precio, setPrecio] = useState((plan.priceCents / 100).toFixed(2).replace('.', ','));
   const [descripcion, setDescripcion] = useState(plan.description ?? '');
@@ -440,32 +523,48 @@ function FilaEditando({
   };
 
   return (
-    <tr className={estilos.filaEdicion}>
-      <td colSpan={5}>
-        {error && <Aviso>{error}</Aviso>}
+    <>
+      {error && <Aviso>{error}</Aviso>}
 
-        <div className={estilos.edicion}>
+      <div className={estilos.edicion}>
           <Campo etiqueta="Nombre" valor={nombre} alCambiar={setNombre} />
           <Campo etiqueta="Precio" ayuda="En euros" valor={precio} alCambiar={setPrecio} />
           <Campo etiqueta="Descripcion" opcional valor={descripcion} alCambiar={setDescripcion} />
 
-          <div className={estilos.periodoFijo}>
-            <span className={estilos.etiquetaCampo}>Periodicidad</span>
-            <span className={estilos.periodoValor}>{NOMBRE_DEL_PERIODO[plan.period]}</span>
-            <span className={estilos.periodoNota}>
-              No se puede cambiar: reescribiria lo que cubre cada pago ya registrado
-            </span>
-          </div>
+        <div className={estilos.periodoFijo}>
+          <span className={estilos.etiquetaCampo}>Periodicidad</span>
+          <span className={estilos.periodoValor}>{NOMBRE_DEL_PERIODO[plan.period]}</span>
+          <span className={estilos.periodoNota}>
+            No se puede cambiar: reescribiria lo que cubre cada pago ya registrado
+          </span>
         </div>
+      </div>
 
-        <div className={estilos.accionesEdicion}>
-          <Boton variante="primario" cargando={guardando} onClick={guardar}>
-            Guardar
-          </Boton>
-          <Boton disabled={guardando} onClick={() => void onFin(false)}>
-            Cancelar
-          </Boton>
-        </div>
+      <div className={estilos.accionesEdicion}>
+        <Boton variante="primario" cargando={guardando} onClick={guardar}>
+          Guardar
+        </Boton>
+        <Boton disabled={guardando} onClick={() => void onFin(false)}>
+          Cancelar
+        </Boton>
+      </div>
+    </>
+  );
+}
+
+/**
+ * El mismo formulario, dentro de la fila de la tabla.
+ *
+ * Se separo del formulario en si para que la lista estrecha pueda usarlo
+ * tambien: un `<td colSpan>` no vale dentro de un `<li>`, pero los campos son
+ * exactamente los mismos y duplicarlos habria sido tener dos ediciones que
+ * mantener.
+ */
+function FilaEditando(props: PropsDeEdicion) {
+  return (
+    <tr className={estilos.filaEdicion}>
+      <td colSpan={5}>
+        <Edicion {...props} />
       </td>
     </tr>
   );

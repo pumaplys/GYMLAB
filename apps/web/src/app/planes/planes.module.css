@@ -59,7 +59,10 @@
   font-weight: 500;
 }
 
+/* `block` para que en la tarjeta estrecha caiga debajo del nombre y no pegada
+   a el: dentro del titulo va en un `<span>`, y suelto quedaba "PlanDescripcion". */
 .descripcion {
+  display: block;
   margin-top: 0.125rem;
   color: var(--texto-sutil);
   font-size: var(--t-sm);
@@ -120,4 +123,11 @@
   .edicion {
     grid-template-columns: 1fr;
   }
+}
+
+/* La tarjeta de un plan, mientras se edita: mismo relleno que las demas. */
+.editandoEnEstrecho {
+  padding: var(--e4);
+  background: var(--fondo-sutil);
+  border-bottom: 1px solid var(--borde);
 }

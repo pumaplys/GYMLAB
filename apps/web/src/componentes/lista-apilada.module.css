@@ -1,0 +1,115 @@
+/*
+ * La lista solo existe por debajo de 48rem.
+ *
+ * Se esconde con `display: none` y no con JavaScript porque el panel se exporta
+ * estatico: una decision en `matchMedia` tendria que esperar a que hidrate, y
+ * durante ese rato se veria la tabla y despues daria un salto. Y `display: none`
+ * saca el bloque del arbol de accesibilidad, asi que no queda contenido
+ * duplicado: a cada anchura, un lector de pantalla encuentra UNA lista.
+ */
+.lista {
+  display: none;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (max-width: 48rem) {
+  .lista {
+    display: block;
+  }
+}
+
+.fila {
+  padding: var(--e4);
+  border-bottom: 1px solid var(--borde);
+}
+
+.fila:last-child {
+  border-bottom: none;
+}
+
+/*
+ * El enlace ocupa la fila entera.
+ *
+ * `display: block` y no `inline`: asi el objetivo tactil es toda la tarjeta
+ * —unos 100 px de alto— en lugar de la linea del nombre. Es la diferencia entre
+ * acertar con el pulgar a la primera y no.
+ */
+.enlace {
+  display: block;
+  color: inherit;
+}
+
+.enlace:hover {
+  text-decoration: none;
+}
+
+/* El anillo de foco rodea la tarjeta entera, que es lo que se activa. */
+.enlace:focus-visible {
+  outline: 2px solid var(--acento);
+  outline-offset: 4px;
+  border-radius: var(--radio-s);
+}
+
+.cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e3);
+  margin-bottom: var(--e3);
+}
+
+.titulo {
+  font-size: var(--t-md);
+  font-weight: 500;
+  /* Que un nombre largo no empuje la etiqueta de estado fuera de la tarjeta. */
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.enlace .titulo {
+  color: var(--acento);
+}
+
+/*
+ * Etiqueta a la izquierda, valor a la derecha.
+ *
+ * `minmax(0, …)` en las dos columnas para que un correo largo se parta en lugar
+ * de estirar la rejilla: sin eso, a 320 px un `socio12@ejemplo.com` desborda la
+ * tarjeta y con ella la pagina.
+ */
+.datos {
+  display: grid;
+  grid-template-columns: minmax(0, 6.5rem) minmax(0, 1fr);
+  gap: var(--e2) var(--e3);
+  margin: 0;
+}
+
+.nombreDelDato {
+  color: var(--texto-sutil);
+  font-size: var(--t-sm);
+}
+
+.valor {
+  margin: 0;
+  font-size: var(--t-base);
+  overflow-wrap: anywhere;
+}
+
+/*
+ * Las acciones, separadas del dato por un filete.
+ *
+ * Sin el, un boton pegado al ultimo valor parece parte de el. Y `flex-wrap`
+ * porque la confirmacion en linea —"¿Revocar? Si / No"— es mas ancha que el
+ * boton que la abre y a 320 px no cabe en una linea.
+ */
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e2);
+  margin-top: var(--e3);
+  padding-top: var(--e3);
+  border-top: 1px solid var(--borde);
+}

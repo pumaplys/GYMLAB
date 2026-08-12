@@ -16,6 +16,7 @@ import { ConfirmacionEnLinea } from '@/componentes/confirmacion-en-linea';
 import { EncabezadoDePagina } from '@/componentes/encabezado-de-pagina';
 import { EstadoVacio } from '@/componentes/estado-vacio';
 import { Etiqueta, type TonoDeEtiqueta } from '@/componentes/etiqueta';
+import { Dato, FilaApilada, ListaApilada } from '@/componentes/lista-apilada';
 import { Marco } from '@/componentes/marco';
 import { RutaPrivada } from '@/componentes/ruta-privada';
 import { Selector } from '@/componentes/selector';
@@ -332,7 +333,7 @@ function PersonalActivo({
       )}
 
       <Tarjeta variante="lista" className={estilos.panel}>
-        <Tabla>
+        <Tabla conListaEstrecha>
           <thead>
             <tr>
               <th scope="col">Nombre</th>
@@ -374,6 +375,47 @@ function PersonalActivo({
             ))}
           </tbody>
         </Tabla>
+
+        {/*
+          Sin `href`: aqui la tarjeta NO lleva a ningun sitio —no hay ficha de
+          personal— y lo unico pulsable es su boton. El tipo de `FilaApilada`
+          impide pasar los dos, que es lo que evita la tarjeta que parece
+          navegable y no lo es.
+
+          El rol NO es una pastilla de estado: describe el puesto, no una
+          situacion que cambie. Va como par dato/valor, igual que en la tabla.
+        */}
+        <ListaApilada etiqueta="Personal activo">
+          {personal.map((persona) => (
+            <FilaApilada
+              key={persona.userId}
+              titulo={persona.name}
+              acciones={
+                puedeRetirar &&
+                (confirmando === persona.userId ? (
+                  <ConfirmacionEnLinea
+                    pregunta="¿Retirar el acceso?"
+                    confirmando={retirando === persona.userId}
+                    onConfirmar={() => retirar(persona.userId)}
+                    onCancelar={() => setConfirmando(null)}
+                  />
+                ) : (
+                  <Boton
+                    variante="sutil"
+                    disabled={retirando !== null}
+                    onClick={() => setConfirmando(persona.userId)}
+                  >
+                    Retirar acceso
+                  </Boton>
+                ))
+              }
+            >
+              <Dato etiqueta="Correo">{persona.email}</Dato>
+              <Dato etiqueta="Rol">{NOMBRE_DEL_ROL[persona.role]}</Dato>
+              <Dato etiqueta="Desde">{comoFecha(persona.joinedAt)}</Dato>
+            </FilaApilada>
+          ))}
+        </ListaApilada>
       </Tarjeta>
     </section>
   );
@@ -448,7 +490,7 @@ function Listado({
       )}
 
       <Tarjeta variante="lista" className={estilos.panel}>
-        <Tabla>
+        <Tabla conListaEstrecha>
           <thead>
             <tr>
               <th scope="col">Correo</th>
@@ -502,6 +544,53 @@ function Listado({
             })}
           </tbody>
         </Tabla>
+
+        {/*
+          Una invitacion NO es una persona, y por eso esta lista es suya y no
+          la misma que la de arriba con otros campos: una invitacion es una
+          PROMESA —caduca, se revoca, puede no aceptarse— y el personal activo
+          es un HECHO. El identificador tambien es distinto: alli el nombre,
+          aqui el correo, porque hasta que no se acepta no hay nombre.
+
+          Aqui la etiqueta de estado SI es una pastilla: pendiente, aceptada,
+          caducada y revocada son situaciones, y es lo que se mira primero.
+        */}
+        <ListaApilada etiqueta="Invitaciones">
+          {invitaciones.map((invitacion) => {
+            const estado = estadoDe(invitacion);
+            const pendiente = estado.texto === 'Pendiente';
+
+            return (
+              <FilaApilada
+                key={invitacion.id}
+                titulo={invitacion.email}
+                etiqueta={<Etiqueta tono={estado.tono}>{estado.texto}</Etiqueta>}
+                acciones={
+                  pendiente &&
+                  (confirmando === invitacion.id ? (
+                    <ConfirmacionEnLinea
+                      pregunta="¿Revocar?"
+                      confirmando={revocando === invitacion.id}
+                      onConfirmar={() => revocar(invitacion.id)}
+                      onCancelar={() => setConfirmando(null)}
+                    />
+                  ) : (
+                    <Boton
+                      variante="sutil"
+                      disabled={revocando !== null}
+                      onClick={() => setConfirmando(invitacion.id)}
+                    >
+                      Revocar
+                    </Boton>
+                  ))
+                }
+              >
+                <Dato etiqueta="Rol">{NOMBRE_DEL_ROL[invitacion.role]}</Dato>
+                <Dato etiqueta="Caduca">{comoFecha(invitacion.expiresAt)}</Dato>
+              </FilaApilada>
+            );
+          })}
+        </ListaApilada>
       </Tarjeta>
     </section>
   );

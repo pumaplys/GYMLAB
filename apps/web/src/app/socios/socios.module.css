@@ -33,6 +33,20 @@
   white-space: nowrap;
 }
 
+/*
+ * El numero de socio delante del nombre, en la tarjeta estrecha.
+ *
+ * Es el dato por el que recepcion pregunta al telefono —"¿tu numero?"— asi que
+ * no puede quedar enterrado entre los pares de abajo. Va en tenue y con digitos
+ * de ancho fijo para que una columna de numeros se lea recta al deslizar.
+ */
+.numeroEnTarjeta {
+  margin-right: var(--e2);
+  color: var(--texto-tenue);
+  font-variant-numeric: var(--numeros);
+  font-weight: 400;
+}
+
 .enlace {
   color: var(--texto);
 }
