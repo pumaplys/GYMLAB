@@ -22,11 +22,21 @@ import estilos from './tabla.module.css';
  */
 export function Tabla({
   filasPulsables = false,
+  conListaEstrecha = false,
   children,
   className,
 }: {
   /** Resalta la fila al pasar por encima. Solo si la fila lleva a algun sitio. */
   filasPulsables?: boolean;
+  /**
+   * Hay una `ListaApilada` al lado para las pantallas estrechas, asi que la
+   * tabla se aparta por debajo de 48rem.
+   *
+   * Es explicito y no automatico: una tabla sin alternativa que desapareciera
+   * sola en el movil seria un fallo que nadie ve hasta que alguien abre el
+   * panel en un telefono.
+   */
+  conListaEstrecha?: boolean;
   children: ReactNode;
   className?: string;
 }) {
@@ -40,7 +50,11 @@ export function Tabla({
      * dentro, lo unico que se mueve es la tabla, y la paginacion, el estado
      * vacio y cualquier otra cosa de la tarjeta se quedan donde estan.
      */
-    <div className={estilos.desplazable}>
+    <div
+      className={[estilos.desplazable, conListaEstrecha ? estilos.soloAncho : '']
+        .filter(Boolean)
+        .join(' ')}
+    >
       <table
         className={[estilos.tabla, filasPulsables ? estilos.pulsables : '', className ?? '']
           .filter(Boolean)

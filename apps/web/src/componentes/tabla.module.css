@@ -10,6 +10,18 @@
   overflow-x: auto;
 }
 
+/*
+ * Con lista apilada al lado, la tabla se aparta en estrecho.
+ *
+ * `display: none` la saca tambien del arbol de accesibilidad, que es lo que
+ * evita que un lector de pantalla encuentre los mismos datos dos veces.
+ */
+@media (max-width: 48rem) {
+  .soloAncho {
+    display: none;
+  }
+}
+
 .tabla {
   width: 100%;
   border-collapse: collapse;
@@ -31,8 +43,22 @@
   letter-spacing: 0.04em;
   text-align: left;
   text-transform: uppercase;
-  /* Una cabecera partida en dos lineas descuadra el alto de la fila. */
-  white-space: nowrap;
+}
+
+/*
+ * Las cabeceras SI pueden partirse en dos lineas, y los valores no.
+ *
+ * En el paso 5 se les puso `nowrap` a todas por estetica —una cabecera de dos
+ * lineas descuadra el alto de la fila— y salio caro: medido, la tabla de planes
+ * pedia 736 px dentro de una tarjeta de 702 y se desplazaba de lado EN
+ * ESCRITORIO por culpa de "Cuotas activas", que no podia partirse.
+ *
+ * Una cabecera en dos lineas se lee igual de bien. Un importe partido por la
+ * mitad, no — por eso `nowrap` se queda en las celdas numericas y en las de
+ * acciones, que es donde significa algo.
+ */
+.tabla th.numerica {
+  white-space: normal;
 }
 
 .tabla td {

@@ -9,6 +9,7 @@ import { Cargando } from '@/componentes/cargando';
 import { EncabezadoDePagina } from '@/componentes/encabezado-de-pagina';
 import { EstadoVacio } from '@/componentes/estado-vacio';
 import { Etiqueta } from '@/componentes/etiqueta';
+import { Dato, FilaApilada, ListaApilada } from '@/componentes/lista-apilada';
 import { Marco } from '@/componentes/marco';
 import { Paginacion } from '@/componentes/paginacion';
 import { Tabla, celda } from '@/componentes/tabla';
@@ -142,7 +143,7 @@ function Socios() {
           lista && (
             <>
               <div className={cargando ? estilos.refrescando : ''}>
-                <Tabla filasPulsables>
+                <Tabla filasPulsables conListaEstrecha>
                   <thead>
                     <tr>
                       <th scope="col">N.º</th>
@@ -183,6 +184,53 @@ function Socios() {
                     ))}
                   </tbody>
                 </Tabla>
+
+                {/*
+                  En estrecho, cada socio es una tarjeta y la tarjeta ENTERA
+                  abre su ficha. En la tabla el enlace es solo el nombre —para
+                  poder abrirlo en otra pestana— pero con el pulgar esa linea
+                  de texto es un objetivo de 20 px, y aqui son 100.
+
+                  Se conservan los seis datos de la tabla: el numero y el
+                  estado suben a la cabecera, donde se ven sin leer, y correo,
+                  telefono y alta quedan como pares con su nombre delante.
+                */}
+                <ListaApilada etiqueta="Socios">
+                  {lista.items.map((socio) => (
+                    <FilaApilada
+                      key={socio.id}
+                      href={`/socios/ficha?id=${encodeURIComponent(socio.id)}`}
+                      titulo={
+                        <>
+                          <span className={estilos.numeroEnTarjeta}>
+                            {/*
+                              En la tabla el numero lo explica su cabecera; aqui
+                              no hay cabecera, y suelto se anuncia como "nueve
+                              Elena Bermudez", que no dice de que es el nueve.
+                              La etiqueta no se ve: solo la oye quien la necesita.
+                            */}
+                            <span className="solo-lectores">Numero de socio </span>
+                            {socio.memberNumber}
+                          </span>
+                          {socio.firstName} {socio.lastName}
+                        </>
+                      }
+                      etiqueta={
+                        <Etiqueta tono={socio.status === 'active' ? 'exito' : 'neutro'}>
+                          {socio.status === 'active' ? 'Activo' : 'Inactivo'}
+                        </Etiqueta>
+                      }
+                    >
+                      <Dato etiqueta="Correo">
+                        {socio.email ?? <span className={celda.tenue}>—</span>}
+                      </Dato>
+                      <Dato etiqueta="Telefono">
+                        {socio.phone ?? <span className={celda.tenue}>—</span>}
+                      </Dato>
+                      <Dato etiqueta="Alta">{comoFecha(socio.joinedAt)}</Dato>
+                    </FilaApilada>
+                  ))}
+                </ListaApilada>
               </div>
 
               <Paginacion
