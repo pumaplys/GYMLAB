@@ -5,8 +5,10 @@ import { createMemberSchema, type Member } from '@gymlab/contracts';
 import { Aviso } from '@/componentes/aviso';
 import { Boton, BotonEnlace } from '@/componentes/boton';
 import { Campo } from '@/componentes/campo';
+import { EncabezadoDePagina } from '@/componentes/encabezado-de-pagina';
 import { Marco } from '@/componentes/marco';
 import { RutaPrivada } from '@/componentes/ruta-privada';
+import { Tarjeta } from '@/componentes/tarjeta';
 import { api } from '@/lib/api';
 import { useFormulario } from '@/lib/formulario';
 import { ROLES_DEL_PANEL } from '@/lib/roles';
@@ -31,10 +33,10 @@ function NuevoSocio() {
 
   return (
     <>
-      <div className={estilos.encabezado}>
-        <h1>Nuevo socio</h1>
-        <BotonEnlace href="/socios">Volver al listado</BotonEnlace>
-      </div>
+      <EncabezadoDePagina
+        titulo="Nuevo socio"
+        acciones={<BotonEnlace href="/socios">Volver al listado</BotonEnlace>}
+      />
 
       {ultimo && (
         <div className={estilos.aviso}>
@@ -45,7 +47,7 @@ function NuevoSocio() {
         </div>
       )}
 
-      <div className={estilos.tarjeta}>
+      <Tarjeta className={estilos.tarjeta}>
         <Formulario
           key={ronda}
           alCrear={(socio) => {
@@ -53,7 +55,7 @@ function NuevoSocio() {
             setRonda((anterior) => anterior + 1);
           }}
         />
-      </div>
+      </Tarjeta>
     </>
   );
 }

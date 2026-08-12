@@ -1,9 +1,18 @@
+/*
+ * Solo lo que es de ESTA pantalla.
+ *
+ * La tabla, el desplazamiento y los modificadores de celda —numero, tenue— se
+ * fueron a `componentes/tabla`: eran la tercera copia de la misma tabla.
+ */
+
 .herramientas {
   display: flex;
   gap: var(--e3);
   margin-bottom: var(--e4);
 }
 
+/* Un buscador no es un campo de formulario: no lleva etiqueta visible ni ayuda,
+   y su ancho es el de la caja, no el de la columna. */
 .buscador {
   width: 100%;
   max-width: 22rem;
@@ -15,45 +24,8 @@
   font-size: var(--t-base);
 }
 
-.desplazable {
-  overflow-x: auto;
-}
-
-.tabla {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: var(--t-base);
-}
-
-.tabla th {
-  padding: var(--e3) var(--e4);
-  border-bottom: 1px solid var(--borde);
-  color: var(--texto-sutil);
-  font-size: var(--t-xs);
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-align: left;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.tabla td {
-  padding: var(--e3) var(--e4);
-  border-bottom: 1px solid var(--borde);
-  vertical-align: middle;
-}
-
-.tabla tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.tabla tbody tr:hover {
-  background: var(--fondo-sutil);
-}
-
-.numero {
+.buscador::placeholder {
   color: var(--texto-tenue);
-  font-variant-numeric: var(--numeros);
 }
 
 .nombre {
@@ -69,20 +41,9 @@
   color: var(--acento);
 }
 
-.tenue {
-  color: var(--texto-tenue);
-}
-
 /* Mientras llega una pagina nueva, la anterior se atenua en lugar de
    desaparecer: la tabla no da un salto y no se pierde la referencia. */
 .refrescando {
   opacity: 0.55;
   transition: opacity 0.12s ease;
-}
-
-@media (max-width: 48rem) {
-  .encabezado {
-    flex-direction: column;
-    align-items: stretch;
-  }
 }

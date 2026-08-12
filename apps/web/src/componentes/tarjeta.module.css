@@ -11,43 +11,54 @@
  * │ caian en x=436 y estiraban el documento a 438 px. La pagina entera se    │
  * │ desplazaba 63 px de lado por una etiqueta invisible.                     │
  * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * `overflow: hidden` para que una tabla no se salga de las esquinas.
  */
 .tarjeta {
   position: relative;
+  overflow: hidden;
   background: var(--fondo);
   border: 1px solid var(--borde);
   border-radius: var(--radio);
 }
 
-.contenido {
-  padding: var(--e5) var(--e6);
+/*
+ * La cabecera va FUERA del cuerpo, y por eso el filete llega de borde a borde.
+ * El relleno horizontal es el mismo que el del cuerpo, para que el titulo y el
+ * contenido arranquen en la misma vertical.
+ */
+.cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e4);
+  min-height: 2.25rem;
+  padding: var(--e4) var(--e5);
+  border-bottom: 1px solid var(--borde);
 }
 
-/* `overflow: hidden` para que una tabla no se salga de las esquinas. */
+.contenido {
+  padding: var(--e5);
+}
+
+/*
+ * Sin relleno: lo ponen las celdas de la tabla, con el mismo valor.
+ *
+ * Y sin `overflow` tampoco: el desplazamiento horizontal vive dentro de
+ * `Tabla`. Si estuviera aqui, al desplazar la tabla se irian con ella sus
+ * hermanas —la paginacion de socios se perdia por la izquierda— y tambien la
+ * cabecera de la tarjeta.
+ */
 .lista {
-  overflow: hidden;
+  padding: 0;
 }
 
 @media (max-width: 48rem) {
-  .contenido {
-    padding: var(--e4);
+  .cabecera {
+    padding: var(--e3) var(--e4);
   }
 
-  /*
-   * ┌────────────────────────────────────────────────────────────────────────┐
-   * │ EN ESTRECHO, LA TABLA SE DESPLAZA DENTRO DE SU TARJETA.                │
-   * │                                                                        │
-   * │ Sin esto, una tabla de cinco columnas mide 434 px en una pantalla de    │
-   * │ 375 y quien desplaza no es ella: es LA PAGINA ENTERA. La cabecera y el │
-   * │ resto del contenido se van con ella, que es la peor forma de leer una  │
-   * │ lista en un movil.                                                     │
-   * │                                                                        │
-   * │ No es la solucion definitiva —esa es convertir cada fila en una        │
-   * │ tarjeta, y llega en la pasada de responsive—, pero deja el cuerpo de   │
-   * │ la pagina quieto desde ya en lugar de dejarlo roto hasta entonces.     │
-   * └────────────────────────────────────────────────────────────────────────┘
-   */
-  .lista {
-    overflow: auto;
+  .contenido {
+    padding: var(--e4);
   }
 }

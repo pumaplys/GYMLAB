@@ -388,23 +388,88 @@ utilizable y no.
 Objetivos concretos: **44 px** de zona táctil mínima, ningún desplazamiento
 horizontal del cuerpo, y `prefers-reduced-motion` ya respetado.
 
-## Hallazgos del paso 4 que se arreglan más adelante
+## Hallazgos del paso 4, y qué pasó con ellos
 
-Salieron midiendo el layout nuevo, pero corregirlos aquí habría sido rediseñar
-pantallas, que es el paso siguiente. Se anotan para no perderlos:
-
-1. **El `h1` salta 4 px al cambiar de pantalla.** `EncabezadoDePagina` empieza
-   en la misma coordenada en todas —el marco es estable—, pero socios usa
-   `alineacion="centro"` y personal `"arriba"`, así que el título queda a 142 px
-   en una y 138 en la otra. Es decisión de cada pantalla: **paso 5**.
-2. **`--texto-tenue` no llega al contraste mínimo.** Sobre blanco da **3.17**, y
-   AA pide 4.5 para texto pequeño. En la cabecera ya se cambió a `--texto-sutil`
-   (6.23), pero el token se sigue usando en otras pantallas y hay que repasarlas
-   una a una: **paso 5**.
+1. **El `h1` saltaba 4 px al cambiar de pantalla.** ✅ Resuelto en el paso 5.
+2. **`--texto-tenue` no llegaba al contraste mínimo.** ✅ Resuelto en el paso 5.
 3. **Las tablas siguen desplazándose en horizontal dentro de su tarjeta.** Es la
-   contención que se puso en el paso 3, no la solución: la buena es convertir
-   cada fila en tarjeta por debajo de 48rem. Afecta a socios, personal (dos
-   tablas) y planes: **paso 6**.
+   contención del paso 3, no la solución: la buena es convertir cada fila en
+   tarjeta por debajo de 48rem. Afecta a socios, personal (dos tablas), planes y
+   pagos: **paso 6**.
+
+---
+
+# L · Paso 5 · Componentes interactivos y superficies
+
+## Lo que se encontró: la duplicación no se había ido, se había escondido
+
+El paso 2 extrajo ocho componentes, pero cuatro pantallas seguían pintándose las
+suyas. Al medirlo aparecieron **tres tablas** escritas tres veces —con relleno
+`--e4`, `--e5` y `--e6`, o sea que cada una empezaba en una vertical distinta—,
+**cuatro copias de la superficie de tarjeta** (cuota, ficha, nuevo y la de
+verdad) y **cuatro encabezados de página**, de los cuales solo uno era el
+componente.
+
+## Botones
+
+| Variante | Para qué | Dónde |
+| --- | --- | --- |
+| `primario` | La acción de la pantalla. **Una** por contexto | Crear, guardar, dar de alta |
+| `secundario` | Lo demás que se puede hacer | Editar, cancelar, invitar |
+| `peligro` | **Confirmar** algo que quita acceso | El «Sí» de una confirmación |
+| `sutil` | Acción de fila o de apoyo | Retirar, archivar, salir |
+
+El rojo va **solo en la confirmación, nunca en el botón que la abre**: «Dar de
+baja» es secundario y «¿Seguro? Sí» es peligro. Pintar de rojo el primero llena
+la pantalla de alarma antes de que nadie haya decidido nada.
+
+Antes, el «Sí» que retiraba un acceso y el «No» que lo cancelaba eran **el mismo
+botón sutil**: había que leer la palabra para saber cuál era cuál.
+
+Tamaños: `md` (2.25rem) por defecto y `sm` (1.75rem) para acciones dentro de una
+fila de tabla — 28 px, por encima del mínimo de 24 que pide WCAG 2.2.
+
+## Campos
+
+`Campo` y `Selector` comparten ahora una sola envoltura —etiqueta, control,
+ayuda, error, y los `aria-describedby` que los atan—. El desplegable no tenía
+ayuda ni error, **y por eso cuota no lo usaba**: se había escrito tres `<select>`
+a mano. La caja mide 2.25rem, igual que un botón, para que un campo y su botón
+cuadren en una fila.
+
+## Superficies
+
+`Tarjeta` admite `titulo` y `acciones`, que dibujan una cabecera con filete. Se
+añadió porque cuota ya la tenía escrita a mano y era la última superficie que
+seguía siendo copia. El relleno vive en el **cuerpo** y no en la tarjeta: si
+estuviera en la tarjeta, el filete no llegaría a los bordes.
+
+## Tablas
+
+Una sola tabla, con **una** opción: `filasPulsables`. Es la única diferencia que
+significaba algo —en socios cada fila abre una ficha; en planes y personal las
+filas no van a ninguna parte y el mismo resalte prometería algo que no pasa—.
+Los modificadores de celda (`numerica`, `acciones`, `tenue`) se exportan como
+clases.
+
+## Cómo se arregló el salto de 4 px
+
+Desapareció el parámetro `alineacion`. Ahora el título y las acciones comparten
+una **fila de alto fijo** (2.25rem, el alto de un botón) y la entradilla va
+debajo de esa fila, no dentro. El `h1` cae en la misma coordenada haya o no haya
+botón, haya o no haya entradilla — y nadie tiene que elegir nada.
+
+En estrecho ese alto fijo **se quita**: apilado no alinea nada, y provocaba el
+mismo salto en el otro sentido (sin acciones, el bloque del título se estiraba
+hasta los 36 px y centraba el `h1` dentro).
+
+## Contraste
+
+`--texto-tenue` pasa de `#8c9198` a `#6b7280`. No fallaba en un sitio: fallaba
+en los 21 donde se usa. Ahora da **4.83** sobre blanco y **4.55** sobre
+`--fondo-sutil`, la otra superficie donde aparece; los valores intermedios que
+se probaron pasaban sobre blanco y fallaban sobre el gris. Sigue siendo el más
+claro de los tres, así que la jerarquía se conserva.
 
 ---
 

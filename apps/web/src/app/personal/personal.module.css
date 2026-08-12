@@ -49,6 +49,7 @@
   margin-bottom: var(--e2);
 }
 
+/* Explicacion de seccion: va encima de la tarjeta, no dentro. */
 .explicacion {
   margin-bottom: var(--e3);
   color: var(--texto-sutil);
@@ -62,16 +63,6 @@
 .correo {
   font-weight: 500;
   word-break: break-all;
-}
-
-.desde {
-  color: var(--texto-tenue);
-  white-space: nowrap;
-}
-
-.acciones {
-  text-align: right;
-  white-space: nowrap;
 }
 
 @media (max-width: 48rem) {

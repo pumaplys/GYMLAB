@@ -1,20 +1,35 @@
 .encabezado {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--e4);
   margin-bottom: var(--e5);
 }
 
-.arriba {
-  align-items: flex-start;
-}
-
-.centro {
+/*
+ * La fila del titulo tiene alto fijo, y de ahi sale la estabilidad.
+ *
+ * `min-height` es la altura de un boton (2.25rem). Con el titulo y las acciones
+ * centrados dentro, el `h1` cae en la misma coordenada tenga o no tenga boton
+ * al lado: sin esto, una pantalla con accion mide 36 px de fila y una sin ella
+ * 28, y el titulo baila al navegar.
+ */
+.fila {
+  display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: var(--e4);
+  min-height: 2.25rem;
 }
 
+/* El titulo con lo que lo acompana: numero, etiqueta de estado. */
+.identidad {
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+/* Debajo de la fila, no dentro: asi no empuja al titulo ni a las acciones. */
 .entradilla {
-  margin-top: var(--e2);
+  margin-top: var(--e3);
   max-width: var(--ancho-lectura);
   color: var(--texto-sutil);
   font-size: var(--t-base);
@@ -22,8 +37,17 @@
 
 /* En estrecho, la accion baja debajo del titulo en lugar de estrujarlo. */
 @media (max-width: 48rem) {
-  .encabezado {
+  .fila {
     flex-direction: column;
     align-items: stretch;
+    gap: var(--e3);
+    /*
+     * Y el alto fijo se quita: en columna ya no alinea nada con nada, y ademas
+     * estropeaba justo lo que arregla en ancho. Medido a 375: sin acciones,
+     * `.identidad` se estiraba hasta los 36 px y centraba el titulo dentro, con
+     * lo que el `h1` volvia a caer 4 px por debajo del de las pantallas que si
+     * tienen boton — el mismo salto, otra vez, en el otro sentido.
+     */
+    min-height: 0;
   }
 }

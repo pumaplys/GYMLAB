@@ -19,7 +19,7 @@ import { Etiqueta, type TonoDeEtiqueta } from '@/componentes/etiqueta';
 import { Marco } from '@/componentes/marco';
 import { RutaPrivada } from '@/componentes/ruta-privada';
 import { Selector } from '@/componentes/selector';
-import { Tabla } from '@/componentes/tabla';
+import { Tabla, celda } from '@/componentes/tabla';
 import { Tarjeta } from '@/componentes/tarjeta';
 import { api } from '@/lib/api';
 import { mensajeDeError } from '@/lib/errores';
@@ -194,6 +194,9 @@ function Invitar({
   const [error, setError] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
 
+  // Sin cabecera, a diferencia del formulario: esto es un aviso de que la
+  // seccion no aplica. Ponerle el titulo "Invitar a alguien" a un texto que
+  // dice justo que no se puede invitar promete un formulario que no esta.
   if (puedeInvitarA.length === 0) {
     return (
       <Tarjeta className={estilos.tarjeta}>
@@ -347,8 +350,8 @@ function PersonalActivo({
                 <td className={estilos.nombre}>{persona.name}</td>
                 <td className={estilos.correo}>{persona.email}</td>
                 <td>{NOMBRE_DEL_ROL[persona.role]}</td>
-                <td className={estilos.desde}>{comoFecha(persona.joinedAt)}</td>
-                <td className={estilos.acciones}>
+                <td className={celda.tenue}>{comoFecha(persona.joinedAt)}</td>
+                <td className={celda.acciones}>
                   {puedeRetirar &&
                     (confirmando === persona.userId ? (
                       <ConfirmacionEnLinea
@@ -470,7 +473,7 @@ function Listado({
                     <Etiqueta tono={estado.tono}>{estado.texto}</Etiqueta>
                   </td>
                   <td>{comoFecha(invitacion.expiresAt)}</td>
-                  <td className={estilos.acciones}>
+                  <td className={celda.acciones}>
                     {/*
                       Revocar solo aparece en las pendientes. La API rechaza las
                       demas con un 404, pero ofrecer el boton para que falle es

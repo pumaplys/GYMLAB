@@ -1,3 +1,18 @@
+/*
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ CUATRO VARIANTES, Y CADA UNA DICE ALGO DISTINTO.                        │
+ * │                                                                          │
+ * │   primario    la accion de esta pantalla. UNA por contexto.             │
+ * │   secundario  lo demas que se puede hacer, sin llamar la atencion.      │
+ * │   peligro     confirmar algo que quita acceso o da de baja.             │
+ * │   sutil       accion de fila o de apoyo; no compite con el contenido.   │
+ * │                                                                          │
+ * │ El rojo va SOLO en la confirmacion, nunca en el boton que la abre. Es    │
+ * │ decir: "Dar de baja" es secundario y "¿Seguro? Si" es peligro. Pintar    │
+ * │ de rojo el primero llena la pantalla de alarma antes de que nadie haya   │
+ * │ decidido nada, y cuando todo alarma ya no alarma nada.                   │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ */
 .boton {
   display: inline-flex;
   align-items: center;
@@ -14,6 +29,19 @@
   transition:
     background-color 0.12s ease,
     border-color 0.12s ease;
+}
+
+/*
+ * `sm` para acciones dentro de una fila de tabla.
+ *
+ * 1.75rem son 28 px: por encima del minimo de 24 que pide WCAG 2.2 para un
+ * objetivo, y suficiente para que una tabla de diez filas no parezca una lista
+ * de botones. El tamano normal se queda para todo lo demas.
+ */
+.sm {
+  min-height: 1.75rem;
+  padding: 0 var(--e3);
+  font-size: var(--t-sm);
 }
 
 .boton:disabled {
@@ -40,6 +68,21 @@
   background: var(--fondo-hover);
 }
 
+/*
+ * Relleno y no contorno: es el unico boton que confirma algo que cuesta
+ * deshacer, y tiene que distinguirse de un vistazo del "No" que hay al lado.
+ * Un contorno rojo junto a un boton gris se confunde a la velocidad a la que se
+ * trabaja en un mostrador.
+ */
+.peligro {
+  background: var(--peligro);
+  color: var(--sobre-acento);
+}
+
+.peligro:hover:not(:disabled) {
+  background: var(--peligro-fuerte);
+}
+
 .sutil {
   background: transparent;
   color: var(--texto-sutil);
@@ -63,6 +106,11 @@
   border-right-color: transparent;
   border-radius: 50%;
   animation: girar 0.6s linear infinite;
+}
+
+.sm .girando {
+  width: 0.75rem;
+  height: 0.75rem;
 }
 
 @keyframes girar {

@@ -1,9 +1,27 @@
+/*
+ * Sin media query: `auto` no pinta barra si el contenido cabe, asi que vale
+ * igual a 375 que a 1440 — y cubre el hueco entre 768 px y el ancho que
+ * necesite la tabla mas ancha, donde antes la pagina volvia a desplazarse.
+ *
+ * No es la solucion definitiva —esa es convertir cada fila en una tarjeta, y
+ * llega en la pasada de responsive—, pero deja el cuerpo de la pagina quieto.
+ */
+.desplazable {
+  overflow-x: auto;
+}
+
 .tabla {
   width: 100%;
   border-collapse: collapse;
   font-size: var(--t-base);
 }
 
+/*
+ * El relleno horizontal es `--e5`, el mismo que el cuerpo de la tarjeta: asi la
+ * primera columna arranca en la misma vertical que el texto de cualquier otra
+ * tarjeta de la pantalla. Antes habia tres valores —`--e4` en socios, `--e5`
+ * aqui y `--e6` en los pagos de la ficha— y cada tabla empezaba en un sitio.
+ */
 .tabla th {
   padding: var(--e3) var(--e5);
   border-bottom: 1px solid var(--borde);
@@ -13,6 +31,8 @@
   letter-spacing: 0.04em;
   text-align: left;
   text-transform: uppercase;
+  /* Una cabecera partida en dos lineas descuadra el alto de la fila. */
+  white-space: nowrap;
 }
 
 .tabla td {
@@ -23,6 +43,38 @@
 
 .tabla tbody tr:last-child td {
   border-bottom: none;
+}
+
+/*
+ * El resalte al pasar por encima SOLO donde la fila lleva a algun sitio.
+ *
+ * En socios cada fila abre una ficha, y el resalte dice "esto se pulsa". En
+ * planes y en personal las filas no van a ninguna parte —lo pulsable son los
+ * botones de dentro— y ahi el mismo resalte prometeria algo que no pasa.
+ */
+.pulsables tbody tr:hover {
+  background: var(--fondo-sutil);
+}
+
+/*
+ * Modificadores de celda, para no reescribirlos en cada pantalla.
+ *
+ * `numerica` alinea a la derecha y con digitos de ancho fijo: es lo que permite
+ * comparar una columna de importes de un vistazo en lugar de leerlos uno a uno.
+ */
+.numerica {
+  text-align: right;
+  font-variant-numeric: var(--numeros);
+  white-space: nowrap;
+}
+
+.acciones {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.tenue {
+  color: var(--texto-tenue);
 }
 
 @media (max-width: 48rem) {

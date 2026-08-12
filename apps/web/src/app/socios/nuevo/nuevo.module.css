@@ -1,17 +1,6 @@
-.encabezado {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--e4);
-  margin-bottom: var(--e5);
-}
-
+/* Solo el ancho: la superficie la pone `Tarjeta`. */
 .tarjeta {
   max-width: var(--ancho-lectura);
-  padding: var(--e6);
-  background: var(--fondo);
-  border: 1px solid var(--borde);
-  border-radius: var(--radio);
 }
 
 .formulario {
@@ -60,9 +49,5 @@
 @media (max-width: 48rem) {
   .pareja {
     grid-template-columns: 1fr;
-  }
-
-  .tarjeta {
-    padding: var(--e4);
   }
 }

@@ -1,3 +1,10 @@
+/*
+ * La estructura de UN campo, sea del tipo que sea.
+ *
+ * Etiqueta arriba, control, y debajo la ayuda y el error. Lo comparten `Campo`
+ * y `Selector`: antes cada uno tenia su propia `.etiqueta` y su propio hueco, y
+ * un desplegable al lado de un input no acababa de cuadrar.
+ */
 .campo {
   display: flex;
   flex-direction: column;
@@ -16,24 +23,45 @@
   color: var(--texto-tenue);
 }
 
-.entrada {
+/*
+ * El control: input, select y textarea con la misma caja.
+ *
+ * `2.25rem` de alto es la misma medida que un boton, para que un campo y el
+ * boton que lo acompana en una fila queden alineados por arriba y por abajo.
+ */
+.control {
   min-height: 2.25rem;
   padding: 0 var(--e3);
   background: var(--fondo);
   border: 1px solid var(--borde-fuerte);
   border-radius: var(--radio-s);
+  color: var(--texto);
   font-size: var(--t-base);
 }
 
-.entrada::placeholder {
+.control::placeholder {
   color: var(--texto-tenue);
 }
 
-.entrada:disabled {
-  background: var(--fondo-hover);
-  color: var(--texto-sutil);
+.control:hover:not(:disabled) {
+  border-color: var(--texto-tenue);
 }
 
+/*
+ * Deshabilitado se dice con el fondo, no con el texto.
+ *
+ * Aclarar la letra ademas de grisear el fondo deja un campo que no se lee; y un
+ * campo deshabilitado se sigue consultando —"¿que ponia aqui?"— aunque no se
+ * pueda editar.
+ */
+.control:disabled {
+  background: var(--fondo-hover);
+  color: var(--texto-sutil);
+  cursor: not-allowed;
+}
+
+/* El borde rojo NO es la unica senal: debajo va el mensaje, y ademas el control
+   lleva `aria-invalid` y `aria-describedby`. */
 .conError {
   border-color: var(--peligro);
 }
