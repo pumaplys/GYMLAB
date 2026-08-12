@@ -314,6 +314,60 @@ debajo de 48rem, la cabecera se queda solo con marca, cajón y persona.
 Es el cambio estructural más grande de la propuesta, y por eso va en su propio
 paso.
 
+## Lo que se hizo en el paso 4, y por qué no fue la barra lateral
+
+La propuesta de arriba parte de una premisa: **«van a ser siete»**. Al llegar al
+paso 4 seguían siendo **tres** — socios, personal y planes — y para recepción,
+que no ve planes, **dos**. La barra lateral se midió en el navegador antes de
+decidir, con estos resultados a 1024 px:
+
+| | Con barra lateral de 240 px | Sin ella |
+| --- | --- | --- |
+| Alto que ocupan los destinos | 109 px de 800 (**14 %**) | — |
+| Ancho para el contenido | 784 px | 1024 px |
+| Tabla de socios | 734 px | 974 px |
+
+Se pagaría **una cuarta parte del ancho de la tabla, todos los días**, a cambio
+de una columna vacía en un 86 %; para recepción, ocupada al 9 %. Es exactamente
+el aspecto de «panel genérico comprado» que la dirección aprobada descarta. Y
+obligaría a un punto de ruptura nuevo para plegarla, más un cajón en móvil.
+
+**Decisión: se mantiene la navegación superior, reordenada en dos bandas.**
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│  GYMLAB │ Gimnasio Maqueta          Ana Dueña · Dueña    Salir   │  contexto
+├──────────────────────────────────────────────────────────────────┤
+│  Socios   Personal   Planes                                      │  destinos
+└──────────────────────────────────────────────────────────────────┘
+```
+
+Lo que cambia respecto a lo que había:
+
+- **El gimnasio deja de colgar de la marca.** Era `GYMLAB / Gimnasio Centro`, y
+  esa barra se lee como una ruta: como si el gimnasio fuera un sitio al que se
+  ha navegado, y no el dato que decide **qué datos se están viendo**. Ahora las
+  separa un filete vertical, que no dice jerarquía sino «aquí empieza otra cosa».
+- **Un filete de borde a borde** parte contexto de destinos. Antes las dos filas
+  compartían superficie y la navegación parecía colgar de la marca.
+- **El destino actual se marca en tinta, no en azul**, porque el azul está
+  reservado a lo accionable y donde ya estás no es una acción. Y **sin cambiar
+  el grosor de la letra**: en 600 el texto es más ancho que en 500, así que al
+  navegar las pestañas de al lado se desplazarían unos píxeles cada vez.
+- **En móvil no se oculta nada del contexto.** Antes el bloque de identidad
+  desaparecía entero por debajo de 48rem y quedaba un «Salir» suelto: se podía
+  cerrar la sesión sin ver de quién era. Medido a 375 px, nombre, rol, gimnasio
+  y salir suman 320 px de los 343 útiles — cabe, y los nombres largos se
+  recortan con puntos suspensivos.
+- **Sin cajón ni hamburguesa.** Tres destinos caben en una fila a 375 px.
+- **Sin iconos.** Con tres etiquetas de texto no añaden claridad, solo ruido.
+- **Salto al contenido** al principio del foco, para no tabular por la
+  navegación entera en cada pantalla.
+
+Sigue habiendo **un solo punto de ruptura, 48rem**. La barra lateral se ganará
+el sitio cuando los destinos crezcan; ese día esta sección vuelve a estar
+vigente.
+
 ---
 
 # I · Responsive
@@ -333,6 +387,24 @@ utilizable y no.
 
 Objetivos concretos: **44 px** de zona táctil mínima, ningún desplazamiento
 horizontal del cuerpo, y `prefers-reduced-motion` ya respetado.
+
+## Hallazgos del paso 4 que se arreglan más adelante
+
+Salieron midiendo el layout nuevo, pero corregirlos aquí habría sido rediseñar
+pantallas, que es el paso siguiente. Se anotan para no perderlos:
+
+1. **El `h1` salta 4 px al cambiar de pantalla.** `EncabezadoDePagina` empieza
+   en la misma coordenada en todas —el marco es estable—, pero socios usa
+   `alineacion="centro"` y personal `"arriba"`, así que el título queda a 142 px
+   en una y 138 en la otra. Es decisión de cada pantalla: **paso 5**.
+2. **`--texto-tenue` no llega al contraste mínimo.** Sobre blanco da **3.17**, y
+   AA pide 4.5 para texto pequeño. En la cabecera ya se cambió a `--texto-sutil`
+   (6.23), pero el token se sigue usando en otras pantallas y hay que repasarlas
+   una a una: **paso 5**.
+3. **Las tablas siguen desplazándose en horizontal dentro de su tarjeta.** Es la
+   contención que se puso en el paso 3, no la solución: la buena es convertir
+   cada fila en tarjeta por debajo de 48rem. Afecta a socios, personal (dos
+   tablas) y planes: **paso 6**.
 
 ---
 
@@ -379,7 +451,7 @@ componentes/cargando.tsx + .module.css
 componentes/encabezado-de-pagina.tsx + .module.css
 componentes/confirmacion-en-linea.tsx + .module.css
 componentes/selector.tsx + .module.css
-componentes/barra-lateral.tsx + .module.css      (paso 4)
+componentes/barra-lateral.tsx + .module.css      (paso 4 — NO se creó, ver H)
 lib/tipografia.ts                                 (paso 3, next/font)
 ```
 
