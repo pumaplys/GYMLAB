@@ -1,4 +1,19 @@
+/*
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ `position: relative` NO ES DECORATIVO: SIN EL, LA PAGINA SE DESPLAZA.    │
+ * │                                                                          │
+ * │ Un elemento `absolute` se coloca respecto a su ancestro POSICIONADO, y   │
+ * │ una tarjeta sin `position` no lo es: sus descendientes absolutos se      │
+ * │ escapan al bloque raiz y NO los recorta el `overflow` de la tarjeta.     │
+ * │                                                                          │
+ * │ Medido en `/personal` a 375 px: los `<span class="solo-lectores">` de    │
+ * │ las cabeceras "Acciones" —texto que solo lee un lector de pantalla—      │
+ * │ caian en x=436 y estiraban el documento a 438 px. La pagina entera se    │
+ * │ desplazaba 63 px de lado por una etiqueta invisible.                     │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ */
 .tarjeta {
+  position: relative;
   background: var(--fondo);
   border: 1px solid var(--borde);
   border-radius: var(--radio);
