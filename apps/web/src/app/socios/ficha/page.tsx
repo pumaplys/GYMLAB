@@ -7,9 +7,12 @@ import { updateMemberSchema, type Invitation, type Member } from '@gymlab/contra
 import { Aviso } from '@/componentes/aviso';
 import { Boton } from '@/componentes/boton';
 import { Campo } from '@/componentes/campo';
+import { Cargando } from '@/componentes/cargando';
+import { EncabezadoDePagina } from '@/componentes/encabezado-de-pagina';
 import { Etiqueta } from '@/componentes/etiqueta';
 import { Marco } from '@/componentes/marco';
 import { RutaPrivada } from '@/componentes/ruta-privada';
+import { Tarjeta } from '@/componentes/tarjeta';
 import { api } from '@/lib/api';
 import { mensajeDeError } from '@/lib/errores';
 import { comoFecha } from '@/lib/formato';
@@ -38,7 +41,7 @@ export default function FichaPage() {
   return (
     <RutaPrivada roles={ROLES_DEL_PANEL}>
       <Marco>
-        <Suspense fallback={<p className={estilos.cargando}>Abriendo la ficha…</p>}>
+        <Suspense fallback={<Cargando>Abriendo la ficha…</Cargando>}>
           <Ficha />
         </Suspense>
       </Marco>
@@ -95,9 +98,7 @@ function Ficha() {
 
   if (cargando) {
     return (
-      <p className={estilos.cargando} role="status">
-        Cargando la ficha…
-      </p>
+      <Cargando>Cargando la ficha…</Cargando>
     );
   }
 
@@ -114,23 +115,24 @@ function Ficha() {
     <>
       <Volver />
 
-      <div className={estilos.encabezado}>
-        <div className={estilos.identidad}>
-          <h1>
-            {socio.firstName} {socio.lastName}
-          </h1>
-          <span className={estilos.numero}>N.º {socio.memberNumber}</span>
-          <Etiqueta tono={socio.status === 'active' ? 'exito' : 'neutro'}>
-            {socio.status === 'active' ? 'Activo' : 'De baja'}
-          </Etiqueta>
-        </div>
+      <EncabezadoDePagina
+        titulo={`${socio.firstName} ${socio.lastName}`}
+        junto={
+          <>
+            <span className={estilos.numero}>N.º {socio.memberNumber}</span>
+            <Etiqueta tono={socio.status === 'active' ? 'exito' : 'neutro'}>
+              {socio.status === 'active' ? 'Activo' : 'De baja'}
+            </Etiqueta>
+          </>
+        }
+        acciones={
+          !editando && (
+            <Acciones socio={socio} onCambio={setSocio} onEditar={() => setEditando(true)} />
+          )
+        }
+      />
 
-        {!editando && (
-          <Acciones socio={socio} onCambio={setSocio} onEditar={() => setEditando(true)} />
-        )}
-      </div>
-
-      <div className={estilos.tarjeta}>
+      <Tarjeta className={estilos.tarjeta}>
         {editando ? (
           <Edicion
             socio={socio}
@@ -143,7 +145,7 @@ function Ficha() {
         ) : (
           <Datos socio={socio} />
         )}
-      </div>
+      </Tarjeta>
 
       {/*
         La cuota va debajo de la ficha y no en otra pantalla: recepcion abre
@@ -274,13 +276,14 @@ function Acciones({
             <span className={estilos.confirmar}>
               ¿Dar de baja?
               <Boton
-                variante="sutil"
+                variante="peligro"
+                tamano="sm"
                 cargando={trabajando === 'baja'}
                 onClick={() => ejecutar('baja', () => api.members.deactivate(gymId, socio.id))}
               >
                 Si, dar de baja
               </Boton>
-              <Boton variante="sutil" onClick={() => setConfirmandoBaja(false)}>
+              <Boton variante="sutil" tamano="sm" onClick={() => setConfirmandoBaja(false)}>
                 No
               </Boton>
             </span>

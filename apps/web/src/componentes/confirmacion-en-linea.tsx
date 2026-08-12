@@ -30,10 +30,17 @@ export function ConfirmacionEnLinea({ pregunta, confirmando, onConfirmar, onCanc
   return (
     <span className={estilos.confirmar}>
       {pregunta}
-      <Boton variante="sutil" cargando={confirmando} onClick={onConfirmar}>
+      {/*
+        El "Si" en peligro y el "No" en sutil, y no los dos iguales como estaban.
+        Los dos en `sutil` obligaban a leer la palabra para saber cual quitaba el
+        acceso; ahora se distinguen antes de leerlos. El que destaca es el que
+        confirma, que es lo que hay que ver bien, pero sigue siendo mas pequeno
+        que la accion principal de la pantalla.
+      */}
+      <Boton variante="peligro" tamano="sm" cargando={confirmando} onClick={onConfirmar}>
         Si
       </Boton>
-      <Boton variante="sutil" onClick={onCancelar}>
+      <Boton variante="sutil" tamano="sm" onClick={onCancelar}>
         No
       </Boton>
     </span>

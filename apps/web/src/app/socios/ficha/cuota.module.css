@@ -1,30 +1,24 @@
+/*
+ * Solo lo que es de ESTA pantalla.
+ *
+ * La superficie, su cabecera, la tabla de pagos y los tres desplegables se han
+ * ido a `componentes/`: eran una copia de `Tarjeta`, una copia de `Tabla` y
+ * tres copias de `Selector`. Lo que queda es el ancho, la rejilla del
+ * formulario y como se pinta un pago anulado.
+ */
+
+/* Ancho y separacion: los decide la pantalla, no la tarjeta. */
 .bloque {
   max-width: var(--ancho-lectura);
   margin-top: var(--e5);
-  background: var(--fondo);
-  border: 1px solid var(--borde);
-  border-radius: var(--radio);
-  overflow: hidden;
 }
 
-.cabecera {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--e4);
-  padding: var(--e4) var(--e6);
-  border-bottom: 1px solid var(--borde);
-}
-
+/* El titulo y su etiqueta de estado, juntos en la cabecera de la tarjeta. */
 .titulo {
   display: flex;
   align-items: center;
   gap: var(--e3);
   flex-wrap: wrap;
-}
-
-.cuerpo {
-  padding: var(--e5) var(--e6);
 }
 
 .resumen {
@@ -57,25 +51,10 @@
   flex-wrap: wrap;
 }
 
+/* El desplegable de planes lleva nombre y precio: necesita mas sitio que el
+   ancho por defecto, pero no todo el de la tarjeta. */
 .selector {
   min-width: 16rem;
-  min-height: 2.25rem;
-  padding: 0 var(--e2);
-  background: var(--fondo);
-  border: 1px solid var(--borde-fuerte);
-  border-radius: var(--radio-s);
-  font-size: var(--t-base);
-}
-
-.campoSelector {
-  display: flex;
-  flex-direction: column;
-  gap: var(--e2);
-}
-
-.etiquetaCampo {
-  font-size: var(--t-sm);
-  font-weight: 500;
 }
 
 .formulario {
@@ -98,37 +77,8 @@
   gap: var(--e3);
 }
 
-.pagos {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: var(--t-base);
-}
-
-.pagos th {
-  padding: var(--e2) var(--e6);
-  border-bottom: 1px solid var(--borde);
-  color: var(--texto-sutil);
-  font-size: var(--t-xs);
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-align: left;
-  text-transform: uppercase;
-}
-
-.pagos td {
-  padding: var(--e3) var(--e6);
-  border-bottom: 1px solid var(--borde);
-}
-
-.pagos tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.importe {
-  font-variant-numeric: var(--numeros);
-  white-space: nowrap;
-}
-
+/* Un pago anulado no se borra —el historial tiene que cuadrar con la
+   contabilidad—, se tacha. */
 .anulado {
   color: var(--texto-tenue);
   text-decoration: line-through;
@@ -142,33 +92,12 @@
 }
 
 .vacio {
-  padding: var(--e5) var(--e6);
-  color: var(--texto-tenue);
+  padding: var(--e5);
+  color: var(--texto-sutil);
   font-size: var(--t-base);
 }
 
-.subtitulo {
-  padding: var(--e4) var(--e6) 0;
-  color: var(--texto-sutil);
-  font-size: var(--t-xs);
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
 @media (max-width: 48rem) {
-  .cabecera,
-  .cuerpo {
-    padding-left: var(--e4);
-    padding-right: var(--e4);
-  }
-
-  .pagos th,
-  .pagos td {
-    padding-left: var(--e4);
-    padding-right: var(--e4);
-  }
-
   .resumen {
     grid-template-columns: 1fr;
     gap: var(--e1) var(--e4);
@@ -176,5 +105,9 @@
 
   .pareja {
     grid-template-columns: 1fr;
+  }
+
+  .vacio {
+    padding: var(--e4);
   }
 }

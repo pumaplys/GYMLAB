@@ -13,7 +13,7 @@ import { Etiqueta } from '@/componentes/etiqueta';
 import { Marco } from '@/componentes/marco';
 import { RutaPrivada } from '@/componentes/ruta-privada';
 import { Selector } from '@/componentes/selector';
-import { Tabla } from '@/componentes/tabla';
+import { Tabla, celda } from '@/componentes/tabla';
 import { Tarjeta } from '@/componentes/tarjeta';
 import { api } from '@/lib/api';
 import { mensajeDeError } from '@/lib/errores';
@@ -131,9 +131,7 @@ function NuevoPlan({ gymId, onCreado }: { gymId: string; onCreado: () => Promise
   });
 
   return (
-    <Tarjeta className={estilos.tarjeta}>
-      <h2 className={estilos.tituloSeccion}>Nuevo plan</h2>
-
+    <Tarjeta className={estilos.tarjeta} titulo={<h2>Nuevo plan</h2>}>
       <form className={estilos.formulario} onSubmit={formulario.alEnviar} noValidate>
         {formulario.errorGeneral && <Aviso>{formulario.errorGeneral}</Aviso>}
         {creado && <Aviso tono="exito">Plan «{creado}» creado. Ya se puede usar en una cuota.</Aviso>}
@@ -168,25 +166,25 @@ function NuevoPlan({ gymId, onCreado }: { gymId: string; onCreado: () => Promise
           alSalir={() => formulario.alSalirDe('description')}
         />
 
-        <div className={estilos.campoSelector}>
-          <Selector
-            etiqueta="Periodicidad"
-            valor={periodo}
-            alCambiar={(valor) => setPeriodo(valor as PlanPeriod)}
-            className={estilos.selector}
-          >
-            {Object.entries(NOMBRE_DEL_PERIODO).map(([valor, texto]) => (
-              <option key={valor} value={valor}>
-                {texto}
-              </option>
-            ))}
-          </Selector>
-          <p className={estilos.ayudaPeriodo}>
-            <strong>No se podra cambiar despues.</strong> Cambiarla reescribiria lo que cubre cada
-            pago ya registrado: quien pago un mes pasaria a haber pagado un trimestre. Para cambiarla
-            se crea otro plan y se archiva este.
-          </p>
-        </div>
+        <Selector
+          etiqueta="Periodicidad"
+          valor={periodo}
+          alCambiar={(valor) => setPeriodo(valor as PlanPeriod)}
+          className={estilos.selector}
+          ayuda={
+            <>
+              <strong>No se podra cambiar despues.</strong> Cambiarla reescribiria lo que cubre cada
+              pago ya registrado: quien pago un mes pasaria a haber pagado un trimestre. Para
+              cambiarla se crea otro plan y se archiva este.
+            </>
+          }
+        >
+          {Object.entries(NOMBRE_DEL_PERIODO).map(([valor, texto]) => (
+            <option key={valor} value={valor}>
+              {texto}
+            </option>
+          ))}
+        </Selector>
 
         <div className={estilos.pie}>
           <Boton type="submit" variante="primario" cargando={formulario.enviando}>
@@ -318,9 +316,13 @@ function TablaDePlanes({
         <thead>
           <tr>
             <th scope="col">Plan</th>
-            <th scope="col">Precio</th>
+            <th scope="col" className={celda.numerica}>
+              Precio
+            </th>
             <th scope="col">Periodicidad</th>
-            <th scope="col">Cuotas activas</th>
+            <th scope="col" className={celda.numerica}>
+              Cuotas activas
+            </th>
             <th scope="col">
               <span className="solo-lectores">Acciones</span>
             </th>
@@ -349,12 +351,12 @@ function TablaDePlanes({
                     </Etiqueta>
                   )}
                 </td>
-                <td className={estilos.importe}>
+                <td className={celda.numerica}>
                   {comoImporte(plan.priceCents, plan.currency)}
                 </td>
                 <td>{NOMBRE_DEL_PERIODO[plan.period]}</td>
-                <td>{plan.activeSubscriptions}</td>
-                <td className={estilos.acciones}>
+                <td className={celda.numerica}>{plan.activeSubscriptions}</td>
+                <td className={celda.acciones}>
                   {plan.status === 'active' &&
                     (confirmando === plan.id ? (
                       <ConfirmacionEnLinea

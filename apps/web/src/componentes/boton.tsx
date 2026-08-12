@@ -2,8 +2,23 @@ import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import Link from 'next/link';
 import estilos from './boton.module.css';
 
+/**
+ * Las cuatro variantes, y cuando usar cada una.
+ *
+ *   primario    la accion de esta pantalla. UNA por contexto.
+ *   secundario  lo demas que se puede hacer.
+ *   peligro     confirmar algo que quita acceso o da de baja.
+ *   sutil       accion de fila o de apoyo.
+ *
+ * `peligro` es para la CONFIRMACION, no para el boton que la abre: "Dar de
+ * baja" es secundario y el "Si" que lo confirma es peligro.
+ */
+export type VarianteDeBoton = 'primario' | 'secundario' | 'peligro' | 'sutil';
+
 interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variante?: 'primario' | 'secundario' | 'sutil';
+  variante?: VarianteDeBoton;
+  /** `sm` solo para acciones dentro de una fila de tabla. */
+  tamano?: 'sm' | 'md';
   /** Deshabilita y anuncia que hay algo en marcha. */
   cargando?: boolean;
   bloque?: boolean;
@@ -12,6 +27,7 @@ interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 export function Boton({
   variante = 'secundario',
+  tamano = 'md',
   cargando = false,
   bloque = false,
   disabled,
@@ -27,7 +43,13 @@ export function Boton({
       type="button"
       disabled={disabled ?? cargando}
       aria-busy={cargando || undefined}
-      className={[estilos.boton, estilos[variante], bloque ? estilos.bloque : '', className ?? '']
+      className={[
+        estilos.boton,
+        estilos[variante],
+        tamano === 'sm' ? estilos.sm : '',
+        bloque ? estilos.bloque : '',
+        className ?? '',
+      ]
         .filter(Boolean)
         .join(' ')}
       {...resto}
@@ -49,14 +71,21 @@ export function Boton({
 export function BotonEnlace({
   href,
   variante = 'secundario',
+  tamano = 'md',
   children,
 }: {
   href: string;
-  variante?: 'primario' | 'secundario' | 'sutil';
+  variante?: VarianteDeBoton;
+  tamano?: 'sm' | 'md';
   children: ReactNode;
 }) {
   return (
-    <Link href={href} className={`${estilos.boton} ${estilos[variante]}`}>
+    <Link
+      href={href}
+      className={[estilos.boton, estilos[variante], tamano === 'sm' ? estilos.sm : '']
+        .filter(Boolean)
+        .join(' ')}
+    >
       {children}
     </Link>
   );

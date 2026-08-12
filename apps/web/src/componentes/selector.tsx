@@ -1,15 +1,14 @@
 import { useId, type ReactNode } from 'react';
-import estilos from './selector.module.css';
+import { EnvolturaDeCampo } from './campo';
 
 /**
- * Un desplegable con su etiqueta.
+ * Un desplegable con su etiqueta, su ayuda y su error.
  *
- * `Campo` cubre los `input` pero no los `select`, asi que las tres pantallas
- * que tienen uno —personal, planes y la cuota de la ficha— se habian escrito
- * cada una el suyo: mismo aspecto, tres copias.
- *
- * La etiqueta va atada por `id` y no por proximidad visual: quien use un lector
- * de pantalla tiene que oir de que es el desplegable al llegar a el.
+ * `Campo` cubre los `input` pero no los `select`, asi que las pantallas que
+ * tienen uno —personal, planes y la cuota de la ficha— se habian escrito cada
+ * una el suyo: mismo aspecto, tres copias. La de cuota ademas se quedo fuera
+ * cuando esto se extrajo, porque necesitaba ayuda y error y aqui no habia.
+ * Ahora comparte envoltura con `Campo`, asi que los tiene.
  *
  * El ANCHO lo pone quien lo coloca. Un desplegable de planes quiere caber en su
  * fila; el de roles, no. No es asunto del componente.
@@ -19,6 +18,8 @@ interface Props {
   valor: string;
   alCambiar: (valor: string) => void;
   children: ReactNode;
+  ayuda?: ReactNode;
+  error?: string;
   className?: string;
   deshabilitado?: boolean;
 }
@@ -28,25 +29,26 @@ export function Selector({
   valor,
   alCambiar,
   children,
+  ayuda,
+  error,
   className,
   deshabilitado,
 }: Props) {
   const id = useId();
 
   return (
-    <div className={estilos.campo}>
-      <label className={estilos.etiqueta} htmlFor={id}>
-        {etiqueta}
-      </label>
-      <select
-        id={id}
-        className={`${estilos.selector} ${className ?? ''}`.trim()}
-        value={valor}
-        onChange={(evento) => alCambiar(evento.target.value)}
-        disabled={deshabilitado}
-      >
-        {children}
-      </select>
-    </div>
+    <EnvolturaDeCampo id={id} etiqueta={etiqueta} ayuda={ayuda} error={error}>
+      {(props) => (
+        <select
+          {...props}
+          className={`${props.className} ${className ?? ''}`.trim()}
+          value={valor}
+          onChange={(evento) => alCambiar(evento.target.value)}
+          disabled={deshabilitado}
+        >
+          {children}
+        </select>
+      )}
+    </EnvolturaDeCampo>
   );
 }

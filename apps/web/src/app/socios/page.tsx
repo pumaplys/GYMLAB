@@ -11,6 +11,7 @@ import { EstadoVacio } from '@/componentes/estado-vacio';
 import { Etiqueta } from '@/componentes/etiqueta';
 import { Marco } from '@/componentes/marco';
 import { Paginacion } from '@/componentes/paginacion';
+import { Tabla, celda } from '@/componentes/tabla';
 import { RutaPrivada } from '@/componentes/ruta-privada';
 import { Tarjeta } from '@/componentes/tarjeta';
 import { api } from '@/lib/api';
@@ -102,7 +103,6 @@ function Socios() {
     <>
       <EncabezadoDePagina
         titulo="Socios"
-        alineacion="centro"
         acciones={
           <BotonEnlace href="/socios/nuevo" variante="primario">
             Nuevo socio
@@ -141,8 +141,8 @@ function Socios() {
         ) : (
           lista && (
             <>
-              <div className={`${estilos.desplazable} ${cargando ? estilos.refrescando : ''}`}>
-                <table className={estilos.tabla}>
+              <div className={cargando ? estilos.refrescando : ''}>
+                <Tabla filasPulsables>
                   <thead>
                     <tr>
                       <th scope="col">N.º</th>
@@ -156,7 +156,7 @@ function Socios() {
                   <tbody>
                     {lista.items.map((socio) => (
                       <tr key={socio.id}>
-                        <td className={estilos.numero}>{socio.memberNumber}</td>
+                        <td className={`${celda.numerica} ${celda.tenue}`}>{socio.memberNumber}</td>
                         <td className={estilos.nombre}>
                           {/*
                             El nombre es el enlace, no una fila entera pinchable:
@@ -171,18 +171,18 @@ function Socios() {
                             {socio.firstName} {socio.lastName}
                           </Link>
                         </td>
-                        <td>{socio.email ?? <span className={estilos.tenue}>—</span>}</td>
-                        <td>{socio.phone ?? <span className={estilos.tenue}>—</span>}</td>
+                        <td>{socio.email ?? <span className={celda.tenue}>—</span>}</td>
+                        <td>{socio.phone ?? <span className={celda.tenue}>—</span>}</td>
                         <td>
                           <Etiqueta tono={socio.status === 'active' ? 'exito' : 'neutro'}>
                             {socio.status === 'active' ? 'Activo' : 'Inactivo'}
                           </Etiqueta>
                         </td>
-                        <td className={estilos.tenue}>{comoFecha(socio.joinedAt)}</td>
+                        <td className={celda.tenue}>{comoFecha(socio.joinedAt)}</td>
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </Tabla>
               </div>
 
               <Paginacion

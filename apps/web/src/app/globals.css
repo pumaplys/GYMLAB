@@ -23,10 +23,29 @@
   --borde: #e4e6eb;
   --borde-fuerte: #cfd3da;
 
-  /* Texto. Tres niveles bastan; con mas, la jerarquia deja de leerse */
+  /*
+   * Texto. Tres niveles bastan; con mas, la jerarquia deja de leerse.
+   *
+   * ┌────────────────────────────────────────────────────────────────────────┐
+   * │ EL TENUE SE OSCURECIO PORQUE NO SE LEIA.                              │
+   * │                                                                        │
+   * │ Era `#8c9198`: 3.17 de contraste sobre blanco, cuando AA pide 4.5 para │
+   * │ texto normal. No fallaba en un sitio concreto — fallaba en los 21      │
+   * │ sitios donde se usa: marcadores de posicion, "(opcional)", el texto de │
+   * │ carga, los metadatos de la ficha y los pagos anulados.                 │
+   * │                                                                        │
+   * │ `#6b7280` da 4.83 sobre blanco y 4.55 sobre `--fondo-sutil`, que es    │
+   * │ la otra superficie donde aparece. Los valores intermedios que se       │
+   * │ probaron pasaban sobre blanco y fallaban sobre el gris.                │
+   * │                                                                        │
+   * │ Sigue siendo el mas claro de los tres —6.23 el sutil, 18.11 el         │
+   * │ normal—, asi que la jerarquia se conserva: lo que cambia es que ahora  │
+   * │ tambien se lee.                                                        │
+   * └────────────────────────────────────────────────────────────────────────┘
+   */
   --texto: #14161a;
   --texto-sutil: #5c6169;
-  --texto-tenue: #8c9198;
+  --texto-tenue: #6b7280;
 
   /*
    * EL ACENTO ES SOLO PARA LO QUE SE PUEDE PULSAR.
@@ -53,6 +72,8 @@
    * concepto, y hasta ahora no lo sabian.
    */
   --peligro: #b42318;
+  /* Solo para el `hover` del boton de confirmar. Mismo tono, un paso mas. */
+  --peligro-fuerte: #91190f;
   --peligro-suave: #fef3f2;
   --exito: #067647;
   --exito-suave: #ecfdf3;

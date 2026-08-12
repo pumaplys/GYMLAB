@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   type DuesState,
   type DuesStatus,
@@ -11,7 +11,11 @@ import {
 import { Aviso } from '@/componentes/aviso';
 import { Boton } from '@/componentes/boton';
 import { Campo } from '@/componentes/campo';
+import { Cargando } from '@/componentes/cargando';
 import { Etiqueta, type TonoDeEtiqueta } from '@/componentes/etiqueta';
+import { Selector } from '@/componentes/selector';
+import { Tabla, celda } from '@/componentes/tabla';
+import { Tarjeta } from '@/componentes/tarjeta';
 import { api } from '@/lib/api';
 import { mensajeDeError } from '@/lib/errores';
 import { aCentimos, comoFecha, comoImporte } from '@/lib/formato';
@@ -132,32 +136,32 @@ export function Cuota({ memberId }: { memberId: string }) {
 
   if (cargando) {
     return (
-      <div className={estilos.bloque}>
-        <p className={estilos.vacio} role="status">
-          Cargando la cuota…
-        </p>
-      </div>
+      <Tarjeta className={estilos.bloque}>
+        <Cargando>Cargando la cuota…</Cargando>
+      </Tarjeta>
     );
   }
 
   return (
-    <section className={estilos.bloque} aria-label="Cuota">
-      <div className={estilos.cabecera}>
-        <div className={estilos.titulo}>
-          <h2>Cuota</h2>
-          {cuota && (
-            <Etiqueta tono={TONO_DEL_ESTADO[cuota.estado]}>
-              {NOMBRE_DEL_ESTADO[cuota.estado]}
-            </Etiqueta>
-          )}
-        </div>
-
-        {cuota && cuota.estado !== 'SIN_SUSCRIPCION' && !cobrando && (
-          <Boton onClick={() => setCobrando(true)}>Registrar pago</Boton>
-        )}
-      </div>
-
-      <div className={estilos.cuerpo}>
+    <>
+      <Tarjeta
+        className={estilos.bloque}
+        titulo={
+          <span className={estilos.titulo}>
+            <h2>Cuota</h2>
+            {cuota && (
+              <Etiqueta tono={TONO_DEL_ESTADO[cuota.estado]}>
+                {NOMBRE_DEL_ESTADO[cuota.estado]}
+              </Etiqueta>
+            )}
+          </span>
+        }
+        acciones={
+          cuota &&
+          cuota.estado !== 'SIN_SUSCRIPCION' &&
+          !cobrando && <Boton onClick={() => setCobrando(true)}>Registrar pago</Boton>
+        }
+      >
         {error && <Aviso>{error}</Aviso>}
 
         {cuota?.estado === 'SIN_SUSCRIPCION' ? (
@@ -186,11 +190,20 @@ export function Cuota({ memberId }: { memberId: string }) {
             onCancelar={() => setCobrando(false)}
           />
         )}
-      </div>
+      </Tarjeta>
 
-      <p className={estilos.subtitulo}>Pagos</p>
-      <Pagos pagos={pagos} />
-    </section>
+      {/*
+        Los pagos pasan a su propia tarjeta, y no a un subtitulo dentro de la de
+        la cuota. Son dos cosas distintas —en que estado esta hoy, y que se ha
+        cobrado desde siempre— y compartian superficie solo porque la cabecera
+        de tarjeta no existia todavia. Ademas, la tabla necesita ir sin relleno
+        y el resto del bloque con el, que en una sola tarjeta obligaba a que
+        esta pantalla se pintara sus propios margenes.
+      */}
+      <Tarjeta variante="lista" className={estilos.bloque} titulo={<h2>Pagos</h2>}>
+        <Pagos pagos={pagos} />
+      </Tarjeta>
+    </>
   );
 }
 
@@ -228,7 +241,6 @@ function AltaDeCuota({
   planes: Plan[];
   onAlta: () => void;
 }) {
-  const id = useId();
   const [planId, setPlanId] = useState('');
   const [trabajando, setTrabajando] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -263,24 +275,19 @@ function AltaDeCuota({
       {error && <Aviso>{error}</Aviso>}
 
       <div className={estilos.alta}>
-        <div className={estilos.campoSelector}>
-          <label className={estilos.etiquetaCampo} htmlFor={id}>
-            Plan
-          </label>
-          <select
-            id={id}
-            className={estilos.selector}
-            value={planId}
-            onChange={(evento) => setPlanId(evento.target.value)}
-          >
-            <option value="">Elige un plan</option>
-            {planes.map((plan) => (
-              <option key={plan.id} value={plan.id}>
-                {plan.name} — {comoImporte(plan.priceCents, plan.currency)}
-              </option>
-            ))}
-          </select>
-        </div>
+        <Selector
+          etiqueta="Plan"
+          valor={planId}
+          alCambiar={setPlanId}
+          className={estilos.selector}
+        >
+          <option value="">Elige un plan</option>
+          {planes.map((plan) => (
+            <option key={plan.id} value={plan.id}>
+              {plan.name} — {comoImporte(plan.priceCents, plan.currency)}
+            </option>
+          ))}
+        </Selector>
 
         <Boton variante="primario" cargando={trabajando} disabled={!planId} onClick={darDeAlta}>
           Dar de alta la cuota
@@ -301,8 +308,6 @@ function FormularioDePago({
   onCobrado: (estado: DuesStatus) => void;
   onCancelar: () => void;
 }) {
-  const idConcepto = useId();
-  const idMetodo = useId();
 
   const [concepto, setConcepto] = useState<PaymentConcept>('subscription');
   const [importe, setImporte] = useState('');
@@ -348,39 +353,27 @@ function FormularioDePago({
       {error && <Aviso>{error}</Aviso>}
 
       <div className={estilos.pareja}>
-        <div className={estilos.campoSelector}>
-          <label className={estilos.etiquetaCampo} htmlFor={idConcepto}>
-            Concepto
-          </label>
-          <select
-            id={idConcepto}
-            className={estilos.selector}
-            value={concepto}
-            onChange={(evento) => setConcepto(evento.target.value as PaymentConcept)}
-          >
-            <option value="subscription">Cuota</option>
-            <option value="enrolment">Matricula</option>
-            <option value="other">Otro</option>
-          </select>
-        </div>
+        <Selector
+          etiqueta="Concepto"
+          valor={concepto}
+          alCambiar={(valor) => setConcepto(valor as PaymentConcept)}
+        >
+          <option value="subscription">Cuota</option>
+          <option value="enrolment">Matricula</option>
+          <option value="other">Otro</option>
+        </Selector>
 
-        <div className={estilos.campoSelector}>
-          <label className={estilos.etiquetaCampo} htmlFor={idMetodo}>
-            Metodo
-          </label>
-          <select
-            id={idMetodo}
-            className={estilos.selector}
-            value={metodo}
-            onChange={(evento) => setMetodo(evento.target.value as (typeof METODOS)[number][0])}
-          >
-            {METODOS.map(([valor, texto]) => (
-              <option key={valor} value={valor}>
-                {texto}
-              </option>
-            ))}
-          </select>
-        </div>
+        <Selector
+          etiqueta="Metodo"
+          valor={metodo}
+          alCambiar={(valor) => setMetodo(valor as (typeof METODOS)[number][0])}
+        >
+          {METODOS.map(([valor, texto]) => (
+            <option key={valor} value={valor}>
+              {texto}
+            </option>
+          ))}
+        </Selector>
       </div>
 
       <Campo
@@ -419,13 +412,15 @@ function Pagos({ pagos }: { pagos: Payment[] }) {
   }
 
   return (
-    <table className={estilos.pagos}>
+    <Tabla>
       <thead>
         <tr>
           <th scope="col">Fecha</th>
           <th scope="col">Concepto</th>
           <th scope="col">Metodo</th>
-          <th scope="col">Importe</th>
+          <th scope="col" className={celda.numerica}>
+            Importe
+          </th>
         </tr>
       </thead>
       <tbody>
@@ -434,13 +429,13 @@ function Pagos({ pagos }: { pagos: Payment[] }) {
             <td>{comoFecha(`${pago.paidOn}T00:00:00Z`)}</td>
             <td>{NOMBRE_DEL_CONCEPTO[pago.concept]}</td>
             <td>{METODOS.find(([valor]) => valor === pago.method)?.[1] ?? pago.method}</td>
-            <td className={`${estilos.importe} ${pago.voidedAt ? estilos.anulado : ''}`}>
+            <td className={`${celda.numerica} ${pago.voidedAt ? estilos.anulado : ''}`}>
               {comoImporte(pago.amountCents, pago.currency)}
               {pago.voidedAt && <span className={estilos.motivo}>Anulado: {pago.voidReason}</span>}
             </td>
           </tr>
         ))}
       </tbody>
-    </table>
+    </Tabla>
   );
 }

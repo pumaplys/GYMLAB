@@ -4,21 +4,6 @@
   font-size: var(--t-base);
 }
 
-.encabezado {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--e4);
-  margin-bottom: var(--e5);
-}
-
-.identidad {
-  display: flex;
-  align-items: center;
-  gap: var(--e3);
-  flex-wrap: wrap;
-}
-
 .numero {
   color: var(--texto-tenue);
   font-size: var(--t-base);
@@ -39,12 +24,9 @@
   max-width: var(--ancho-lectura);
 }
 
+/* Solo el ancho: la superficie la pone Tarjeta. */
 .tarjeta {
   max-width: var(--ancho-lectura);
-  padding: var(--e5) var(--e6);
-  background: var(--fondo);
-  border: 1px solid var(--borde);
-  border-radius: var(--radio);
 }
 
 /* Lista de definiciones: cada dato con su nombre, sin tabla. */
@@ -88,12 +70,6 @@
   border-top: 1px solid var(--borde);
 }
 
-.cargando {
-  padding: var(--e7) 0;
-  color: var(--texto-tenue);
-  font-size: var(--t-base);
-}
-
 .confirmar {
   display: flex;
   align-items: center;
@@ -107,10 +83,6 @@
 }
 
 @media (max-width: 48rem) {
-  .encabezado {
-    flex-direction: column;
-  }
-
   .datos {
     grid-template-columns: 1fr;
     gap: var(--e1) var(--e4);
@@ -118,9 +90,5 @@
 
   .pareja {
     grid-template-columns: 1fr;
-  }
-
-  .tarjeta {
-    padding: var(--e4);
   }
 }
