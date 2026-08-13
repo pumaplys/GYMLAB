@@ -815,33 +815,239 @@ describe('RGPD · que se lleva por delante el borrado', () => {
       .expect(404);
   });
 
-  /**
-   * DOCUMENTA UN LIMITE CONOCIDO, no lo aprueba.
-   *
-   * Al borrar la ficha de un socio CON cuenta, su `memberships` sobrevive: nada
-   * la cascadea, porque apunta a `users` y `gyms`, no a `members`. La persona
-   * sigue viendo ese gimnasio en su selector y se encuentra un 404 en todo.
-   *
-   * La prueba fija el comportamiento actual para que cambiarlo sea deliberado y
-   * no un efecto colateral. Pendiente de decision de producto.
-   */
-  it('el borrado NO retira todavia la pertenencia de un socio con cuenta', async () => {
-    const socio = await altaSocio(tokenOwnerA, gymA, {
-      firstName: 'Con',
-      lastName: 'Cuenta',
-      email: email('socio-borrado'),
+});
+
+/**
+ * QUE PASA CON LA CUENTA Y LA PERTENENCIA AL BORRAR UNA FICHA.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ EL AGUJERO QUE CIERRAN ESTAS PRUEBAS.                                    │
+ * │                                                                          │
+ * │ Las claves ajenas resuelven el art. 17 para todo lo que APUNTA a         │
+ * │ `members`. `memberships` no apunta ahi —apunta a `users` y a `gyms`— asi │
+ * │ que ninguna cascada la tocaba: la persona seguia perteneciendo al        │
+ * │ gimnasio despues de que su ficha desapareciera, y lo seguia viendo en su │
+ * │ selector con un 404 en todo.                                             │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ */
+describe('RGPD · identidad tras el borrado', () => {
+  /** Cuantas pertenencias vivas tiene esa cuenta, en cualquier gimnasio. */
+  async function pertenenciasDe(correo: string): Promise<number> {
+    const filas = await owner.execute<{ n: number }>(
+      sql`SELECT count(*)::int AS n FROM memberships m
+          JOIN users u ON u.id = m.user_id
+          WHERE u.email = ${correo}`,
+    );
+    return filas.rows[0]!.n;
+  }
+
+  async function existeCuenta(correo: string): Promise<boolean> {
+    const filas = await owner.execute<{ n: number }>(
+      sql`SELECT count(*)::int AS n FROM users WHERE email = ${correo}`,
+    );
+    return filas.rows[0]!.n > 0;
+  }
+
+  /** Da de alta un socio CON cuenta: ficha, invitacion y aceptacion. */
+  async function socioConCuenta(gymId: string, tokenStaff: string, quien: string) {
+    const socio = await altaSocio(tokenStaff, gymId, {
+      firstName: 'Socio',
+      lastName: quien,
+      email: email(quien),
     });
     await http()
-      .post(`/v1/gyms/${gymA}/members/${socio.id}/invite`)
-      .set(conSesion(tokenOwnerA))
+      .post(`/v1/gyms/${gymId}/members/${socio.id}/invite`)
+      .set(conSesion(tokenStaff))
       .expect(201);
-    await http()
+    const res = await http()
       .post('/v1/auth/accept-invitation')
       .send({
-        token: await tokenEncolado(EMAIL_QUEUES.invitation, email('socio-borrado')),
-        name: 'Socio Borrado',
+        token: await tokenEncolado(EMAIL_QUEUES.invitation, email(quien)),
+        name: quien,
         password: PASSWORD,
       })
+      .expect(201);
+    return { socio, token: res.body.token as string };
+  }
+
+  it('un socio SIN cuenta se borra sin tocar ninguna identidad', async () => {
+    const socio = await altaSocio(tokenOwnerA, gymA, { firstName: 'Sin', lastName: 'Cuenta' });
+    const antes = await owner.execute<{ n: number }>(sql`SELECT count(*)::int AS n FROM users`);
+
+    await http()
+      .delete(`/v1/gyms/${gymA}/members/${socio.id}`)
+      .set(conSesion(tokenOwnerA))
+      .expect(200);
+
+    const despues = await owner.execute<{ n: number }>(sql`SELECT count(*)::int AS n FROM users`);
+    expect(despues.rows[0]!.n).toBe(antes.rows[0]!.n);
+  });
+
+  it('con cuenta y una sola pertenencia: desaparecen la pertenencia Y la cuenta', async () => {
+    const quien = 'socio-unico';
+    const { socio } = await socioConCuenta(gymA, tokenOwnerA, quien);
+    expect(await pertenenciasDe(email(quien))).toBe(1);
+
+    await http()
+      .delete(`/v1/gyms/${gymA}/members/${socio.id}`)
+      .set(conSesion(tokenOwnerA))
+      .expect(200);
+
+    expect(await pertenenciasDe(email(quien))).toBe(0);
+    // Sin pertenencias, sin perfil de entrenador y sin invitaciones emitidas, la
+    // cuenta no tiene ninguna finalidad dentro de GYMLAB.
+    expect(await existeCuenta(email(quien))).toBe(false);
+  });
+
+  it('borrar en un gimnasio NO afecta a la ficha ni a la cuenta en el otro', async () => {
+    const quien = 'socio-en-dos';
+    const { socio: enA, token } = await socioConCuenta(gymA, tokenOwnerA, quien);
+
+    // La MISMA persona, socia tambien de B: se le invita desde su ficha en B y
+    // acepta con la sesion ya abierta, que es el flujo de vincular (ADR-0010).
+    const enB = await altaSocio(tokenOwnerB, gymB, {
+      firstName: 'Socio',
+      lastName: quien,
+      email: email(quien),
+    });
+    await http()
+      .post(`/v1/gyms/${gymB}/members/${enB.id}/invite`)
+      .set(conSesion(tokenOwnerB))
+      .expect(201);
+    await http()
+      .post('/v1/auth/link-invitation')
+      .set(conSesion(token))
+      .send({ token: await tokenEncolado(EMAIL_QUEUES.invitation, email(quien)) })
+      .expect(201);
+
+    expect(await pertenenciasDe(email(quien))).toBe(2);
+
+    await http()
+      .delete(`/v1/gyms/${gymA}/members/${enA.id}`)
+      .set(conSesion(tokenOwnerA))
+      .expect(200);
+
+    // Queda la de B, y la cuenta sigue viva porque le queda una finalidad.
+    expect(await pertenenciasDe(email(quien))).toBe(1);
+    expect(await existeCuenta(email(quien))).toBe(true);
+
+    // Y su ficha en B sigue intacta: el otro gimnasio no ha pedido nada.
+    await http()
+      .get(`/v1/gyms/${gymB}/members/${enB.id}`)
+      .set(conSesion(tokenOwnerB))
+      .expect(200);
+  });
+
+  it('el gimnasio borrado deja de aparecerle a esa persona', async () => {
+    const quien = 'socio-que-deja-de-ver';
+    const { socio, token } = await socioConCuenta(gymA, tokenOwnerA, quien);
+
+    const antes = await http().get('/v1/auth/me').set(conSesion(token)).expect(200);
+    expect(antes.body.memberships.map((m: { gymId: string }) => m.gymId)).toContain(gymA);
+
+    await http()
+      .delete(`/v1/gyms/${gymA}/members/${socio.id}`)
+      .set(conSesion(tokenOwnerA))
+      .expect(200);
+
+    // La cuenta se ha ido con la ultima pertenencia, asi que su sesion ya no
+    // vale: `sessions` cae en cascada al borrar `users`. Es el resultado
+    // correcto — no puede quedar navegando por un gimnasio que le olvido.
+    await http().get('/v1/auth/me').set(conSesion(token)).expect(401);
+  });
+
+  /**
+   * DOS ROLES EN EL MISMO GIMNASIO NO SON REPRESENTABLES, y conviene saberlo.
+   *
+   * Se intento probar "recepcion que ademas es socia del gimnasio donde
+   * trabaja" y no se puede montar: invitar devuelve 400 con "Esa persona ya
+   * pertenece al gimnasio", y ademas hay un indice unico parcial sobre
+   * `(gym_id, user_id) WHERE ended_at IS NULL`. Una cuenta tiene como mucho UNA
+   * pertenencia viva por gimnasio.
+   *
+   * El caso real equivalente es este: trabajar en un gimnasio y ser socio de
+   * OTRO. Prueba lo mismo —que borrar la ficha de socio no toca el puesto ni la
+   * cuenta— con un escenario que si existe.
+   */
+  it('quien trabaja en un gimnasio y es socio de otro conserva cuenta y puesto', async () => {
+    const quien = 'entrenador-y-socio';
+    const tokenStaff = await altaPersonal(gymA, tokenOwnerA, 'trainer', quien);
+    expect(await pertenenciasDe(email(quien))).toBe(1);
+
+    const ficha = await altaSocio(tokenOwnerB, gymB, {
+      firstName: 'Entrenador',
+      lastName: 'Y Socio',
+      email: email(quien),
+    });
+    await http()
+      .post(`/v1/gyms/${gymB}/members/${ficha.id}/invite`)
+      .set(conSesion(tokenOwnerB))
+      .expect(201);
+    await http()
+      .post('/v1/auth/link-invitation')
+      .set(conSesion(tokenStaff))
+      .send({ token: await tokenEncolado(EMAIL_QUEUES.invitation, email(quien)) })
+      .expect(201);
+    expect(await pertenenciasDe(email(quien))).toBe(2);
+
+    await http()
+      .delete(`/v1/gyms/${gymB}/members/${ficha.id}`)
+      .set(conSesion(tokenOwnerB))
+      .expect(200);
+
+    // Se va la de socio en B; queda la de entrenador en A, y la cuenta con ella.
+    expect(await pertenenciasDe(email(quien))).toBe(1);
+    expect(await existeCuenta(email(quien))).toBe(true);
+    const roles = await owner.execute<{ role: string }>(
+      sql`SELECT m.role FROM memberships m JOIN users u ON u.id = m.user_id
+          WHERE u.email = ${email(quien)}`,
+    );
+    expect(roles.rows.map((r) => r.role)).toEqual(['trainer']);
+
+    // Y sigue pudiendo trabajar donde trabajaba.
+    await http().get('/v1/me/trainer').set(conSesion(tokenStaff)).expect(200);
+  });
+
+  it('la operacion no deja estado a medias: o todo o nada', async () => {
+    // La ficha y la pertenencia se van en la MISMA transaccion. Se comprueba
+    // consultando las dos despues de una sola llamada: si el hook corriera
+    // fuera de la transaccion, una de las dos podria sobrevivir.
+    const quien = 'socio-atomico';
+    const { socio } = await socioConCuenta(gymA, tokenOwnerA, quien);
+
+    await http()
+      .delete(`/v1/gyms/${gymA}/members/${socio.id}`)
+      .set(conSesion(tokenOwnerA))
+      .expect(200);
+
+    const restos = await owner.execute<{ fichas: number; pertenencias: number }>(
+      sql`SELECT
+            (SELECT count(*)::int FROM members WHERE id = ${socio.id}::uuid) AS fichas,
+            (SELECT count(*)::int FROM memberships m JOIN users u ON u.id = m.user_id
+              WHERE u.email = ${email(quien)}) AS pertenencias`,
+    );
+    expect(restos.rows[0]!.fichas).toBe(0);
+    expect(restos.rows[0]!.pertenencias).toBe(0);
+  });
+
+  it('los pagos sobreviven al borrado de la cuenta, desvinculados', async () => {
+    const quien = 'socio-con-pagos';
+    const { socio } = await socioConCuenta(gymA, tokenOwnerA, quien);
+
+    const plan = await http()
+      .post(`/v1/gyms/${gymA}/plans`)
+      .set(conSesion(tokenOwnerA))
+      .send({ name: `Plan identidad ${sufijo}`, priceCents: 4100, period: 'monthly' })
+      .expect(201);
+    await http()
+      .post(`/v1/gyms/${gymA}/members/${socio.id}/subscription`)
+      .set(conSesion(tokenOwnerA))
+      .send({ planId: plan.body.id })
+      .expect(201);
+    await http()
+      .post(`/v1/gyms/${gymA}/members/${socio.id}/payments`)
+      .set(conSesion(tokenOwnerA))
+      .send({ concept: 'subscription', amountCents: 4100, method: 'card' })
       .expect(201);
 
     await http()
@@ -849,11 +1055,12 @@ describe('RGPD · que se lleva por delante el borrado', () => {
       .set(conSesion(tokenOwnerA))
       .expect(200);
 
-    const pertenencias = await owner.execute<{ n: number }>(
-      sql`SELECT count(*)::int AS n FROM memberships m
-          JOIN users u ON u.id = m.user_id
-          WHERE u.email = ${email('socio-borrado')} AND m.ended_at IS NULL`,
+    const pagos = await owner.execute<{ n: number; sinSocio: number }>(
+      sql`SELECT count(*)::int AS n,
+                 count(*) FILTER (WHERE member_id IS NULL)::int AS "sinSocio"
+          FROM payments WHERE gym_id = ${gymA}::uuid AND amount_cents = 4100`,
     );
-    expect(pertenencias.rows[0]!.n).toBe(1);
+    expect(pagos.rows[0]!.n).toBe(1);
+    expect(pagos.rows[0]!.sinSocio).toBe(1);
   });
 });
