@@ -1,0 +1,37 @@
+/*
+ * Movil primero: los pares dato/valor se apilan por defecto y solo pasan a dos
+ * columnas cuando hay sitio. Es al reves que en el panel, y a proposito — el
+ * socio abre esto en un telefono, no en un mostrador.
+ */
+.datos {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--e1) var(--e4);
+  margin: 0;
+}
+
+.datos dt {
+  color: var(--texto-sutil);
+  font-size: var(--t-base);
+}
+
+.datos dd {
+  margin: 0;
+  font-size: var(--t-base);
+}
+
+.numero {
+  font-variant-numeric: var(--numeros);
+}
+
+/*
+ * 48rem, el unico punto de ruptura del sistema. Se escribe en `min-width` y no
+ * en `max-width` porque aqui la base es el movil: lo que se declara arriba es
+ * lo que ve un telefono, y esto es la excepcion para pantallas grandes.
+ */
+@media (min-width: 48.0625rem) {
+  .datos {
+    grid-template-columns: 9rem 1fr;
+    gap: var(--e3) var(--e4);
+  }
+}

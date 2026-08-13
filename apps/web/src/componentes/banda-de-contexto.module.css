@@ -1,0 +1,146 @@
+/* Banda de contexto: donde estoy y quien soy. Comun a las tres areas. */
+.contexto {
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+  max-width: var(--ancho-maximo);
+  margin: 0 auto;
+  padding: var(--e3) var(--e5);
+}
+
+.marca {
+  font-size: var(--t-sm);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  /* La marca es tinta, no el azul de accion: lo dice el sistema de #51. */
+  color: var(--tinta);
+  white-space: nowrap;
+}
+
+/*
+ * Un filete vertical en lugar de la barra `/` que habia antes.
+ *
+ * `GYMLAB / Gimnasio Centro` se lee como una ruta —marca, luego un sitio
+ * dentro de la marca—. El filete no dice jerarquia, dice "aqui empieza otra
+ * cosa", que es exactamente la relacion entre el producto y el gimnasio activo.
+ */
+.division {
+  flex: none;
+  width: 1px;
+  height: 1.125rem;
+  background: var(--borde);
+}
+
+.gimnasio {
+  font-size: var(--t-base);
+  font-weight: 500;
+  /* Que el nombre largo se corte con puntos y no empuje a la cuenta fuera. */
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/*
+ * El selector de gimnasio no lleva marco hasta que se le apunta.
+ *
+ * Con borde permanente parecia un campo de formulario incrustado en la
+ * cabecera. Sin el, se lee como lo que es —el dato del contexto— y sigue
+ * anunciandose como pulsable al pasar por encima y al recibir el foco.
+ */
+.selector {
+  min-width: 0;
+  max-width: 14rem;
+  min-height: 1.875rem;
+  padding: 0 var(--e2);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radio-s);
+  color: var(--texto);
+  font-size: var(--t-base);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.selector:hover {
+  background: var(--fondo-hover);
+  border-color: var(--borde);
+}
+
+.cuenta {
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+  margin-left: auto;
+  padding-left: var(--e3);
+  min-width: 0;
+}
+
+.identidad {
+  display: flex;
+  align-items: baseline;
+  gap: var(--e2);
+  min-width: 0;
+}
+
+.nombre {
+  font-size: var(--t-sm);
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/*
+ * `flex: none` para que el rol no se recorte: quien cede ancho es el nombre.
+ *
+ * Y `--texto-sutil`, no `--texto-tenue`: medido sobre el blanco de la cabecera,
+ * el tenue da 3.17 de contraste y a 12 px hacen falta 4.5. El sutil da 6.23.
+ */
+.rol {
+  flex: none;
+  font-size: var(--t-xs);
+  color: var(--texto-sutil);
+  white-space: nowrap;
+}
+
+@media (max-width: 48rem) {
+  .contexto {
+    padding-left: var(--e4);
+    padding-right: var(--e4);
+    gap: var(--e2);
+  }
+
+  /*
+   * ┌────────────────────────────────────────────────────────────────────────┐
+   * │ EN EL MOVIL CAE EL ROL, Y EL NOMBRE TIENE UN MINIMO GARANTIZADO.      │
+   * │                                                                        │
+   * │ Aqui hubo una medicion mal hecha. Se comprobo que el contexto "cabia"  │
+   * │ a 375 porque la suma de sus hijos daba 320 de los 343 utiles — pero    │
+   * │ cabia precisamente porque el nombre se habia encogido a CERO y el      │
+   * │ resto ocupaba el hueco. Medido de nuevo: el nombre medía 0 px de 320 a │
+   * │ 375 y 21 px a 430. O sea que en cualquier telefono se podia cerrar la  │
+   * │ sesion sin ver de quien era, que es justo lo que se queria evitar.     │
+   * │                                                                        │
+   * │ De los dos datos de la identidad, el que responde "esta es mi cuenta"  │
+   * │ es el NOMBRE; el rol se deduce de lo que la pantalla deja hacer. Asi   │
+   * │ que el rol se esconde y el nombre reserva 3.5rem, que dan para unos    │
+   * │ cuantos caracteres mas los puntos suspensivos.                         │
+   * │                                                                        │
+   * │ El gimnasio activo no se toca: en un panel multi-inquilino saber que   │
+   * │ datos estas viendo es lo ultimo que puede desaparecer.                 │
+   * └────────────────────────────────────────────────────────────────────────┘
+   */
+  .rol {
+    display: none;
+  }
+
+  .nombre {
+    min-width: 3.5rem;
+  }
+
+  .selector,
+  .gimnasio {
+    max-width: 9rem;
+  }
+}
