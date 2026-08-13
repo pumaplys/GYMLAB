@@ -72,9 +72,12 @@
   gap: var(--e4);
 }
 
+/* Mismo filete que el resto de pies de formulario del panel. */
 .pie {
   display: flex;
   gap: var(--e3);
+  padding-top: var(--e4);
+  border-top: 1px solid var(--borde);
 }
 
 /* Un pago anulado no se borra —el historial tiene que cuadrar con la

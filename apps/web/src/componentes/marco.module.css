@@ -228,20 +228,32 @@
 
   /*
    * ┌────────────────────────────────────────────────────────────────────────┐
-   * │ EN EL MOVIL NO SE OCULTA NADA DEL CONTEXTO.                           │
+   * │ EN EL MOVIL CAE EL ROL, Y EL NOMBRE TIENE UN MINIMO GARANTIZADO.      │
    * │                                                                        │
-   * │ Antes el bloque de identidad desaparecia entero por debajo de 48rem y  │
-   * │ quedaba un boton "Salir" suelto: se podia cerrar la sesion sin ver de  │
-   * │ quien era. Y en un panel multi-inquilino saber en que gimnasio estas   │
-   * │ es justo lo que no puede faltar en la pantalla mas pequena.            │
+   * │ Aqui habia una medicion mal hecha. Se comprobo que el contexto "cabia" │
+   * │ a 375 porque la suma de sus hijos daba 320 de los 343 utiles — pero    │
+   * │ cabia precisamente porque el nombre se habia encogido a CERO y el      │
+   * │ resto ocupaba el hueco. Medido de nuevo: el nombre mide 0 px de 320 a  │
+   * │ 375 y 21 px a 430. O sea que en cualquier telefono se podia cerrar la  │
+   * │ sesion sin ver de quien era, que es justo lo que se queria evitar.     │
    * │                                                                        │
-   * │ Medido a 375 px: nombre, rol, gimnasio y salir suman 320 px de los     │
-   * │ 343 utiles. Cabe. Lo unico que se cede es el ancho del selector, y     │
-   * │ tanto el nombre del gimnasio como el de la persona se recortan con     │
-   * │ puntos suspensivos cuando son largos — que es perder el final de una   │
-   * │ palabra, no el dato entero.                                            │
+   * │ De los dos datos de la identidad, el que responde "esta es mi cuenta"  │
+   * │ es el NOMBRE; el rol se deduce de lo que la pantalla deja hacer. Asi   │
+   * │ que el rol se esconde y el nombre reserva 3.5rem, que dan para unos    │
+   * │ cuantos caracteres mas los puntos suspensivos.                         │
+   * │                                                                        │
+   * │ El gimnasio activo no se toca: en un panel multi-inquilino saber que   │
+   * │ datos estas viendo es lo ultimo que puede desaparecer.                 │
    * └────────────────────────────────────────────────────────────────────────┘
    */
+  .rol {
+    display: none;
+  }
+
+  .nombre {
+    min-width: 3.5rem;
+  }
+
   .selector,
   .gimnasio {
     max-width: 9rem;
