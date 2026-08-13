@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import {
   invitationSchema,
   memberListSchema,
@@ -63,6 +64,31 @@ export interface MembersApi {
    * cuenta o si esta de baja.
    */
   invite(gymId: string, id: string, options?: RequestOptions): Promise<Invitation>;
+
+  /**
+   * Todo lo que el gimnasio guarda de esa persona (RGPD art. 15 y 20).
+   *
+   * Sin esquema a proposito, y es la unica excepcion del cliente. El resto de
+   * metodos validan la respuesta contra el contrato porque su forma es fija;
+   * esta la componen los modulos que haya registrados en cada momento, asi que
+   * un esquema cerrado dejaria fuera al siguiente que se anada — y en una
+   * entrega legal, de silencio ya hubo bastante.
+   *
+   * Solo el dueno. Recepcion recibe 403.
+   */
+  exportData(gymId: string, id: string, options?: RequestOptions): Promise<unknown>;
+
+  /**
+   * Borrado por derecho al olvido (art. 17). NO es dar de baja.
+   *
+   * Dar de baja conserva la ficha —el gimnasio necesita historial— y esto la
+   * elimina junto con sus notas, su progreso, sus consentimientos y sus cuotas.
+   * Los pagos y los accesos se conservan sin socio: la obligacion contable
+   * convive con el derecho al olvido, y el art. 17.3.b lo permite.
+   *
+   * Solo el dueno.
+   */
+  erase(gymId: string, id: string, options?: RequestOptions): Promise<{ ok: true }>;
 }
 
 export function createMembersApi(http: Http): MembersApi {
@@ -121,6 +147,22 @@ export function createMembersApi(http: Http): MembersApi {
         method: 'POST',
         path: `${ficha(gymId, id)}/invite`,
         schema: invitationSchema,
+        ...options,
+      }),
+
+    exportData: (gymId, id, options) =>
+      http({
+        method: 'GET',
+        path: `${ficha(gymId, id)}/export`,
+        schema: z.unknown(),
+        ...options,
+      }),
+
+    erase: (gymId, id, options) =>
+      http({
+        method: 'DELETE',
+        path: ficha(gymId, id),
+        schema: z.object({ ok: z.literal(true) }),
         ...options,
       }),
   };

@@ -70,6 +70,25 @@
   border-top: 1px solid var(--borde);
 }
 
+/* El bloque del RGPD: al final de la ficha, separado de las acciones del dia. */
+.datosPersonales {
+  max-width: var(--ancho-lectura);
+  margin-top: var(--e5);
+}
+
+.explicacionLegal {
+  margin-bottom: var(--e4);
+  color: var(--texto-sutil);
+  font-size: var(--t-base);
+}
+
+.accionesLegales {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e3);
+}
+
 .confirmar {
   display: flex;
   align-items: center;

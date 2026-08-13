@@ -582,3 +582,278 @@ describe('el socio y sus propios datos', () => {
       .expect(403);
   });
 });
+
+/**
+ * LA EXPORTACION TIENE QUE TRAER LO QUE GUARDAN LOS DEMAS MODULOS.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ POR QUE ESTE BLOQUE EXISTE.                                              │
+ * │                                                                          │
+ * │ `PersonalDataModule` ya avisaba por escrito de que un modulo con datos   │
+ * │ personales que no se registrara dejaria la exportacion incompleta "y     │
+ * │ nadie recibira ningun error". Paso exactamente eso: progreso, accesos y  │
+ * │ rutinas existian y no estaban en la lista, asi que una solicitud del     │
+ * │ art. 15 se respondia sin los datos de SALUD.                             │
+ * │                                                                          │
+ * │ La guarda de arranque no lo detecta: comprueba que la lista no este      │
+ * │ vacia, y con `billing` dentro no lo estaba. Estas pruebas son las que    │
+ * │ faltaban — piden un dato concreto de cada modulo.                        │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ */
+/** La version del texto de salud sale de la configuracion, no del cliente. */
+const VERSION_SALUD = '2026-09-01';
+(env as { HEALTH_CONSENT_VERSION?: string }).HEALTH_CONSENT_VERSION = VERSION_SALUD;
+
+/** Un ejercicio cualquiera de la biblioteca que el alta del gimnasio ya siembra. */
+async function unEjercicio(gymId: string, token: string): Promise<string> {
+  const lista = await http()
+    .get(`/v1/gyms/${gymId}/exercises`)
+    .set(conSesion(token))
+    .expect(200);
+  return lista.body[0].id as string;
+}
+
+describe('RGPD · la exportacion no deja fuera ningun modulo', () => {
+  it('incluye las mediciones corporales y sus consentimientos (art. 9)', async () => {
+    const socio = await altaSocio(tokenOwnerA, gymA, { firstName: 'Salud', lastName: 'Exportada' });
+
+    await http()
+      .post(`/v1/gyms/${gymA}/members/${socio.id}/health-consent`)
+      .set(conSesion(tokenOwnerA))
+      .send({ version: VERSION_SALUD })
+      .expect(200);
+
+    await http()
+      .post(`/v1/gyms/${gymA}/members/${socio.id}/progress`)
+      .set(conSesion(tokenOwnerA))
+      .send({ weightKg: 74.5, waistCm: 81 })
+      .expect(201);
+
+    const res = await http()
+      .get(`/v1/gyms/${gymA}/members/${socio.id}/export`)
+      .set(conSesion(tokenOwnerA))
+      .expect(200);
+
+    expect(res.body.progresoYConsentimientos.mediciones).toHaveLength(1);
+    expect(Number(res.body.progresoYConsentimientos.mediciones[0].pesoKg)).toBe(74.5);
+    expect(res.body.progresoYConsentimientos.consentimientos).toHaveLength(1);
+    expect(res.body.progresoYConsentimientos.consentimientos[0].version).toBe(VERSION_SALUD);
+  });
+
+  it('incluye las rutinas asignadas, SIN decir quien las asigno', async () => {
+    // El nombre del entrenador es dato de otra persona: art. 15.4.
+    const socio = await altaSocio(tokenOwnerA, gymA, { firstName: 'Rutina', lastName: 'Exportada' });
+
+    const ejercicio = await unEjercicio(gymA, tokenOwnerA);
+    const rutina = await http()
+      .post(`/v1/gyms/${gymA}/routines`)
+      .set(conSesion(tokenOwnerA))
+      .send({
+        name: 'Fuerza basica',
+        description: 'Tres dias',
+        items: [{ exerciseId: ejercicio, sets: 4, reps: '8-10' }],
+      })
+      .expect(201);
+
+    await http()
+      .post(`/v1/gyms/${gymA}/routines/${rutina.body.id}/members`)
+      .set(conSesion(tokenOwnerA))
+      .send({ memberId: socio.id })
+      .expect(201);
+
+    const res = await http()
+      .get(`/v1/gyms/${gymA}/members/${socio.id}/export`)
+      .set(conSesion(tokenOwnerA))
+      .expect(200);
+
+    expect(res.body.rutinasAsignadas).toHaveLength(1);
+    expect(res.body.rutinasAsignadas[0].rutina).toBe('Fuerza basica');
+    expect(JSON.stringify(res.body.rutinasAsignadas)).not.toContain('TrainerId');
+    expect(JSON.stringify(res.body.rutinasAsignadas)).not.toContain('assignedBy');
+  });
+
+  it('trae la seccion de accesos aunque el socio no haya entrado nunca', async () => {
+    // Una lista vacia es una respuesta correcta y frecuente. Lo que no puede
+    // pasar es que la seccion no exista: quien recibe la entrega no sabria si
+    // es que no hay accesos o es que no se los han dado.
+    const socio = await altaSocio(tokenOwnerA, gymA, { firstName: 'Sin', lastName: 'Accesos' });
+
+    const res = await http()
+      .get(`/v1/gyms/${gymA}/members/${socio.id}/export`)
+      .set(conSesion(tokenOwnerA))
+      .expect(200);
+
+    expect(res.body.accesos).toEqual([]);
+  });
+
+  it('la entrega trae todas las secciones, con un socio recien dado de alta', async () => {
+    const socio = await altaSocio(tokenOwnerA, gymA, { firstName: 'Todas', lastName: 'Secciones' });
+
+    const res = await http()
+      .get(`/v1/gyms/${gymA}/members/${socio.id}/export`)
+      .set(conSesion(tokenOwnerA))
+      .expect(200);
+
+    for (const seccion of [
+      'ficha',
+      'notasInternas',
+      'cuotasYPagos',
+      'progresoYConsentimientos',
+      'accesos',
+      'rutinasAsignadas',
+    ]) {
+      expect(res.body, `falta la seccion "${seccion}"`).toHaveProperty(seccion);
+    }
+  });
+
+  it('no exporta un socio de otro gimnasio', async () => {
+    const enB = await altaSocio(tokenOwnerB, gymB, { firstName: 'Ajeno', lastName: 'DeB' });
+
+    await http()
+      .get(`/v1/gyms/${gymA}/members/${enB.id}/export`)
+      .set(conSesion(tokenOwnerA))
+      .expect(404);
+  });
+
+  it('exportar un socio inexistente responde 404, no 500', async () => {
+    await http()
+      .get(`/v1/gyms/${gymA}/members/${randomUUID()}/export`)
+      .set(conSesion(tokenOwnerA))
+      .expect(404);
+  });
+});
+
+describe('RGPD · que se lleva por delante el borrado', () => {
+  it('borra progreso y consentimientos, y anonimiza los pagos', async () => {
+    const socio = await altaSocio(tokenOwnerA, gymA, { firstName: 'Con', lastName: 'Historial' });
+
+    await http()
+      .post(`/v1/gyms/${gymA}/members/${socio.id}/health-consent`)
+      .set(conSesion(tokenOwnerA))
+      .send({ version: VERSION_SALUD })
+      .expect(200);
+    await http()
+      .post(`/v1/gyms/${gymA}/members/${socio.id}/progress`)
+      .set(conSesion(tokenOwnerA))
+      .send({ weightKg: 70 })
+      .expect(201);
+
+    const plan = await http()
+      .post(`/v1/gyms/${gymA}/plans`)
+      .set(conSesion(tokenOwnerA))
+      .send({ name: `Plan borrado ${sufijo}`, priceCents: 3000, period: 'monthly' })
+      .expect(201);
+    await http()
+      .post(`/v1/gyms/${gymA}/members/${socio.id}/subscription`)
+      .set(conSesion(tokenOwnerA))
+      .send({ planId: plan.body.id })
+      .expect(201);
+    await http()
+      .post(`/v1/gyms/${gymA}/members/${socio.id}/payments`)
+      .set(conSesion(tokenOwnerA))
+      .send({ concept: 'subscription', amountCents: 3000, method: 'cash' })
+      .expect(201);
+
+    await http()
+      .delete(`/v1/gyms/${gymA}/members/${socio.id}`)
+      .set(conSesion(tokenOwnerA))
+      .expect(200);
+
+    // Datos personales y de salud: fuera.
+    const salud = await owner.execute<{ n: number }>(
+      sql`SELECT count(*)::int AS n FROM body_metrics WHERE member_id = ${socio.id}::uuid`,
+    );
+    expect(salud.rows[0]!.n).toBe(0);
+
+    const permisos = await owner.execute<{ n: number }>(
+      sql`SELECT count(*)::int AS n FROM consents WHERE member_id = ${socio.id}::uuid`,
+    );
+    expect(permisos.rows[0]!.n).toBe(0);
+
+    const cuotas = await owner.execute<{ n: number }>(
+      sql`SELECT count(*)::int AS n FROM member_subscriptions WHERE member_id = ${socio.id}::uuid`,
+    );
+    expect(cuotas.rows[0]!.n).toBe(0);
+
+    /*
+     * El pago NO se borra: se le quita el socio.
+     *
+     * Un gimnasio tiene obligacion de conservar sus registros contables, y esa
+     * obligacion convive con el derecho al olvido — el art. 17.3.b lo permite
+     * expresamente. La forma de cumplir las dos es que el cobro siga cuadrando
+     * la caja sin decir de quien era. Por eso la clave ajena es SET NULL y no
+     * CASCADE: si fuera cascada, borrar a una persona descuadraria el ejercicio.
+     */
+    const pagos = await owner.execute<{ n: number; huerfanos: number }>(
+      sql`SELECT count(*)::int AS n,
+                 count(*) FILTER (WHERE member_id IS NULL)::int AS huerfanos
+          FROM payments WHERE gym_id = ${gymA}::uuid AND amount_cents = 3000`,
+    );
+    expect(pagos.rows[0]!.n).toBeGreaterThan(0);
+    expect(pagos.rows[0]!.huerfanos).toBe(pagos.rows[0]!.n);
+  });
+
+  it('no borra un socio de otro gimnasio', async () => {
+    const enB = await altaSocio(tokenOwnerB, gymB, { firstName: 'Intocable', lastName: 'DeB' });
+
+    await http()
+      .delete(`/v1/gyms/${gymA}/members/${enB.id}`)
+      .set(conSesion(tokenOwnerA))
+      .expect(404);
+
+    // Y sigue ahi.
+    await http()
+      .get(`/v1/gyms/${gymB}/members/${enB.id}`)
+      .set(conSesion(tokenOwnerB))
+      .expect(200);
+  });
+
+  it('borrar un socio inexistente responde 404, no 500', async () => {
+    await http()
+      .delete(`/v1/gyms/${gymA}/members/${randomUUID()}`)
+      .set(conSesion(tokenOwnerA))
+      .expect(404);
+  });
+
+  /**
+   * DOCUMENTA UN LIMITE CONOCIDO, no lo aprueba.
+   *
+   * Al borrar la ficha de un socio CON cuenta, su `memberships` sobrevive: nada
+   * la cascadea, porque apunta a `users` y `gyms`, no a `members`. La persona
+   * sigue viendo ese gimnasio en su selector y se encuentra un 404 en todo.
+   *
+   * La prueba fija el comportamiento actual para que cambiarlo sea deliberado y
+   * no un efecto colateral. Pendiente de decision de producto.
+   */
+  it('el borrado NO retira todavia la pertenencia de un socio con cuenta', async () => {
+    const socio = await altaSocio(tokenOwnerA, gymA, {
+      firstName: 'Con',
+      lastName: 'Cuenta',
+      email: email('socio-borrado'),
+    });
+    await http()
+      .post(`/v1/gyms/${gymA}/members/${socio.id}/invite`)
+      .set(conSesion(tokenOwnerA))
+      .expect(201);
+    await http()
+      .post('/v1/auth/accept-invitation')
+      .send({
+        token: await tokenEncolado(EMAIL_QUEUES.invitation, email('socio-borrado')),
+        name: 'Socio Borrado',
+        password: PASSWORD,
+      })
+      .expect(201);
+
+    await http()
+      .delete(`/v1/gyms/${gymA}/members/${socio.id}`)
+      .set(conSesion(tokenOwnerA))
+      .expect(200);
+
+    const pertenencias = await owner.execute<{ n: number }>(
+      sql`SELECT count(*)::int AS n FROM memberships m
+          JOIN users u ON u.id = m.user_id
+          WHERE u.email = ${email('socio-borrado')} AND m.ended_at IS NULL`,
+    );
+    expect(pertenencias.rows[0]!.n).toBe(1);
+  });
+});
