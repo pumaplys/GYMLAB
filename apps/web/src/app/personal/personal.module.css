@@ -31,8 +31,11 @@
   align-items: start;
 }
 
+/* Mismo filete que el resto de pies de formulario del panel. */
 .pie {
   display: flex;
+  padding-top: var(--e4);
+  border-top: 1px solid var(--borde);
 }
 
 .panel {

@@ -38,8 +38,18 @@
   max-width: 16rem;
 }
 
+/*
+ * El pie de un formulario se separa de los campos con un filete.
+ *
+ * Es la misma regla que ya usaban el alta de socio y la edicion de la ficha, y
+ * la que sigue la cabecera de `Tarjeta`: dentro de una tarjeta, las secciones
+ * se parten con una linea de un pixel. Aqui faltaba, y tres formularios del
+ * panel terminaban de una forma y dos de otra.
+ */
 .pie {
   display: flex;
+  padding-top: var(--e4);
+  border-top: 1px solid var(--borde);
 }
 
 /*

@@ -17,13 +17,22 @@
   box-shadow: var(--sombra);
 }
 
+/*
+ * La misma marca que la del panel, con los mismos valores.
+ *
+ * Estaba en gris tenue y peso 600, mientras que en `Marco` va en tinta y 700:
+ * la misma palabra con dos tratamientos, y el primero que ve quien entra era el
+ * flojo. La direccion del sistema es "la marca en negro tinta", asi que gana esa.
+ *
+ * `text-transform` se queda porque el texto ya viene en mayusculas y no cambia
+ * nada, pero el color y el peso ahora salen del mismo sitio que en la cabecera.
+ */
 .marca {
   margin-bottom: var(--e5);
   font-size: var(--t-sm);
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.08em;
-  color: var(--texto-tenue);
-  text-transform: uppercase;
+  color: var(--tinta);
 }
 
 .titulo {
