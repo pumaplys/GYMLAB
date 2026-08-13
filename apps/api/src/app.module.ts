@@ -16,6 +16,7 @@ import { InvitationsModule } from './invitations/invitations.module';
 import { JobsModule } from './jobs/jobs.module';
 import { MailModule } from './mail/mail.module';
 import { MembersModule } from './members/members.module';
+import { MemberErasedHooksModule } from './member-erased-hooks.module';
 import { PersonalDataModule } from './personal-data.module';
 import { TrainersModule } from './trainers/trainers.module';
 import { ProgressModule } from './progress/progress.module';
@@ -59,6 +60,7 @@ import { TrainingModule } from './training/training.module';
     // Van DESPUES de los modulos de dominio: registran sus implementaciones de
     // los dos puntos de extension. Ver ADR-0010 y ADR-0011.
     InvitationHooksModule,
+    MemberErasedHooksModule,
     PersonalDataModule,
     GymHooksModule,
   ],

@@ -2,12 +2,13 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { updateMemberSchema, type Invitation, type Member } from '@gymlab/contracts';
 import { Aviso } from '@/componentes/aviso';
 import { Boton } from '@/componentes/boton';
 import { Campo } from '@/componentes/campo';
 import { Cargando } from '@/componentes/cargando';
+import { ConfirmacionEnLinea } from '@/componentes/confirmacion-en-linea';
 import { EncabezadoDePagina } from '@/componentes/encabezado-de-pagina';
 import { Etiqueta } from '@/componentes/etiqueta';
 import { Marco } from '@/componentes/marco';
@@ -153,7 +154,110 @@ function Ficha() {
         preguntas viven juntas.
       */}
       <Cuota memberId={socio.id} />
+
+      <DatosPersonales socio={socio} />
     </>
+  );
+}
+
+/**
+ * Las dos operaciones del RGPD: entregar lo que se guarda y borrarlo.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ POR QUE ESTAN AQUI ABAJO Y NO EN LA FILA DE ACCIONES.                    │
+ * │                                                                          │
+ * │ Arriba viven las acciones del dia —editar, invitar, dar de baja— y son   │
+ * │ las que recepcion usa cien veces. Estas dos se usan cuando alguien las   │
+ * │ pide por escrito, quiza una vez al ano. Ponerlas en la misma fila las    │
+ * │ mezclaria, y sobre todo pondria "Eliminar" al lado de "Dar de baja",     │
+ * │ que es justo la confusion que hay que evitar: una conserva la ficha y la │
+ * │ otra la destruye.                                                        │
+ * │                                                                          │
+ * │ Solo el dueno las ve. El servidor lo impone igual con un 403; aqui solo  │
+ * │ se evita ofrecer un boton que va a fallar.                               │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ */
+function DatosPersonales({ socio }: { socio: Member }) {
+  const { gymId, rol } = useSesion();
+  const router = useRouter();
+  const [trabajando, setTrabajando] = useState<'exportar' | 'borrar' | null>(null);
+  const [confirmando, setConfirmando] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  if (!gymId || rol !== 'owner') return null;
+
+  const descargar = () => {
+    setTrabajando('exportar');
+    setError(null);
+    void api.members
+      .exportData(gymId, socio.id)
+      .then((datos) => {
+        /*
+         * Se descarga en el navegador y no se abre en una pestana: son datos
+         * personales, y una pestana queda en el historial y en la sesion del
+         * ordenador del mostrador. Un fichero lo guarda quien lo pidio y se
+         * acabo.
+         */
+        const url = URL.createObjectURL(
+          new Blob([JSON.stringify(datos, null, 2)], { type: 'application/json' }),
+        );
+        const enlace = document.createElement('a');
+        enlace.href = url;
+        enlace.download = `gymlab-socio-${socio.memberNumber}.json`;
+        enlace.click();
+        URL.revokeObjectURL(url);
+      })
+      .catch((problema: unknown) => setError(mensajeDeError(problema)))
+      .finally(() => setTrabajando(null));
+  };
+
+  const borrar = () => {
+    setTrabajando('borrar');
+    setError(null);
+    void api.members
+      .erase(gymId, socio.id)
+      // Al listado: quedarse en la ficha de alguien que ya no existe solo
+      // puede acabar en un 404 al recargar.
+      .then(() => router.replace('/socios'))
+      .catch((problema: unknown) => {
+        setError(mensajeDeError(problema));
+        setTrabajando(null);
+        setConfirmando(false);
+      });
+  };
+
+  return (
+    <Tarjeta className={estilos.datosPersonales} titulo={<h2>Datos personales</h2>}>
+      {error && <Aviso>{error}</Aviso>}
+
+      <p className={estilos.explicacionLegal}>
+        Descargar entrega todo lo que el gimnasio guarda de esta persona. Eliminar borra su ficha,
+        sus notas, sus medidas y sus cuotas, y no se puede deshacer: los cobros se conservan sin su
+        nombre porque la contabilidad tiene que seguir cuadrando.
+      </p>
+
+      <div className={estilos.accionesLegales}>
+        <Boton cargando={trabajando === 'exportar'} disabled={trabajando !== null} onClick={descargar}>
+          Descargar sus datos
+        </Boton>
+
+        {confirmando ? (
+          <ConfirmacionEnLinea
+            pregunta="¿Eliminar para siempre?"
+            confirmando={trabajando === 'borrar'}
+            onConfirmar={borrar}
+            onCancelar={() => setConfirmando(false)}
+          />
+        ) : (
+          // `sutil` y no `peligro`: el rojo es del boton que CONFIRMA, no del
+          // que abre la pregunta. Un "Eliminar" rojo permanente en la ficha
+          // pone alarma en una pantalla que se abre cien veces al dia.
+          <Boton variante="sutil" disabled={trabajando !== null} onClick={() => setConfirmando(true)}>
+            Eliminar
+          </Boton>
+        )}
+      </div>
+    </Tarjeta>
   );
 }
 

@@ -31,6 +31,7 @@ import type {
   UpdateOwnProfileInput,
 } from '@gymlab/contracts';
 import type { Invitation } from '@gymlab/contracts';
+import { MEMBER_ERASED_HOOK, type MemberErasedHooks } from '../common/member-erased-hooks';
 import {
   PERSONAL_DATA_CONTRIBUTORS,
   type PersonalDataContributors,
@@ -62,6 +63,17 @@ export class MembersService implements OnModuleInit {
     @Optional()
     @Inject(PERSONAL_DATA_CONTRIBUTORS)
     private readonly contribuidores: PersonalDataContributors = [],
+    /**
+     * Quienes reaccionan al borrado de una ficha (art. 17).
+     *
+     * OPCIONAL con la misma forma que los contribuidores, y comprobado al
+     * arrancar por el mismo motivo: sin ellos el borrado responderia 200
+     * dejando a la persona perteneciendo a un gimnasio del que ya no tiene
+     * ficha, en silencio.
+     */
+    @Optional()
+    @Inject(MEMBER_ERASED_HOOK)
+    private readonly alBorrarSocio: MemberErasedHooks = [],
   ) {}
 
   /**
@@ -80,6 +92,15 @@ export class MembersService implements OnModuleInit {
           'Revisa que PersonalDataModule este en los imports de AppModule: sin el, ' +
           'la exportacion del art. 15 entregaria solo la ficha y omitiria en ' +
           'silencio las cuotas y los pagos.',
+      );
+    }
+
+    if (this.alBorrarSocio.length === 0) {
+      throw new Error(
+        '[members] No hay ningun MemberErasedHook registrado. ' +
+          'Revisa que MemberErasedHooksModule este en los imports de AppModule: sin el, ' +
+          'borrar una ficha dejaria viva la pertenencia de esa persona al gimnasio, ' +
+          'que seguiria viendolo en su selector con un 404 en todo.',
       );
     }
   }
@@ -412,10 +433,23 @@ export class MembersService implements OnModuleInit {
   /**
    * Borrado por derecho al olvido (art. 17), la parte de ESTE modulo.
    *
-   * Elimina la ficha y, en cascada, sus notas. No toca la cuenta de usuario ni
-   * la pertenencia al gimnasio: son del modulo `identity`, y la arquitectura
-   * establecio que cada modulo expone su borrado e `identity` los orquesta
-   * (ADR-0006). Llamar aqui a tablas ajenas romperia esa frontera.
+   * Elimina la ficha y, en cascada, todo lo que apunta a ella: notas, medidas,
+   * consentimientos, cuotas y asignaciones. Los pagos y los accesos NO se
+   * borran —su clave ajena es `SET NULL`— porque la obligacion contable convive
+   * con el derecho al olvido, y el art. 17.3.b lo contempla.
+   *
+   * ┌──────────────────────────────────────────────────────────────────────────┐
+   * │ LO QUE LAS CLAVES AJENAS NO ALCANZAN.                                    │
+   * │                                                                          │
+   * │ `memberships` no apunta a `members`, sino a `users` y a `gyms`, asi que  │
+   * │ ninguna cascada la toca: la persona seguia perteneciendo al gimnasio     │
+   * │ despues de que su ficha desapareciera. Y no puede arreglarse aqui —esa   │
+   * │ tabla es de `identity` y ADR-0006 no permite escribir en tablas ajenas—, │
+   * │ asi que se anuncia el borrado y quien es su dueno reacciona.             │
+   * │                                                                          │
+   * │ Dentro de la MISMA transaccion: si retirar la pertenencia fallara, la    │
+   * │ ficha tampoco se borraria. No hay estado a medias posible.               │
+   * └──────────────────────────────────────────────────────────────────────────┘
    *
    * El registro de auditoria se escribe ANTES, y a proposito no guarda ningun
    * dato personal: solo que hubo un borrado y quien lo pidio. Un registro que
@@ -436,6 +470,12 @@ export class MembersService implements OnModuleInit {
     });
 
     await tx.delete(members).where(and(eq(members.gymId, gymId), eq(members.id, id)));
+
+    // Despues del borrado y no antes: quien reacciona actua sobre un hecho
+    // consumado, no sobre una intencion que todavia podria fallar.
+    for (const hook of this.alBorrarSocio) {
+      await hook.onMemberErased({ gymId, memberId: id, userId: socio.userId, tx });
+    }
 
     return { ok: true };
   }

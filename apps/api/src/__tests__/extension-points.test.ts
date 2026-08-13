@@ -13,6 +13,7 @@ import type {
   InvitationAcceptedEvent,
   InvitationAcceptedHooks,
 } from '../common/invitation-hooks';
+import type { MemberErasedHooks } from '../common/member-erased-hooks';
 import type { PersonalDataContributors } from '../common/personal-data';
 import { InvitationsService } from '../invitations/invitations.service';
 import { MembersService } from '../members/members.service';
@@ -43,13 +44,17 @@ describe('guarda de arranque de InvitationsService', () => {
   });
 });
 
-const crearMembers = (contribuidores: PersonalDataContributors) =>
-  new MembersService(undefined as never, contribuidores);
+const crearMembers = (
+  contribuidores: PersonalDataContributors,
+  hooks: MemberErasedHooks = [hookDeBorradoInerte],
+) => new MembersService(undefined as never, contribuidores, hooks);
 
 const contribuidorInerte = {
   seccion: 'nada',
   aportarDatos: async () => ({}),
 };
+
+const hookDeBorradoInerte = { onMemberErased: async () => {} };
 
 describe('guarda de arranque de MembersService (ADR-0011)', () => {
   it('sin ningun contribuidor registrado, muere en el arranque', () => {
@@ -60,5 +65,14 @@ describe('guarda de arranque de MembersService (ADR-0011)', () => {
 
   it('con contribuidores registrados, arranca', () => {
     expect(() => crearMembers([contribuidorInerte]).onModuleInit()).not.toThrow();
+  });
+
+  it('sin ningun hook de borrado, muere en el arranque', () => {
+    // El modo de fallo que evita: borrar una ficha responderia 200 dejando a esa
+    // persona perteneciendo a un gimnasio del que ya no tiene ficha, y viendolo
+    // en su selector con un 404 en todo lo que abriera.
+    expect(() => crearMembers([contribuidorInerte], []).onModuleInit()).toThrow(
+      /MemberErasedHook/,
+    );
   });
 });
