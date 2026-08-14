@@ -1,3 +1,68 @@
+/* Solo lo que es del area de entrenador: el resto sale de `componentes/`. */
+
+.herramientas {
+  display: flex;
+  gap: var(--e3);
+  margin-bottom: var(--e4);
+}
+
+/* Un buscador no es un campo de formulario: no lleva etiqueta visible ni ayuda,
+   y su ancho es el de la caja, no el de la columna. */
+.buscador {
+  width: 100%;
+  max-width: 22rem;
+  min-height: 2.25rem;
+  padding: 0 var(--e3);
+  background: var(--fondo);
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radio-s);
+  font-size: var(--t-base);
+}
+
+.buscador::placeholder {
+  color: var(--texto-tenue);
+}
+
+.nombre {
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.enlace {
+  color: var(--texto);
+}
+
+.enlace:hover {
+  color: var(--acento);
+}
+
+/*
+ * El numero de socio delante del nombre, en la tarjeta estrecha.
+ *
+ * Es el dato por el que se pregunta en la sala —"¿tu numero?"— asi que no puede
+ * quedar enterrado entre los pares de abajo.
+ */
+.numeroEnTarjeta {
+  margin-right: var(--e2);
+  color: var(--texto-tenue);
+  font-variant-numeric: var(--numeros);
+  font-weight: 400;
+}
+
+/* --- Ficha del socio asignado ------------------------------------------- */
+
+.volver {
+  display: inline-block;
+  margin-bottom: var(--e4);
+  font-size: var(--t-base);
+}
+
+.numero {
+  color: var(--texto-tenue);
+  font-size: var(--t-base);
+  font-variant-numeric: var(--numeros);
+}
+
 .tarjeta {
   max-width: var(--ancho-lectura);
 }
@@ -5,7 +70,7 @@
 /* Lista de definiciones: cada dato con su nombre, sin tabla. */
 .datos {
   display: grid;
-  grid-template-columns: 10rem 1fr;
+  grid-template-columns: 12rem 1fr;
   gap: var(--e3) var(--e4);
   margin: 0;
 }
@@ -18,6 +83,10 @@
 .datos dd {
   margin: 0;
   font-size: var(--t-base);
+}
+
+.vacio {
+  color: var(--texto-tenue);
 }
 
 @media (max-width: 48rem) {
