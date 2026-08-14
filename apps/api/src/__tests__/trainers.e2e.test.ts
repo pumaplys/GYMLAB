@@ -506,4 +506,40 @@ describe('aislamiento entre gimnasios', () => {
       .set(conSesion(tokenOwnerB))
       .expect(403);
   });
+
+  /**
+   * EL CASO QUE FALTABA: un socio de OTRO gimnasio por la ruta propia.
+   *
+   * Las demas pruebas de aislamiento usan rutas con `:gymId`, donde el 403 lo
+   * da comparar ese id con el gimnasio activo. Esta no lleva ninguno —
+   * `/me/trainer/members/:memberId` resuelve el gimnasio por la sesion— asi que
+   * lo unico que separa los datos es que la asignacion se busca dentro del
+   * gimnasio activo. Es la via por la que un identificador copiado de otro
+   * gimnasio podria colarse, y no estaba cubierta.
+   */
+  it('un socio de OTRO gimnasio, por la ruta propia del entrenador, responde 404', async () => {
+    const enB = await altaSocio(gymB, tokenOwnerB, 'SocioDeB');
+
+    await http()
+      .get(`/v1/me/trainer/members/${enB}`)
+      .set(conSesion(tokenEntrenador1))
+      .expect(404);
+
+    // Y sigue existiendo en su gimnasio: no se ha tocado nada.
+    await http()
+      .get(`/v1/gyms/${gymB}/members/${enB}`)
+      .set(conSesion(tokenOwnerB))
+      .expect(200);
+  });
+
+  it('tampoco aparece en la lista propia del entrenador', async () => {
+    const res = await http()
+      .get('/v1/me/trainer/members')
+      .set(conSesion(tokenEntrenador1))
+      .expect(200);
+
+    for (const socio of res.body as { lastName: string }[]) {
+      expect(socio.lastName).not.toBe('SocioDeB');
+    }
+  });
 });

@@ -1,4 +1,12 @@
-import { memberSchema, trainerSchema, type Member, type Trainer } from '@gymlab/contracts';
+import { z } from 'zod';
+import {
+  assignedMemberSchema,
+  memberSchema,
+  trainerSchema,
+  type AssignedMember,
+  type Member,
+  type Trainer,
+} from '@gymlab/contracts';
 import type { Http, RequestOptions } from './http';
 
 /**
@@ -30,6 +38,25 @@ export interface YoApi {
   perfilDeEntrenador(options?: RequestOptions): Promise<Trainer>;
 
   /**
+   * Los socios que el entrenador tiene asignados en el gimnasio activo.
+   *
+   * SIN PAGINACION NI BUSQUEDA EN SERVIDOR, y no es un olvido del cliente: el
+   * endpoint no las ofrece. Un entrenador lleva una cartera de personas, no un
+   * censo, asi que la lista entera cabe en una respuesta y filtrar por nombre
+   * se hace en pantalla sin pedir nada.
+   */
+  misSocios(options?: RequestOptions): Promise<AssignedMember[]>;
+
+  /**
+   * Uno de mis socios asignados.
+   *
+   * **404 si no es mio**, no 403 — y esa diferencia es del servidor, no de
+   * aqui: confirmar que la ficha existe ya seria filtrar informacion sobre
+   * socios ajenos.
+   */
+  miSocio(memberId: string, options?: RequestOptions): Promise<AssignedMember>;
+
+  /**
    * La ficha del socio que ha iniciado sesion.
    *
    * 404 si esa cuenta no tiene ficha en el gimnasio activo, que es un caso
@@ -42,6 +69,22 @@ export function createYoApi(http: Http): YoApi {
   return {
     perfilDeEntrenador: (options) =>
       http({ method: 'GET', path: '/me/trainer', schema: trainerSchema, ...options }),
+
+    misSocios: (options) =>
+      http({
+        method: 'GET',
+        path: '/me/trainer/members',
+        schema: z.array(assignedMemberSchema),
+        ...options,
+      }),
+
+    miSocio: (memberId, options) =>
+      http({
+        method: 'GET',
+        path: `/me/trainer/members/${encodeURIComponent(memberId)}`,
+        schema: assignedMemberSchema,
+        ...options,
+      }),
 
     fichaDeSocio: (options) =>
       http({ method: 'GET', path: '/me/member-profile', schema: memberSchema, ...options }),

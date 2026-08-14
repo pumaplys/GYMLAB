@@ -56,6 +56,15 @@ describe('a que area pertenece cada ruta', () => {
     expect(areaDeRuta('/socio/carne')).toBe('socio');
   });
 
+  it('la ficha del socio asignado es del area de entrenador', () => {
+    // Se parece a `/socio` en el nombre y no lo es: cuelga de `/entrenador`.
+    expect(areaDeRuta('/entrenador/socio')).toBe('entrenador');
+    expect(destinoSegunArea('trainer', '/entrenador/socio')).toBeNull();
+    expect(destinoSegunArea('member', '/entrenador/socio')).toBe('/socio');
+    expect(destinoSegunArea('owner', '/entrenador/socio')).toBe('/socios');
+    expect(destinoSegunArea('receptionist', '/entrenador/socio')).toBe('/socios');
+  });
+
   it('/socio y /socios son areas DISTINTAS', () => {
     // El parecido de los nombres es el fallo evidente de una comparacion por
     // prefijo mal escrita: `/socios` empieza por `/socio`.
