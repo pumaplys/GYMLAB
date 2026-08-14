@@ -89,6 +89,25 @@
   color: var(--texto-tenue);
 }
 
+/* --- Rutinas y biblioteca ------------------------------------------------ */
+
+.nombreRutina {
+  font-weight: 500;
+}
+
+/* Debajo del nombre, no a su lado: en la tarjeta estrecha va dentro del titulo
+   y suelto se leeria "RutinaDescripcion". */
+.descripcion {
+  display: block;
+  margin-top: 0.125rem;
+  color: var(--texto-sutil);
+  font-size: var(--t-sm);
+}
+
+.panelRutina {
+  max-width: var(--ancho-maximo);
+}
+
 @media (max-width: 48rem) {
   .datos {
     grid-template-columns: 1fr;

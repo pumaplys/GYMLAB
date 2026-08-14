@@ -1,9 +1,8 @@
 /*
- * Solo la fila de destinos del panel.
+ * La fila de destinos de un area. La comparten el panel y el entrenador.
  *
  * El esqueleto —salto, cabecera pegajosa, `main`— vive en `armazon`, y el
- * contexto —marca, gimnasio, cuenta— en `banda-de-contexto`. Los comparten las
- * tres areas; esto es lo unico que es del panel de gimnasio.
+ * contexto —marca, gimnasio, cuenta— en `banda-de-contexto`.
  */
 .destinos {
   display: flex;
@@ -11,6 +10,9 @@
   max-width: var(--ancho-maximo);
   margin: 0 auto;
   padding: 0 var(--e5);
+  /* Con cuatro destinos en un movil estrecho, la fila se desplaza sola en
+     lugar de estrujarlos o desbordar la pagina. */
+  overflow-x: auto;
 }
 
 .enlace {
@@ -23,6 +25,7 @@
   color: var(--texto-sutil);
   font-size: var(--t-base);
   font-weight: 500;
+  white-space: nowrap;
 }
 
 .enlace:hover {
