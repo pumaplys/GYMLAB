@@ -8,19 +8,31 @@ import { Aviso } from '@/componentes/aviso';
 import { Boton } from '@/componentes/boton';
 import { Campo } from '@/componentes/campo';
 import { PantallaCentrada } from '@/componentes/pantalla-centrada';
+import { inicioPara } from '@/lib/areas';
 import { useFormulario } from '@/lib/formulario';
 import { useSesion } from '@/lib/sesion';
 import estilos from './login.module.css';
 
 export default function Entrar() {
-  const { estado, entrar } = useSesion();
+  const { estado, entrar, rol } = useSesion();
   const router = useRouter();
 
-  // Quien ya tiene sesion no ve esta pantalla: si vuelve a /login —por un
-  // marcador, o por el boton de atras— se le devuelve al panel.
+  /*
+   * UN SOLO LOGIN PARA LAS TRES EXPERIENCIAS.
+   *
+   * No hay "entrar como entrenador" ni "entrar como socio": la misma cuenta
+   * entra por aqui y GYMLAB resuelve a donde va. Y lo resuelve por el rol de la
+   * pertenencia ACTIVA, no por la cuenta — la misma persona puede ser
+   * entrenadora en un gimnasio y socia en otro.
+   *
+   * Si la cuenta pertenece a varios gimnasios no hay activo todavia, asi que
+   * `rol` es nulo: se manda a la raiz y `RutaPrivada` ensena el selector. Al
+   * elegir uno, esa misma raiz reparte con el rol ya resuelto.
+   */
   useEffect(() => {
-    if (estado.fase === 'identificado') router.replace('/socios');
-  }, [estado.fase, router]);
+    if (estado.fase !== 'identificado') return;
+    router.replace(rol ? inicioPara(rol) : '/');
+  }, [estado.fase, rol, router]);
 
   const formulario = useFormulario({
     esquema: loginSchema,

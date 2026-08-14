@@ -1,0 +1,28 @@
+.tarjeta {
+  max-width: var(--ancho-lectura);
+}
+
+/* Lista de definiciones: cada dato con su nombre, sin tabla. */
+.datos {
+  display: grid;
+  grid-template-columns: 10rem 1fr;
+  gap: var(--e3) var(--e4);
+  margin: 0;
+}
+
+.datos dt {
+  color: var(--texto-sutil);
+  font-size: var(--t-base);
+}
+
+.datos dd {
+  margin: 0;
+  font-size: var(--t-base);
+}
+
+@media (max-width: 48rem) {
+  .datos {
+    grid-template-columns: 1fr;
+    gap: var(--e1) var(--e4);
+  }
+}
