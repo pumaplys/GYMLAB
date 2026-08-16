@@ -16,6 +16,7 @@ import { mensajeDeError } from '@/lib/errores';
 import { comoFecha } from '@/lib/formato';
 import { esSesionCaducada, useSesion } from '@/lib/sesion';
 import estilos from '../entrenador.module.css';
+import { ProgresoDelSocio } from './progreso';
 import { RutinasDelSocio } from './rutinas';
 
 /**
@@ -155,10 +156,7 @@ function Ficha() {
 
       <RutinasDelSocio memberId={socio.id} nombre={socio.firstName} />
 
-      {/*
-        Su progreso ira debajo, en el PR siguiente. Hoy no se anuncia ni se deja
-        un hueco vacio: un "proximamente" es un enlace muerto con otro nombre.
-      */}
+      <ProgresoDelSocio memberId={socio.id} nombre={socio.firstName} />
     </>
   );
 }

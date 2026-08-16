@@ -43,6 +43,7 @@ import { createEntrenamientoApi, type EntrenamientoApi } from './entrenamiento';
 import { createHttp, type ApiClientOptions } from './http';
 import { createInvitationsApi, type InvitationsApi } from './invitations';
 import { createMembersApi, type MembersApi } from './members';
+import { createProgresoApi, type ProgresoApi } from './progreso';
 import { createStaffApi, type StaffApi } from './staff';
 import { createYoApi, type YoApi } from './yo';
 
@@ -54,6 +55,8 @@ export interface ApiClient {
   staff: StaffApi;
   /** Ejercicios y rutinas del gimnasio. */
   entrenamiento: EntrenamientoApi;
+  /** Peso y medidas. Datos de salud: toda escritura pasa por el consentimiento. */
+  progreso: ProgresoApi;
   /** Lo que cada rol pide sobre si mismo. Sin gymId en la ruta. */
   yo: YoApi;
 }
@@ -67,6 +70,7 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
     invitations: createInvitationsApi(http),
     staff: createStaffApi(http),
     entrenamiento: createEntrenamientoApi(http),
+    progreso: createProgresoApi(http),
     yo: createYoApi(http),
   };
 }
@@ -77,6 +81,7 @@ export type { BillingApi } from './billing';
 export type { InvitationsApi } from './invitations';
 export type { StaffApi } from './staff';
 export type { EntrenamientoApi } from './entrenamiento';
+export type { ProgresoApi } from './progreso';
 export type { YoApi } from './yo';
 export type { ApiClientOptions, Fetch, Http, RequestOptions } from './http';
 export {

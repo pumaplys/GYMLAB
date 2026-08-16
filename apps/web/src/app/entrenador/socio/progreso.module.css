@@ -1,0 +1,44 @@
+.cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e3);
+  margin-top: var(--e5);
+  margin-bottom: var(--e3);
+}
+
+.titulo {
+  font-size: var(--t-lg);
+  font-weight: 600;
+}
+
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e4);
+  margin-bottom: var(--e3);
+}
+
+/*
+ * Las medidas en rejilla. Son campos cortos —un peso son cuatro caracteres— y a
+ * lo ancho quedan raquiticos uno debajo de otro; en el movil van en columna
+ * porque a 320 px dos columnas dejan el numero sin sitio junto a su etiqueta.
+ */
+.medidas {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--e4);
+}
+
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e3);
+}
+
+@media (min-width: 48.0625rem) {
+  .medidas {
+    grid-template-columns: 1fr 1fr;
+  }
+}
