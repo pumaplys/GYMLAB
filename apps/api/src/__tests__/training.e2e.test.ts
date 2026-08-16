@@ -923,6 +923,171 @@ describe('el socio y sus rutinas', () => {
       .set(conSesion(tokenSocio))
       .expect(403);
   });
+
+  /** Crea una cuenta de socio con ficha enlazada en el gimnasio indicado. */
+  async function socioConCuenta(gymId: string, tokenStaff: string, quien: string) {
+    const token = await altaPersonal(gymId, tokenStaff, 'member', quien);
+    const cuenta = await owner.execute<{ id: string }>(
+      sql`SELECT id FROM users WHERE email = ${email(quien)}`,
+    );
+    const memberId = await altaSocio(gymId, tokenStaff, quien);
+    await owner.execute(
+      sql`UPDATE members SET user_id = ${cuenta.rows[0]!.id}::uuid WHERE id = ${memberId}::uuid`,
+    );
+    return { token, memberId, userId: cuenta.rows[0]!.id };
+  }
+
+  it('sin rutinas asignadas devuelve una lista vacia, no un error', async () => {
+    const { token } = await socioConCuenta(gymA, tokenOwnerA, 'socio-sin-rutina');
+    const mias = await http().get('/v1/me/routines').set(conSesion(token)).expect(200);
+    expect(mias.body).toEqual([]);
+  });
+
+  it('ve VARIAS a la vez, la mas reciente primero', async () => {
+    // El modelo lo permite a proposito y ninguna es "la principal": ese concepto
+    // no existe, asi que la pantalla no puede inventarselo.
+    const { token, memberId } = await socioConCuenta(gymA, tokenOwnerA, 'socio-varias');
+    const ejercicio = await unEjercicio(gymA, tokenOwnerA);
+
+    for (const nombre of ['Fuerza suya', 'Movilidad suya']) {
+      const r = await crearRutina(gymA, tokenOwnerA, nombre, ejercicio);
+      await http()
+        .post(`/v1/gyms/${gymA}/routines/${r.id}/members`)
+        .set(conSesion(tokenOwnerA))
+        .send({ memberId })
+        .expect(201);
+    }
+
+    const mias = await http().get('/v1/me/routines').set(conSesion(token)).expect(200);
+    expect(mias.body).toHaveLength(2);
+    expect(mias.body[0].name).toBe('Movilidad suya');
+  });
+
+  it('un ejercicio borrado de la biblioteca NO rompe su rutina', async () => {
+    // `exercise_id` queda a nulo y el NOMBRE sobrevive dentro de la rutina. Al
+    // socio no le importa el catalogo del gimnasio: le importa que sigue
+    // teniendo que hacer ese ejercicio, con sus series y sus repeticiones.
+    const { token, memberId } = await socioConCuenta(gymA, tokenOwnerA, 'socio-huerfano');
+    const ejercicio = await unEjercicio(gymA, tokenOwnerA);
+    const rutina = await crearRutina(gymA, tokenOwnerA, 'Con borrado', ejercicio);
+    await http()
+      .post(`/v1/gyms/${gymA}/routines/${rutina.id}/members`)
+      .set(conSesion(tokenOwnerA))
+      .send({ memberId })
+      .expect(201);
+
+    await http()
+      .delete(`/v1/gyms/${gymA}/exercises/${ejercicio}`)
+      .set(conSesion(tokenOwnerA))
+      .expect(200);
+
+    const mias = await http().get('/v1/me/routines').set(conSesion(token)).expect(200);
+    const item = mias.body[0].items[0];
+    expect(item.exerciseId).toBeNull();
+    expect(item.exerciseName.length).toBeGreaterThan(0);
+    expect(item.sets).toBe(4);
+    expect(item.reps).toBe('8-10');
+    expect(item.restSeconds).toBe(90);
+  });
+
+  it('las repeticiones llegan como TEXTO, tal cual se escribieron', async () => {
+    const { token, memberId } = await socioConCuenta(gymA, tokenOwnerA, 'socio-reps');
+    const res = await http()
+      .post(`/v1/gyms/${gymA}/routines`)
+      .set(conSesion(tokenOwnerA))
+      .send({
+        name: 'Reps de texto',
+        items: [
+          { exerciseId: await unEjercicio(gymA, tokenOwnerA), sets: 3, reps: 'al fallo' },
+        ],
+      })
+      .expect(201);
+    await http()
+      .post(`/v1/gyms/${gymA}/routines/${res.body.id}/members`)
+      .set(conSesion(tokenOwnerA))
+      .send({ memberId })
+      .expect(201);
+
+    const mias = await http().get('/v1/me/routines').set(conSesion(token)).expect(200);
+    expect(mias.body[0].items[0].reps).toBe('al fallo');
+  });
+
+  /*
+   * ┌──────────────────────────────────────────────────────────────────────────┐
+   * │ LA MISMA PERSONA, DOS GIMNASIOS, RUTINAS DISTINTAS.                     │
+   * │                                                                          │
+   * │ `/me/routines` resuelve por el `user_id` de la sesion Y por el gimnasio  │
+   * │ activo. Si se mezclaran, alguien entrenaria siguiendo la rutina que le   │
+   * │ pusieron en otro sitio.                                                  │
+   * └──────────────────────────────────────────────────────────────────────────┘
+   */
+  it('socio en dos gimnasios ve la rutina de CADA uno', async () => {
+    const { token, memberId, userId } = await socioConCuenta(gymA, tokenOwnerA, 'socio-dos-gyms');
+    const rutinaEnA = await crearRutina(
+      gymA,
+      tokenOwnerA,
+      'Solo en A',
+      await unEjercicio(gymA, tokenOwnerA),
+    );
+    await http()
+      .post(`/v1/gyms/${gymA}/routines/${rutinaEnA.id}/members`)
+      .set(conSesion(tokenOwnerA))
+      .send({ memberId })
+      .expect(201);
+
+    // La misma cuenta, socia tambien en B pero sin rutina alli.
+    await http()
+      .post(`/v1/gyms/${gymB}/invitations`)
+      .set(conSesion(tokenOwnerB))
+      .send({ email: email('socio-dos-gyms'), role: 'member' })
+      .expect(201);
+    const job = await owner.execute<{ data: { token: string } }>(
+      sql`SELECT data FROM pgboss.job WHERE name = ${EMAIL_QUEUES.invitation}
+          AND data->>'to' = ${email('socio-dos-gyms')} ORDER BY created_on DESC LIMIT 1`,
+    );
+    await http()
+      .post('/v1/auth/link-invitation')
+      .set(conSesion(token))
+      .send({ token: job.rows[0]!.data.token })
+      .expect(201);
+    const enB = await altaSocio(gymB, tokenOwnerB, 'MismaEnB');
+    await owner.execute(
+      sql`UPDATE members SET user_id = ${userId}::uuid WHERE id = ${enB}::uuid`,
+    );
+
+    const enAantes = await http().get('/v1/me/routines').set(conSesion(token)).expect(200);
+    expect(enAantes.body.map((r: { name: string }) => r.name)).toContain('Solo en A');
+
+    await http()
+      .post('/v1/auth/switch-gym')
+      .set(conSesion(token))
+      .send({ gymId: gymB })
+      .expect(201);
+
+    // En B no tiene ninguna, y NO hereda la de A.
+    const enBahora = await http().get('/v1/me/routines').set(conSesion(token)).expect(200);
+    expect(enBahora.body).toEqual([]);
+
+    await http()
+      .post('/v1/auth/switch-gym')
+      .set(conSesion(token))
+      .send({ gymId: gymA })
+      .expect(201);
+    const vuelta = await http().get('/v1/me/routines').set(conSesion(token)).expect(200);
+    expect(vuelta.body.map((r: { name: string }) => r.name)).toContain('Solo en A');
+  });
+
+  it('quien no tiene ficha de socio no tiene rutinas que ver', async () => {
+    // El entrenador y el dueno llegan a la ruta —no lleva `@Roles`— y reciben
+    // 404 al resolver su ficha: no es un permiso denegado, es que no son socios.
+    await http().get('/v1/me/routines').set(conSesion(tokenEntrenador1)).expect(404);
+    await http().get('/v1/me/routines').set(conSesion(tokenOwnerA)).expect(404);
+    await http().get('/v1/me/routines').set(conSesion(tokenRecepcionA)).expect(404);
+  });
+
+  it('sin sesion no se llega', async () => {
+    await http().get('/v1/me/routines').expect(401);
+  });
 });
 
 describe('quien puede hacer que', () => {
