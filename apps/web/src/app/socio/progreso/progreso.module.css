@@ -1,0 +1,73 @@
+.lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.medicion {
+  padding: var(--e3) var(--e4);
+}
+
+.fecha {
+  margin-bottom: var(--e3);
+  font-size: var(--t-base);
+  font-weight: 600;
+  font-variant-numeric: var(--numeros);
+}
+
+/*
+ * Las medidas en rejilla, dos por fila a 320 px.
+ *
+ * Son pares cortos —"Peso 78,6 kg"— y en una sola columna la tarjeta se hace
+ * larguisima cuando se midieron cinco cosas. Con `auto-fit` no hace falta
+ * declarar un punto de ruptura: caben las que quepan.
+ */
+.datos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+  gap: var(--e3);
+  margin: 0;
+}
+
+.dato dt {
+  color: var(--texto-sutil);
+  font-size: var(--t-sm);
+}
+
+.dato dd {
+  margin: 0;
+  font-size: var(--t-md);
+  font-weight: 500;
+  font-variant-numeric: var(--numeros);
+}
+
+/* La unidad, mas discreta que el numero: lo que se lee es el 78,6. */
+.unidad {
+  color: var(--texto-sutil);
+  font-size: var(--t-sm);
+  font-weight: 400;
+}
+
+.notas {
+  margin-top: var(--e3);
+  padding-top: var(--e3);
+  border-top: 1px solid var(--borde);
+  color: var(--texto-sutil);
+  font-size: var(--t-base);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.pie {
+  margin-top: var(--e4);
+  color: var(--texto-sutil);
+  font-size: var(--t-sm);
+  line-height: 1.5;
+}
+
+.pie a {
+  color: inherit;
+}

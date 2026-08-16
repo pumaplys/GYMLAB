@@ -1,11 +1,15 @@
 import { z } from 'zod';
 import {
   assignedMemberSchema,
+  assignedRoutineSchema,
+  bodyMetricSchema,
   duesStatusSchema,
   healthConsentStatusSchema,
   memberSchema,
   trainerSchema,
   type AssignedMember,
+  type AssignedRoutine,
+  type BodyMetric,
   type DuesStatus,
   type HealthConsentStatus,
   type Member,
@@ -100,6 +104,30 @@ export interface YoApi {
    * │ `plans`, que es del personal.                                            │
    * └──────────────────────────────────────────────────────────────────────────┘
    */
+  /**
+   * Las rutinas que sigo AHORA MISMO en el gimnasio activo.
+   *
+   * Solo las vigentes: el servidor filtra por `ended_at IS NULL`. Pueden ser
+   * VARIAS a la vez —fuerza y movilidad— y no hay ninguna marcada como
+   * principal, porque el modelo no tiene ese concepto.
+   *
+   * Cada una viene entera, con sus ejercicios dentro y en orden.
+   */
+  misRutinas(options?: RequestOptions): Promise<AssignedRoutine[]>;
+
+  /**
+   * Mis mediciones, de la mas reciente a la mas antigua.
+   *
+   * ┌──────────────────────────────────────────────────────────────────────────┐
+   * │ LEER NO EXIGE CONSENTIMIENTO VIGENTE.                                    │
+   * │                                                                          │
+   * │ Si retiro mi autorizacion, dejan de poder registrarme mediciones nuevas  │
+   * │ pero sigo viendo las que ya existen — que es justo lo que necesito para  │
+   * │ ejercer el derecho de acceso o pedir que las borren.                     │
+   * └──────────────────────────────────────────────────────────────────────────┘
+   */
+  miProgreso(options?: RequestOptions): Promise<BodyMetric[]>;
+
   miCuota(options?: RequestOptions): Promise<DuesStatus>;
 
   /**
@@ -147,6 +175,22 @@ export function createYoApi(http: Http): YoApi {
 
     fichaDeSocio: (options) =>
       http({ method: 'GET', path: '/me/member-profile', schema: memberSchema, ...options }),
+
+    misRutinas: (options) =>
+      http({
+        method: 'GET',
+        path: '/me/routines',
+        schema: z.array(assignedRoutineSchema),
+        ...options,
+      }),
+
+    miProgreso: (options) =>
+      http({
+        method: 'GET',
+        path: '/me/progress',
+        schema: z.array(bodyMetricSchema),
+        ...options,
+      }),
 
     miCuota: (options) =>
       http({ method: 'GET', path: '/me/dues', schema: duesStatusSchema, ...options }),

@@ -5,16 +5,20 @@ import { Armazon } from '@/componentes/armazon';
 import { NavegacionDeArea } from '@/componentes/navegacion-de-area';
 
 /**
- * Los destinos del socio. Los dos existen.
+ * Los destinos del socio. Los cuatro existen.
  *
- * No estan su rutina, su progreso, su carne, su cuota detallada ni sus accesos:
- * la regla del proyecto es que la navegacion solo muestra destinos reales, y un
- * enlace a una pantalla que no existe es peor que no tener el enlace.
+ * No estan su carne con QR, sus pagos ni sus accesos: la regla del proyecto es
+ * que la navegacion solo muestra destinos reales, y un enlace a una pantalla que
+ * no existe es peor que no tener el enlace. Ademas dos de ellos necesitan
+ * endpoints `me/*` que todavia no existen.
  *
  * "Privacidad" y no "Consentimiento": es la palabra que usa quien lo busca.
+ * "Rutina" en singular aunque puedan ser varias: es como se dice.
  */
 const DESTINOS = [
   { href: '/socio', texto: 'Inicio' },
+  { href: '/socio/rutina', texto: 'Rutina' },
+  { href: '/socio/progreso', texto: 'Progreso' },
   { href: '/socio/privacidad', texto: 'Privacidad' },
 ] as const;
 

@@ -1,4 +1,5 @@
 import { recordBodyMetricSchema, type HealthConsentStatus } from '@gymlab/contracts';
+import { MEDIDAS, type CampoDeMedida } from '@/lib/medidas';
 
 /**
  * La logica de la seccion de progreso, sin React.
@@ -35,18 +36,12 @@ export function estadoDe(consentimiento: HealthConsentStatus): EstadoDeConsentim
   return consentimiento.accepted ? 'vigente' : 'sin-aceptar';
 }
 
-/** Lo que se puede escribir de un socio. Los nombres y unidades son los del contrato. */
-export const MEDIDAS = [
-  { campo: 'weightKg', etiqueta: 'Peso', unidad: 'kg' },
-  { campo: 'bodyFatPercent', etiqueta: 'Grasa corporal', unidad: '%' },
-  { campo: 'chestCm', etiqueta: 'Pecho', unidad: 'cm' },
-  { campo: 'waistCm', etiqueta: 'Cintura', unidad: 'cm' },
-  { campo: 'hipCm', etiqueta: 'Cadera', unidad: 'cm' },
-  { campo: 'armCm', etiqueta: 'Brazo', unidad: 'cm' },
-  { campo: 'thighCm', etiqueta: 'Muslo', unidad: 'cm' },
-] as const;
-
-export type CampoDeMedida = (typeof MEDIDAS)[number]['campo'];
+/*
+ * La lista de medidas vive en `lib`: la comparten esta pantalla —donde se
+ * escriben— y la del socio, donde se leen. Se reexporta para no tocar a quien
+ * ya la importaba de aqui.
+ */
+export { MEDIDAS, type CampoDeMedida } from '@/lib/medidas';
 
 /** Lo que hay escrito en el formulario. Todo texto: son `<input>`, no numeros aun. */
 export interface Borrador {
