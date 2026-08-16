@@ -455,6 +455,138 @@ describe('quien puede ver datos de salud', () => {
       .set(conSesion(tokenOwnerB))
       .expect(404);
   });
+
+  it('un entrenador tampoco escribe en un socio de otro gimnasio', async () => {
+    // Leer ya estaba cubierto; escribir es lo que crearia el dato, asi que se
+    // comprueba aparte. El socio de B no existe para esta sesion.
+    conVersion(VERSION);
+    const deB = await altaSocio(gymB, tokenOwnerB, 'DeBSalud');
+    await registrarPeso(gymA, tokenEntrenador1, deB).expect(404);
+  });
+
+  it('un id de socio inventado responde 404, no 500', async () => {
+    conVersion(VERSION);
+    const inventado = randomUUID();
+
+    await http()
+      .get(`/v1/gyms/${gymA}/members/${inventado}/progress`)
+      .set(conSesion(tokenEntrenador1))
+      .expect(404);
+    await registrarPeso(gymA, tokenEntrenador1, inventado).expect(404);
+  });
+
+  it('escribir el gymId de otro en la URL responde 403', async () => {
+    conVersion(VERSION);
+    const mio = await altaSocio(gymA, tokenOwnerA, 'GymAjeno');
+
+    await http()
+      .get(`/v1/gyms/${gymB}/members/${mio}/progress`)
+      .set(conSesion(tokenEntrenador1))
+      .expect(403);
+  });
+
+  /*
+   * ┌──────────────────────────────────────────────────────────────────────────┐
+   * │ UN SOCIO NO ES PERSONAL, Y LA RUTA CON `:memberId` NO ES SUYA.           │
+   * │                                                                          │
+   * │ Tiene `/me/progress` para lo propio. La ruta con identificador esta      │
+   * │ cerrada por `@Roles('owner','trainer')`, asi que ni siquiera llega al    │
+   * │ servicio — que es donde vive la comprobacion de que el socio sea el      │
+   * │ mismo. Las dos capas existen; esta prueba fija la primera.               │
+   * └──────────────────────────────────────────────────────────────────────────┘
+   */
+  it('un socio no entra por la ruta del personal, ni para sus propios datos', async () => {
+    conVersion(VERSION);
+    const tokenSocio = await altaPersonal(gymA, tokenOwnerA, 'member', 'socio-progreso');
+
+    // Aceptar la invitacion crea la CUENTA, no la ficha: se enlazan a mano, que
+    // es lo que hace que la ficha sea de verdad la suya y no la de otro.
+    const cuenta = await owner.execute<{ id: string }>(
+      sql`SELECT id FROM users WHERE email = ${email('socio-progreso')}`,
+    );
+    const suId = await altaSocio(gymA, tokenOwnerA, 'ConCuentaProgreso');
+    await owner.execute(
+      sql`UPDATE members SET user_id = ${cuenta.rows[0]!.id}::uuid WHERE id = ${suId}::uuid`,
+    );
+
+    await http()
+      .get(`/v1/gyms/${gymA}/members/${suId}/progress`)
+      .set(conSesion(tokenSocio))
+      .expect(403);
+    await registrarPeso(gymA, tokenSocio, suId).expect(403);
+
+    // Y tampoco puede tocar el consentimiento de nadie, ni el suyo.
+    await aceptar(gymA, tokenSocio, suId).expect(403);
+    await http()
+      .delete(`/v1/gyms/${gymA}/members/${suId}/health-consent`)
+      .set(conSesion(tokenSocio))
+      .expect(403);
+  });
+});
+
+/**
+ * CAMBIAR DE GIMNASIO CORTA EL ACCESO AL ANTERIOR.
+ *
+ * Importa mas aqui que en ninguna otra pantalla: si una sesion que ya apunta a
+ * otro gimnasio pudiera escribir en el anterior, el dato de salud acabaria en el
+ * sitio equivocado. Se comprueba que ni leer ni escribir sobreviven al cambio.
+ */
+describe('un entrenador que cambia de gimnasio', () => {
+  it('deja de poder leer y escribir el progreso del gimnasio anterior', async () => {
+    conVersion(VERSION);
+
+    const mio = await altaSocio(gymA, tokenOwnerA, 'AntesDelCambio');
+    await http()
+      .post(`/v1/gyms/${gymA}/trainers/${entrenador1}/members`)
+      .set(conSesion(tokenOwnerA))
+      .send({ memberId: mio })
+      .expect(201);
+    await aceptar(gymA, tokenOwnerA, mio).expect(200);
+    await registrarPeso(gymA, tokenEntrenador1, mio).expect(201);
+
+    // Se le vincula al gimnasio B con la cuenta que ya tiene (ADR-0010).
+    await http()
+      .post(`/v1/gyms/${gymB}/invitations`)
+      .set(conSesion(tokenOwnerB))
+      .send({ email: email('entrenador-1'), role: 'trainer' })
+      .expect(201);
+    const job = await owner.execute<{ data: { token: string } }>(
+      sql`SELECT data FROM pgboss.job WHERE name = ${EMAIL_QUEUES.invitation}
+          AND data->>'to' = ${email('entrenador-1')} ORDER BY created_on DESC LIMIT 1`,
+    );
+    await http()
+      .post('/v1/auth/link-invitation')
+      .set(conSesion(tokenEntrenador1))
+      .send({ token: job.rows[0]!.data.token })
+      .expect(201);
+
+    await http()
+      .post('/v1/auth/switch-gym')
+      .set(conSesion(tokenEntrenador1))
+      .send({ gymId: gymB })
+      .expect(201);
+
+    // Con el gimnasio de A en la URL: 403 por contexto, antes de tocar la base.
+    await http()
+      .get(`/v1/gyms/${gymA}/members/${mio}/progress`)
+      .set(conSesion(tokenEntrenador1))
+      .expect(403);
+    await registrarPeso(gymA, tokenEntrenador1, mio).expect(403);
+
+    // Con el gimnasio activo correcto: ese socio no existe aqui.
+    await http()
+      .get(`/v1/gyms/${gymB}/members/${mio}/progress`)
+      .set(conSesion(tokenEntrenador1))
+      .expect(404);
+    await registrarPeso(gymB, tokenEntrenador1, mio).expect(404);
+
+    // Se vuelve a A: los tests que siguen usan este mismo token.
+    await http()
+      .post('/v1/auth/switch-gym')
+      .set(conSesion(tokenEntrenador1))
+      .send({ gymId: gymA })
+      .expect(201);
+  });
 });
 
 describe('el dato', () => {
