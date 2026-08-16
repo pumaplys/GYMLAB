@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import type { Member } from '@gymlab/contracts';
 import { Aviso } from '@/componentes/aviso';
+import { BotonEnlace } from '@/componentes/boton';
 import { Cargando } from '@/componentes/cargando';
 import { EncabezadoDePagina } from '@/componentes/encabezado-de-pagina';
 import { MarcoSocio } from '@/componentes/marco-socio';
@@ -74,7 +75,7 @@ function Inicio() {
     <>
       <EncabezadoDePagina
         titulo="Tu cuenta"
-        entradilla="Tu area personal. Todavia no tiene pantallas: llegan en las siguientes entregas."
+        entradilla="Tu area personal. Tu rutina, tu cuota y tu carne llegan en las siguientes entregas."
       />
 
       {error && <Aviso>{error}</Aviso>}
@@ -98,6 +99,18 @@ function Inicio() {
             </dl>
           )
         )}
+      </Tarjeta>
+
+      {/*
+        Se enlaza siempre, tambien si el gimnasio no tiene texto publicado: la
+        pantalla lo explica. Esconder el enlace dejaria a quien quiere retirar su
+        autorizacion sin forma de llegar, y retirarla es un derecho.
+      */}
+      <Tarjeta className={estilos.enlace}>
+        <BotonEnlace href="/socio/privacidad">Tus datos de salud</BotonEnlace>
+        <p className={estilos.pista}>
+          Decide si tu gimnasio puede registrar tu peso y tus medidas.
+        </p>
       </Tarjeta>
     </>
   );

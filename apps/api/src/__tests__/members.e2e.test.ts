@@ -601,7 +601,12 @@ describe('el socio y sus propios datos', () => {
  * └──────────────────────────────────────────────────────────────────────────┘
  */
 /** La version del texto de salud sale de la configuracion, no del cliente. */
-const VERSION_SALUD = '2026-09-01';
+/**
+ * La version tiene que EXISTIR COMO PLANTILLA, no basta con nombrarla: sin texto
+ * sembrado no hay documento que publicar y el gate falla en cerrado. Es la que
+ * siembra la migracion 0014.
+ */
+const VERSION_SALUD = '2026-09-01-borrador';
 (env as { HEALTH_CONSENT_VERSION?: string }).HEALTH_CONSENT_VERSION = VERSION_SALUD;
 
 /** Un ejercicio cualquiera de la biblioteca que el alta del gimnasio ya siembra. */

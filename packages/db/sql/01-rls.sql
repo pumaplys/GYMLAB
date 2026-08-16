@@ -217,6 +217,62 @@ CREATE POLICY tenant_isolation ON consents
 
 
 -- -----------------------------------------------------------------------------
+-- consent_documents — patron estandar, y ademas INMUTABLE.
+-- -----------------------------------------------------------------------------
+-- RLS impide que un gimnasio vea el documento de otro. Lo que RLS no hace es
+-- impedir que el propio gimnasio reescriba su texto, y eso es justo lo que no
+-- puede pasar: hay socios cuya aceptacion apunta aqui, asi que editar el cuerpo
+-- borraria la prueba de que consintieron algo concreto.
+--
+-- `consent_document_templates` no lleva politica: no tiene gym_id porque es
+-- catalogo de plataforma, igual que `exercise_templates`.
+ALTER TABLE consent_documents ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS tenant_isolation ON consent_documents;
+CREATE POLICY tenant_isolation ON consent_documents
+  FOR ALL
+  TO gymlab_app
+  USING (gym_id = app_current_gym_id())
+  WITH CHECK (gym_id = app_current_gym_id());
+
+-- -----------------------------------------------------------------------------
+-- Un documento publicado NO se edita. Publicar de nuevo es crear otra version.
+-- -----------------------------------------------------------------------------
+-- Lo unico que puede cambiar es `superseded_at` —retirarlo— y `updated_at`, que
+-- va con ello. Se hace con un disparador y no confiando en el servicio porque la
+-- regla tiene que valer tambien para una importacion, un script o una consola:
+-- el mismo criterio por el que la puerta del consentimiento vive en el servicio
+-- y no en el controlador, aplicado un nivel mas abajo.
+CREATE OR REPLACE FUNCTION consent_documents_inmutable()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  IF NEW.gym_id IS DISTINCT FROM OLD.gym_id
+     OR NEW.purpose IS DISTINCT FROM OLD.purpose
+     OR NEW.version IS DISTINCT FROM OLD.version
+     OR NEW.template_version IS DISTINCT FROM OLD.template_version
+     OR NEW.title IS DISTINCT FROM OLD.title
+     OR NEW.body IS DISTINCT FROM OLD.body
+     OR NEW.controller IS DISTINCT FROM OLD.controller
+     OR NEW.published_at IS DISTINCT FROM OLD.published_at
+  THEN
+    RAISE EXCEPTION
+      'Un documento de consentimiento publicado no se puede modificar: publica otra version'
+      USING ERRCODE = 'check_violation';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS consent_documents_inmutable ON consent_documents;
+CREATE TRIGGER consent_documents_inmutable
+  BEFORE UPDATE ON consent_documents
+  FOR EACH ROW
+  EXECUTE FUNCTION consent_documents_inmutable();
+
+
+-- -----------------------------------------------------------------------------
 -- members — patron estandar.
 -- -----------------------------------------------------------------------------
 ALTER TABLE members ENABLE ROW LEVEL SECURITY;

@@ -7,6 +7,7 @@ import {
   type Member,
   type Trainer,
 } from '@gymlab/contracts';
+import { healthConsentStatusSchema, type HealthConsentStatus } from '@gymlab/contracts';
 import type { Http, RequestOptions } from './http';
 
 /**
@@ -63,6 +64,43 @@ export interface YoApi {
    * real: alguien puede ser recepcion en un gimnasio y no ser socio de el.
    */
   fichaDeSocio(options?: RequestOptions): Promise<Member>;
+
+  /**
+   * Mi consentimiento de datos de salud, con EL TEXTO que tendria que leer.
+   *
+   * ┌──────────────────────────────────────────────────────────────────────────┐
+   * │ NINGUNA DE LAS TRES LLEVA IDENTIFICADOR, Y ESA ES LA SEGURIDAD.         │
+   * │                                                                          │
+   * │ El servidor resuelve la ficha por el `user_id` de la sesion. No hay      │
+   * │ parametro que manipular para hablar del consentimiento de otro: no es    │
+   * │ que se compruebe, es que no existe la via.                               │
+   * └──────────────────────────────────────────────────────────────────────────┘
+   *
+   * `document` es `null` cuando el gimnasio no tiene texto publicado: entonces
+   * no hay nada que aceptar, y el servidor tampoco lo permitiria.
+   */
+  consentimientoDeSalud(options?: RequestOptions): Promise<HealthConsentStatus>;
+
+  /**
+   * Acepto la version vigente. Idempotente: aceptar dos veces no duplica nada.
+   *
+   * La version se manda para que el servidor compruebe que es la que hay ahora:
+   * asi una pantalla vieja no puede registrar la aceptacion de un texto que ya
+   * no esta en uso.
+   */
+  aceptarConsentimientoDeSalud(
+    version: string,
+    options?: RequestOptions,
+  ): Promise<HealthConsentStatus>;
+
+  /**
+   * Retiro mi consentimiento. Es un derecho: ni motivo ni permiso del gimnasio.
+   *
+   * A partir de aqui no se registran mediciones nuevas. Las que ya existen se
+   * conservan —el gimnasio tiene que poder atender una peticion de acceso o de
+   * supresion— y no se borran solas.
+   */
+  revocarConsentimientoDeSalud(options?: RequestOptions): Promise<HealthConsentStatus>;
 }
 
 export function createYoApi(http: Http): YoApi {
@@ -88,5 +126,30 @@ export function createYoApi(http: Http): YoApi {
 
     fichaDeSocio: (options) =>
       http({ method: 'GET', path: '/me/member-profile', schema: memberSchema, ...options }),
+
+    consentimientoDeSalud: (options) =>
+      http({
+        method: 'GET',
+        path: '/me/health-consent',
+        schema: healthConsentStatusSchema,
+        ...options,
+      }),
+
+    aceptarConsentimientoDeSalud: (version, options) =>
+      http({
+        method: 'POST',
+        path: '/me/health-consent',
+        body: { version },
+        schema: healthConsentStatusSchema,
+        ...options,
+      }),
+
+    revocarConsentimientoDeSalud: (options) =>
+      http({
+        method: 'DELETE',
+        path: '/me/health-consent',
+        schema: healthConsentStatusSchema,
+        ...options,
+      }),
   };
 }

@@ -1,0 +1,86 @@
+.volver {
+  display: inline-block;
+  margin-bottom: var(--e3);
+  color: var(--texto-sutil);
+  font-size: var(--t-sm);
+  text-decoration: none;
+}
+
+.volver:hover {
+  text-decoration: underline;
+}
+
+.tarjeta {
+  max-width: var(--ancho-lectura);
+  margin-bottom: var(--e4);
+}
+
+.cabecera {
+  padding-bottom: var(--e3);
+  margin-bottom: var(--e3);
+  border-bottom: 1px solid var(--borde);
+}
+
+.titulo {
+  font-size: var(--t-md);
+  font-weight: 600;
+}
+
+.meta {
+  margin-top: 0.125rem;
+  color: var(--texto-sutil);
+  font-size: var(--t-sm);
+  font-variant-numeric: var(--numeros);
+}
+
+/*
+ * El texto legal se lee, no se ojea.
+ *
+ * Interlineado holgado y parrafos separados: esto es lo que la persona tiene
+ * que entender antes de autorizar, y apretarlo para que "quepa" es exactamente
+ * la forma de que nadie lo lea.
+ */
+.texto {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+  font-size: var(--t-base);
+  line-height: 1.6;
+}
+
+.texto p {
+  overflow-wrap: anywhere;
+}
+
+.parrafo {
+  margin-bottom: var(--e3);
+  color: var(--texto-sutil);
+  font-size: var(--t-base);
+  line-height: 1.55;
+}
+
+/*
+ * El boton de autorizar dice una frase entera, no un verbo.
+ *
+ * Es deliberado —"Aceptar" a secas no dice que se acepta— y por eso tiene que
+ * poder partirse: a 320 px, en una linea, se salia de la pantalla.
+ */
+.principal {
+  max-width: 100%;
+  height: auto;
+  min-height: 2.75rem;
+  padding-top: var(--e2);
+  padding-bottom: var(--e2);
+  white-space: normal;
+  text-align: left;
+}
+
+.estadoActual {
+  margin-bottom: var(--e2);
+  font-size: var(--t-base);
+}
+
+.aceptado {
+  color: var(--exito-texto, var(--texto));
+  font-weight: 600;
+}
