@@ -89,10 +89,50 @@ export const grantHealthConsentSchema = z.object({
 });
 export type GrantHealthConsentInput = z.infer<typeof grantHealthConsentSchema>;
 
+/**
+ * El documento que el socio lee y acepta.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ VIAJA EL TEXTO, NO SOLO SU NOMBRE.                                       │
+ * │                                                                          │
+ * │ Un consentimiento del art. 9 tiene que ser informado. "Acepto la version │
+ * │ 2026-09-01" sin nada que leer no es consentimiento, es un clic — y ante  │
+ * │ una autoridad de control no prueba nada.                                 │
+ * │                                                                          │
+ * │ `controller` es el RESPONSABLE del tratamiento: el gimnasio, no GYMLAB,  │
+ * │ que es encargado. Va congelado dentro del documento.                     │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ */
+export const consentDocumentSchema = z.object({
+  id: z.string().uuid(),
+  version: z.string(),
+  title: z.string(),
+  body: z.string(),
+  controller: z.string(),
+  publishedAt: z.string(),
+});
+export type ConsentDocument = z.infer<typeof consentDocumentSchema>;
+
 export const healthConsentStatusSchema = z.object({
   /** Version vigente configurada, o `null` si todavia no hay texto legal. */
   currentVersion: z.string().nullable(),
   accepted: z.boolean(),
   acceptedAt: z.string().nullable(),
+  /**
+   * El documento vigente, o `null` si el gimnasio no ha publicado ninguno.
+   *
+   * Los cuatro estados que el modelo permite salen de cruzar estos campos:
+   *
+   *   document === null                 -> no hay texto legal publicado
+   *   document && !accepted             -> hay texto y no lo ha aceptado
+   *   document && accepted              -> consentimiento vigente
+   *   document && !accepted && acceptedAt === null pero hubo aceptacion antes
+   *                                     -> lo revoco, o acepto otra version
+   *
+   * El cuarto no se distingue del segundo desde aqui a proposito: para el socio
+   * la accion es la misma —leer y aceptar— y el historial de lo que revoco vive
+   * en `consents`, que es donde tiene valor probatorio.
+   */
+  document: consentDocumentSchema.nullable(),
 });
 export type HealthConsentStatus = z.infer<typeof healthConsentStatusSchema>;

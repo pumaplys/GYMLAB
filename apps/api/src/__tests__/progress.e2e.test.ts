@@ -32,7 +32,16 @@ const PASSWORD = 'contrasena-larga-1';
 const inicio = new Date();
 const gimnasiosCreados: string[] = [];
 
-const VERSION = '2026-09-01';
+/**
+ * La version tiene que existir COMO PLANTILLA, no basta con nombrarla.
+ *
+ * Es la que siembra la migracion. Si se pone aqui una cualquiera, el gate falla
+ * en cerrado con `CONSENT_NOT_CONFIGURED` — que es lo correcto: activar una
+ * version cuyo texto nadie ha escrito seria recoger consentimientos sobre nada.
+ */
+const VERSION = '2026-09-01-borrador';
+/** Una segunda, para probar que cambiar el texto caduca lo aceptado. */
+const VERSION_NUEVA = '2027-01-01-prueba';
 
 let gymA: string;
 let tokenOwnerA: string;
@@ -325,15 +334,33 @@ describe('cambiar la version exige aceptar de nuevo', () => {
     await aceptar(gymA, tokenOwnerA, socio).expect(200);
     await registrarPeso(gymA, tokenOwnerA, socio).expect(201);
 
-    conVersion('2027-01-01');
+    // Cambiar de version es publicar OTRO TEXTO, no renombrar el mismo: por eso
+    // hace falta que exista su plantilla. Sin ella se falla en cerrado.
+    await owner.execute(
+      sql`INSERT INTO consent_document_templates (purpose, version, title, body)
+          VALUES ('health_data', ${VERSION_NUEVA}, 'Texto de prueba',
+                  'Responsable: {{responsable}}. Cuerpo nuevo.')
+          ON CONFLICT DO NOTHING`,
+    );
+    conVersion(VERSION_NUEVA);
 
     const res = await registrarPeso(gymA, tokenOwnerA, socio).expect(403);
     expect(res.body.code).toBe('CONSENT_REQUIRED');
 
     // Y aceptando la nueva, vuelve a funcionar.
-    await aceptar(gymA, tokenOwnerA, socio, '2027-01-01').expect(200);
+    await aceptar(gymA, tokenOwnerA, socio, VERSION_NUEVA).expect(200);
     const nueva = await registrarPeso(gymA, tokenOwnerA, socio).expect(201);
-    expect(nueva.body.consentVersion).toBe('2027-01-01');
+    expect(nueva.body.consentVersion).toBe(VERSION_NUEVA);
+  });
+
+  it('la version que no tiene plantilla no vale: se falla en cerrado', async () => {
+    // Nombrar una version no la crea. Sin texto sembrado no hay documento que
+    // publicar, y sin documento no se recoge ningun consentimiento.
+    conVersion('2099-01-01-inexistente');
+    const socio = await altaSocio(gymA, tokenOwnerA, 'SinPlantilla');
+
+    const res = await registrarPeso(gymA, tokenOwnerA, socio).expect(403);
+    expect(res.body.code).toBe('CONSENT_NOT_CONFIGURED');
   });
 
   it('revocar bloquea nuevos registros pero conserva los anteriores', async () => {
@@ -531,6 +558,258 @@ describe('quien puede ver datos de salud', () => {
  * otro gimnasio pudiera escribir en el anterior, el dato de salud acabaria en el
  * sitio equivocado. Se comprueba que ni leer ni escribir sobreviven al cambio.
  */
+/**
+ * EL SOCIO GESTIONA SU PROPIO CONSENTIMIENTO.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ LO QUE HACE SEGURAS ESTAS RUTAS ES QUE NO TIENEN `:memberId`.            │
+ * │                                                                          │
+ * │ No hay ningun parametro que un socio pueda manipular para hablar del     │
+ * │ consentimiento de otro: la ficha sale del `user_id` de la sesion. No es  │
+ * │ que se valide bien, es que no existe la via.                            │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ */
+describe('el socio y su propio consentimiento', () => {
+  /** Crea una cuenta de socio con ficha enlazada, que es lo que exige `/me/*`. */
+  async function socioConCuenta(quien: string) {
+    const token = await altaPersonal(gymA, tokenOwnerA, 'member', quien);
+    const cuenta = await owner.execute<{ id: string }>(
+      sql`SELECT id FROM users WHERE email = ${email(quien)}`,
+    );
+    const memberId = await altaSocio(gymA, tokenOwnerA, quien);
+    await owner.execute(
+      sql`UPDATE members SET user_id = ${cuenta.rows[0]!.id}::uuid WHERE id = ${memberId}::uuid`,
+    );
+    return { token, memberId };
+  }
+
+  const mio = (token: string) => http().get('/v1/me/health-consent').set(conSesion(token));
+
+  it('ve su estado CON el texto que tendria que leer antes de aceptar', async () => {
+    conVersion(VERSION);
+    const { token } = await socioConCuenta('socio-consent-1');
+
+    const res = await mio(token).expect(200);
+    expect(res.body.accepted).toBe(false);
+    expect(res.body.currentVersion).toBe(VERSION);
+    // Sin texto, aceptar seria pulsar un boton a ciegas: no es consentimiento.
+    expect(res.body.document.body.length).toBeGreaterThan(100);
+    expect(res.body.document.controller).toContain('Gym A');
+    expect(res.body.document.version).toBe(VERSION);
+  });
+
+  it('sin documento publicado lo dice, y no inventa un texto', async () => {
+    conVersion(undefined);
+    const { token } = await socioConCuenta('socio-consent-2');
+
+    const res = await mio(token).expect(200);
+    expect(res.body.currentVersion).toBeNull();
+    expect(res.body.document).toBeNull();
+    expect(res.body.accepted).toBe(false);
+  });
+
+  it('acepta para si mismo y queda apuntando al documento exacto', async () => {
+    conVersion(VERSION);
+    const { token, memberId } = await socioConCuenta('socio-consent-3');
+
+    const estado = await mio(token).expect(200);
+    const res = await http()
+      .post('/v1/me/health-consent')
+      .set(conSesion(token))
+      .send({ version: VERSION })
+      .expect(200);
+    expect(res.body.accepted).toBe(true);
+    expect(res.body.acceptedAt).not.toBeNull();
+
+    // La fila apunta al documento, no solo a su nombre: es lo que la convierte
+    // en prueba de que acepto un texto concreto.
+    const fila = await owner.execute<{ document_id: string; version: string }>(
+      sql`SELECT document_id, version FROM consents
+          WHERE member_id = ${memberId}::uuid AND purpose = 'health_data'
+            AND revoked_at IS NULL`,
+    );
+    expect(fila.rows[0]!.document_id).toBe(estado.body.document.id);
+    expect(fila.rows[0]!.version).toBe(VERSION);
+  });
+
+  it('una version distinta de la vigente se rechaza', async () => {
+    conVersion(VERSION);
+    const { token } = await socioConCuenta('socio-consent-4');
+
+    await http()
+      .post('/v1/me/health-consent')
+      .set(conSesion(token))
+      .send({ version: '2099-12-31' })
+      .expect(400);
+  });
+
+  it('un purpose manipulado no llega a ninguna parte', async () => {
+    // El cuerpo solo admite `version`: la finalidad la fija el servidor. Un
+    // campo de mas se ignora, no elige sobre que se consiente.
+    conVersion(VERSION);
+    const { token, memberId } = await socioConCuenta('socio-consent-5');
+
+    await http()
+      .post('/v1/me/health-consent')
+      .set(conSesion(token))
+      .send({ version: VERSION, purpose: 'image_rights' })
+      .expect(200);
+
+    const filas = await owner.execute<{ purpose: string }>(
+      sql`SELECT purpose FROM consents WHERE member_id = ${memberId}::uuid`,
+    );
+    expect(filas.rows.map((f) => f.purpose)).toEqual(['health_data']);
+  });
+
+  it('mandar memberId o userId en el cuerpo no cambia de quien es', async () => {
+    conVersion(VERSION);
+    const otro = await socioConCuenta('socio-consent-6');
+    const yo = await socioConCuenta('socio-consent-7');
+
+    await http()
+      .post('/v1/me/health-consent')
+      .set(conSesion(yo.token))
+      .send({ version: VERSION, memberId: otro.memberId, userId: otro.memberId })
+      .expect(200);
+
+    // El de verdad acepto; el otro sigue sin nada.
+    const suyas = await owner.execute<{ n: string }>(
+      sql`SELECT count(*) AS n FROM consents WHERE member_id = ${otro.memberId}::uuid`,
+    );
+    expect(Number(suyas.rows[0]!.n)).toBe(0);
+    const mias = await owner.execute<{ n: string }>(
+      sql`SELECT count(*) AS n FROM consents WHERE member_id = ${yo.memberId}::uuid`,
+    );
+    expect(Number(mias.rows[0]!.n)).toBe(1);
+  });
+
+  it('revoca el suyo, y eso bloquea nuevas mediciones pero conserva las hechas', async () => {
+    conVersion(VERSION);
+    const { token, memberId } = await socioConCuenta('socio-consent-8');
+
+    await http()
+      .post('/v1/me/health-consent')
+      .set(conSesion(token))
+      .send({ version: VERSION })
+      .expect(200);
+    await registrarPeso(gymA, tokenOwnerA, memberId).expect(201);
+
+    const tras = await http().delete('/v1/me/health-consent').set(conSesion(token)).expect(200);
+    expect(tras.body.accepted).toBe(false);
+
+    await registrarPeso(gymA, tokenOwnerA, memberId).expect(403);
+
+    const historial = await http()
+      .get(`/v1/gyms/${gymA}/members/${memberId}/progress`)
+      .set(conSesion(tokenOwnerA))
+      .expect(200);
+    expect(historial.body).toHaveLength(1);
+
+    // Y queda traza de la revocacion.
+    const auditoria = await owner.execute<{ action: string }>(
+      sql`SELECT action FROM audit_log WHERE entity_id = ${memberId}::uuid
+          AND action = 'consent.revoked'`,
+    );
+    expect(auditoria.rows).toHaveLength(1);
+  });
+
+  it('puede volver a aceptar despues de revocar', async () => {
+    conVersion(VERSION);
+    const { token, memberId } = await socioConCuenta('socio-consent-9');
+
+    const aceptar = () =>
+      http().post('/v1/me/health-consent').set(conSesion(token)).send({ version: VERSION });
+
+    await aceptar().expect(200);
+    await http().delete('/v1/me/health-consent').set(conSesion(token)).expect(200);
+    const vuelta = await aceptar().expect(200);
+    expect(vuelta.body.accepted).toBe(true);
+
+    // La revocada se queda como historial: es la prueba de que existio.
+    const filas = await owner.execute<{ n: string }>(
+      sql`SELECT count(*) AS n FROM consents WHERE member_id = ${memberId}::uuid`,
+    );
+    expect(Number(filas.rows[0]!.n)).toBe(2);
+  });
+
+  it('quien no tiene ficha de socio en este gimnasio no tiene nada que gestionar', async () => {
+    // El entrenador y el dueno llegan a la ruta —no lleva `@Roles`— y reciben
+    // 404 al resolver su ficha. No es un permiso denegado: es que no son socios.
+    conVersion(VERSION);
+
+    await mio(tokenEntrenador1).expect(404);
+    await mio(tokenOwnerA).expect(404);
+    await http()
+      .post('/v1/me/health-consent')
+      .set(conSesion(tokenEntrenador1))
+      .send({ version: VERSION })
+      .expect(404);
+    await http().delete('/v1/me/health-consent').set(conSesion(tokenRecepcionA)).expect(404);
+  });
+
+  it('sin sesion no se llega', async () => {
+    await http().get('/v1/me/health-consent').expect(401);
+    await http().post('/v1/me/health-consent').send({ version: VERSION }).expect(401);
+  });
+
+  it('el consentimiento no cruza de gimnasio: es de su gimnasio, no suyo', async () => {
+    // La tabla lleva `gym_id` por una razon legal: el socio consiente que SU
+    // gimnasio trate sus datos, no que lo haga GYMLAB.
+    conVersion(VERSION);
+    const { token, memberId } = await socioConCuenta('socio-consent-10');
+    await http()
+      .post('/v1/me/health-consent')
+      .set(conSesion(token))
+      .send({ version: VERSION })
+      .expect(200);
+
+    // La misma persona, socia tambien del gimnasio B.
+    await http()
+      .post(`/v1/gyms/${gymB}/invitations`)
+      .set(conSesion(tokenOwnerB))
+      .send({ email: email('socio-consent-10'), role: 'member' })
+      .expect(201);
+    const job = await owner.execute<{ data: { token: string } }>(
+      sql`SELECT data FROM pgboss.job WHERE name = ${EMAIL_QUEUES.invitation}
+          AND data->>'to' = ${email('socio-consent-10')} ORDER BY created_on DESC LIMIT 1`,
+    );
+    await http()
+      .post('/v1/auth/link-invitation')
+      .set(conSesion(token))
+      .send({ token: job.rows[0]!.data.token })
+      .expect(201);
+    const enB = await altaSocio(gymB, tokenOwnerB, 'MismaPersonaEnB');
+    const cuenta = await owner.execute<{ id: string }>(
+      sql`SELECT id FROM users WHERE email = ${email('socio-consent-10')}`,
+    );
+    await owner.execute(
+      sql`UPDATE members SET user_id = ${cuenta.rows[0]!.id}::uuid WHERE id = ${enB}::uuid`,
+    );
+
+    await http()
+      .post('/v1/auth/switch-gym')
+      .set(conSesion(token))
+      .send({ gymId: gymB })
+      .expect(201);
+
+    // En B no ha aceptado nada, aunque en A si.
+    const enBEstado = await mio(token).expect(200);
+    expect(enBEstado.body.accepted).toBe(false);
+    expect(enBEstado.body.document.controller).toContain('Gym B');
+
+    // Y lo de A sigue intacto.
+    await http()
+      .post('/v1/auth/switch-gym')
+      .set(conSesion(token))
+      .send({ gymId: gymA })
+      .expect(201);
+    const enAEstado = await mio(token).expect(200);
+    expect(enAEstado.body.accepted).toBe(true);
+    expect(enAEstado.body.document.controller).toContain('Gym A');
+    expect(memberId).toBeTruthy();
+  });
+});
+
 describe('un entrenador que cambia de gimnasio', () => {
   it('deja de poder leer y escribir el progreso del gimnasio anterior', async () => {
     conVersion(VERSION);

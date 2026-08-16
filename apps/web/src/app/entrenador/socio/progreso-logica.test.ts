@@ -28,16 +28,28 @@ const con = (medidas: Partial<Borrador['medidas']>, resto: Partial<Borrador> = {
 });
 
 describe('en que estado esta el consentimiento', () => {
-  it('sin texto legal configurado, no es que el socio no haya aceptado', () => {
+  /** El documento publicado del gimnasio, que es lo que el socio acepta. */
+  const doc = {
+    id: '00000000-0000-4000-8000-000000000001',
+    version: '2026-09-01',
+    title: 'Tratamiento de datos de salud',
+    body: 'Responsable: Gimnasio Centro.',
+    controller: 'Gimnasio Centro',
+    publishedAt: '2026-08-01T10:00:00.000Z',
+  };
+
+  it('sin texto legal publicado, no es que el socio no haya aceptado', () => {
     // Son dos situaciones distintas y las arregla gente distinta: esta la
     // resuelve quien gestiona el gimnasio, no el socio.
-    expect(estadoDe({ currentVersion: null, accepted: false, acceptedAt: null })).toBe('sin-texto');
+    expect(
+      estadoDe({ currentVersion: null, accepted: false, acceptedAt: null, document: null }),
+    ).toBe('sin-texto');
   });
 
   it('con texto vigente y sin aceptar', () => {
-    expect(estadoDe({ currentVersion: '2026-09-01', accepted: false, acceptedAt: null })).toBe(
-      'sin-aceptar',
-    );
+    expect(
+      estadoDe({ currentVersion: '2026-09-01', accepted: false, acceptedAt: null, document: doc }),
+    ).toBe('sin-aceptar');
   });
 
   it('aceptado y vigente', () => {
@@ -46,6 +58,7 @@ describe('en que estado esta el consentimiento', () => {
         currentVersion: '2026-09-01',
         accepted: true,
         acceptedAt: '2026-08-01T10:00:00.000Z',
+        document: doc,
       }),
     ).toBe('vigente');
   });
@@ -53,7 +66,9 @@ describe('en que estado esta el consentimiento', () => {
   it('si el backend dijera aceptado sin version, no se da por bueno', () => {
     // No deberia ocurrir, pero el orden de las comprobaciones importa: primero
     // se mira si hay texto. Sin el, el servidor rechazaria la escritura igual.
-    expect(estadoDe({ currentVersion: null, accepted: true, acceptedAt: null })).toBe('sin-texto');
+    expect(
+      estadoDe({ currentVersion: null, accepted: true, acceptedAt: null, document: null }),
+    ).toBe('sin-texto');
   });
 });
 

@@ -16,9 +16,9 @@ import type {
   RecordBodyMetricInput,
 } from '@gymlab/contracts';
 import { requireRequestContext, requireTransaction } from '../common/request-context';
-import { env } from '../config/env';
 import { MembersService } from '../members/members.service';
 import { TrainersService } from '../trainers/trainers.service';
+import { ConsentDocumentsService } from './consent-documents.service';
 import { ConsentGate } from './consent.gate';
 
 /**
@@ -40,6 +40,7 @@ export class ProgressService {
     private readonly members: MembersService,
     private readonly trainers: TrainersService,
     private readonly consentGate: ConsentGate,
+    private readonly documentos: ConsentDocumentsService,
   ) {}
 
   /**
@@ -189,12 +190,13 @@ export class ProgressService {
     const { userId: actorUserId } = requireRequestContext();
     await this.members.getById(gymId, memberId);
 
-    const vigente = env.HEALTH_CONSENT_VERSION;
-    if (!vigente) {
+    const documento = await this.documentos.vigente(gymId);
+    if (!documento) {
       throw new BadRequestException(
-        'No hay ninguna version del consentimiento configurada; no se puede aceptar nada todavia.',
+        'Este gimnasio no tiene publicado el documento de consentimiento; no se puede aceptar nada todavia.',
       );
     }
+    const vigente = documento.version;
     if (input.version !== vigente) {
       throw new BadRequestException(
         `La version aceptada (${input.version}) no es la vigente (${vigente}).`,
@@ -215,7 +217,7 @@ export class ProgressService {
           eq(consents.gymId, gymId),
           eq(consents.memberId, memberId),
           eq(consents.purpose, 'health_data'),
-          eq(consents.version, vigente),
+          eq(consents.documentId, documento.id),
           isNull(consents.revokedAt),
         ),
       )
@@ -225,6 +227,9 @@ export class ProgressService {
 
     await tx.insert(consents).values({
       gymId,
+      // El documento EXACTO. Es lo que convierte la fila en una prueba: apunta a
+      // un texto congelado, no a una etiqueta que manana signifique otra cosa.
+      documentId: documento.id,
       // SOLO `member_id`, y no tambien la cuenta.
       //
       // El sujeto del consentimiento es la ficha: el socio consiente que **su
@@ -287,6 +292,45 @@ export class ProgressService {
     return this.healthConsentStatus(gymId, memberId);
   }
 
+  // --- El socio y SU consentimiento ----------------------------------------
+
+  /*
+   * ┌──────────────────────────────────────────────────────────────────────────┐
+   * │ SIN `memberId` EN NINGUNA PARTE. ESA ES LA SEGURIDAD.                    │
+   * │                                                                          │
+   * │ Los tres metodos parten del `userId` de la sesion y resuelven la ficha    │
+   * │ con `getOwnProfile`. No hay ningun parametro que un socio pueda escribir  │
+   * │ para hablar de otro: no es que se valide, es que no existe.               │
+   * │                                                                          │
+   * │ Y reutilizan los metodos de arriba en lugar de repetir su logica, porque  │
+   * │ dos copias de una regla de consentimiento divergen y la que se olvide     │
+   * │ sera la que acepte datos de salud sin amparo.                             │
+   * └──────────────────────────────────────────────────────────────────────────┘
+   */
+
+  /** Mi consentimiento, con el texto que tendria que leer antes de aceptar. */
+  async myHealthConsent(gymId: string, userId: string): Promise<HealthConsentStatus> {
+    const ficha = await this.members.getOwnProfile(gymId, userId);
+    return this.healthConsentStatus(gymId, ficha.id);
+  }
+
+  /** Acepto yo, para mi. */
+  async grantMyHealthConsent(
+    gymId: string,
+    userId: string,
+    input: GrantHealthConsentInput,
+    ip: string | null,
+  ): Promise<HealthConsentStatus> {
+    const ficha = await this.members.getOwnProfile(gymId, userId);
+    return this.grantHealthConsent(gymId, ficha.id, input, ip);
+  }
+
+  /** Retiro yo el mio. Es un derecho y no necesita motivo. */
+  async revokeMyHealthConsent(gymId: string, userId: string): Promise<HealthConsentStatus> {
+    const ficha = await this.members.getOwnProfile(gymId, userId);
+    return this.revokeHealthConsent(gymId, ficha.id);
+  }
+
   async healthConsentStatus(gymId: string, memberId: string): Promise<HealthConsentStatus> {
     const tx = requireTransaction();
     const estado = await this.consentGate.estadoDeConsentimiento(gymId, memberId);
@@ -305,10 +349,30 @@ export class ProgressService {
       .orderBy(desc(consents.grantedAt))
       .limit(1);
 
+    /*
+     * El TEXTO viaja con el estado, y no es un extra.
+     *
+     * Un consentimiento del art. 9 tiene que ser informado: una pantalla que
+     * diga "acepto la version 2026-09-01" sin ensenar nada no recoge un
+     * consentimiento, recoge un clic. Si el estado no trajera el documento, no
+     * habria forma de que el socio leyera lo que va a aceptar.
+     */
+    const documento = await this.documentos.vigente(gymId);
+
     return {
       currentVersion: estado.configurada,
       accepted: estado.aceptada,
       acceptedAt: estado.aceptada ? (ultimo?.grantedAt.toISOString() ?? null) : null,
+      document: documento
+        ? {
+            id: documento.id,
+            version: documento.version,
+            title: documento.title,
+            body: documento.body,
+            controller: documento.controller,
+            publishedAt: documento.publishedAt.toISOString(),
+          }
+        : null,
     };
   }
 

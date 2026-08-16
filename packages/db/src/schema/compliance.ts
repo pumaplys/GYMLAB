@@ -7,6 +7,7 @@ import {
   pgTable,
   text,
   timestamp,
+  unique,
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
@@ -46,6 +47,102 @@ export const consentPurpose = pgEnum('consent_purpose', [
   'image_rights',
 ]);
 
+/**
+ * La PLANTILLA legal que mantiene la plataforma. **No es una tabla de tenant.**
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ NO LLEVA `gym_id` A PROPOSITO, igual que `exercise_templates`.           │
+ * │                                                                          │
+ * │ Son datos de referencia: el texto base que GYMLAB redacta una vez y del  │
+ * │ que sale el documento de cada gimnasio. Ningun socio acepta esto — se    │
+ * │ acepta el documento PUBLICADO del gimnasio, que es el que nombra al      │
+ * │ responsable del tratamiento.                                            │
+ * │                                                                          │
+ * │ Existe para que ningun gimnasio tenga que redactar un consentimiento del │
+ * │ art. 9 desde cero, que es como se acaba con textos que no amparan nada.  │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * Se siembra en una migracion con el rol propietario. La aplicacion solo lee.
+ */
+export const consentDocumentTemplates = pgTable(
+  'consent_document_templates',
+  {
+    id: primaryId(),
+    purpose: consentPurpose('purpose').notNull(),
+    /** Identificador de la version, p. ej. '2026-09-01-borrador'. */
+    version: text('version').notNull(),
+    title: text('title').notNull(),
+    /**
+     * El cuerpo del texto.
+     *
+     * Puede contener `{{responsable}}`, que se sustituye al publicar por la
+     * identidad del gimnasio. Es la unica sustitucion que hay: una plantilla con
+     * logica es un motor de plantillas, y aqui hace falta un texto.
+     */
+    body: text('body').notNull(),
+    ...timestamps,
+  },
+  (t) => [uniqueIndex('consent_document_templates_key').on(t.purpose, t.version)],
+);
+
+/**
+ * El documento que un gimnasio concreto PUBLICA y sus socios aceptan.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ ES INMUTABLE, Y ESO NO ES UNA CONVENCION: LO IMPIDE LA BASE DE DATOS.    │
+ * │                                                                          │
+ * │ Un consentimiento del art. 9 tiene que ser demostrable: ante una         │
+ * │ autoridad hay que poder ensenar EL TEXTO EXACTO que esa persona acepto,  │
+ * │ no el que hay hoy en pantalla. Si el cuerpo se pudiera editar, la fila   │
+ * │ de `consents` seguiria apuntando aqui y la prueba se habria evaporado    │
+ * │ sin que nadie lo notara.                                                  │
+ * │                                                                          │
+ * │ Por eso cambiar el texto no es editar: es PUBLICAR OTRA VERSION. La      │
+ * │ anterior se marca con `superseded_at` y se queda para siempre, porque    │
+ * │ hay socios cuya aceptacion la senala.                                    │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * `controller` guarda la identidad del RESPONSABLE del tratamiento congelada en
+ * el momento de publicar. GYMLAB es encargado y el gimnasio es responsable, asi
+ * que quien responde ante el socio es el gimnasio — y si manana cambia de
+ * nombre, lo que acepto esa persona sigue diciendo lo que decia.
+ */
+export const consentDocuments = pgTable(
+  'consent_documents',
+  {
+    id: primaryId(),
+    gymId: tenantId().references(() => gyms.id, { onDelete: 'cascade' }),
+    purpose: consentPurpose('purpose').notNull(),
+    /** Version de ESTE documento. Es la que se guarda en `consents.version`. */
+    version: text('version').notNull(),
+    /** De que version de la plantilla salio. Nulo si el gimnasio lo escribio entero. */
+    templateVersion: text('template_version'),
+    title: text('title').notNull(),
+    /** El texto final, ya resuelto. Lo que el socio lee y acepta. */
+    body: text('body').notNull(),
+    /** Identidad del responsable del tratamiento, congelada al publicar. */
+    controller: text('controller').notNull(),
+    publishedAt: timestamp('published_at', { withTimezone: true }).notNull().defaultNow(),
+    /** Cuando dejo de ser el vigente. Nulo = es el que se acepta ahora. */
+    supersededAt: timestamp('superseded_at', { withTimezone: true }),
+    ...timestamps,
+  },
+  (t) => [
+    uniqueIndex('consent_documents_version_key').on(t.gymId, t.purpose, t.version),
+    /**
+     * UN SOLO documento vigente por gimnasio y finalidad.
+     *
+     * Con dos, "el consentimiento vigente" dejaria de tener respuesta y la
+     * puerta del art. 9 tendria que elegir — que es justo lo que no puede pasar.
+     */
+    uniqueIndex('consent_documents_vigente_key')
+      .on(t.gymId, t.purpose)
+      .where(sql`superseded_at IS NULL`),
+    // Para que `consents` apunte aqui con clave ajena compuesta.
+    unique('consent_documents_gym_id_key').on(t.gymId, t.id),
+  ],
+);
+
 export const consents = pgTable(
   'consents',
   {
@@ -76,6 +173,18 @@ export const consents = pgTable(
     purpose: consentPurpose('purpose').notNull(),
     /** Version del documento aceptado, p. ej. '2026-07-01'. */
     version: text('version').notNull(),
+    /**
+     * EL DOCUMENTO EXACTO que esta persona acepto.
+     *
+     * La `version` sola no basta como prueba: es una etiqueta, y ante una
+     * reclamacion hay que poder ensenar el texto. Esta referencia lo garantiza
+     * porque `consent_documents` no se puede editar — apunta a un cuerpo
+     * congelado, no a "lo que hoy se llama asi".
+     *
+     * Anulable solo por las filas anteriores a que existiera el modelo de
+     * documentos: no se inventa a que texto apuntaban.
+     */
+    documentId: uuid('document_id'),
     grantedAt: timestamp('granted_at', { withTimezone: true }).notNull().defaultNow(),
     /** El consentimiento es revocable: es un derecho, no una casilla. */
     revokedAt: timestamp('revoked_at', { withTimezone: true }),
@@ -107,6 +216,18 @@ export const consents = pgTable(
       foreignColumns: [members.gymId, members.id],
       name: 'consents_gym_member_fk',
     }).onDelete('cascade'),
+    /**
+     * `RESTRICT`: un documento aceptado por alguien NO se borra.
+     *
+     * Es la otra mitad de la inmutabilidad. Sin esto, borrar la fila del
+     * documento dejaria aceptaciones apuntando al vacio, que ante una autoridad
+     * es lo mismo que no tener nada.
+     */
+    foreignKey({
+      columns: [t.gymId, t.documentId],
+      foreignColumns: [consentDocuments.gymId, consentDocuments.id],
+      name: 'consents_gym_document_fk',
+    }).onDelete('restrict'),
     // Un consentimiento sin sujeto no prueba nada ante una autoridad de control.
     check('consents_sujeto_check', sql`user_id IS NOT NULL OR member_id IS NOT NULL`),
   ],
@@ -115,3 +236,6 @@ export const consents = pgTable(
 export type Consent = typeof consents.$inferSelect;
 export type NewConsent = typeof consents.$inferInsert;
 export type ConsentPurpose = (typeof consentPurpose.enumValues)[number];
+export type ConsentDocumentTemplate = typeof consentDocumentTemplates.$inferSelect;
+export type ConsentDocument = typeof consentDocuments.$inferSelect;
+export type NewConsentDocument = typeof consentDocuments.$inferInsert;

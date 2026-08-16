@@ -2,7 +2,7 @@ import { ForbiddenException, Injectable } from '@nestjs/common';
 import { and, consents, desc, eq, isNull } from '@gymlab/db';
 import { CONSENT_NOT_CONFIGURED, CONSENT_REQUIRED } from '@gymlab/contracts';
 import { requireTransaction } from '../common/request-context';
-import { env } from '../config/env';
+import { ConsentDocumentsService } from './consent-documents.service';
 
 /**
  * La puerta del consentimiento para datos de salud (RGPD art. 9).
@@ -15,30 +15,37 @@ import { env } from '../config/env';
  * │ controlador, de un trabajo de fondo, de una importacion o de un script.   │
  * │ Puesta aqui, el punto de entrada da igual.                                │
  * │                                                                          │
- * │ Y FALLA EN CERRADO: sin version configurada no hay consentimiento posible │
+ * │ Y FALLA EN CERRADO: sin documento publicado no hay consentimiento posible │
  * │ y no se registra nada. Es el mismo criterio que `app_current_gym_id()`    │
  * │ devolviendo NULL cuando falta contexto — un olvido no puede convertirse   │
  * │ en un tratamiento sin amparo.                                             │
  * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * LO QUE SE COMPRUEBA ES EL DOCUMENTO, NO UNA CADENA. Antes se comparaba la
+ * version aceptada con una variable de entorno; ahora se exige que la aceptacion
+ * apunte al documento VIGENTE del gimnasio, que es un texto concreto e inmutable.
+ * Una etiqueta no prueba que alguien leyera nada.
  */
 @Injectable()
 export class ConsentGate {
+  constructor(private readonly documentos: ConsentDocumentsService) {}
+
   /**
    * Exige consentimiento vigente, o lanza.
    *
-   * Devuelve la version aceptada para que quien escriba la guarde junto al dato:
-   * ante una reclamacion hay que poder demostrar bajo que texto se recogio cada
-   * medicion concreta, y eso no se deduce de la tabla de consentimientos si
-   * despues cambia de version.
+   * Devuelve la version del documento aceptado para que quien escriba la guarde
+   * junto al dato: ante una reclamacion hay que poder demostrar bajo que texto
+   * se recogio cada medicion concreta, y eso no se deduce de la tabla de
+   * consentimientos si despues cambia de version.
    */
   async exigirConsentimientoDeSalud(gymId: string, memberId: string): Promise<string> {
-    const versionVigente = env.HEALTH_CONSENT_VERSION;
+    const documento = await this.documentos.vigente(gymId);
 
-    if (!versionVigente) {
+    if (!documento) {
       throw new ForbiddenException({
         code: CONSENT_NOT_CONFIGURED,
         message:
-          'No hay ninguna version del consentimiento de datos de salud configurada, ' +
+          'Este gimnasio no tiene publicado el documento de consentimiento de datos de salud, ' +
           'asi que no se puede registrar ni modificar ningun dato de progreso. ' +
           'Falta el texto legal, no una opcion tecnica.',
       });
@@ -53,10 +60,10 @@ export class ConsentGate {
           eq(consents.gymId, gymId),
           eq(consents.memberId, memberId),
           eq(consents.purpose, 'health_data'),
-          // La comparacion contra la version EXACTA es lo que obliga a volver a
-          // aceptar cuando cambia el texto: un consentimiento de la version
-          // anterior deja de valer solo, sin que nadie tenga que invalidarlo.
-          eq(consents.version, versionVigente),
+          // Contra el DOCUMENTO exacto, no contra su nombre: si el gimnasio
+          // publica otro texto, lo aceptado antes deja de valer solo — sin que
+          // nadie tenga que invalidarlo.
+          eq(consents.documentId, documento.id),
           isNull(consents.revokedAt),
         ),
       )
@@ -68,7 +75,7 @@ export class ConsentGate {
         code: CONSENT_REQUIRED,
         message:
           `Este socio no ha aceptado la version vigente del consentimiento de datos ` +
-          `de salud (${versionVigente}). Sin el no se pueden registrar ni modificar ` +
+          `de salud (${documento.version}). Sin el no se pueden registrar ni modificar ` +
           `sus datos de progreso.`,
       });
     }
@@ -81,14 +88,14 @@ export class ConsentGate {
     gymId: string,
     memberId: string,
   ): Promise<{ configurada: string | null; aceptada: boolean }> {
-    const versionVigente = env.HEALTH_CONSENT_VERSION ?? null;
-    if (!versionVigente) return { configurada: null, aceptada: false };
+    const documento = await this.documentos.vigente(gymId);
+    if (!documento) return { configurada: null, aceptada: false };
 
     try {
       await this.exigirConsentimientoDeSalud(gymId, memberId);
-      return { configurada: versionVigente, aceptada: true };
+      return { configurada: documento.version, aceptada: true };
     } catch {
-      return { configurada: versionVigente, aceptada: false };
+      return { configurada: documento.version, aceptada: false };
     }
   }
 }

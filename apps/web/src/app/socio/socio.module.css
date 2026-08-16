@@ -35,3 +35,16 @@
     gap: var(--e3) var(--e4);
   }
 }
+
+.enlace {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--e2);
+  margin-top: var(--e4);
+}
+
+.pista {
+  color: var(--texto-sutil);
+  font-size: var(--t-sm);
+}

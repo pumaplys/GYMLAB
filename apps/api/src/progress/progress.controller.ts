@@ -136,6 +136,62 @@ export class HealthConsentController {
 }
 
 /**
+ * El socio y SU consentimiento de datos de salud.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ SIN `:memberId`, Y NO ES UN DETALLE DE ESTILO.                           │
+ * │                                                                          │
+ * │ Es lo que hace imposible que un socio hable del consentimiento de otro:  │
+ * │ no hay parametro que manipular, porque la ficha sale del `user_id` de la │
+ * │ sesion. Una comprobacion se puede olvidar; un parametro que no existe,   │
+ * │ no.                                                                      │
+ * │                                                                          │
+ * │ Tampoco lleva `@Roles`: quien no tenga ficha de socio en el gimnasio     │
+ * │ activo recibe 404 al resolverla, que es la respuesta correcta para un    │
+ * │ entrenador o un dueno que llame aqui — no es que no le dejen, es que no  │
+ * │ tiene consentimiento propio que gestionar.                               │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ */
+@Controller('me/health-consent')
+export class OwnHealthConsentController {
+  constructor(private readonly progress: ProgressService) {}
+
+  @Get()
+  status() {
+    const ctx = requireRequestContext();
+    return this.progress.myHealthConsent(this.gymActivo(), ctx.userId);
+  }
+
+  /** 200 y no 201: aceptar dos veces la misma version no crea una segunda fila. */
+  @HttpCode(200)
+  @Post()
+  grant(@Body(new ZodBody(grantHealthConsentSchema)) body: GrantHealthConsentInput, @Req() req: Request) {
+    const ctx = requireRequestContext();
+    return this.progress.grantMyHealthConsent(
+      this.gymActivo(),
+      ctx.userId,
+      body,
+      ipDe(toHeaders(req)),
+    );
+  }
+
+  /** Retirarlo es un derecho: ni motivo ni confirmacion del gimnasio. */
+  @Delete()
+  revoke() {
+    const ctx = requireRequestContext();
+    return this.progress.revokeMyHealthConsent(this.gymActivo(), ctx.userId);
+  }
+
+  private gymActivo(): string {
+    const ctx = requireRequestContext();
+    if (!ctx.gymId) {
+      throw new ForbiddenException('Necesitas un gimnasio activo. Usa /v1/auth/switch-gym.');
+    }
+    return ctx.gymId;
+  }
+}
+
+/**
  * El socio y sus propios datos de progreso.
  *
  * Sin `:memberId`: se localiza por el `user_id` de la sesion. Registrar el propio

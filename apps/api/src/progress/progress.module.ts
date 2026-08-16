@@ -1,10 +1,12 @@
 import { Module } from '@nestjs/common';
 import { MembersModule } from '../members/members.module';
 import { TrainersModule } from '../trainers/trainers.module';
+import { ConsentDocumentsService } from './consent-documents.service';
 import { ConsentGate } from './consent.gate';
 import {
   HealthConsentController,
   MemberProgressController,
+  OwnHealthConsentController,
   OwnProgressController,
 } from './progress.controller';
 import { ProgressService } from './progress.service';
@@ -19,8 +21,13 @@ import { ProgressService } from './progress.service';
  */
 @Module({
   imports: [MembersModule, TrainersModule],
-  controllers: [MemberProgressController, HealthConsentController, OwnProgressController],
-  providers: [ProgressService, ConsentGate],
+  controllers: [
+    MemberProgressController,
+    HealthConsentController,
+    OwnHealthConsentController,
+    OwnProgressController,
+  ],
+  providers: [ProgressService, ConsentGate, ConsentDocumentsService],
   exports: [ProgressService, ConsentGate],
 })
 export class ProgressModule {}
