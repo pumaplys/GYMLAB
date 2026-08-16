@@ -1,11 +1,9 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { Armazon } from '@/componentes/armazon';
+import { NavegacionDeArea, type Destino } from '@/componentes/navegacion-de-area';
 import { useSesion } from '@/lib/sesion';
-import estilos from './marco.module.css';
 
 /**
  * Los destinos del panel de gimnasio. La lista es el sitio donde crece.
@@ -28,17 +26,10 @@ const DESTINOS = [
 /**
  * El marco del PANEL DE GIMNASIO: contexto arriba, destinos debajo.
  *
- * ┌──────────────────────────────────────────────────────────────────────────┐
- * │ ES EL MARCO DE UN AREA, NO EL DE LA APLICACION.                          │
- * │                                                                          │
- * │ Antes tambien pintaba el contexto y el esqueleto; ahora eso vive en      │
- * │ `Armazon` y `BandaDeContexto`, que comparten las tres areas. Lo que      │
- * │ queda aqui es lo unico que es del panel: su fila de destinos.            │
- * │                                                                          │
- * │ El area de entrenador y la de socio tienen su propio marco y pueden      │
- * │ evolucionar sin tocar este — que es justo lo que se queria: el           │
- * │ entrenador es una herramienta de trabajo y el socio sera movil.          │
- * └──────────────────────────────────────────────────────────────────────────┘
+ * Es el marco de un AREA, no el de la aplicacion. El esqueleto vive en
+ * `Armazon`, el contexto en `BandaDeContexto` y la fila de destinos en
+ * `NavegacionDeArea` — las tres las comparten las tres areas. Lo que queda aqui
+ * es lo unico que es del panel: QUE destinos tiene y quien los ve.
  *
  * POR QUE NO HAY BARRA LATERAL
  *
@@ -55,31 +46,10 @@ const DESTINOS = [
  */
 export function Marco({ children }: { children: ReactNode }) {
   const { rol } = useSesion();
-  const ruta = usePathname();
 
-  const visibles = DESTINOS.filter((destino) => !destino.soloDueno || rol === 'owner');
+  const visibles: Destino[] = DESTINOS.filter(
+    (destino) => !destino.soloDueno || rol === 'owner',
+  ).map(({ href, texto }) => ({ href, texto }));
 
-  return (
-    <Armazon
-      navegacion={
-        <nav className={estilos.destinos} aria-label="Secciones">
-          {visibles.map((destino) => {
-            const activo = ruta === destino.href || ruta.startsWith(`${destino.href}/`);
-            return (
-              <Link
-                key={destino.href}
-                href={destino.href}
-                className={`${estilos.enlace} ${activo ? estilos.activo : ''}`}
-                aria-current={activo ? 'page' : undefined}
-              >
-                {destino.texto}
-              </Link>
-            );
-          })}
-        </nav>
-      }
-    >
-      {children}
-    </Armazon>
-  );
+  return <Armazon navegacion={<NavegacionDeArea destinos={visibles} />}>{children}</Armazon>;
 }

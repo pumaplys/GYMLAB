@@ -56,6 +56,20 @@ describe('a que area pertenece cada ruta', () => {
     expect(areaDeRuta('/socio/carne')).toBe('socio');
   });
 
+  it('rutinas y ejercicios son del area de entrenador', () => {
+    for (const ruta of [
+      '/entrenador/rutinas',
+      '/entrenador/rutinas/ficha',
+      '/entrenador/ejercicios',
+    ]) {
+      expect(areaDeRuta(ruta)).toBe('entrenador');
+      expect(destinoSegunArea('trainer', ruta)).toBeNull();
+      expect(destinoSegunArea('member', ruta)).toBe('/socio');
+      expect(destinoSegunArea('owner', ruta)).toBe('/socios');
+      expect(destinoSegunArea('receptionist', ruta)).toBe('/socios');
+    }
+  });
+
   it('la ficha del socio asignado es del area de entrenador', () => {
     // Se parece a `/socio` en el nombre y no lo es: cuelga de `/entrenador`.
     expect(areaDeRuta('/entrenador/socio')).toBe('entrenador');
