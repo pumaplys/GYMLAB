@@ -1,7 +1,9 @@
 import { z } from 'zod';
 import {
+  assignedRoutineSchema,
   exerciseSchema,
   routineSchema,
+  type AssignedRoutine,
   type CreateRoutineInput,
   type Exercise,
   type Routine,
@@ -25,9 +27,9 @@ import type { Http, RequestOptions } from './http';
  * │ Escribir el de otro gimnasio no abre nada, solo produce un error.        │
  * └──────────────────────────────────────────────────────────────────────────┘
  *
- * SOLO LECTURA DE MOMENTO. Crear, editar, borrar y asignar existen en la API y
- * se anadiran con la pantalla que los use: un metodo sin consumidor no se
- * ejecuta nunca y, por tanto, tampoco se sabe si funciona.
+ * Falta `borrar rutina`: existe en la API pero todavia no hay pantalla que lo
+ * use, y un metodo sin consumidor no se ejecuta nunca — asi que tampoco se sabe
+ * si funciona.
  */
 export interface EntrenamientoApi {
   /**
@@ -77,6 +79,62 @@ export interface EntrenamientoApi {
     input: UpdateRoutineInput,
     options?: RequestOptions,
   ): Promise<Routine>;
+
+  /**
+   * Las rutinas que un socio sigue AHORA MISMO.
+   *
+   * Solo las vigentes: el servidor filtra por `ended_at IS NULL`. Las terminadas
+   * siguen en la base —una asignacion se termina, no se borra— pero no hay
+   * endpoint que las devuelva, asi que no hay historial que pintar.
+   *
+   * Cada una viene con la rutina ENTERA, ejercicios incluidos, mas
+   * `assignmentId` y `assignedAt`.
+   *
+   * Si quien pregunta es entrenador, responde 404 cuando ese socio no esta entre
+   * los suyos — igual que si no existiera.
+   */
+  rutinasDeSocio(
+    gymId: string,
+    memberId: string,
+    options?: RequestOptions,
+  ): Promise<AssignedRoutine[]>;
+
+  /**
+   * Asigna una rutina a un socio.
+   *
+   * ┌──────────────────────────────────────────────────────────────────────────┐
+   * │ ASIGNAR NO REEMPLAZA NADA. SE ACUMULAN.                                  │
+   * │                                                                          │
+   * │ Un socio puede seguir varias rutinas a la vez —fuerza y movilidad— y esa │
+   * │ es una decision del modelo, no un descuido. Asignar una segunda deja la  │
+   * │ primera vigente; para quitarla hay que terminarla expresamente.          │
+   * │                                                                          │
+   * │ Lo unico que NO se puede es asignar dos veces la MISMA rutina mientras   │
+   * │ siga vigente: responde 400 "Ese socio ya sigue esa rutina."              │
+   * └──────────────────────────────────────────────────────────────────────────┘
+   *
+   * La ruta cuelga de la rutina y no del socio, pero eso es forma de la API: lo
+   * que decide si se puede es de quien es el socio.
+   */
+  asignarRutina(
+    gymId: string,
+    routineId: string,
+    memberId: string,
+    options?: RequestOptions,
+  ): Promise<void>;
+
+  /**
+   * Termina la asignacion vigente. NO borra la fila: le pone `ended_at`.
+   *
+   * Es lo que permite saber dentro de tres meses que rutina siguio alguien. 404
+   * si ese socio no sigue esa rutina.
+   */
+  terminarAsignacion(
+    gymId: string,
+    routineId: string,
+    memberId: string,
+    options?: RequestOptions,
+  ): Promise<void>;
 }
 
 export function createEntrenamientoApi(http: Http): EntrenamientoApi {
@@ -122,6 +180,33 @@ export function createEntrenamientoApi(http: Http): EntrenamientoApi {
         path: `${raiz(gymId)}/routines/${encodeURIComponent(id)}`,
         body: input,
         schema: routineSchema,
+        ...options,
+      }),
+
+    rutinasDeSocio: (gymId, memberId, options) =>
+      http({
+        method: 'GET',
+        path: `${raiz(gymId)}/members/${encodeURIComponent(memberId)}/routines`,
+        schema: z.array(assignedRoutineSchema),
+        ...options,
+      }),
+
+    asignarRutina: (gymId, routineId, memberId, options) =>
+      http({
+        method: 'POST',
+        path: `${raiz(gymId)}/routines/${encodeURIComponent(routineId)}/members`,
+        body: { memberId },
+        // Responde `{ ok: true }`. No devuelve la asignacion, asi que quien
+        // llame tiene que volver a pedir la lista para verla.
+        schema: z.object({ ok: z.literal(true) }).transform(() => undefined),
+        ...options,
+      }),
+
+    terminarAsignacion: (gymId, routineId, memberId, options) =>
+      http({
+        method: 'DELETE',
+        path: `${raiz(gymId)}/routines/${encodeURIComponent(routineId)}/members/${encodeURIComponent(memberId)}`,
+        schema: z.object({ ok: z.literal(true) }).transform(() => undefined),
         ...options,
       }),
   };

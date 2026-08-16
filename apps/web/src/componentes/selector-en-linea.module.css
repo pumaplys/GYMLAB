@@ -72,8 +72,27 @@
   border-bottom: none;
 }
 
-.resultado:hover {
+.resultado:hover:not(:disabled) {
   background: var(--fondo-hover);
+}
+
+/*
+ * Una opcion que no se puede elegir se pinta igual, apagada y con el motivo.
+ * Quitarla de la lista dejaria a quien la busca preguntandose donde esta.
+ */
+.resultado:disabled {
+  cursor: default;
+}
+
+.resultado:disabled .nombre,
+.resultado:disabled .detalle {
+  color: var(--texto-tenue);
+}
+
+.bloqueo {
+  color: var(--texto-sutil);
+  font-size: var(--t-sm);
+  font-weight: 500;
 }
 
 .nombre {
