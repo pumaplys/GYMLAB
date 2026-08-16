@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import {
+  accessTokenSchema,
   assignedMemberSchema,
   assignedRoutineSchema,
   bodyMetricSchema,
@@ -7,6 +8,7 @@ import {
   healthConsentStatusSchema,
   memberSchema,
   trainerSchema,
+  type AccessTokenResponse,
   type AssignedMember,
   type AssignedRoutine,
   type BodyMetric,
@@ -104,6 +106,8 @@ export interface YoApi {
    * │ `plans`, que es del personal.                                            │
    * └──────────────────────────────────────────────────────────────────────────┘
    */
+  miCuota(options?: RequestOptions): Promise<DuesStatus>;
+
   /**
    * Las rutinas que sigo AHORA MISMO en el gimnasio activo.
    *
@@ -128,7 +132,25 @@ export interface YoApi {
    */
   miProgreso(options?: RequestOptions): Promise<BodyMetric[]>;
 
-  miCuota(options?: RequestOptions): Promise<DuesStatus>;
+  /**
+   * Genera mi codigo de acceso para el gimnasio activo.
+   *
+   * ┌──────────────────────────────────────────────────────────────────────────┐
+   * │ DURA UN MINUTO Y SE USA UNA VEZ.                                        │
+   * │                                                                          │
+   * │ El servidor lo firma con una clave derivada del gimnasio, asi que un     │
+   * │ codigo de otro gimnasio no valida por construccion. Al escanearlo se     │
+   * │ consume el `jti`: presentarlo dos veces no abre dos veces.               │
+   * │                                                                          │
+   * │ NO COMPRUEBA LA CUOTA. Generar siempre funciona si eres socio; quien     │
+   * │ decide si pasas es el escaner de la puerta, que mira el estado en ese    │
+   * │ momento. Por eso esto no es la via para saber si puedes entrar.          │
+   * └──────────────────────────────────────────────────────────────────────────┘
+   *
+   * Es `POST` y no `GET` porque crea algo: cada llamada devuelve un codigo
+   * nuevo.
+   */
+  tokenDeAcceso(options?: RequestOptions): Promise<AccessTokenResponse>;
 
   /**
    * Acepto la version vigente. Idempotente: aceptar dos veces no duplica nada.
@@ -191,6 +213,9 @@ export function createYoApi(http: Http): YoApi {
         schema: z.array(bodyMetricSchema),
         ...options,
       }),
+
+    tokenDeAcceso: (options) =>
+      http({ method: 'POST', path: '/me/access/token', schema: accessTokenSchema, ...options }),
 
     miCuota: (options) =>
       http({ method: 'GET', path: '/me/dues', schema: duesStatusSchema, ...options }),
