@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import type { Routine } from '@gymlab/contracts';
 import { Aviso } from '@/componentes/aviso';
+import { BotonEnlace } from '@/componentes/boton';
 import { Cargando } from '@/componentes/cargando';
 import { EncabezadoDePagina } from '@/componentes/encabezado-de-pagina';
 import { Dato, FilaApilada, ListaApilada } from '@/componentes/lista-apilada';
@@ -24,8 +25,12 @@ import estilos from '../../entrenador.module.css';
  * direccion tiene que funcionar al recargar y al compartirla, y depender de un
  * estado que solo existe si vienes de la pantalla anterior la rompe.
  *
- * TODAVIA NO SE EDITA. El editor llega en el PR siguiente; aqui no hay ningun
- * boton que insinue lo contrario.
+ * Editar es otra pantalla y no un modo de esta: el editor tiene su propio
+ * estado —items que se anaden, se quitan y se mueven— y mezclarlo con la vista
+ * de lectura obliga a que cada fila sepa en cual de los dos mundos vive.
+ *
+ * La puede editar cualquier entrenador del gimnasio. Lo que solo puede hacer su
+ * creador —o el dueno— es borrarla, y eso todavia no esta en ninguna pantalla.
  */
 export default function FichaDeRutinaPage() {
   return (
@@ -108,6 +113,11 @@ function Ficha() {
               ? '1 socio la sigue'
               : `${rutina.activeAssignments} socios la siguen`}
           </span>
+        }
+        acciones={
+          <BotonEnlace href={`/entrenador/rutinas/editar?id=${encodeURIComponent(rutina.id)}`}>
+            Editar
+          </BotonEnlace>
         }
       />
 

@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import type { ButtonHTMLAttributes, ReactNode, Ref } from 'react';
 import Link from 'next/link';
 import estilos from './boton.module.css';
 
@@ -22,6 +22,14 @@ interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
   /** Deshabilita y anuncia que hay algo en marcha. */
   cargando?: boolean;
   bloque?: boolean;
+  /**
+   * Para poder MOVER EL FOCO a este boton, no para leer el DOM.
+   *
+   * Lo pide el editor de rutinas: al subir un ejercicio hasta el primer puesto,
+   * el boton que se acaba de pulsar queda deshabilitado y el foco se cae al
+   * `body`. Sin acceso al nodo no hay forma de devolverlo a su sitio.
+   */
+  ref?: Ref<HTMLButtonElement>;
   children: ReactNode;
 }
 
@@ -32,11 +40,13 @@ export function Boton({
   bloque = false,
   disabled,
   className,
+  ref,
   children,
   ...resto
 }: Props) {
   return (
     <button
+      ref={ref}
       // `type="button"` por defecto: dentro de un formulario, el defecto del
       // HTML es "submit", y un boton auxiliar que envie el formulario sin
       // querer es de los fallos que nadie reproduce despues.

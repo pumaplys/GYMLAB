@@ -1,5 +1,12 @@
 import { z } from 'zod';
-import { exerciseSchema, routineSchema, type Exercise, type Routine } from '@gymlab/contracts';
+import {
+  exerciseSchema,
+  routineSchema,
+  type CreateRoutineInput,
+  type Exercise,
+  type Routine,
+  type UpdateRoutineInput,
+} from '@gymlab/contracts';
 import type { Http, RequestOptions } from './http';
 
 /**
@@ -44,6 +51,32 @@ export interface EntrenamientoApi {
 
   /** Una rutina. 404 si no es de ese gimnasio. */
   rutina(gymId: string, id: string, options?: RequestOptions): Promise<Routine>;
+
+  /** Crea una rutina. Exige al menos un ejercicio; el orden de la lista ES el orden. */
+  crearRutina(gymId: string, input: CreateRoutineInput, options?: RequestOptions): Promise<Routine>;
+
+  /**
+   * Edita una rutina. La puede editar CUALQUIER entrenador del gimnasio.
+   *
+   * ┌──────────────────────────────────────────────────────────────────────────┐
+   * │ SI SE MANDA `items`, REEMPLAZA LA LISTA ENTERA.                          │
+   * │                                                                          │
+   * │ El servidor borra los items y los reinserta desde lo que llegue, asi que │
+   * │ omitir uno es borrarlo. No hay reconciliacion parcial que valga: quien   │
+   * │ llame tiene que mandar la coleccion completa y en su orden final.        │
+   * │                                                                          │
+   * │ Y al reves: `items` es OPCIONAL. Mandar solo `name` o `description` deja │
+   * │ los ejercicios intactos — que es la unica forma de editar el titulo de   │
+   * │ una rutina que contenga un ejercicio ya borrado de la biblioteca sin     │
+   * │ perderlo.                                                                │
+   * └──────────────────────────────────────────────────────────────────────────┘
+   */
+  actualizarRutina(
+    gymId: string,
+    id: string,
+    input: UpdateRoutineInput,
+    options?: RequestOptions,
+  ): Promise<Routine>;
 }
 
 export function createEntrenamientoApi(http: Http): EntrenamientoApi {
@@ -70,6 +103,24 @@ export function createEntrenamientoApi(http: Http): EntrenamientoApi {
       http({
         method: 'GET',
         path: `${raiz(gymId)}/routines/${encodeURIComponent(id)}`,
+        schema: routineSchema,
+        ...options,
+      }),
+
+    crearRutina: (gymId, input, options) =>
+      http({
+        method: 'POST',
+        path: `${raiz(gymId)}/routines`,
+        body: input,
+        schema: routineSchema,
+        ...options,
+      }),
+
+    actualizarRutina: (gymId, id, input, options) =>
+      http({
+        method: 'PATCH',
+        path: `${raiz(gymId)}/routines/${encodeURIComponent(id)}`,
+        body: input,
         schema: routineSchema,
         ...options,
       }),
