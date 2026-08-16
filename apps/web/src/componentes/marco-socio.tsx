@@ -2,6 +2,21 @@
 
 import type { ReactNode } from 'react';
 import { Armazon } from '@/componentes/armazon';
+import { NavegacionDeArea } from '@/componentes/navegacion-de-area';
+
+/**
+ * Los destinos del socio. Los dos existen.
+ *
+ * No estan su rutina, su progreso, su carne, su cuota detallada ni sus accesos:
+ * la regla del proyecto es que la navegacion solo muestra destinos reales, y un
+ * enlace a una pantalla que no existe es peor que no tener el enlace.
+ *
+ * "Privacidad" y no "Consentimiento": es la palabra que usa quien lo busca.
+ */
+const DESTINOS = [
+  { href: '/socio', texto: 'Inicio' },
+  { href: '/socio/privacidad', texto: 'Privacidad' },
+] as const;
 
 /**
  * El marco del area de socio.
@@ -19,10 +34,13 @@ import { Armazon } from '@/componentes/armazon';
  * │ Que sea movil primero no significa que en escritorio se vea mal.         │
  * └──────────────────────────────────────────────────────────────────────────┘
  *
- * Sin fila de destinos por el mismo motivo que el area de entrenador: hoy hay
- * una sola ruta. El carne, la cuota, la rutina y el progreso llegan en PRs
- * posteriores, y hasta entonces no se anuncian.
+ * Ya con fila de destinos: hay dos pantallas reales. El carne, la rutina y el
+ * progreso llegan en PRs posteriores y hasta entonces no se anuncian.
  */
 export function MarcoSocio({ children }: { children: ReactNode }) {
-  return <Armazon ancho="lectura">{children}</Armazon>;
+  return (
+    <Armazon ancho="lectura" navegacion={<NavegacionDeArea destinos={DESTINOS} />}>
+      {children}
+    </Armazon>
+  );
 }

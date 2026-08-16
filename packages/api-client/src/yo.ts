@@ -1,13 +1,16 @@
 import { z } from 'zod';
 import {
   assignedMemberSchema,
+  duesStatusSchema,
+  healthConsentStatusSchema,
   memberSchema,
   trainerSchema,
   type AssignedMember,
+  type DuesStatus,
+  type HealthConsentStatus,
   type Member,
   type Trainer,
 } from '@gymlab/contracts';
-import { healthConsentStatusSchema, type HealthConsentStatus } from '@gymlab/contracts';
 import type { Http, RequestOptions } from './http';
 
 /**
@@ -82,6 +85,24 @@ export interface YoApi {
   consentimientoDeSalud(options?: RequestOptions): Promise<HealthConsentStatus>;
 
   /**
+   * Mi cuota en el gimnasio activo.
+   *
+   * ┌──────────────────────────────────────────────────────────────────────────┐
+   * │ EL ESTADO LO CALCULA EL SERVIDOR, Y AQUI NO SE RECALCULA NADA.           │
+   * │                                                                          │
+   * │ `estado` ya viene resuelto —AL_CORRIENTE, POR_VENCER, EN_GRACIA,         │
+   * │ VENCIDA, PAUSADA o SIN_SUSCRIPCION— teniendo en cuenta el huso horario   │
+   * │ del gimnasio y sus dias de cortesia, que son configurables. Deducirlo    │
+   * │ en pantalla a partir de `hasta` daria otro resultado, y el que estaria   │
+   * │ mal seria el de la pantalla.                                            │
+   * │                                                                          │
+   * │ NO TRAE IMPORTE: `DuesStatus` no lo lleva. Lo que cuesta el plan vive en │
+   * │ `plans`, que es del personal.                                            │
+   * └──────────────────────────────────────────────────────────────────────────┘
+   */
+  miCuota(options?: RequestOptions): Promise<DuesStatus>;
+
+  /**
    * Acepto la version vigente. Idempotente: aceptar dos veces no duplica nada.
    *
    * La version se manda para que el servidor compruebe que es la que hay ahora:
@@ -126,6 +147,9 @@ export function createYoApi(http: Http): YoApi {
 
     fichaDeSocio: (options) =>
       http({ method: 'GET', path: '/me/member-profile', schema: memberSchema, ...options }),
+
+    miCuota: (options) =>
+      http({ method: 'GET', path: '/me/dues', schema: duesStatusSchema, ...options }),
 
     consentimientoDeSalud: (options) =>
       http({

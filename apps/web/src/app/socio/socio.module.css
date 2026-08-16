@@ -48,3 +48,36 @@
   color: var(--texto-sutil);
   font-size: var(--t-sm);
 }
+
+.tarjeta {
+  margin-bottom: var(--e4);
+}
+
+.titulo {
+  margin-bottom: var(--e2);
+  font-size: var(--t-md);
+  font-weight: 600;
+}
+
+.cabeceraCuota {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e2);
+  margin-bottom: var(--e2);
+}
+
+.explicacion {
+  margin-bottom: var(--e3);
+  font-size: var(--t-base);
+  line-height: 1.5;
+}
+
+.dias {
+  color: var(--texto-sutil);
+}
+
+.vacio {
+  color: var(--texto-tenue);
+}
