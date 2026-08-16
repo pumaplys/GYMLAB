@@ -763,6 +763,92 @@ describe('el socio y su propia cuota', () => {
     const ajeno = await altaSocio(gymA, tokenOwnerA, 'Ajeno');
     await dues(ajeno, tokenSocio).expect(403);
   });
+
+  /*
+   * ┌──────────────────────────────────────────────────────────────────────────┐
+   * │ LA MISMA PERSONA, DOS GIMNASIOS, DOS CUOTAS DISTINTAS.                  │
+   * │                                                                          │
+   * │ `/me/dues` no lleva ningun identificador: resuelve por el `user_id` de   │
+   * │ la sesion Y por el gimnasio activo. Si se olvidara el segundo, la misma  │
+   * │ cuenta veria la cuota del gimnasio equivocado — y creeria estar al       │
+   * │ corriente donde no lo esta.                                              │
+   * │                                                                          │
+   * │ Es el caso que el portal del socio hace real: cambiar de gimnasio en el  │
+   * │ selector tiene que cambiar la cuota, no solo el nombre de la cabecera.   │
+   * └──────────────────────────────────────────────────────────────────────────┘
+   */
+  it('socia en dos gimnasios ve la cuota de CADA uno, no la mezcla', async () => {
+    const tokenSocio = await altaPersonal(gymA, tokenOwnerA, 'member', 'socia-dos-gyms');
+    const cuenta = await owner.execute<{ id: string }>(
+      sql`SELECT id FROM users WHERE email = ${email('socia-dos-gyms')}`,
+    );
+    const idCuenta = cuenta.rows[0]!.id;
+
+    // En A: con cuota pagada.
+    const enA = await altaSocio(gymA, tokenOwnerA, 'EnA');
+    await owner.execute(
+      sql`UPDATE members SET user_id = ${idCuenta}::uuid WHERE id = ${enA}::uuid`,
+    );
+    await http()
+      .post(`/v1/gyms/${gymA}/members/${enA}/subscription`)
+      .set(conSesion(tokenOwnerA))
+      .send({ planId: planMensual })
+      .expect(201);
+    await pagarCuota(enA).expect(201);
+
+    // En B: socia tambien, pero SIN cuota contratada.
+    await http()
+      .post(`/v1/gyms/${gymB}/invitations`)
+      .set(conSesion(tokenOwnerB))
+      .send({ email: email('socia-dos-gyms'), role: 'member' })
+      .expect(201);
+    const job = await owner.execute<{ data: { token: string } }>(
+      sql`SELECT data FROM pgboss.job WHERE name = ${EMAIL_QUEUES.invitation}
+          AND data->>'to' = ${email('socia-dos-gyms')} ORDER BY created_on DESC LIMIT 1`,
+    );
+    await http()
+      .post('/v1/auth/link-invitation')
+      .set(conSesion(tokenSocio))
+      .send({ token: job.rows[0]!.data.token })
+      .expect(201);
+    const enB = await altaSocio(gymB, tokenOwnerB, 'EnB');
+    await owner.execute(
+      sql`UPDATE members SET user_id = ${idCuenta}::uuid WHERE id = ${enB}::uuid`,
+    );
+
+    // En A esta al corriente.
+    const cuotaEnA = await http().get('/v1/me/dues').set(conSesion(tokenSocio)).expect(200);
+    expect(cuotaEnA.body.estado).toBe('AL_CORRIENTE');
+    expect(cuotaEnA.body.planName).not.toBeNull();
+
+    await http()
+      .post('/v1/auth/switch-gym')
+      .set(conSesion(tokenSocio))
+      .send({ gymId: gymB })
+      .expect(201);
+
+    // En B no tiene cuota, y no hereda la de A.
+    const cuotaEnB = await http().get('/v1/me/dues').set(conSesion(tokenSocio)).expect(200);
+    expect(cuotaEnB.body.estado).toBe('SIN_SUSCRIPCION');
+    expect(cuotaEnB.body.planName).toBeNull();
+    expect(cuotaEnB.body.puedeAcceder).toBe(false);
+
+    // Y su ficha tambien es la de B: numero de socio distinto.
+    const fichaEnB = await http()
+      .get('/v1/me/member-profile')
+      .set(conSesion(tokenSocio))
+      .expect(200);
+    expect(fichaEnB.body.id).toBe(enB);
+
+    // Al volver a A, lo de A sigue estando.
+    await http()
+      .post('/v1/auth/switch-gym')
+      .set(conSesion(tokenSocio))
+      .send({ gymId: gymA })
+      .expect(201);
+    const vuelta = await http().get('/v1/me/dues').set(conSesion(tokenSocio)).expect(200);
+    expect(vuelta.body.estado).toBe('AL_CORRIENTE');
+  });
 });
 
 describe('aislamiento entre gimnasios', () => {
