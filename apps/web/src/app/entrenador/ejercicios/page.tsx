@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import type { Exercise, MuscleGroup } from '@gymlab/contracts';
+import type { Exercise } from '@gymlab/contracts';
 import { Aviso } from '@/componentes/aviso';
 import { Cargando } from '@/componentes/cargando';
 import { EncabezadoDePagina } from '@/componentes/encabezado-de-pagina';
@@ -13,27 +13,10 @@ import { RutaPrivada } from '@/componentes/ruta-privada';
 import { Tabla, celda } from '@/componentes/tabla';
 import { Tarjeta } from '@/componentes/tarjeta';
 import { api } from '@/lib/api';
+import { NOMBRE_DEL_GRUPO, filtrarEjercicios } from '@/lib/ejercicios';
 import { mensajeDeError } from '@/lib/errores';
 import { esSesionCaducada, useSesion } from '@/lib/sesion';
 import estilos from '../entrenador.module.css';
-
-/**
- * Como se llama cada grupo muscular en pantalla.
- *
- * `Record<MuscleGroup, string>` obliga a que un grupo nuevo del contrato pase
- * por aqui: si se anadiera uno, esto deja de compilar en lugar de pintar
- * `full_body` en una tabla que lee un entrenador.
- */
-const NOMBRE_DEL_GRUPO: Record<MuscleGroup, string> = {
-  chest: 'Pecho',
-  back: 'Espalda',
-  legs: 'Piernas',
-  shoulders: 'Hombros',
-  arms: 'Brazos',
-  core: 'Core',
-  cardio: 'Cardio',
-  full_body: 'Cuerpo completo',
-};
 
 /**
  * La biblioteca de ejercicios del gimnasio.
@@ -101,18 +84,13 @@ function Biblioteca() {
    *
    * La plantilla siembra mas de sesenta ejercicios, asi que la lista es larga
    * de recorrer — pero el endpoint la devuelve entera de una vez y no admite
-   * filtro. Filtrar en pantalla responde al instante y cubre nombre, material y
-   * grupo muscular, que son las tres formas en que alguien busca esto.
+   * filtro. El mismo filtro que usa el selector del editor de rutinas: se busca
+   * igual en los dos sitios porque es la misma biblioteca.
    */
-  const visibles = useMemo(() => {
-    const q = busqueda.trim().toLowerCase();
-    if (!q || !ejercicios) return ejercicios ?? [];
-    return ejercicios.filter((e) =>
-      `${e.name} ${e.equipment ?? ''} ${NOMBRE_DEL_GRUPO[e.muscleGroup]}`
-        .toLowerCase()
-        .includes(q),
-    );
-  }, [ejercicios, busqueda]);
+  const visibles = useMemo(
+    () => filtrarEjercicios(ejercicios ?? [], busqueda),
+    [ejercicios, busqueda],
+  );
 
   const buscando = busqueda.trim() !== '';
 

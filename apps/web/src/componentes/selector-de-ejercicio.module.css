@@ -1,0 +1,89 @@
+/*
+ * Se abre EN LINEA, donde estaba el boton. No tapa nada, asi que se enmarca
+ * para que se vea que es un bloque aparte del formulario que hay debajo.
+ */
+.selector {
+  padding: var(--e4);
+  background: var(--fondo-sutil);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+}
+
+.cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e3);
+  margin-bottom: var(--e3);
+}
+
+.etiqueta {
+  font-size: var(--t-sm);
+  font-weight: 500;
+}
+
+.buscador {
+  width: 100%;
+  min-height: 2.25rem;
+  padding: 0 var(--e3);
+  background: var(--fondo);
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radio-s);
+  font-size: var(--t-base);
+}
+
+.buscador::placeholder {
+  color: var(--texto-tenue);
+}
+
+/*
+ * La lista tiene tope de alto y se desplaza dentro.
+ *
+ * Son setenta y cinco ejercicios: sin tope, abrir el selector empuja el
+ * formulario tan abajo que se pierde de vista lo que se estaba editando.
+ */
+.resultados {
+  max-height: 18rem;
+  overflow-y: auto;
+  margin: var(--e3) 0 0;
+  padding: 0;
+  list-style: none;
+  background: var(--fondo);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-s);
+}
+
+.resultado {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  width: 100%;
+  /* 44 px es el minimo comodo para un dedo; con dos lineas queda holgado. */
+  min-height: 2.75rem;
+  padding: var(--e2) var(--e3);
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--borde);
+  text-align: left;
+  cursor: pointer;
+}
+
+.resultados li:last-child .resultado {
+  border-bottom: none;
+}
+
+.resultado:hover {
+  background: var(--fondo-hover);
+}
+
+.nombre {
+  font-size: var(--t-base);
+  font-weight: 500;
+  /* Un nombre largo se parte en lugar de desbordar a 320 px. */
+  overflow-wrap: anywhere;
+}
+
+.detalle {
+  color: var(--texto-sutil);
+  font-size: var(--t-sm);
+}

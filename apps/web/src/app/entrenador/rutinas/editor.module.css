@@ -1,0 +1,110 @@
+.tarjeta {
+  max-width: var(--ancho-lectura);
+  margin-bottom: var(--e4);
+}
+
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e4);
+}
+
+.tituloSeccion {
+  margin-bottom: var(--e3);
+}
+
+/* Lo que falta, enumerado: unido por puntos parecia una sola frase rota. */
+.errores {
+  margin: var(--e2) 0 0;
+  padding-left: var(--e4);
+}
+
+.sinItems {
+  color: var(--texto-sutil);
+  font-size: var(--t-base);
+}
+
+.items {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cabeceraItem {
+  display: flex;
+  align-items: baseline;
+  gap: var(--e3);
+  margin-bottom: var(--e4);
+}
+
+/* El numero de orden. Es la posicion en la rutina, no un dato del ejercicio. */
+.posicion {
+  flex: none;
+  min-width: 1.5rem;
+  color: var(--texto-tenue);
+  font-variant-numeric: var(--numeros);
+  font-weight: 500;
+}
+
+.nombreItem {
+  font-size: var(--t-md);
+  font-weight: 500;
+  /* Un nombre largo se parte en lugar de desbordar a 320 px. */
+  overflow-wrap: anywhere;
+}
+
+.faltante {
+  display: block;
+  margin-top: 0.125rem;
+  color: var(--aviso);
+  font-size: var(--t-sm);
+  font-weight: 400;
+}
+
+/*
+ * Dos columnas cuando hay sitio, una en el movil.
+ *
+ * Series y descanso son cortos y quedan raquiticos a lo ancho; repeticiones y
+ * notas quieren espacio. Con la rejilla, los cuatro caben en dos filas en
+ * cuanto la pantalla lo permite.
+ */
+.camposItem {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--e4);
+}
+
+/*
+ * Subir y bajar son los botones que mas se pulsan aqui, y se pulsan con el
+ * pulgar: ordenar una rutina de diez ejercicios son muchos toques seguidos. Un
+ * `sm` normal se queda en 37x28 px, por debajo de los 44 px que el resto del
+ * proyecto respeta, asi que aqui se ensanchan. Solo estos dos: "Quitar" se pulsa
+ * una vez y ademas pide confirmacion.
+ */
+.reordenar {
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+}
+
+.accionesItem {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e2);
+  margin-top: var(--e4);
+  padding-top: var(--e4);
+  border-top: 1px solid var(--borde);
+}
+
+.pie {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e3);
+  max-width: var(--ancho-lectura);
+}
+
+@media (min-width: 48.0625rem) {
+  .camposItem {
+    grid-template-columns: 1fr 1fr;
+  }
+}

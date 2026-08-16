@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import type { Routine } from '@gymlab/contracts';
 import { Aviso } from '@/componentes/aviso';
+import { BotonEnlace } from '@/componentes/boton';
 import { Cargando } from '@/componentes/cargando';
 import { EncabezadoDePagina } from '@/componentes/encabezado-de-pagina';
 import { EstadoVacio } from '@/componentes/estado-vacio';
@@ -78,6 +79,11 @@ function Rutinas() {
       <EncabezadoDePagina
         titulo="Rutinas"
         entradilla="Las rutinas de este gimnasio. Las ve y las usa cualquier entrenador."
+        acciones={
+          <BotonEnlace href="/entrenador/rutinas/nueva" variante="primario">
+            Nueva rutina
+          </BotonEnlace>
+        }
       />
 
       {error && <Aviso>{error}</Aviso>}
@@ -88,12 +94,7 @@ function Rutinas() {
         ) : !rutinas || rutinas.length === 0 ? (
           <EstadoVacio
             titulo="Todavia no hay ninguna rutina"
-            /*
-             * Sin boton de crear: crear rutinas llega en el PR siguiente, y
-             * ofrecer aqui una accion que no existe es un enlace muerto con
-             * otro nombre.
-             */
-            texto="Cuando se cree la primera aparecera aqui, con sus ejercicios."
+            texto="Crea la primera con «Nueva rutina»: eliges ejercicios de la biblioteca del gimnasio y les pones series y repeticiones."
           />
         ) : (
           <>
