@@ -571,6 +571,117 @@ describe('estado del socio y de su cuota', () => {
   });
 });
 
+/**
+ * EL HISTORIAL DE ENTRADAS DEL PROPIO SOCIO.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ LOS INTENTOS TECNICOS NO SALEN, Y NADIE LOS FILTRA.                     │
+ * │                                                                          │
+ * │ Una firma invalida o un token caducado se registran SIN socio, porque un │
+ * │ token que no valida no identifica a nadie de fiar. Al buscar por la      │
+ * │ ficha quedan fuera solos — no hay ninguna lista de motivos prohibidos    │
+ * │ que alguien pueda olvidarse de actualizar.                               │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ */
+describe('el socio y su historial de entradas', () => {
+  const mios = (token: string, q = '') =>
+    http().get(`/v1/me/access/events${q}`).set(conSesion(token));
+
+  it('sin entradas devuelve una pagina vacia', async () => {
+    const { tokenSocio } = await socioAlCorriente(gymA, tokenOwnerA, planA, 'hist-vacio');
+    const res = await mios(tokenSocio).expect(200);
+    expect(res.body.items).toEqual([]);
+    expect(res.body.total).toBe(0);
+  });
+
+  it('ve sus permitidas y sus denegadas, con el motivo real', async () => {
+    const { tokenSocio, memberId } = await socioAlCorriente(gymA, tokenOwnerA, planA, 'hist-mixto');
+
+    await verificar(gymA, escaner1, await generarQr(tokenSocio)).expect(201);
+
+    // Se le vence la cuota y vuelve a intentarlo.
+    await venceEn(memberId, -30);
+    await verificar(gymA, escaner1, await generarQr(tokenSocio)).expect(201);
+
+    const res = await mios(tokenSocio).expect(200);
+    expect(res.body.total).toBe(2);
+    // La mas reciente primero: la denegada.
+    expect(res.body.items[0].decision).toBe('DENY');
+    expect(res.body.items[0].reason).toBe('DUES_EXPIRED');
+    expect(res.body.items[1].decision).toBe('ALLOW');
+    expect(res.body.items[1].reason).toBe('OK');
+  });
+
+  it('NO expone su nombre, su id ni ningun identificador tecnico', async () => {
+    // Quien mira su propio historial ya sabe quien es. Y el `jti`, la firma y
+    // la sesion del escaner nunca salieron de la base de datos.
+    const { tokenSocio } = await socioAlCorriente(gymA, tokenOwnerA, planA, 'hist-campos');
+    await verificar(gymA, escaner1, await generarQr(tokenSocio)).expect(201);
+
+    const res = await mios(tokenSocio).expect(200);
+    const evento = res.body.items[0];
+    expect(Object.keys(evento).sort()).toEqual(['decision', 'isRetry', 'occurredAt', 'reason']);
+    expect(JSON.stringify(res.body)).not.toContain('hist-campos');
+  });
+
+  it('un intento con token invalido NO aparece en el historial de nadie', async () => {
+    // Se registra sin socio, asi que no pertenece al historial de ninguna
+    // persona. No hay filtro que lo esconda: es que no esta.
+    const { tokenSocio } = await socioAlCorriente(gymA, tokenOwnerA, planA, 'hist-invalido');
+    const bueno = await generarQr(tokenSocio);
+    await verificar(gymA, escaner1, `${bueno.slice(0, -4)}AAAA`).expect(201);
+
+    const res = await mios(tokenSocio).expect(200);
+    expect(res.body.total).toBe(0);
+  });
+
+  it('no ve las entradas de otro socio del mismo gimnasio', async () => {
+    const yo = await socioAlCorriente(gymA, tokenOwnerA, planA, 'hist-yo');
+    const otro = await socioAlCorriente(gymA, tokenOwnerA, planA, 'hist-otro');
+    await verificar(gymA, escaner1, await generarQr(otro.tokenSocio)).expect(201);
+
+    const res = await mios(yo.tokenSocio).expect(200);
+    expect(res.body.total).toBe(0);
+  });
+
+  it('las entradas de una ficha BORRADA no reaparecen', async () => {
+    const { tokenSocio, memberId } = await socioAlCorriente(gymA, tokenOwnerA, planA, 'hist-borra');
+    await verificar(gymA, escaner1, await generarQr(tokenSocio)).expect(201);
+
+    await owner.execute(
+      sql`UPDATE access_events SET member_id = NULL WHERE member_id = ${memberId}::uuid`,
+    );
+
+    const res = await mios(tokenSocio).expect(200);
+    expect(res.body.total).toBe(0);
+  });
+
+  it('pagina con el mismo contrato que el listado del mostrador', async () => {
+    const { tokenSocio } = await socioAlCorriente(gymA, tokenOwnerA, planA, 'hist-pagina');
+    for (let i = 0; i < 3; i++) {
+      await verificar(gymA, escaner1, await generarQr(tokenSocio)).expect(201);
+    }
+
+    const primera = await mios(tokenSocio, '?page=1&pageSize=2').expect(200);
+    expect(primera.body.items).toHaveLength(2);
+    expect(primera.body.total).toBe(3);
+
+    const segunda = await mios(tokenSocio, '?page=2&pageSize=2').expect(200);
+    expect(segunda.body.items).toHaveLength(1);
+
+    await mios(tokenSocio, '?pageSize=101').expect(400);
+  });
+
+  it('quien no tiene ficha de socio no tiene entradas que ver', async () => {
+    await mios(tokenOwnerA).expect(404);
+    await mios(escaner1).expect(404);
+  });
+
+  it('sin sesion no se llega', async () => {
+    await http().get('/v1/me/access/events').expect(401);
+  });
+});
+
 describe('quien puede hacer que', () => {
   it('un socio no puede validar QR: se abriria la puerta el mismo', async () => {
     const socio = await socioAlCorriente(gymA, tokenOwnerA, planA, 'listillo');

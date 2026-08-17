@@ -4,6 +4,7 @@ import { BillingDataContributor } from './billing-data.contributor';
 import {
   MemberBillingController,
   OwnDuesController,
+  OwnPaymentsController,
   PaymentsController,
   PlansController,
 } from './billing.controller';
@@ -26,6 +27,7 @@ import { BillingService } from './billing.service';
     MemberBillingController,
     PaymentsController,
     OwnDuesController,
+    OwnPaymentsController,
   ],
   providers: [BillingService, BillingDataContributor],
   exports: [BillingService, BillingDataContributor],

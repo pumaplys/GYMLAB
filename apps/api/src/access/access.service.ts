@@ -15,6 +15,8 @@ import type {
   AccessResult,
   AccessTokenResponse,
   ListAccessEventsQuery,
+  ListOwnAccessEventsQuery,
+  OwnAccessEventList,
 } from '@gymlab/contracts';
 import { BillingService } from '../billing/billing.service';
 import { requireRequestContext, requireTransaction } from '../common/request-context';
@@ -363,6 +365,39 @@ export class AccessService {
   }
 
   // --- Historial -----------------------------------------------------------
+
+  /**
+   * Mis entradas, como socio.
+   *
+   * Reutiliza el listado del mostrador en lugar de repetir la consulta: la
+   * diferencia esta en QUE se devuelve, no en como se busca. Aqui se recorta el
+   * nombre y los identificadores —quien mira su propio historial ya sabe quien
+   * es— y se resuelve la ficha por sesion, sin ningun parametro que manipular.
+   *
+   * Los eventos de una ficha borrada quedan con `member_id` a nulo y este filtro
+   * los deja fuera solos. No se reconstruyen por correo ni por cuenta: eso
+   * desharia el borrado.
+   */
+  async misEventos(
+    gymId: string,
+    userId: string,
+    query: ListOwnAccessEventsQuery,
+  ): Promise<OwnAccessEventList> {
+    const ficha = await this.members.getOwnProfile(gymId, userId);
+    const pagina = await this.listarEventos(gymId, { ...query, memberId: ficha.id });
+
+    return {
+      items: pagina.items.map((e) => ({
+        decision: e.decision,
+        reason: e.reason,
+        isRetry: e.isRetry,
+        occurredAt: e.occurredAt,
+      })),
+      total: pagina.total,
+      page: pagina.page,
+      pageSize: pagina.pageSize,
+    };
+  }
 
   async listarEventos(gymId: string, query: ListAccessEventsQuery): Promise<AccessEventList> {
     const tx = requireTransaction();

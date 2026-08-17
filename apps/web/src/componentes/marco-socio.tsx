@@ -20,6 +20,8 @@ const DESTINOS = [
   { href: '/socio/rutina', texto: 'Rutina' },
   { href: '/socio/progreso', texto: 'Progreso' },
   { href: '/socio/carne', texto: 'Carne' },
+  { href: '/socio/pagos', texto: 'Pagos' },
+  { href: '/socio/accesos', texto: 'Accesos' },
   { href: '/socio/privacidad', texto: 'Privacidad' },
 ] as const;
 

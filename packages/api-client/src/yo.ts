@@ -2,6 +2,8 @@ import { z } from 'zod';
 import {
   accessTokenSchema,
   assignedMemberSchema,
+  ownAccessEventListSchema,
+  ownPaymentListSchema,
   assignedRoutineSchema,
   bodyMetricSchema,
   duesStatusSchema,
@@ -10,6 +12,8 @@ import {
   trainerSchema,
   type AccessTokenResponse,
   type AssignedMember,
+  type OwnAccessEventList,
+  type OwnPaymentList,
   type AssignedRoutine,
   type BodyMetric,
   type DuesStatus,
@@ -150,6 +154,41 @@ export interface YoApi {
    * Es `POST` y no `GET` porque crea algo: cada llamada devuelve un codigo
    * nuevo.
    */
+  /**
+   * Mi historial de pagos en el gimnasio activo. Paginado.
+   *
+   * ┌──────────────────────────────────────────────────────────────────────────┐
+   * │ NO TRAE `note` NI QUIEN LO COBRO.                                       │
+   * │                                                                          │
+   * │ La nota es del mostrador y quien cobro es un empleado: son datos de      │
+   * │ otros, no del socio. Lo que si viene son los ANULADOS, con su motivo,    │
+   * │ porque anular retira el periodo que ese pago concedio y es justo lo que  │
+   * │ explica por que una cuota volvio atras.                                  │
+   * └──────────────────────────────────────────────────────────────────────────┘
+   *
+   * Los pagos de una ficha borrada quedan con `member_id` a nulo y no vuelven
+   * por aqui: eso desharia el borrado.
+   */
+  misPagos(
+    pagina: { page: number; pageSize: number },
+    options?: RequestOptions,
+  ): Promise<OwnPaymentList>;
+
+  /**
+   * Mi historial de entradas. Paginado, de la mas reciente a la mas antigua.
+   *
+   * Solo lo que la persona necesita: si paso o no, por que, cuando, y si fue un
+   * reintento del mismo escaner. Ni su nombre —ya sabe quien es— ni ningun
+   * identificador tecnico.
+   *
+   * Los intentos con token invalido NO estan: se registran sin socio, asi que
+   * no pertenecen al historial de nadie.
+   */
+  misAccesos(
+    pagina: { page: number; pageSize: number },
+    options?: RequestOptions,
+  ): Promise<OwnAccessEventList>;
+
   tokenDeAcceso(options?: RequestOptions): Promise<AccessTokenResponse>;
 
   /**
@@ -211,6 +250,22 @@ export function createYoApi(http: Http): YoApi {
         method: 'GET',
         path: '/me/progress',
         schema: z.array(bodyMetricSchema),
+        ...options,
+      }),
+
+    misPagos: (pagina, options) =>
+      http({
+        method: 'GET',
+        path: `/me/payments?page=${pagina.page}&pageSize=${pagina.pageSize}`,
+        schema: ownPaymentListSchema,
+        ...options,
+      }),
+
+    misAccesos: (pagina, options) =>
+      http({
+        method: 'GET',
+        path: `/me/access/events?page=${pagina.page}&pageSize=${pagina.pageSize}`,
+        schema: ownAccessEventListSchema,
         ...options,
       }),
 

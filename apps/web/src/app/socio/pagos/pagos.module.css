@@ -1,0 +1,70 @@
+.lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+  margin: 0 0 var(--e4);
+  padding: 0;
+  list-style: none;
+}
+
+.pago,
+.pagoAnulado {
+  padding: var(--e3) var(--e4);
+}
+
+/* Atenuado, pero legible: sigue siendo parte de su historial. */
+.pagoAnulado .concepto,
+.pagoAnulado .importe {
+  color: var(--texto-sutil);
+  text-decoration: line-through;
+}
+
+.cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--e2);
+}
+
+.concepto {
+  font-size: var(--t-md);
+  font-weight: 600;
+}
+
+/* `tabular-nums`: una columna de importes se lee comparando cifras. */
+.importe {
+  font-size: var(--t-md);
+  font-weight: 600;
+  font-variant-numeric: var(--numeros);
+}
+
+.detalle {
+  margin-top: 0.125rem;
+  color: var(--texto-sutil);
+  font-size: var(--t-sm);
+  font-variant-numeric: var(--numeros);
+}
+
+.anulacion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e2);
+  margin-top: var(--e3);
+  padding-top: var(--e3);
+  border-top: 1px solid var(--borde);
+}
+
+.motivo {
+  color: var(--texto-sutil);
+  font-size: var(--t-sm);
+  overflow-wrap: anywhere;
+}
+
+.errorFila {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e3);
+}
