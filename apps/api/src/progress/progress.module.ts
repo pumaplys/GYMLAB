@@ -10,6 +10,7 @@ import {
   OwnHealthConsentController,
   OwnProgressController,
 } from './progress.controller';
+import { PrivacyDocumentController } from './privacy-document.controller';
 import { ProgressService } from './progress.service';
 
 /**
@@ -27,6 +28,7 @@ import { ProgressService } from './progress.service';
     HealthConsentController,
     OwnHealthConsentController,
     OwnProgressController,
+    PrivacyDocumentController,
   ],
   providers: [ProgressService, ConsentGate, ConsentDocumentsService],
   exports: [ProgressService, ConsentGate],

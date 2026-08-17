@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Get, NotFoundException, Put } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, NotFoundException, Patch } from '@nestjs/common';
 import { updateLegalDataSchema, type LegalData, type UpdateLegalDataInput } from '@gymlab/contracts';
 import { Roles } from '../common/decorators/roles.decorator';
 import { requireRequestContext } from '../common/request-context';
@@ -34,7 +34,14 @@ export class LegalController {
     return datos;
   }
 
-  @Put()
+  /**
+   * PATCH y no PUT: se envian SOLO los campos que han cambiado.
+   *
+   * Un `undefined` significa «no lo toques» y un `null` «borralo». Con PUT
+   * habria que mandar los cuatro campos siempre, y guardar solo el NIF
+   * borraria la razon social por no venir en el cuerpo.
+   */
+  @Patch()
   async guardar(
     @Body(new ZodBody(updateLegalDataSchema)) body: UpdateLegalDataInput,
   ): Promise<LegalData> {

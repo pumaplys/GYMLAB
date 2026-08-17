@@ -89,7 +89,7 @@ async function registrarGimnasio(nombre: string, quien: string) {
    * pruebas en legal.e2e.test.ts.
    */
   await http()
-    .put(`/v1/gyms/${gymId}/legal`)
+    .patch(`/v1/gyms/${gymId}/legal`)
     .set(conSesion(token))
     .send({
       legalName: `${nombre} S.L.`,

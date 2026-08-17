@@ -8,19 +8,22 @@ import { useSesion } from '@/lib/sesion';
 /**
  * Los destinos del panel de gimnasio. La lista es el sitio donde crece.
  *
- * Son TRES, y son los que existen: `/socios`, `/personal` y `/planes`. No hay
- * panel de inicio, ni entrenadores, ni rutinas, ni configuracion — y mientras
- * no los haya no se anuncian aqui. Un enlace que lleva a un 404 cuesta mas
- * confianza de la que ahorra tenerlo preparado.
+ * Son CUATRO, y son los que existen: `/socios`, `/personal`, `/planes` y
+ * `/configuracion`. No hay panel de inicio, ni entrenadores, ni rutinas — y
+ * mientras no los haya no se anuncian aqui. Un enlace que lleva a un 404 cuesta
+ * mas confianza de la que ahorra tenerlo preparado.
  *
  * `soloDueno` no protege nada —la autorizacion la impone el servidor— sino que
  * evita ofrecer un destino que responderia "esta seccion no es para tu rol".
  * Los precios son decision del dueno; el mostrador solo los consulta al cobrar.
+ * Y la identidad juridica con la que se publica el documento de privacidad no
+ * es un dato de contacto mas: la cambia quien responde por ella.
  */
 const DESTINOS = [
   { href: '/socios', texto: 'Socios', soloDueno: false },
   { href: '/personal', texto: 'Personal', soloDueno: false },
   { href: '/planes', texto: 'Planes', soloDueno: true },
+  { href: '/configuracion', texto: 'Configuración', soloDueno: true },
 ] as const;
 
 /**

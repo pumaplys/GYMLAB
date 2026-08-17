@@ -35,6 +35,13 @@ const conSesion = (token: string) => ({ Authorization: `Bearer ${token}` });
 
 /** La que siembra la migracion. Es BORRADOR, y aqui solo sirve de vehiculo. */
 const VERSION = '2026-09-01-borrador';
+/** Una segunda, para probar que publicar de nuevo usa los datos de ahora. */
+const VERSION_NUEVA = '2027-01-01-prueba';
+
+/** env se lee en caliente, asi que escribir en el cambia la version vigente. */
+function conVersion(valor: string | undefined) {
+  (env as { HEALTH_CONSENT_VERSION?: string }).HEALTH_CONSENT_VERSION = valor;
+}
 
 const IDENTIDAD = {
   legalName: 'Deportes del Norte, S.L.',
@@ -146,7 +153,7 @@ async function altaPersonal(gymId: string, tokenStaff: string, rol: string, quie
 }
 
 const guardar = (gymId: string, token: string, datos: Record<string, unknown>) =>
-  http().put(`/v1/gyms/${gymId}/legal`).set(conSesion(token)).send(datos);
+  http().patch(`/v1/gyms/${gymId}/legal`).set(conSesion(token)).send(datos);
 
 describe('quien puede configurar la identidad juridica', () => {
   it('el dueno la lee y la escribe', async () => {
@@ -258,6 +265,168 @@ describe('publicacion e inmutabilidad', () => {
 
     expect(fila.rows[0]!.document_id).toBe(doc.body.document.id);
     expect(fila.rows[0]!.version).toBe(VERSION);
+  });
+
+  it('una version NUEVA publica con los datos de AHORA, y la anterior no se toca', async () => {
+    const anterior = await http()
+      .get(`/v1/me/health-consent`)
+      .set(conSesion(tokenSocioA))
+      .expect(200);
+    const idAnterior = anterior.body.document.id as string;
+    const textoAnterior = anterior.body.document.body as string;
+
+    // La empresa se muda y cambia de denominacion.
+    await guardar(gymA, tokenOwnerA, {
+      legalName: 'Deportes del Norte 2, S.L.',
+      address: 'Avenida Nueva 9, 08001 Barcelona',
+    }).expect(200);
+
+    await owner.execute(
+      sql`INSERT INTO consent_document_templates (purpose, version, title, body)
+          VALUES ('health_data', ${VERSION_NUEVA}, 'Texto revisado',
+                  'Responsable: {{responsable}}. Cuerpo revisado.')
+          ON CONFLICT DO NOTHING`,
+    );
+    conVersion(VERSION_NUEVA);
+
+    const nuevo = await http()
+      .get(`/v1/me/health-consent`)
+      .set(conSesion(tokenSocioA))
+      .expect(200);
+
+    // Documento distinto, con la identidad nueva dentro.
+    expect(nuevo.body.document.id).not.toBe(idAnterior);
+    expect(nuevo.body.document.controller).toContain('Deportes del Norte 2');
+    expect(nuevo.body.document.controller).toContain('Barcelona');
+
+    /*
+     * Y el anterior sigue EXACTAMENTE igual. Es lo que hace que la aceptacion
+     * de esa persona siga significando lo que significaba: si el texto se
+     * hubiera reescrito, su consentimiento apuntaria a algo que nunca leyo.
+     */
+    const viejo = await owner.execute<{ body: string; controller: string }>(
+      sql`SELECT body, controller FROM consent_documents WHERE id = ${idAnterior}::uuid`,
+    );
+    expect(viejo.rows[0]!.body).toBe(textoAnterior);
+    expect(viejo.rows[0]!.controller).toContain('Deportes del Norte,');
+    expect(viejo.rows[0]!.controller).not.toContain('Barcelona');
+
+    conVersion(VERSION);
+  });
+});
+
+describe('el borrador no vale en produccion', () => {
+  it('con NODE_ENV=production, una plantilla marcada como borrador no ampara nada', async () => {
+    /*
+     * El texto sembrado empieza literalmente por «BORRADOR — pendiente de
+     * redaccion juridica definitiva». Recoger consentimientos del art. 9 con
+     * eso es peor que no recogerlos: aparenta una base legal que no existe.
+     */
+    const antes = env.NODE_ENV;
+    (env as { NODE_ENV: string }).NODE_ENV = 'production';
+
+    try {
+      const res = await http()
+        .get(`/v1/me/health-consent`)
+        .set(conSesion(tokenSocioA))
+        .expect(200);
+
+      // Sin documento, pero con respuesta controlada: nada de 500.
+      expect(res.body.document).toBeNull();
+
+      // Y el dueno ve POR QUE, que es distinto de un «pendiente» a secas.
+      const estado = await http()
+        .get(`/v1/gyms/${gymA}/privacy-document`)
+        .set(conSesion(tokenOwnerA))
+        .expect(200);
+      expect(estado.body.state).toBe('plantilla_en_borrador');
+    } finally {
+      (env as { NODE_ENV: string }).NODE_ENV = antes;
+    }
+  });
+
+  it('la version inexistente falla en cerrado y se distingue del borrador', async () => {
+    conVersion('9999-01-01-no-existe');
+    try {
+      const estado = await http()
+        .get(`/v1/gyms/${gymA}/privacy-document`)
+        .set(conSesion(tokenOwnerA))
+        .expect(200);
+      expect(estado.body.state).toBe('falta_plantilla');
+    } finally {
+      conVersion(VERSION);
+    }
+  });
+});
+
+describe('lo que el socio puede llegar a ver', () => {
+  it('su API de privacidad NO expone el NIF ni nada de organizations', async () => {
+    const res = await http()
+      .get(`/v1/me/health-consent`)
+      .set(conSesion(tokenSocioA))
+      .expect(200);
+
+    /*
+     * El NIF SI aparece dentro del cuerpo del documento —forma parte del texto
+     * que esa persona acepta, y debe— pero NO como campo suelto de la
+     * respuesta. La diferencia importa: un campo es configuracion mutable del
+     * gimnasio; el cuerpo es un snapshot congelado.
+     */
+    const crudo = JSON.stringify(res.body);
+    expect(res.body.document.body).toContain(IDENTIDAD.taxId);
+    expect(crudo).not.toContain('"taxId"');
+    expect(crudo).not.toContain('"legalName"');
+    expect(crudo).not.toContain('"privacyEmail"');
+    expect(crudo).not.toContain('"missing"');
+  });
+
+  it('un socio no alcanza el estado del documento, que es del dueno', async () => {
+    await http()
+      .get(`/v1/gyms/${gymA}/privacy-document`)
+      .set(conSesion(tokenSocioA))
+      .expect(403);
+  });
+});
+
+describe('dos gimnasios de la MISMA sociedad', () => {
+  it('comparten identidad pero cada uno publica su propio documento', async () => {
+    /*
+     * Se inserta la segunda sede directamente: no hay endpoint para anadir un
+     * gimnasio a una organizacion existente, y lo que se mide aqui es el
+     * modelo, no ese alta.
+     */
+    const org = await owner.execute<{ organization_id: string }>(
+      sql`SELECT organization_id FROM gyms WHERE id = ${gymA}::uuid`,
+    );
+    const sede2 = await owner.execute<{ id: string }>(
+      sql`INSERT INTO gyms (organization_id, name, slug)
+          VALUES (${org.rows[0]!.organization_id}::uuid, 'Norte Sede 2', ${'norte-sede-2-' + sufijo})
+          RETURNING id`,
+    );
+    const gymA2 = sede2.rows[0]!.id;
+    gimnasiosCreados.push(gymA2);
+
+    const datos = await http()
+      .get(`/v1/gyms/${gymA}/legal`)
+      .set(conSesion(tokenOwnerA))
+      .expect(200);
+
+    /*
+     * La identidad se configuro UNA vez, en la organizacion. La segunda sede la
+     * hereda sin que nadie la reescriba — que es justo el motivo de que viva
+     * ahi y no en `gyms`.
+     */
+    const heredada = await owner.execute<{ legal_name: string }>(
+      sql`SELECT o.legal_name FROM organizations o
+          JOIN gyms g ON g.organization_id = o.id WHERE g.id = ${gymA2}::uuid`,
+    );
+    expect(heredada.rows[0]!.legal_name).toBe(datos.body.legalName);
+
+    // Pero los documentos son POR GIMNASIO: la sede 2 no tiene ninguno todavia.
+    const documentos = await owner.execute<{ n: string }>(
+      sql`SELECT count(1)::text AS n FROM consent_documents WHERE gym_id = ${gymA2}::uuid`,
+    );
+    expect(documentos.rows[0]!.n).toBe('0');
   });
 });
 

@@ -34,6 +34,51 @@ export type UpdateLegalDataInput = z.infer<typeof updateLegalDataSchema>;
 export const LEGAL_REQUIRED_FIELDS = ['legalName', 'taxId', 'address', 'privacyEmail'] as const;
 export type LegalRequiredField = (typeof LEGAL_REQUIRED_FIELDS)[number];
 
+/**
+ * En que punto esta el documento de privacidad del gimnasio.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ CINCO ESTADOS, NO UN BOOLEANO, PORQUE LAS CAUSAS SON DISTINTAS.         │
+ * │                                                                          │
+ * │ «No hay documento» puede significar que el dueno no ha rellenado sus     │
+ * │ datos, que la plataforma no ha subido el texto revisado, o que la        │
+ * │ version configurada es todavia un borrador. Cada una la arregla una      │
+ * │ persona distinta, y decirle «pendiente» a las tres es no decir nada.     │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ */
+export const PRIVACY_DOCUMENT_STATES = [
+  /** Hay documento publicado y vigente. Los socios pueden leerlo y aceptarlo. */
+  'publicado',
+  /**
+   * Todo listo, pero todavia sin documento.
+   *
+   * Es el estado normal de un gimnasio cuyo primer socio aun no ha abierto su
+   * pantalla de privacidad: el documento se publica cuando hace falta. Se
+   * distingue de `publicado` porque decir «documento publicado» junto a
+   * «version publicada: ninguna» es contradecirse en la misma pantalla.
+   */
+  'listo',
+  /** Faltan datos del responsable. Lo arregla el dueno, desde /configuracion. */
+  'falta_configuracion',
+  /** No hay ninguna version configurada en la plataforma. */
+  'sin_version',
+  /** La version configurada no tiene plantilla. Lo arregla la plataforma. */
+  'falta_plantilla',
+  /** La plantilla existe pero es un borrador, y en produccion no vale. */
+  'plantilla_en_borrador',
+] as const;
+export type PrivacyDocumentState = (typeof PRIVACY_DOCUMENT_STATES)[number];
+
+export const privacyDocumentStatusSchema = z.object({
+  state: z.enum(PRIVACY_DOCUMENT_STATES),
+  /** La version que la plataforma espera. Sale de HEALTH_CONSENT_VERSION. */
+  expectedVersion: z.string().nullable(),
+  /** La del documento realmente publicado, si lo hay. */
+  publishedVersion: z.string().nullable(),
+  publishedAt: z.string().nullable(),
+});
+export type PrivacyDocumentStatus = z.infer<typeof privacyDocumentStatusSchema>;
+
 export const legalDataSchema = z.object({
   /** Nombre comercial, para que el dueno sepa que organizacion esta viendo. */
   name: z.string(),

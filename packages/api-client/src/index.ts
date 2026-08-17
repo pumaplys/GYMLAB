@@ -40,6 +40,7 @@
 import { createAuthApi, type AuthApi } from './auth';
 import { createBillingApi, type BillingApi } from './billing';
 import { createEntrenadoresApi, type EntrenadoresApi } from './entrenadores';
+import { createLegalApi, type LegalApi } from './legal';
 import { createEntrenamientoApi, type EntrenamientoApi } from './entrenamiento';
 import { createHttp, type ApiClientOptions } from './http';
 import { createInvitationsApi, type InvitationsApi } from './invitations';
@@ -52,6 +53,7 @@ export interface ApiClient {
   auth: AuthApi;
   members: MembersApi;
   billing: BillingApi;
+  legal: LegalApi;
   invitations: InvitationsApi;
   staff: StaffApi;
   /** Quien entrena a quien. Lo gestiona el personal desde la ficha del socio. */
@@ -70,6 +72,7 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
     auth: createAuthApi(http),
     members: createMembersApi(http),
     billing: createBillingApi(http),
+    legal: createLegalApi(http),
     invitations: createInvitationsApi(http),
     staff: createStaffApi(http),
     entrenadores: createEntrenadoresApi(http),
@@ -82,6 +85,7 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
 export type { AuthApi } from './auth';
 export type { MembersApi } from './members';
 export type { BillingApi } from './billing';
+export type { LegalApi } from './legal';
 export type { InvitationsApi } from './invitations';
 export type { StaffApi } from './staff';
 export type { EntrenadoresApi } from './entrenadores';
