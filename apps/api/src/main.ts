@@ -10,13 +10,12 @@ async function bootstrap() {
   // ┌──────────────────────────────────────────────────────────────────────────┐
   // │ CUANTOS PROXIES HAY DELANTE. DE ESTO DEPENDE EL LIMITE DE INTENTOS.      │
   // │                                                                          │
-  // │ `x-forwarded-for` la escribe quien llama y un proxy solo le anade su     │
-  // │ valor por la derecha. Sin esto, Express no sabe cuantos saltos descartar │
-  // │ y `request.ip` no es de fiar — que es la direccion con la que se cuentan │
-  // │ los intentos de login (ver `ipDe`).                                      │
+  // │ `x-forwarded-for` la escribe quien llama. Sin esto, Express no sabe      │
+  // │ cuantos saltos descartar y `request.ip` no es de fiar — que es la        │
+  // │ direccion con la que se cuentan los intentos de login (ver `ipDe`).      │
   // │                                                                          │
-  // │ Vale 0 en desarrollo, donde no hay proxy. Ponerlo mas alto de lo que hay │
-  // │ de verdad es peor que dejarlo a 0.                                       │
+  // │ Vale 0 en desarrollo, donde no hay proxy, y 1 detras de Caddy. El        │
+  // │ razonamiento completo, con lo medido al ponerlo mal, esta en `env.ts`.   │
   // └──────────────────────────────────────────────────────────────────────────┘
   app.set('trust proxy', env.TRUST_PROXY);
 

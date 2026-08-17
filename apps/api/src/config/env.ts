@@ -95,9 +95,8 @@ const schema = z.object({
    * ┌──────────────────────────────────────────────────────────────────────────┐
    * │ NO ES AFINAR UN REGISTRO: DE ESTO DEPENDE EL LIMITE DE INTENTOS.         │
    * │                                                                          │
-   * │ `x-forwarded-for` la escribe QUIEN LLAMA. Un proxy no la reemplaza: le   │
-   * │ anade su valor por la derecha, asi que el primero de la cadena es el que │
-   * │ mando el cliente y se puede inventar en cada peticion.                   │
+   * │ `x-forwarded-for` la escribe QUIEN LLAMA, asi que sin nadie delante que  │
+   * │ la reescriba, el cliente elige la IP con la que se le cuenta.            │
    * │                                                                          │
    * │ Medido contra este mismo proceso: con la cabecera fija, el sexto intento │
    * │ fallido devuelve 429; rotandola, 12 de 12 pasaron. El limite por IP se   │
@@ -107,10 +106,26 @@ const schema = z.object({
    * │ `request.ip` la unica direccion que escribio alguien de confianza. Es la │
    * │ que se usa (ver `toHeaders`).                                             │
    * │                                                                          │
-   * │ 0 = no hay proxy y vale la del socket. Detras de Caddy, de Nginx o de la │
-   * │ mayoria de plataformas gestionadas: 1. Ponerlo MAS ALTO de lo que hay es │
-   * │ peor que dejarlo a 0, porque vuelve a hacer creible lo que mande el      │
-   * │ cliente.                                                                 │
+   * │ 0 = no hay proxy y vale la del socket. Detras de Caddy: 1.               │
+   * │                                                                          │
+   * │ QUE PASA SI SE PONE MAL, medido en contenedor con Caddy delante:         │
+   * │                                                                          │
+   * │ - a 0 detras del proxy NO se cuela nadie, pero `request.ip` pasa a ser   │
+   * │   la de Caddy PARA TODO EL MUNDO: el gimnasio entero comparte cubo de    │
+   * │   intentos y la IP que se guarda en auditoria no identifica a nadie.     │
+   * │                                                                          │
+   * │ - a 5 —cuatro saltos de mas— tampoco se colo nadie, y merece explicacion │
+   * │   porque contradice lo que decia antes este comentario: Caddy no ANADE a │
+   * │   la cadena, la REEMPLAZA por la IP que el observo, asi que nunca hay    │
+   * │   mas de una entrada que descartar. Detras de un proxy que la fuera      │
+   * │   anadiendo —nginx con `proxy_add_x_forwarded_for`— sobrepasarse SI      │
+   * │   volveria creible lo que mande el cliente. Sigue siendo mala idea       │
+   * │   declarar saltos que no existen; solo no es explotable con Caddy.       │
+   * │                                                                          │
+   * │ Lo que SI abre el agujero es que se pueda llegar al puerto sin pasar por │
+   * │ el proxy: atacando 3001 directamente, con este valor a 1, ocho de ocho   │
+   * │ intentos esquivaron el limite rotando la cabecera. Por eso el contenedor │
+   * │ publica el puerto SOLO en el bucle local — ver compose de produccion.    │
    * └──────────────────────────────────────────────────────────────────────────┘
    */
   TRUST_PROXY: z.coerce.number().int().min(0).max(10).default(0),
@@ -152,6 +167,63 @@ const schema = z.object({
  * con `turbo.json`.
  */
 const schemaValidado = schema
+  /**
+   * ┌────────────────────────────────────────────────────────────────────────┐
+   * │ EN PRODUCCION, LOS VALORES POR DEFECTO SON UN DESPLIEGUE INSEGURO.     │
+   * │                                                                        │
+   * │ Casi todo aqui tiene un default comodo para desarrollo, y ese default  │
+   * │ apunta a `localhost` por HTTP. El problema no es que sea incomodo: es  │
+   * │ que NO SE NOTA. El proceso arranca, `/health` responde 200 y todo      │
+   * │ parece bien.                                                           │
+   * │                                                                        │
+   * │ El caso concreto que motiva esto: `API_URL` es de donde Better Auth    │
+   * │ deduce si la cookie de sesion lleva `Secure`. El compose lo pasa como  │
+   * │ `${DOMINIO}`, y si esa variable no esta en el `.env`, Compose la       │
+   * │ sustituye por CADENA VACIA — que `sinVacias` trata como ausente, asi   │
+   * │ que entra el default `http://localhost:3001` y la sesion viaja SIN     │
+   * │ `Secure`. Un olvido de una linea en un fichero degrada la sesion de    │
+   * │ todo el mundo, en silencio.                                            │
+   * │                                                                        │
+   * │ Mismo razonamiento para `WEB_APP_URL` —los enlaces de invitacion y de  │
+   * │ restablecer contrasena llevarian a localhost— y para `CORS_ORIGINS`,   │
+   * │ cuyo default deja `http://localhost:3000` como origen de confianza con │
+   * │ `credentials: true` en un despliegue publico.                          │
+   * │                                                                        │
+   * │ En produccion se prefiere no arrancar a arrancar mintiendo, igual que  │
+   * │ con el remitente de Resend.                                            │
+   * └────────────────────────────────────────────────────────────────────────┘
+   */
+  .superRefine((valores, ctx) => {
+    if (valores.NODE_ENV !== 'production') return;
+
+    for (const clave of ['API_URL', 'WEB_APP_URL'] as const) {
+      const valor = valores[clave];
+      if (!valor.startsWith('https://') || esLocal(valor)) {
+        ctx.addIssue({
+          code: 'custom',
+          path: [clave],
+          message:
+            `En produccion ${clave} debe ser la URL publica por HTTPS, y vale "${valor}". ` +
+            'De aqui sale si la cookie de sesion lleva Secure y adonde apuntan los enlaces ' +
+            'de los correos. Comprueba que DOMINIO este definido en el .env del despliegue: ' +
+            'si falta, Compose lo sustituye por cadena vacia y entra el valor de desarrollo.',
+        });
+      }
+    }
+
+    const locales = valores.CORS_ORIGINS.filter((o) => esLocal(o) || o.startsWith('http://'));
+    if (locales.length > 0) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['CORS_ORIGINS'],
+        message:
+          `En produccion CORS_ORIGINS no puede incluir origenes locales ni HTTP, y trae ${locales.join(', ')}. ` +
+          'Con credentials: true eso es un origen de confianza que puede hacer peticiones ' +
+          'autenticadas contra este despliegue. El panel se sirve desde el mismo origen que ' +
+          'la API, asi que lo normal es que aqui solo este el dominio publico.',
+      });
+    }
+  })
   /**
    * ┌────────────────────────────────────────────────────────────────────────┐
    * │ CON CLAVE DE RESEND, EL REMITENTE TIENE QUE SER DE VERDAD.             │
@@ -203,6 +275,21 @@ const schemaValidado = schema
  * La direccion de un remitente, admitiendo las dos formas que acepta Resend:
  * `Nombre <a@b.c>` y `a@b.c`. Devuelve null si no hay ninguna.
  */
+/**
+ * Si una URL u origen apunta a la propia maquina.
+ *
+ * Se mira el HOST, no la cadena entera: `https://localhost.miempresa.com` es un
+ * dominio publico perfectamente valido y no debe confundirse con `localhost`.
+ */
+function esLocal(url: string): boolean {
+  try {
+    const host = new URL(url).hostname;
+    return host === 'localhost' || host === '127.0.0.1' || host === '::1' || host === '[::1]';
+  } catch {
+    return false;
+  }
+}
+
 function direccionDe(remitente: string): string | null {
   const entreAngulos = /<([^>]+)>/.exec(remitente);
   const candidato = (entreAngulos ? entreAngulos[1]! : remitente).trim();
