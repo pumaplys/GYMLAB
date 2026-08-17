@@ -327,6 +327,137 @@ describe('el entrenador ve SOLO a sus socios asignados', () => {
   });
 });
 
+/**
+ * QUIEN ENTRENA A ESTE SOCIO. La consulta simetrica.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ EXISTE PORQUE LA FICHA DEL SOCIO LA NECESITA.                            │
+ * │                                                                          │
+ * │ Hasta ahora solo se podia preguntar "los socios de este entrenador". La  │
+ * │ ficha del panel hace la pregunta contraria, y sin esta ruta habria que   │
+ * │ pedir todos los entrenadores y luego la cartera de cada uno: N+1, y      │
+ * │ ademas trayendo carteras de gente por la que nadie pregunto.             │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ */
+describe('los entrenadores de un socio', () => {
+  const suyos = (gymId: string, memberId: string, token: string) =>
+    http().get(`/v1/gyms/${gymId}/members/${memberId}/trainers`).set(conSesion(token));
+
+  it('sin entrenador devuelve lista vacia, no un error', async () => {
+    const socio = await altaSocio(gymA, tokenOwnerA, 'SinEntrenador');
+    const res = await suyos(gymA, socio, tokenOwnerA).expect(200);
+    expect(res.body).toEqual([]);
+  });
+
+  it('devuelve VARIOS a la vez, el mas reciente primero', async () => {
+    // El modelo lo permite a proposito —fuerza con uno, rehabilitacion con
+    // otro— asi que la ficha tiene que poder representarlos todos.
+    const socio = await altaSocio(gymA, tokenOwnerA, 'ConDos');
+    await asignar(gymA, tokenOwnerA, entrenador1, socio).expect(201);
+    await asignar(gymA, tokenOwnerA, entrenador2, socio).expect(201);
+
+    const res = await suyos(gymA, socio, tokenOwnerA).expect(200);
+    expect(res.body).toHaveLength(2);
+    expect(res.body[0].trainerId).toBe(entrenador2);
+    expect(res.body[0].name.length).toBeGreaterThan(0);
+    expect(res.body[0].assignmentId).toBeTruthy();
+  });
+
+  it('el DTO es minimo: sin cartera, sin bio, sin correo', async () => {
+    // Quien mira la ficha de un socio quiere saber quien le lleva, no la
+    // agenda completa de cada entrenador del gimnasio.
+    const socio = await altaSocio(gymA, tokenOwnerA, 'DtoMinimo');
+    await asignar(gymA, tokenOwnerA, entrenador1, socio).expect(201);
+
+    const res = await suyos(gymA, socio, tokenOwnerA).expect(200);
+    expect(Object.keys(res.body[0]).sort()).toEqual([
+      'assignedAt',
+      'assignmentId',
+      'name',
+      'status',
+      'trainerId',
+    ]);
+  });
+
+  it('una asignacion TERMINADA deja de aparecer, pero no se borra', async () => {
+    const socio = await altaSocio(gymA, tokenOwnerA, 'Terminada');
+    await asignar(gymA, tokenOwnerA, entrenador1, socio).expect(201);
+    await http()
+      .delete(`/v1/gyms/${gymA}/trainers/${entrenador1}/members/${socio}`)
+      .set(conSesion(tokenOwnerA))
+      .expect(200);
+
+    const res = await suyos(gymA, socio, tokenOwnerA).expect(200);
+    expect(res.body).toEqual([]);
+
+    // La fila sigue en la base: hay rutinas que necesitan que esa relacion
+    // haya existido.
+    const filas = await owner.execute<{ n: string }>(
+      sql`SELECT count(*) AS n FROM trainer_assignments
+          WHERE member_id = ${socio}::uuid AND ended_at IS NOT NULL`,
+    );
+    expect(Number(filas.rows[0]!.n)).toBe(1);
+  });
+
+  it('retirar uno deja los demas en pie', async () => {
+    const socio = await altaSocio(gymA, tokenOwnerA, 'RetirarUno');
+    await asignar(gymA, tokenOwnerA, entrenador1, socio).expect(201);
+    await asignar(gymA, tokenOwnerA, entrenador2, socio).expect(201);
+
+    await http()
+      .delete(`/v1/gyms/${gymA}/trainers/${entrenador1}/members/${socio}`)
+      .set(conSesion(tokenOwnerA))
+      .expect(200);
+
+    const res = await suyos(gymA, socio, tokenOwnerA).expect(200);
+    expect(res.body).toHaveLength(1);
+    expect(res.body[0].trainerId).toBe(entrenador2);
+  });
+
+  it('se puede volver a asignar una pareja ya terminada', async () => {
+    // El indice unico es PARCIAL sobre las vigentes, asi que la fila historica
+    // no bloquea que esa persona vuelva con su entrenador de siempre.
+    const socio = await altaSocio(gymA, tokenOwnerA, 'Vuelve');
+    await asignar(gymA, tokenOwnerA, entrenador1, socio).expect(201);
+    await http()
+      .delete(`/v1/gyms/${gymA}/trainers/${entrenador1}/members/${socio}`)
+      .set(conSesion(tokenOwnerA))
+      .expect(200);
+    await asignar(gymA, tokenOwnerA, entrenador1, socio).expect(201);
+
+    const res = await suyos(gymA, socio, tokenOwnerA).expect(200);
+    expect(res.body).toHaveLength(1);
+  });
+
+  it('recepcion tambien puede consultarlo', async () => {
+    const socio = await altaSocio(gymA, tokenOwnerA, 'ParaRecepcion');
+    await asignar(gymA, tokenOwnerA, entrenador1, socio).expect(201);
+    await suyos(gymA, socio, tokenRecepcionA).expect(200);
+  });
+
+  it('el entrenador y el socio no entran por esta ruta', async () => {
+    // El entrenador tiene `/me/trainer/members` para lo suyo, sin identificador.
+    const socio = await altaSocio(gymA, tokenOwnerA, 'RolIncorrecto');
+    await suyos(gymA, socio, tokenEntrenador1).expect(403);
+  });
+
+  it('un socio de OTRO gimnasio: 404, no una lista vacia', async () => {
+    // Vacio diria "existe pero no tiene entrenador". La existencia tampoco se
+    // confirma.
+    const deB = await altaSocio(gymB, tokenOwnerB, 'DeOtroGym');
+    await suyos(gymA, deB, tokenOwnerA).expect(404);
+  });
+
+  it('un id inventado: 404', async () => {
+    await suyos(gymA, randomUUID(), tokenOwnerA).expect(404);
+  });
+
+  it('escribir el gymId de otro en la URL: 403', async () => {
+    const socio = await altaSocio(gymA, tokenOwnerA, 'GymAjeno');
+    await suyos(gymB, socio, tokenOwnerA).expect(403);
+  });
+});
+
 describe('asignaciones', () => {
   it('recepcion puede asignar, y el socio aparece en la lista del entrenador', async () => {
     const socio = await altaSocio(gymA, tokenOwnerA, 'PorRecepcion');

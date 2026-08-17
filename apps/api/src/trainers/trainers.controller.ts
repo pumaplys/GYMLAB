@@ -110,6 +110,37 @@ export class TrainersController {
 }
 
 /**
+ * Los entrenadores de UN socio. La consulta simetrica de `trainers/:id/members`.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ MISMOS ROLES QUE ASIGNAR Y TERMINAR, y no es casualidad: es la lectura   │
+ * │ que acompana a esas dos acciones. Quien puede decidir quien entrena a    │
+ * │ alguien tiene que poder ver quien le entrena ahora.                       │
+ * │                                                                          │
+ * │ El entrenador NO entra: para lo suyo tiene `/me/trainer/members`, que no │
+ * │ lleva identificador. Y el socio tampoco — su ficha no dice quien le      │
+ * │ entrena porque hoy ninguna pantalla suya lo necesita.                     │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ */
+@Controller('gyms/:gymId/members/:memberId/trainers')
+@Roles('owner', 'receptionist')
+export class MemberTrainersController {
+  constructor(private readonly trainers: TrainersService) {}
+
+  @Get()
+  list(
+    @Param('gymId', ParseUUIDPipe) gymId: string,
+    @Param('memberId', ParseUUIDPipe) memberId: string,
+  ) {
+    const ctx = requireRequestContext();
+    if (ctx.gymId !== gymId) {
+      throw new ForbiddenException('El gimnasio de la ruta no es el activo de tu sesion.');
+    }
+    return this.trainers.trainersOf(ctx.gymId, memberId);
+  }
+}
+
+/**
  * El entrenador y sus propios socios.
  *
  * ┌──────────────────────────────────────────────────────────────────────────┐

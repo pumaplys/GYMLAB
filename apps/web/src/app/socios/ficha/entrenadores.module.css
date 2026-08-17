@@ -1,0 +1,76 @@
+.seccion {
+  margin-top: var(--e5);
+}
+
+.cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e3);
+  margin-bottom: var(--e3);
+}
+
+.titulo {
+  font-size: var(--t-lg);
+  font-weight: 600;
+}
+
+.selector {
+  margin-bottom: var(--e3);
+}
+
+.lista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/*
+ * En columna hasta que hay sitio: a 320 px, el nombre y el boton en la misma
+ * linea dejan al nombre en dos caracteres por renglon.
+ */
+.fila {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--e2);
+  padding: var(--e3) var(--e4);
+  border-bottom: 1px solid var(--borde);
+}
+
+.lista li:last-child {
+  border-bottom: none;
+}
+
+.datos {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.nombre {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e2);
+  font-size: var(--t-base);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.desde {
+  color: var(--texto-sutil);
+  font-size: var(--t-sm);
+  font-variant-numeric: var(--numeros);
+}
+
+@media (min-width: 48.0625rem) {
+  .fila {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--e4);
+  }
+}

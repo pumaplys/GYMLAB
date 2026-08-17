@@ -39,6 +39,7 @@
 
 import { createAuthApi, type AuthApi } from './auth';
 import { createBillingApi, type BillingApi } from './billing';
+import { createEntrenadoresApi, type EntrenadoresApi } from './entrenadores';
 import { createEntrenamientoApi, type EntrenamientoApi } from './entrenamiento';
 import { createHttp, type ApiClientOptions } from './http';
 import { createInvitationsApi, type InvitationsApi } from './invitations';
@@ -53,6 +54,8 @@ export interface ApiClient {
   billing: BillingApi;
   invitations: InvitationsApi;
   staff: StaffApi;
+  /** Quien entrena a quien. Lo gestiona el personal desde la ficha del socio. */
+  entrenadores: EntrenadoresApi;
   /** Ejercicios y rutinas del gimnasio. */
   entrenamiento: EntrenamientoApi;
   /** Peso y medidas. Datos de salud: toda escritura pasa por el consentimiento. */
@@ -69,6 +72,7 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
     billing: createBillingApi(http),
     invitations: createInvitationsApi(http),
     staff: createStaffApi(http),
+    entrenadores: createEntrenadoresApi(http),
     entrenamiento: createEntrenamientoApi(http),
     progreso: createProgresoApi(http),
     yo: createYoApi(http),
@@ -80,6 +84,7 @@ export type { MembersApi } from './members';
 export type { BillingApi } from './billing';
 export type { InvitationsApi } from './invitations';
 export type { StaffApi } from './staff';
+export type { EntrenadoresApi } from './entrenadores';
 export type { EntrenamientoApi } from './entrenamiento';
 export type { ProgresoApi } from './progreso';
 export type { YoApi } from './yo';

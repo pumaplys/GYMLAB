@@ -20,6 +20,7 @@ import { comoFecha } from '@/lib/formato';
 import { ROLES_DEL_PANEL } from '@/lib/roles';
 import { esSesionCaducada, useSesion } from '@/lib/sesion';
 import { Cuota } from './cuota';
+import { EntrenadoresDelSocio } from './entrenadores';
 import estilos from './ficha.module.css';
 
 /**
@@ -154,6 +155,14 @@ function Ficha() {
         preguntas viven juntas.
       */}
       <Cuota memberId={socio.id} />
+
+      {/*
+        Y el entrenador debajo, por el mismo motivo: quien da de alta a alguien
+        decide en ese momento quien lo lleva. La otra opcion era gestionarlo
+        desde la ficha del entrenador, que responde la pregunta inversa —"¿a
+        quien lleva Marta?"— y se hace mucho menos veces.
+      */}
+      <EntrenadoresDelSocio memberId={socio.id} />
 
       <DatosPersonales socio={socio} />
     </>
