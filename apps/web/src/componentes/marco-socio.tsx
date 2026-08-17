@@ -19,6 +19,7 @@ const DESTINOS = [
   { href: '/socio', texto: 'Inicio' },
   { href: '/socio/rutina', texto: 'Rutina' },
   { href: '/socio/progreso', texto: 'Progreso' },
+  { href: '/socio/carne', texto: 'Carne' },
   { href: '/socio/privacidad', texto: 'Privacidad' },
 ] as const;
 

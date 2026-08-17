@@ -1,0 +1,132 @@
+/*
+ * Una credencial, no una tarjeta de banco.
+ *
+ * Sin degradados ni relieves: lo que tiene que verse desde el otro lado del
+ * mostrador es el nombre y el codigo, no el diseno. El resto del portal usa
+ * estas mismas piezas.
+ */
+.carne {
+  max-width: 26rem;
+  margin: 0 auto var(--e4);
+  padding: var(--e4);
+}
+
+.identidad {
+  padding-bottom: var(--e4);
+  margin-bottom: var(--e4);
+  border-bottom: 1px solid var(--borde);
+  text-align: center;
+}
+
+.nombre {
+  font-size: var(--t-lg);
+  font-weight: 600;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.gimnasio {
+  margin-top: 0.125rem;
+  color: var(--texto-sutil);
+  font-size: var(--t-base);
+  overflow-wrap: anywhere;
+}
+
+.numero {
+  margin-top: var(--e2);
+  font-size: var(--t-base);
+  font-variant-numeric: var(--numeros);
+}
+
+.etiquetaNumero {
+  color: var(--texto-sutil);
+}
+
+.zonaQr {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--e3);
+}
+
+.hueco {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--e3);
+  text-align: center;
+}
+
+.instruccion {
+  color: var(--texto-sutil);
+  font-size: var(--t-base);
+  line-height: 1.5;
+}
+
+/*
+ * El QR, sobre blanco SIEMPRE.
+ *
+ * No hereda el fondo del tema: en modo oscuro, un codigo claro sobre fondo
+ * oscuro invierte el contraste y muchos escaneres dejan de leerlo. El margen
+ * blanco alrededor es parte del codigo, no decoracion — sin el, el lector no
+ * encuentra los bordes.
+ *
+ * `min(70vw, 15rem)` para que quepa entero a 320 px sin obligar a hacer zoom.
+ */
+.qr,
+.qrCaducado {
+  width: min(70vw, 15rem);
+  padding: var(--e2);
+  background: #ffffff;
+  border-radius: var(--radio-s);
+}
+
+.qr svg,
+.qrCaducado svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/*
+ * Caducado se ve caducado.
+ *
+ * Atenuarlo evita que alguien lo acerque al lector sin darse cuenta, y ademas
+ * lo dice el texto de debajo: el color no es la unica senal.
+ */
+.qrCaducado {
+  opacity: 0.25;
+}
+
+.vigente {
+  color: var(--texto);
+  font-size: var(--t-base);
+  font-variant-numeric: var(--numeros);
+  text-align: center;
+}
+
+.caducado {
+  color: var(--texto-sutil);
+  font-size: var(--t-base);
+  font-weight: 500;
+  text-align: center;
+}
+
+/* Se pulsa con el pulgar, en la puerta, deprisa. */
+.botonGrande {
+  min-height: 2.75rem;
+  padding-left: var(--e5);
+  padding-right: var(--e5);
+}
+
+.pie {
+  max-width: 26rem;
+  margin: 0 auto;
+  color: var(--texto-sutil);
+  font-size: var(--t-sm);
+  text-align: center;
+}
+
+.pie a {
+  color: inherit;
+}
