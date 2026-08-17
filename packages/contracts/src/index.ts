@@ -28,3 +28,4 @@ export * from './access';
 export * from './training';
 export * from './progress';
 export * from './dashboard';
+export * from './legal';

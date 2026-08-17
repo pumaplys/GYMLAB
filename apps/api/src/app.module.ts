@@ -3,6 +3,7 @@ import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { AccessModule } from './access/access.module';
 import { AuthModule } from './auth/auth.module';
 import { BillingModule } from './billing/billing.module';
+import { LegalModule } from './legal/legal.module';
 import { AuthGuard } from './common/guards/auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { TenantInterceptor } from './common/interceptors/tenant.interceptor';
@@ -54,6 +55,7 @@ import { TrainingModule } from './training/training.module';
     TrainersModule,
     BillingModule,
     TrainingModule,
+    LegalModule,
     ProgressModule,
     AccessModule,
     DashboardModule,

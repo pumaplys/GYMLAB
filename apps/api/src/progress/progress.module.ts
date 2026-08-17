@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { LegalModule } from '../legal/legal.module';
 import { MembersModule } from '../members/members.module';
 import { TrainersModule } from '../trainers/trainers.module';
 import { ConsentDocumentsService } from './consent-documents.service';
@@ -20,7 +21,7 @@ import { ProgressService } from './progress.service';
  * sin poder cerrar un ciclo con quien lo llame.
  */
 @Module({
-  imports: [MembersModule, TrainersModule],
+  imports: [MembersModule, TrainersModule, LegalModule],
   controllers: [
     MemberProgressController,
     HealthConsentController,

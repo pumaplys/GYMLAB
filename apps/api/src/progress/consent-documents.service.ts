@@ -5,12 +5,12 @@ import {
   consentDocuments,
   desc,
   eq,
-  gyms,
   isNull,
   type ConsentDocument,
 } from '@gymlab/db';
 import { requireTransaction } from '../common/request-context';
 import { env } from '../config/env';
+import { LegalService } from '../legal/legal.service';
 
 /**
  * El documento de consentimiento que publica cada gimnasio.
@@ -36,6 +36,8 @@ import { env } from '../config/env';
  */
 @Injectable()
 export class ConsentDocumentsService {
+  constructor(private readonly legal: LegalService) {}
+
   /**
    * Devuelve el documento vigente del gimnasio, publicandolo si hace falta.
    *
@@ -147,7 +149,18 @@ export class ConsentDocumentsService {
      * │ experiencia.                                                             │
      * └──────────────────────────────────────────────────────────────────────────┘
      */
-    const responsable = await this.responsableDe(gymId);
+    const responsable = await this.legal.datosDelResponsable(gymId);
+    /*
+     * Sin identidad del responsable NO se publica, y esto es lo que impide que
+     * un gimnasio recien dado de alta empiece a recoger consentimientos de
+     * datos de salud amparados en un documento que dice «el gimnasio».
+     *
+     * Devuelve `null` en lugar de lanzar: «falta configurar» no es un error del
+     * socio, y su pantalla de privacidad tiene que poder explicarlo en vez de
+     * ensenarle un 500.
+     */
+    if ('falta' in responsable) return null;
+
     const [nuevo] = await tx
       .insert(consentDocuments)
       .values({
@@ -156,8 +169,8 @@ export class ConsentDocumentsService {
         version: versionDePlantilla,
         templateVersion: versionDePlantilla,
         title: plantilla.title,
-        body: plantilla.body.replaceAll('{{responsable}}', responsable),
-        controller: responsable,
+        body: plantilla.body.replaceAll('{{responsable}}', responsable.texto),
+        controller: responsable.texto,
       })
       .onConflictDoNothing()
       .returning();
@@ -207,29 +220,4 @@ export class ConsentDocumentsService {
     return fila ?? null;
   }
 
-  /**
-   * La identidad del responsable del tratamiento, para congelarla en el texto.
-   *
-   * HOY ES EL NOMBRE COMERCIAL, y no basta para produccion: un consentimiento
-   * del art. 9 deberia nombrar la razon social, el NIF y una direccion de
-   * contacto, y el modelo no los tiene todavia — `gyms` guarda nombre y `slug`,
-   * y `organizations` solo el nombre.
-   *
-   * Cuando existan, publicar una version nueva los incorpora sin tocar lo ya
-   * aceptado: para eso los documentos son inmutables.
-   */
-  private async responsableDe(gymId: string): Promise<string> {
-    const tx = requireTransaction();
-    const [fila] = await tx
-      .select({ nombre: gyms.name })
-      .from(gyms)
-      .where(eq(gyms.id, gymId))
-      .limit(1);
-
-    // No se lee `organizations` aunque tenga la razon social mas probable: es de
-    // otro modulo y ADR-0006 lo prohibe —la prueba de fronteras lo caza—. Cuando
-    // haga falta, se pide a su servicio de aplicacion en lugar de saltar la
-    // frontera por comodidad.
-    return fila?.nombre ?? 'el gimnasio';
-  }
 }

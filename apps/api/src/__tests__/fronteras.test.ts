@@ -38,6 +38,18 @@ const PERMITIDAS: Record<string, string[]> = {
   invitations: ['invitations', 'users', 'memberships', 'sessions'],
   auth: ['users', 'memberships', 'sessions', 'authEvents', 'authThrottle', 'gyms', 'organizations'],
   dashboard: [],
+  /**
+   * `legal` comparte `organizations` con `auth`, y es deliberado.
+   *
+   * La tabla guarda dos cosas distintas: la cuenta que contrata GYMLAB —de la
+   * que se ocupa `auth` al dar de alta un gimnasio— y la identidad juridica del
+   * responsable del tratamiento, que es lo unico que toca este modulo.
+   *
+   * Separarlas en dos tablas seria mas puro y peor: una relacion 1:1 obligatoria
+   * que nadie puede crear por su cuenta. Este modulo existe justamente para que
+   * el de consentimientos no lea `organizations` directamente.
+   */
+  legal: ['organizations'],
 };
 
 /** Toda tabla del esquema, para saber cuando un identificador es una tabla. */
