@@ -241,13 +241,23 @@ y demostrarse.
 
 ---
 
+## Accesibilidad del botón de guardar
+
+Medía 36 px de alto. `Boton` no ofrece ninguna variante que garantice 44 —solo
+`sm` (28 px, para filas de tabla) y el normal (36 px)—, así que se corrigió
+**localmente** en esta pantalla con `min-height: 2.75rem`.
+
+No se tocó el componente compartido: subirlo ahí afecta a todos los botones del
+producto, y hay pantallas con varios en fila cuyo espaciado está medido para la
+altura actual. Ese sería un cambio del sistema de diseño, no de este PR.
+
+Comprobado a 320, 375 y 430: 44 px en los tres, sin desbordamiento. Tabulando
+desde el último campo se llega al botón y `:focus-visible` pinta contorno de
+2 px.
+
 ## Deuda no bloqueante
 
-- El botón primario mide **36 px de alto**, por debajo del objetivo de 44 px que
-  el proyecto aplica en otros controles. Es del componente compartido `Boton`,
-  así que afecta a todo el panel y cambiarlo aquí sería tocar el sistema de
-  diseño entero desde este PR.
-- Las tres deudas de #74 siguen abiertas: readiness de la cola, `login` que
-  devuelve 500 y no 503 durante un corte, y la sesión de 90 días.
+Las tres de #74 siguen abiertas: readiness de la cola, `login` que devuelve 500
+y no 503 durante un corte, y la sesión de 90 días.
 
 ## CONFIGURACIÓN PRE-PRODUCCIÓN: APTA
