@@ -14,10 +14,54 @@ import { primaryId, timestamps } from './_helpers';
 
 /**
  * Cuenta de cliente. Es la entidad que contrata y paga la suscripcion GYMLAB.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ Y ES TAMBIEN EL RESPONSABLE DEL TRATAMIENTO.                             │
+ * │                                                                          │
+ * │ GYMLAB es ENCARGADO; quien responde ante el socio es su gimnasio. Pero   │
+ * │ "el gimnasio" en sentido juridico no es la sede: una sede no tiene NIF   │
+ * │ ni puede firmar nada. Lo es la SOCIEDAD que la explota, que es esto.     │
+ * │                                                                          │
+ * │ En el MVP, con una organizacion por gimnasio, la distincion no se nota.  │
+ * │ Se nota con una cadena: tres sedes de la misma empresa tienen UN         │
+ * │ responsable, no tres, y repetir su razon social en cada sede solo crea   │
+ * │ tres sitios donde puede quedar desactualizada.                           │
+ * │                                                                          │
+ * │ Una franquicia donde cada sede es sociedad distinta se modela con una    │
+ * │ organizacion por sociedad, que es lo que el modelo ya hacia.             │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * Los campos legales son ANULABLES a proposito: una organizacion recien creada
+ * no los tiene, y exigirlos en el alta convertiria el registro en un formulario
+ * fiscal. Lo que no se permite es publicar un consentimiento sin ellos — ver
+ * `datosDelResponsable` en el modulo `legal`.
  */
 export const organizations = pgTable('organizations', {
   id: primaryId(),
+  /** Nombre comercial. Es el que se usa en la interfaz. */
   name: text('name').notNull(),
+  /**
+   * Razon social. La denominacion con la que la sociedad existe legalmente.
+   *
+   * Separada de `name` porque no son lo mismo: el socio conoce «Gimnasio
+   * Centro» y quien responde ante la autoridad es «Deportes del Norte, S.L.».
+   * Reutilizar el nombre comercial como identidad juridica es exactamente el
+   * atajo que deja un consentimiento sin responsable identificable.
+   */
+  legalName: text('legal_name'),
+  /** Identificador fiscal (NIF/CIF). */
+  taxId: text('tax_id'),
+  /** Domicilio del responsable, en una linea. */
+  address: text('address'),
+  /**
+   * Direccion de contacto para privacidad y ejercicio de derechos.
+   *
+   * NO se reutiliza el correo de recepcion: son cosas distintas. Un socio que
+   * ejerce su derecho de supresion no deberia acabar en la bandeja donde se
+   * reservan clases, y quien atiende esa bandeja no tiene por que ver esas
+   * peticiones.
+   */
+  privacyEmail: text('privacy_email'),
   ...timestamps,
 });
 

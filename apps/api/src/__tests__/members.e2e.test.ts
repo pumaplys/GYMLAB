@@ -73,7 +73,29 @@ async function registrarGimnasio(nombre: string, quien: string) {
     })
     .expect(201);
   gimnasiosCreados.push(res.body.activeGymId);
-  return { token: res.body.token as string, gymId: res.body.activeGymId as string };
+
+  const gymId = res.body.activeGymId as string;
+  const token = res.body.token as string;
+
+  /*
+   * Sin identidad del responsable no se publica documento y no se puede
+   * consentir nada (#75). Estas pruebas van de la exportacion y el borrado
+   * RGPD, que necesitan consentimientos reales para tener algo que exportar y
+   * algo que borrar. El caso de "falta configurar" se prueba en
+   * legal.e2e.test.ts.
+   */
+  await http()
+    .patch(`/v1/gyms/${gymId}/legal`)
+    .set(conSesion(token))
+    .send({
+      legalName: `${nombre} S.L.`,
+      taxId: 'B00000000',
+      address: 'Calle de Prueba 1, Madrid',
+      privacyEmail: `privacidad@${quien}.test`,
+    })
+    .expect(200);
+
+  return { token, gymId };
 }
 
 /** Da de alta a alguien del personal aceptando una invitacion. */

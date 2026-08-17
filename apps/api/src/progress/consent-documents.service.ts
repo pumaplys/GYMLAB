@@ -5,12 +5,13 @@ import {
   consentDocuments,
   desc,
   eq,
-  gyms,
   isNull,
   type ConsentDocument,
 } from '@gymlab/db';
+import type { PrivacyDocumentStatus } from '@gymlab/contracts';
 import { requireTransaction } from '../common/request-context';
 import { env } from '../config/env';
+import { LegalService } from '../legal/legal.service';
 
 /**
  * El documento de consentimiento que publica cada gimnasio.
@@ -36,6 +37,8 @@ import { env } from '../config/env';
  */
 @Injectable()
 export class ConsentDocumentsService {
+  constructor(private readonly legal: LegalService) {}
+
   /**
    * Devuelve el documento vigente del gimnasio, publicandolo si hace falta.
    *
@@ -84,10 +87,35 @@ export class ConsentDocumentsService {
       return null;
     }
 
-    if (publicado && publicado.templateVersion === versionDePlantilla) return publicado;
-
+    /*
+     * La plantilla se busca ANTES de devolver lo ya publicado, y no es un
+     * rodeo: si el texto vigente salio de un borrador, en produccion no puede
+     * amparar nada AUNQUE su documento exista. Comprobarlo solo en el camino de
+     * publicacion dejaria pasar justo el caso que se quiere impedir.
+     */
     const plantilla = await this.plantilla(versionDePlantilla);
     if (!plantilla) return null;
+
+    /*
+     * ┌──────────────────────────────────────────────────────────────────────┐
+     * │ UN BORRADOR NO AMPARA DATOS DE SALUD EN PRODUCCION.                  │
+     * │                                                                      │
+     * │ El texto sembrado empieza literalmente por «BORRADOR — pendiente de  │
+     * │ redaccion juridica definitiva». Recoger consentimientos del art. 9   │
+     * │ con eso es peor que no recogerlos: da la apariencia de una base      │
+     * │ legal que no existe, y las mediciones entrarian amparadas en nada.   │
+     * │                                                                      │
+     * │ Se bloquea SOLO esto. Inicio, cuota, rutinas, QR, pagos y accesos    │
+     * │ siguen funcionando: no tener el texto listo no puede apagar el       │
+     * │ producto entero.                                                     │
+     * │                                                                      │
+     * │ En desarrollo y en los tests si vale — si no, no habria forma de     │
+     * │ recorrer el flujo hasta que exista el texto definitivo.              │
+     * └──────────────────────────────────────────────────────────────────────┘
+     */
+    if (plantilla.isDraft && env.NODE_ENV === 'production') return null;
+
+    if (publicado && publicado.templateVersion === versionDePlantilla) return publicado;
 
     // El texto cambio: el anterior se retira, no se edita.
     if (publicado) {
@@ -147,7 +175,18 @@ export class ConsentDocumentsService {
      * │ experiencia.                                                             │
      * └──────────────────────────────────────────────────────────────────────────┘
      */
-    const responsable = await this.responsableDe(gymId);
+    const responsable = await this.legal.datosDelResponsable(gymId);
+    /*
+     * Sin identidad del responsable NO se publica, y esto es lo que impide que
+     * un gimnasio recien dado de alta empiece a recoger consentimientos de
+     * datos de salud amparados en un documento que dice «el gimnasio».
+     *
+     * Devuelve `null` en lugar de lanzar: «falta configurar» no es un error del
+     * socio, y su pantalla de privacidad tiene que poder explicarlo en vez de
+     * ensenarle un 500.
+     */
+    if ('falta' in responsable) return null;
+
     const [nuevo] = await tx
       .insert(consentDocuments)
       .values({
@@ -156,8 +195,8 @@ export class ConsentDocumentsService {
         version: versionDePlantilla,
         templateVersion: versionDePlantilla,
         title: plantilla.title,
-        body: plantilla.body.replaceAll('{{responsable}}', responsable),
-        controller: responsable,
+        body: plantilla.body.replaceAll('{{responsable}}', responsable.texto),
+        controller: responsable.texto,
       })
       .onConflictDoNothing()
       .returning();
@@ -178,6 +217,62 @@ export class ConsentDocumentsService {
       .limit(1);
 
     return deLaOtra ?? null;
+  }
+
+  /**
+   * En que punto esta el documento del gimnasio, y POR QUE si no lo hay.
+   *
+   * Existe para que el dueno no tenga que adivinar. Las cuatro causas de que no
+   * haya documento las arreglan personas distintas: sus propios datos, el texto
+   * que sube la plataforma, o la version configurada. Un «pendiente» a secas
+   * no le dice a quien llamar.
+   *
+   * No publica nada: solo mira. Publicar es efecto de que un socio lo necesite.
+   */
+  async estado(gymId: string): Promise<PrivacyDocumentStatus> {
+    const tx = requireTransaction();
+    const esperada = env.HEALTH_CONSENT_VERSION ?? null;
+
+    const [publicado] = await tx
+      .select()
+      .from(consentDocuments)
+      .where(
+        and(
+          eq(consentDocuments.gymId, gymId),
+          eq(consentDocuments.purpose, 'health_data'),
+          isNull(consentDocuments.supersededAt),
+        ),
+      )
+      .limit(1);
+
+    const base = {
+      expectedVersion: esperada,
+      publishedVersion: publicado?.version ?? null,
+      publishedAt: publicado?.publishedAt?.toISOString() ?? null,
+    };
+
+    if (!esperada) return { ...base, state: 'sin_version' };
+
+    const plantilla = await this.plantilla(esperada);
+    if (!plantilla) return { ...base, state: 'falta_plantilla' };
+    if (plantilla.isDraft && env.NODE_ENV === 'production') {
+      return { ...base, state: 'plantilla_en_borrador' };
+    }
+
+    if (publicado && publicado.templateVersion === esperada) {
+      return { ...base, state: 'publicado' };
+    }
+
+    // Queda el unico motivo posible: la identidad del responsable.
+    const responsable = await this.legal.datosDelResponsable(gymId);
+    if ('falta' in responsable) return { ...base, state: 'falta_configuracion' };
+
+    /*
+     * Todo listo y aun sin publicar: el primer socio que abra su pantalla de
+     * privacidad lo publica. No se anuncia como publicado porque no lo esta, y
+     * decirlo junto a «version publicada: ninguna» seria contradecirse.
+     */
+    return { ...base, state: 'listo' };
   }
 
   /** Un documento concreto, para poder ensenar el que alguien acepto. */
@@ -207,29 +302,4 @@ export class ConsentDocumentsService {
     return fila ?? null;
   }
 
-  /**
-   * La identidad del responsable del tratamiento, para congelarla en el texto.
-   *
-   * HOY ES EL NOMBRE COMERCIAL, y no basta para produccion: un consentimiento
-   * del art. 9 deberia nombrar la razon social, el NIF y una direccion de
-   * contacto, y el modelo no los tiene todavia — `gyms` guarda nombre y `slug`,
-   * y `organizations` solo el nombre.
-   *
-   * Cuando existan, publicar una version nueva los incorpora sin tocar lo ya
-   * aceptado: para eso los documentos son inmutables.
-   */
-  private async responsableDe(gymId: string): Promise<string> {
-    const tx = requireTransaction();
-    const [fila] = await tx
-      .select({ nombre: gyms.name })
-      .from(gyms)
-      .where(eq(gyms.id, gymId))
-      .limit(1);
-
-    // No se lee `organizations` aunque tenga la razon social mas probable: es de
-    // otro modulo y ADR-0006 lo prohibe —la prueba de fronteras lo caza—. Cuando
-    // haga falta, se pide a su servicio de aplicacion en lugar de saltar la
-    // frontera por comodidad.
-    return fila?.nombre ?? 'el gimnasio';
-  }
 }

@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm';
 import {
+  boolean,
   check,
   foreignKey,
   index,
@@ -80,6 +81,27 @@ export const consentDocumentTemplates = pgTable(
      * logica es un motor de plantillas, y aqui hace falta un texto.
      */
     body: text('body').notNull(),
+    /**
+     * Si este texto es un BORRADOR.
+     *
+     * ┌──────────────────────────────────────────────────────────────────────┐
+     * │ ES UNA COLUMNA Y NO UN SUFIJO EN LA VERSION, A PROPOSITO.            │
+     * │                                                                      │
+     * │ Deducirlo de que la cadena contenga «borrador» funciona hasta que    │
+     * │ alguien publica '2027-01-01' creyendo que es definitiva, o hasta que │
+     * │ el texto revisado llega con un nombre que nadie penso en filtrar.    │
+     * │ Una condicion de seguridad que depende de como se escriba un nombre  │
+     * │ no es una condicion de seguridad.                                    │
+     * │                                                                      │
+     * │ En produccion, una plantilla marcada aqui NO puede amparar ningun    │
+     * │ consentimiento de datos de salud. Ver `ConsentDocumentsService`.     │
+     * └──────────────────────────────────────────────────────────────────────┘
+     *
+     * Por defecto `true`: sembrar una plantilla nueva y olvidarse de marcarla
+     * deja el texto sin poder usarse, que es el fallo barato. Al reves, un
+     * borrador se publicaria como definitivo sin que nadie se enterase.
+     */
+    isDraft: boolean('is_draft').notNull().default(true),
     ...timestamps,
   },
   (t) => [uniqueIndex('consent_document_templates_key').on(t.purpose, t.version)],

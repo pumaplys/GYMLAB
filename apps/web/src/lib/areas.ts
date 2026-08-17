@@ -53,7 +53,8 @@ export function areaDeRuta(ruta: string): Area | null {
     ruta === '/socios' ||
     ruta.startsWith('/socios/') ||
     ruta === '/personal' ||
-    ruta === '/planes'
+    ruta === '/planes' ||
+    ruta === '/configuracion'
   ) {
     return 'panel';
   }

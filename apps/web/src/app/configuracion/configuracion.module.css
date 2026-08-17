@@ -1,0 +1,91 @@
+.titulo {
+  margin: 0 0 var(--espacio-2);
+  font-size: var(--texto-lg);
+  font-weight: 600;
+  color: var(--tinta);
+}
+
+.introduccion {
+  margin: 0 0 var(--espacio-4);
+  max-width: 60ch;
+  color: var(--tinta-suave);
+  font-size: var(--texto-sm);
+  line-height: 1.6;
+}
+
+.estado {
+  margin-bottom: var(--espacio-5);
+  padding: var(--espacio-3) var(--espacio-4);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-md);
+  background: var(--fondo-suave);
+  font-size: var(--texto-sm);
+  color: var(--tinta);
+}
+
+.faltan {
+  display: block;
+  margin-top: var(--espacio-2);
+  color: var(--tinta-suave);
+}
+
+.lista {
+  margin: var(--espacio-1) 0 0;
+  padding-left: var(--espacio-5);
+  color: var(--tinta);
+}
+
+.lista li + li {
+  margin-top: var(--espacio-1);
+}
+
+/*
+ * Rejilla que se pliega sola. Las direcciones de correo y los domicilios son
+ * largos: a 320 px, dos columnas parten «privacidad@deportesdelnorte.test» por
+ * la mitad, y `minmax(0, ...)` es lo que impide que el contenido empuje la
+ * columna mas alla del ancho de la pantalla.
+ */
+.detalles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  gap: var(--espacio-4);
+  margin: var(--espacio-4) 0 0;
+}
+
+.detalles dt {
+  margin-bottom: var(--espacio-1);
+  color: var(--tinta-suave);
+  font-size: var(--texto-xs);
+}
+
+/*
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ 44 px DE ALTO, Y POR QUE SE ARREGLA AQUI Y NO EN `Boton`.                │
+ * │                                                                          │
+ * │ El boton normal mide 2.25rem —36 px—, por debajo del objetivo tactil de  │
+ * │ 44 que este proyecto ya aplica en otros controles. `Boton` solo ofrece   │
+ * │ `sm` (28 px) y el normal: NO hay variante que garantice 44, asi que no   │
+ * │ hay nada existente que reutilizar.                                       │
+ * │                                                                          │
+ * │ Subirlo en el componente afectaria a todos los botones del producto, y   │
+ * │ eso es un cambio del sistema de diseno que no pertenece a este PR: hay   │
+ * │ pantallas con varios botones en fila cuyo espaciado esta medido para la  │
+ * │ altura actual. Se corrige donde se detecto.                              │
+ * │                                                                          │
+ * │ El selector va DUPLICADO a proposito. `Boton` compone su clase con la    │
+ * │ que recibe, pero ambas tienen la misma especificidad (0-1-0) y entonces  │
+ * │ gana la que el empaquetador ponga despues en la hoja — que no controlo.  │
+ * │ `.guardar.guardar` da 0-2-0 y deja de depender del orden de carga.       │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ */
+.guardar.guardar {
+  min-height: 2.75rem;
+}
+
+.detalles dd {
+  margin: 0;
+  color: var(--tinta);
+  font-size: var(--texto-sm);
+  /* Las versiones y los correos no tienen espacios donde partir. */
+  overflow-wrap: anywhere;
+}

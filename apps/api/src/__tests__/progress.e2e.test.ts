@@ -77,7 +77,29 @@ async function registrarGimnasio(nombre: string, quien: string) {
     })
     .expect(201);
   gimnasiosCreados.push(res.body.activeGymId);
-  return { token: res.body.token as string, gymId: res.body.activeGymId as string };
+
+  const gymId = res.body.activeGymId as string;
+  const token = res.body.token as string;
+
+  /*
+   * Sin identidad del responsable NO se publica documento y no se puede
+   * consentir nada: es el cierre en cerrado de #75. Estas pruebas van de
+   * progreso y de la puerta del consentimiento, no de la configuracion legal,
+   * asi que se deja lista aqui. El caso de "falta configurar" tiene sus propias
+   * pruebas en legal.e2e.test.ts.
+   */
+  await http()
+    .patch(`/v1/gyms/${gymId}/legal`)
+    .set(conSesion(token))
+    .send({
+      legalName: `${nombre} S.L.`,
+      taxId: 'B00000000',
+      address: 'Calle de Prueba 1, Madrid',
+      privacyEmail: `privacidad@${quien}.test`,
+    })
+    .expect(200);
+
+  return { token, gymId };
 }
 
 async function altaPersonal(gymId: string, tokenStaff: string, rol: string, quien: string) {
