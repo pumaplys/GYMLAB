@@ -105,6 +105,62 @@ export const accessEventListSchema = z.object({
 });
 export type AccessEventList = z.infer<typeof accessEventListSchema>;
 
+// --- El historial que ve el propio socio ---------------------------------
+
+/**
+ * Un acceso, visto por quien lo protagonizo.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ NO ES EL MISMO CONTRATO QUE EL DEL MOSTRADOR, Y NO POR ADORNO.           │
+ * │                                                                          │
+ * │ `memberId` y `memberName` sobran: quien mira su propio historial ya sabe │
+ * │ quien es, y repetirlo en cada fila solo anade una copia de su nombre     │
+ * │ viajando por la red. `id` es interno y el frontend no lo necesita ni     │
+ * │ siquiera como clave — la fecha y el indice bastan.                       │
+ * │                                                                          │
+ * │ Lo que NUNCA estuvo en ninguno de los dos: el `jti`, la firma y la       │
+ * │ sesion del escaner. No hay que quitarlos porque nunca salieron de la     │
+ * │ base de datos.                                                           │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * LOS MOTIVOS TECNICOS NO APARECEN AQUI, y tampoco hay que filtrarlos: un
+ * `BAD_SIGNATURE` o un `TOKEN_EXPIRED` se registran SIN socio —el token no
+ * identifica a nadie de fiar— asi que al buscar por la ficha quedan fuera solos.
+ * Los que si pueden salir son `OK`, `DUES_WARN`, `DUES_EXPIRED`,
+ * `NO_SUBSCRIPTION`, `MEMBER_INACTIVE` y `TOKEN_REUSED`.
+ */
+export const ownAccessEventSchema = z.object({
+  decision: accessDecisionSchema,
+  reason: accessReasonSchema,
+  /**
+   * Un reintento del mismo escaner por un fallo de red, no una entrada nueva.
+   *
+   * Se conserva porque sin el, dos filas identicas al mismo segundo parecerian
+   * dos entradas y quien lo mire pensaria que alguien uso su codigo dos veces.
+   */
+  isRetry: z.boolean(),
+  occurredAt: z.string(),
+});
+export type OwnAccessEvent = z.infer<typeof ownAccessEventSchema>;
+
+export const ownAccessEventListSchema = z.object({
+  items: z.array(ownAccessEventSchema),
+  total: z.number().int(),
+  page: z.number().int(),
+  pageSize: z.number().int(),
+});
+export type OwnAccessEventList = z.infer<typeof ownAccessEventListSchema>;
+
+/**
+ * La consulta del propio socio. **Sin `memberId`**, y esa ausencia es la
+ * seguridad: no hay parametro que manipular para mirar el historial de otro.
+ */
+export const listOwnAccessEventsQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(50),
+});
+export type ListOwnAccessEventsQuery = z.infer<typeof listOwnAccessEventsQuerySchema>;
+
 // --- Ajustes del gimnasio ------------------------------------------------
 
 /**

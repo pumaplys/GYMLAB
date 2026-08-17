@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import {
   and,
   auditLog,
+  count,
   desc,
   eq,
   isNull,
@@ -17,6 +18,8 @@ import {
   DIAS_DE_AVISO,
   type CreatePlanInput,
   type DuesStatus,
+  type ListOwnPaymentsQuery,
+  type OwnPaymentList,
   type Payment,
   type Plan,
   type PlanPeriod,
@@ -544,6 +547,66 @@ export class BillingService {
       .orderBy(desc(payments.paidOn), desc(payments.createdAt));
 
     return filas.map((f) => this.pagoToDto(f));
+  }
+
+  /**
+   * Mis pagos, como socio. Paginados.
+   *
+   * ┌──────────────────────────────────────────────────────────────────────────┐
+   * │ METODO APARTE Y NO UN PARAMETRO EN `listPayments`.                       │
+   * │                                                                          │
+   * │ El listado del mostrador devuelve la lista entera y hay pantallas que    │
+   * │ cuentan con eso. Anadirle paginacion "por defecto" cambiaria en silencio │
+   * │ lo que reciben, y un consumidor que esperaba un array y recibe un objeto │
+   * │ con `items` falla en el sitio equivocado.                                 │
+   * │                                                                          │
+   * │ Ademas el DTO es otro: aqui no salen ni la nota del mostrador ni quien   │
+   * │ cobro. Son dos respuestas distintas, no la misma con un filtro.          │
+   * └──────────────────────────────────────────────────────────────────────────┘
+   *
+   * Los ANULADOS entran. No son ruido: anular retira el periodo que el pago
+   * concedio, asi que son justo lo que explica por que una cuota volvio atras.
+   *
+   * Y los pagos de una ficha borrada quedan con `member_id` a nulo, asi que este
+   * filtro los deja fuera solos. No se intenta recuperarlos por correo ni por
+   * cuenta: eso desharia el borrado del art. 17.
+   */
+  async listMyPayments(
+    gymId: string,
+    userId: string,
+    query: ListOwnPaymentsQuery,
+  ): Promise<OwnPaymentList> {
+    const tx = requireTransaction();
+    const ficha = await this.members.getOwnProfile(gymId, userId);
+
+    const where = and(eq(payments.gymId, gymId), eq(payments.memberId, ficha.id));
+
+    const [filas, [total]] = await Promise.all([
+      tx
+        .select()
+        .from(payments)
+        .where(where)
+        .orderBy(desc(payments.paidOn), desc(payments.createdAt))
+        .limit(query.pageSize)
+        .offset((query.page - 1) * query.pageSize),
+      tx.select({ n: count() }).from(payments).where(where),
+    ]);
+
+    return {
+      items: filas.map((f) => ({
+        id: f.id,
+        concept: f.concept,
+        amountCents: f.amountCents,
+        currency: f.currency,
+        method: f.method,
+        paidOn: f.paidOn,
+        voidedAt: f.voidedAt?.toISOString() ?? null,
+        voidReason: f.voidReason,
+      })),
+      total: Number(total?.n ?? 0),
+      page: query.page,
+      pageSize: query.pageSize,
+    };
   }
 
   /**

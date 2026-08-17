@@ -1,9 +1,11 @@
 import { Body, Controller, ForbiddenException, Get, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
 import {
   listAccessEventsQuerySchema,
+  listOwnAccessEventsQuerySchema,
   updateGymSettingsSchema,
   verifyAccessSchema,
   type ListAccessEventsQuery,
+  type ListOwnAccessEventsQuery,
   type UpdateGymSettingsInput,
   type VerifyAccessInput,
 } from '@gymlab/contracts';
@@ -27,11 +29,32 @@ export class OwnAccessController {
 
   @Post('token')
   token() {
+    return this.access.generarToken(this.gymActivo(), requireRequestContext().userId);
+  }
+
+  /**
+   * Mi historial de entradas.
+   *
+   * ┌──────────────────────────────────────────────────────────────────────────┐
+   * │ LOS INTENTOS TECNICOS NO SALEN, Y NO HAY QUE FILTRARLOS.                 │
+   * │                                                                          │
+   * │ Una firma invalida o un token caducado se registran SIN socio —el token  │
+   * │ no identifica a nadie de fiar— asi que al buscar por la ficha quedan     │
+   * │ fuera solos. Anadir un filtro para esconderlos seria trabajo inutil y,   │
+   * │ peor, sugeriria que sin el se colarian.                                   │
+   * └──────────────────────────────────────────────────────────────────────────┘
+   */
+  @Get('events')
+  events(@Query(new ZodQuery(listOwnAccessEventsQuerySchema)) query: ListOwnAccessEventsQuery) {
+    return this.access.misEventos(this.gymActivo(), requireRequestContext().userId, query);
+  }
+
+  private gymActivo(): string {
     const ctx = requireRequestContext();
     if (!ctx.gymId) {
       throw new ForbiddenException('Necesitas un gimnasio activo. Usa /v1/auth/switch-gym.');
     }
-    return this.access.generarToken(ctx.gymId, ctx.userId);
+    return ctx.gymId;
   }
 }
 

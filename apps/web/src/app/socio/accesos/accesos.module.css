@@ -1,0 +1,60 @@
+.lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+  margin: 0 0 var(--e4);
+  padding: 0;
+  list-style: none;
+}
+
+.evento {
+  padding: var(--e3) var(--e4);
+}
+
+.cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e2);
+}
+
+.fecha {
+  font-size: var(--t-base);
+  font-weight: 500;
+  font-variant-numeric: var(--numeros);
+}
+
+.motivo {
+  margin-top: var(--e2);
+  font-size: var(--t-base);
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.nota {
+  margin-top: var(--e2);
+  color: var(--texto-sutil);
+  font-size: var(--t-sm);
+  line-height: 1.45;
+}
+
+/*
+ * El aviso de codigo reutilizado. Se distingue, pero sin alarmar: puede ser que
+ * lo compartiera, o dos tornos a la vez. Acusar a alguien desde aqui seria
+ * irresponsable.
+ */
+.seguridad {
+  margin-top: var(--e3);
+  padding-top: var(--e3);
+  border-top: 1px solid var(--borde);
+  font-size: var(--t-sm);
+  line-height: 1.45;
+}
+
+.errorFila {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e3);
+}

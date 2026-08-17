@@ -738,6 +738,181 @@ describe('pagos: append-only', () => {
   });
 });
 
+/**
+ * EL HISTORIAL DE PAGOS DEL PROPIO SOCIO.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ LO QUE HACE SEGURA ESTA RUTA ES QUE NO ACEPTA `memberId`.               │
+ * │                                                                          │
+ * │ El esquema de la consulta solo admite `page` y `pageSize`. No es que se  │
+ * │ compruebe quien pregunta por quien: es que no existe el parametro.       │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ */
+describe('el socio y su historial de pagos', () => {
+  /** Cuenta de socio con ficha enlazada, que es lo que exige `/me/*`. */
+  async function socioConCuenta(quien: string) {
+    const token = await altaPersonal(gymA, tokenOwnerA, 'member', quien);
+    const cuenta = await owner.execute<{ id: string }>(
+      sql`SELECT id FROM users WHERE email = ${email(quien)}`,
+    );
+    const memberId = await altaSocio(gymA, tokenOwnerA, quien);
+    await owner.execute(
+      sql`UPDATE members SET user_id = ${cuenta.rows[0]!.id}::uuid WHERE id = ${memberId}::uuid`,
+    );
+    return { token, memberId, userId: cuenta.rows[0]!.id };
+  }
+
+  const mios = (token: string, q = '') =>
+    http().get(`/v1/me/payments${q}`).set(conSesion(token));
+
+  it('sin pagos devuelve una pagina vacia, no un error', async () => {
+    const { token } = await socioConCuenta('pagos-vacio');
+    const res = await mios(token).expect(200);
+    expect(res.body.items).toEqual([]);
+    expect(res.body.total).toBe(0);
+    expect(res.body.page).toBe(1);
+  });
+
+  it('ve los suyos, del mas reciente al mas antiguo', async () => {
+    const { token, memberId } = await socioConCuenta('pagos-varios');
+    await http()
+      .post(`/v1/gyms/${gymA}/members/${memberId}/subscription`)
+      .set(conSesion(tokenOwnerA))
+      .send({ planId: planMensual })
+      .expect(201);
+
+    for (const dia of ['2026-06-01', '2026-07-01', '2026-08-01']) {
+      await http()
+        .post(`/v1/gyms/${gymA}/members/${memberId}/payments`)
+        .set(conSesion(tokenOwnerA))
+        .send({ concept: 'subscription', amountCents: 3500, method: 'cash', paidOn: dia })
+        .expect(201);
+    }
+
+    const res = await mios(token).expect(200);
+    expect(res.body.total).toBe(3);
+    expect(res.body.items[0].paidOn).toBe('2026-08-01');
+    expect(res.body.items[0].amountCents).toBe(3500);
+    expect(res.body.items[0].currency).toBeTruthy();
+  });
+
+  it('NO expone quien lo cobro ni la nota del mostrador', async () => {
+    // `recordedByUserId` identifica a un empleado y `note` se escribe para uso
+    // interno: ensenarsela cambiaria lo que el personal se atreve a anotar.
+    const { token, memberId } = await socioConCuenta('pagos-campos');
+    await http()
+      .post(`/v1/gyms/${gymA}/members/${memberId}/payments`)
+      .set(conSesion(tokenOwnerA))
+      .send({
+        concept: 'other',
+        amountCents: 1000,
+        method: 'cash',
+        note: 'Nota interna del mostrador',
+      })
+      .expect(201);
+
+    const res = await mios(token).expect(200);
+    expect(res.body.items[0]).not.toHaveProperty('recordedByUserId');
+    expect(res.body.items[0]).not.toHaveProperty('note');
+    expect(JSON.stringify(res.body)).not.toContain('Nota interna');
+  });
+
+  it('los ANULADOS aparecen, con su motivo', async () => {
+    // Anular retira el periodo que el pago concedio, asi que es justo lo que
+    // explica por que su cuota volvio atras. Esconderlo dejaria un salto sin
+    // explicacion.
+    const { token, memberId } = await socioConCuenta('pagos-anulado');
+    const pago = await http()
+      .post(`/v1/gyms/${gymA}/members/${memberId}/payments`)
+      .set(conSesion(tokenOwnerA))
+      .send({ concept: 'other', amountCents: 2000, method: 'card' })
+      .expect(201);
+
+    await http()
+      .post(`/v1/gyms/${gymA}/payments/${pago.body.payment.id}/void`)
+      .set(conSesion(tokenOwnerA))
+      .send({ reason: 'Cobrado por error' })
+      .expect(201);
+
+    const res = await mios(token).expect(200);
+    expect(res.body.items).toHaveLength(1);
+    expect(res.body.items[0].voidedAt).not.toBeNull();
+    expect(res.body.items[0].voidReason).toBe('Cobrado por error');
+  });
+
+  it('no ve los de otro socio del mismo gimnasio', async () => {
+    const yo = await socioConCuenta('pagos-yo');
+    const otro = await socioConCuenta('pagos-otro');
+    await http()
+      .post(`/v1/gyms/${gymA}/members/${otro.memberId}/payments`)
+      .set(conSesion(tokenOwnerA))
+      .send({ concept: 'other', amountCents: 9999, method: 'cash' })
+      .expect(201);
+
+    const res = await mios(yo.token).expect(200);
+    expect(res.body.total).toBe(0);
+  });
+
+  it('los pagos de una ficha BORRADA no reaparecen', async () => {
+    // Al borrar la ficha, `member_id` queda a nulo y el pago sobrevive por la
+    // obligacion contable. No debe volver por la puerta del socio: recuperarlo
+    // por correo o por cuenta desharia el borrado del art. 17.
+    const { token, memberId, userId } = await socioConCuenta('pagos-borrado');
+    await http()
+      .post(`/v1/gyms/${gymA}/members/${memberId}/payments`)
+      .set(conSesion(tokenOwnerA))
+      .send({ concept: 'other', amountCents: 4321, method: 'cash' })
+      .expect(201);
+
+    await owner.execute(sql`UPDATE payments SET member_id = NULL WHERE member_id = ${memberId}::uuid`);
+
+    // Se le da una ficha nueva a la misma cuenta, como si volviera a apuntarse.
+    const nueva = await altaSocio(gymA, tokenOwnerA, 'PagosVuelve');
+    await owner.execute(
+      sql`UPDATE members SET user_id = NULL WHERE id = ${memberId}::uuid`,
+    );
+    await owner.execute(
+      sql`UPDATE members SET user_id = ${userId}::uuid WHERE id = ${nueva}::uuid`,
+    );
+
+    const res = await mios(token).expect(200);
+    expect(res.body.total).toBe(0);
+    expect(JSON.stringify(res.body)).not.toContain('4321');
+  });
+
+  it('pagina con el mismo contrato que los accesos', async () => {
+    const { token, memberId } = await socioConCuenta('pagos-pagina');
+    for (let i = 0; i < 5; i++) {
+      await http()
+        .post(`/v1/gyms/${gymA}/members/${memberId}/payments`)
+        .set(conSesion(tokenOwnerA))
+        .send({ concept: 'other', amountCents: 100 + i, method: 'cash' })
+        .expect(201);
+    }
+
+    const primera = await mios(token, '?page=1&pageSize=2').expect(200);
+    expect(primera.body.items).toHaveLength(2);
+    expect(primera.body.total).toBe(5);
+    expect(primera.body.pageSize).toBe(2);
+
+    const tercera = await mios(token, '?page=3&pageSize=2').expect(200);
+    expect(tercera.body.items).toHaveLength(1);
+
+    // El tope existe para que nadie pida diez mil de una vez.
+    await mios(token, '?pageSize=101').expect(400);
+  });
+
+  it('quien no tiene ficha de socio no tiene pagos que ver', async () => {
+    // Llegan a la ruta —no lleva `@Roles`— y reciben 404 al resolver la ficha.
+    await mios(tokenOwnerA).expect(404);
+    await mios(tokenRecepcionA).expect(404);
+  });
+
+  it('sin sesion no se llega', async () => {
+    await http().get('/v1/me/payments').expect(401);
+  });
+});
+
 describe('el socio y su propia cuota', () => {
   it('ve la suya por /me/dues y no puede pedir la de otro', async () => {
     const tokenSocio = await altaPersonal(gymA, tokenOwnerA, 'member', 'socio-cuota');

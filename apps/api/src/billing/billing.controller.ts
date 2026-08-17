@@ -8,22 +8,25 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import {
   createPlanSchema,
   createSubscriptionSchema,
+  listOwnPaymentsQuerySchema,
   registerPaymentSchema,
   updatePlanSchema,
   voidPaymentSchema,
   type CreatePlanInput,
   type CreateSubscriptionInput,
+  type ListOwnPaymentsQuery,
   type RegisterPaymentInput,
   type UpdatePlanInput,
   type VoidPaymentInput,
 } from '@gymlab/contracts';
 import { Roles } from '../common/decorators/roles.decorator';
 import { requireRequestContext } from '../common/request-context';
-import { ZodBody } from '../common/zod.pipe';
+import { ZodBody, ZodQuery } from '../common/zod.pipe';
 import { BillingService } from './billing.service';
 
 /**
@@ -233,5 +236,34 @@ export class OwnDuesController {
       throw new ForbiddenException('Necesitas un gimnasio activo. Usa /v1/auth/switch-gym.');
     }
     return this.billing.estadoDeUsuario(ctx.gymId, ctx.userId);
+  }
+}
+
+/**
+ * El socio y su historial de pagos.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ LA CONSULTA NO ADMITE `memberId`, Y AHI ESTA LA SEGURIDAD.               │
+ * │                                                                          │
+ * │ El esquema solo acepta `page` y `pageSize`: no es que se valide quien    │
+ * │ pregunta por quien, es que no existe el parametro. La ficha sale del     │
+ * │ `user_id` de la sesion y el gimnasio del activo.                          │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * Sin `@Roles`: quien no tenga ficha de socio en el gimnasio activo recibe 404
+ * al resolverla, que es la respuesta correcta para un entrenador o un dueno —no
+ * es que no le dejen, es que no tiene pagos propios que consultar.
+ */
+@Controller('me/payments')
+export class OwnPaymentsController {
+  constructor(private readonly billing: BillingService) {}
+
+  @Get()
+  list(@Query(new ZodQuery(listOwnPaymentsQuerySchema)) query: ListOwnPaymentsQuery) {
+    const ctx = requireRequestContext();
+    if (!ctx.gymId) {
+      throw new ForbiddenException('Necesitas un gimnasio activo. Usa /v1/auth/switch-gym.');
+    }
+    return this.billing.listMyPayments(ctx.gymId, ctx.userId, query);
   }
 }

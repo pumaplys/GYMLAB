@@ -186,6 +186,62 @@ export const paymentSchema = z.object({
 });
 export type Payment = z.infer<typeof paymentSchema>;
 
+// --- El historial que ve el propio socio ---------------------------------
+
+/**
+ * Un pago, visto por quien lo hizo.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ FUERA `recordedByUserId` Y `note`.                                       │
+ * │                                                                          │
+ * │ El primero identifica al EMPLEADO que lo cobro: es un dato de otra       │
+ * │ persona, y el socio no necesita saber quien estaba en el mostrador para  │
+ * │ entender su historial.                                                   │
+ * │                                                                          │
+ * │ La segunda es la nota del mostrador, escrita para uso interno —"pago con │
+ * │ el descuento de siempre", "dice que trae el resto manana"—. No se escribe │
+ * │ pensando en que la lea el socio, y ensenarsela ahora cambiaria lo que el │
+ * │ personal se atreve a anotar.                                             │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * `voidReason` SI sale: un pago anulado sin motivo deja al socio con un cargo
+ * que desaparecio y ninguna explicacion. Y anular retira el periodo que ese pago
+ * concedio, asi que es justo lo que explica por que su cuota volvio atras.
+ */
+export const ownPaymentSchema = z.object({
+  id: z.string().uuid(),
+  concept: paymentConceptSchema,
+  amountCents: z.number().int(),
+  currency: z.string(),
+  method: paymentMethodSchema,
+  paidOn: z.string(),
+  /** Nulo si sigue vigente. Con fecha, esta anulado. */
+  voidedAt: z.string().nullable(),
+  voidReason: z.string().nullable(),
+});
+export type OwnPayment = z.infer<typeof ownPaymentSchema>;
+
+export const ownPaymentListSchema = z.object({
+  items: z.array(ownPaymentSchema),
+  total: z.number().int(),
+  page: z.number().int(),
+  pageSize: z.number().int(),
+});
+export type OwnPaymentList = z.infer<typeof ownPaymentListSchema>;
+
+/**
+ * Mismo patron que el historial de accesos: `page`, `pageSize` y tope de 100.
+ *
+ * Se pagina desde el principio porque un socio de cinco anos acumula sesenta
+ * pagos, y porque anadir paginacion despues obliga a cambiar un contrato que ya
+ * tiene consumidores.
+ */
+export const listOwnPaymentsQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(50),
+});
+export type ListOwnPaymentsQuery = z.infer<typeof listOwnPaymentsQuerySchema>;
+
 /**
  * Lo que devuelve registrar un pago: el pago **y el estado resultante**.
  *
