@@ -1,7 +1,11 @@
 import { Module } from '@nestjs/common';
 import { MembersModule } from '../members/members.module';
 import { TrainerProfileLink } from './trainer-profile-link';
-import { OwnTrainerController, TrainersController } from './trainers.controller';
+import {
+  MemberTrainersController,
+  OwnTrainerController,
+  TrainersController,
+} from './trainers.controller';
 import { TrainersService } from './trainers.service';
 
 /**
@@ -17,7 +21,7 @@ import { TrainersService } from './trainers.service';
  */
 @Module({
   imports: [MembersModule],
-  controllers: [TrainersController, OwnTrainerController],
+  controllers: [TrainersController, MemberTrainersController, OwnTrainerController],
   providers: [TrainersService, TrainerProfileLink],
   exports: [TrainersService, TrainerProfileLink],
 })

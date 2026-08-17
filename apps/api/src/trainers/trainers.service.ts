@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import {
   and,
   auditLog,
+  desc,
   eq,
   isNull,
   sql,
@@ -12,6 +13,7 @@ import {
 } from '@gymlab/db';
 import type {
   AssignedMember,
+  MemberTrainer,
   Trainer,
   TrainerAssignment,
   UpdateTrainerInput,
@@ -262,6 +264,74 @@ export class TrainersService {
   }
 
   // --- El entrenador y sus socios ------------------------------------------
+
+  /**
+   * Los entrenadores que lleva ESTE socio ahora mismo.
+   *
+   * ┌──────────────────────────────────────────────────────────────────────────┐
+   * │ LA CONSULTA SIMETRICA DE `listMembersOf`, Y EL MODELO YA LA PREVEIA.     │
+   * │                                                                          │
+   * │ El esquema declara dos indices "las dos consultas del modulo: los socios │
+   * │ de este entrenador y los entrenadores de este socio" — pero solo la      │
+   * │ primera tenia ruta. La ficha del socio del panel necesita la segunda     │
+   * │ para poder preguntar "¿quien entrena a esta persona?".                    │
+   * │                                                                          │
+   * │ Sin ella habia que pedir la lista de entrenadores y luego la cartera de  │
+   * │ cada uno: nueve peticiones para pintar una seccion, y ademas trayendo    │
+   * │ las carteras completas de gente por la que nadie pregunto.               │
+   * └──────────────────────────────────────────────────────────────────────────┘
+   *
+   * SOLO LAS VIGENTES. Terminar una asignacion le pone `ended_at` y la fila se
+   * queda como historial —hay rutinas que necesitan que esa relacion haya
+   * existido— pero la seccion pregunta por el estado de hoy.
+   *
+   * VARIOS A LA VEZ es lo normal: fuerza con uno y rehabilitacion con otro.
+   */
+  async trainersOf(gymId: string, memberId: string): Promise<MemberTrainer[]> {
+    const tx = requireTransaction();
+    // Que el socio exista y sea de este gimnasio lo dice su modulo, no esta
+    // consulta: preguntar por uno inventado tiene que responder 404, no vacio.
+    await this.members.getById(gymId, memberId);
+
+    const filas = await tx
+      .select({
+        assignmentId: trainerAssignments.id,
+        assignedAt: trainerAssignments.assignedAt,
+        trainerId: trainers.id,
+        status: trainers.status,
+        // El nombre sale de `users`, como en el resto del modulo: `trainers` no
+        // lo guarda para no tener dos versiones de la misma persona.
+        name: users.name,
+      })
+      .from(trainerAssignments)
+      // Los dos JOIN son contra tablas que este modulo ya consulta en
+      // `buscarConCuenta`. El prohibido seria contra `members` (ADR-0006), y por
+      // eso la existencia del socio se pide a su servicio, arriba.
+      .innerJoin(
+        trainers,
+        and(
+          eq(trainers.gymId, trainerAssignments.gymId),
+          eq(trainers.id, trainerAssignments.trainerId),
+        ),
+      )
+      .innerJoin(users, eq(users.id, trainers.userId))
+      .where(
+        and(
+          eq(trainerAssignments.gymId, gymId),
+          eq(trainerAssignments.memberId, memberId),
+          isNull(trainerAssignments.endedAt),
+        ),
+      )
+      .orderBy(desc(trainerAssignments.assignedAt));
+
+    return filas.map((f) => ({
+      assignmentId: f.assignmentId,
+      trainerId: f.trainerId,
+      name: f.name,
+      status: f.status,
+      assignedAt: f.assignedAt.toISOString(),
+    }));
+  }
 
   async getOwnProfile(gymId: string, userId: string): Promise<Trainer> {
     return this.toDto(await this.buscarConCuenta(gymId, await this.miTrainerId(gymId, userId)));

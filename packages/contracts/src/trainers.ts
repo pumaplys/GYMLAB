@@ -53,6 +53,32 @@ export const trainerSchema = z.object({
 export type Trainer = z.infer<typeof trainerSchema>;
 
 /**
+ * Un entrenador visto desde la ficha del socio.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ DTO MINIMO: LO JUSTO PARA SABER QUIEN LE ENTRENA.                       │
+ * │                                                                          │
+ * │ Sin `bio`, sin telefono, sin correo y sin `activeMembers`. Quien mira la │
+ * │ ficha de un socio quiere saber quien le lleva y desde cuando, no la      │
+ * │ cartera completa de cada entrenador del gimnasio.                        │
+ * │                                                                          │
+ * │ `assignmentId` esta porque identifica el VINCULO concreto, que es lo que │
+ * │ se retira — un socio puede tener varios, y retirar uno no toca los otros.│
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * `status` viaja porque un entrenador dado de baja sigue apareciendo mientras
+ * su asignacion no se termine, y quien mira la ficha necesita saberlo.
+ */
+export const memberTrainerSchema = z.object({
+  assignmentId: z.string().uuid(),
+  trainerId: z.string().uuid(),
+  name: z.string(),
+  status: trainerStatusSchema,
+  assignedAt: z.string(),
+});
+export type MemberTrainer = z.infer<typeof memberTrainerSchema>;
+
+/**
  * Un socio visto desde una asignacion.
  *
  * Es la ficha completa mas el momento de la asignacion. El entrenador ve la
