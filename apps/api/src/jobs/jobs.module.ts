@@ -1,4 +1,4 @@
-import { Global, Module, type OnApplicationShutdown } from '@nestjs/common';
+import { Global, Logger, Module, type OnApplicationShutdown } from '@nestjs/common';
 import { Inject, Injectable } from '@nestjs/common';
 // `resolution-mode` es obligatorio para importar tipos de un paquete ESM desde
 // un modulo CommonJS. Es el mismo desajuste que ya teniamos con Better Auth.
@@ -28,6 +28,7 @@ class BossLifecycle implements OnApplicationShutdown {
     {
       provide: BOSS,
       useFactory: async (): Promise<PgBoss> => {
+        const logger = new Logger('PgBoss');
         // pg-boss v12 se publica solo como ESM y sin export por defecto: la
         // clase es un named export. Importacion dinamica por el mismo motivo
         // que Better Auth — esta aplicacion compila a CommonJS.
@@ -44,6 +45,36 @@ class BossLifecycle implements OnApplicationShutdown {
           // que ya esta compartida por varios ficheros de test.
           supervise: env.NODE_ENV !== 'test',
           schedule: env.NODE_ENV !== 'test',
+        });
+
+        /*
+         * ┌──────────────────────────────────────────────────────────────────┐
+         * │ SIN ESTE LISTENER, UN HIPO DE POSTGRES MATA LA API ENTERA.       │
+         * │                                                                  │
+         * │ `PgBoss` es un `EventEmitter`, y en Node un emisor que emite     │
+         * │ `'error'` SIN listener registrado lanza la excepcion — que nadie │
+         * │ captura, asi que el proceso termina.                             │
+         * │                                                                  │
+         * │ Reproducido parando Postgres con la API en marcha: murio en dos  │
+         * │ segundos con `Unhandled 'error' event` y                          │
+         * │ `terminating connection due to administrator command` (57P01).   │
+         * │                                                                  │
+         * │ En produccion eso significa que un reinicio de la base de datos, │
+         * │ un failover o un corte de red se llevan por delante toda la API: │
+         * │ el socio no puede abrir su QR en la puerta porque una COLA DE    │
+         * │ CORREOS perdio la conexion.                                      │
+         * │                                                                  │
+         * │ Registrarlo no "traga" el error: lo deja anotado y devuelve el   │
+         * │ control a pg-boss, que reintenta con su propio pool. Lo que se   │
+         * │ evita es que un fallo de un subsistema secundario derribe el     │
+         * │ principal.                                                        │
+         * └──────────────────────────────────────────────────────────────────┘
+         */
+        boss.on('error', (error: unknown) => {
+          logger.error(
+            `pg-boss: ${error instanceof Error ? error.message : String(error)}`,
+            error instanceof Error ? error.stack : undefined,
+          );
         });
 
         await boss.start();
