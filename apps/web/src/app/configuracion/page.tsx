@@ -200,7 +200,12 @@ function Configuracion() {
           {error && <Aviso>{error}</Aviso>}
           {exito && <Aviso tono="exito">{exito}</Aviso>}
 
-          <Boton type="submit" variante="primario" cargando={guardando}>
+          <Boton
+            type="submit"
+            variante="primario"
+            cargando={guardando}
+            className={estilos.guardar}
+          >
             Guardar
           </Boton>
         </form>
