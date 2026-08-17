@@ -45,6 +45,13 @@ services:
       API_URL: ${DOMINIO}
       WEB_APP_URL: ${DOMINIO}
 
+      # El panel se sirve desde este mismo contenedor, asi que el navegador no
+      # hace ni una peticion entre origenes y esta lista no llega a usarse. Se
+      # declara igualmente para no dejar entrar el valor por defecto, que es
+      # `http://localhost:3000` y en produccion seria un origen de confianza con
+      # `credentials: true`. La API se niega a arrancar si eso pasa.
+      CORS_ORIGINS: ${DOMINIO}
+
       # 1 = hay un Caddy delante. Ver .env.example antes de tocarlo: declarar
       # mas saltos de los que hay vuelve a hacer creible lo que mande el cliente.
       TRUST_PROXY: 1

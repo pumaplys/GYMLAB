@@ -16,6 +16,35 @@ export interface CreateDatabaseOptions {
 
 export function createDatabase({ connectionString, max = 10 }: CreateDatabaseOptions) {
   const pool = new Pool({ connectionString, max });
+
+  /*
+   * ┌──────────────────────────────────────────────────────────────────────────┐
+   * │ SIN ESTE LISTENER, PERDER POSTGRES MATA EL PROCESO ENTERO.               │
+   * │                                                                          │
+   * │ El pool de `pg` es un `EventEmitter`, y emite `'error'` cuando una       │
+   * │ conexion OCIOSA se cae — no en respuesta a ninguna consulta, asi que no  │
+   * │ hay `try/catch` que pueda recogerlo. En Node, un `'error'` sin listener  │
+   * │ se convierte en excepcion no capturada y termina el proceso.             │
+   * │                                                                          │
+   * │ Reproducido parando Postgres con la API en marcha: murio en dos segundos │
+   * │ con `Unhandled 'error' event` y `Emitted 'error' event on BoundPool`,    │
+   * │ codigo 57P01 —"terminating connection due to administrator command"—.    │
+   * │ Es exactamente lo que ocurre en un reinicio de la base de datos, un      │
+   * │ failover o un corte de red.                                             │
+   * │                                                                          │
+   * │ Registrarlo no oculta nada: `pg` descarta esa conexion y abre otra a la  │
+   * │ siguiente consulta. Lo que se evita es que una conexion ociosa rota      │
+   * │ derribe una aplicacion que por lo demas esta perfectamente viva.          │
+   * └──────────────────────────────────────────────────────────────────────────┘
+   *
+   * Se escribe a `console.error` y no a un logger propio porque este paquete no
+   * conoce el de la aplicacion: quien lo use puede reemplazarlo anadiendo su
+   * propio listener, que se suma a este.
+   */
+  pool.on('error', (error) => {
+    console.error('[db] conexion ociosa perdida:', error.message);
+  });
+
   return drizzle(pool, { schema });
 }
 
