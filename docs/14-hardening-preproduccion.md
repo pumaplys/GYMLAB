@@ -1,102 +1,123 @@
-# Hardening pre-producción — estado
+# Hardening pre-producción — conexiones
 
-**PRE-PRODUCCIÓN TÉCNICA: NO APTA.** Un blocker abierto, documentado abajo.
+**BLOCKER DE CONEXIONES: CERRADO.**
 
-Este documento recoge únicamente lo investigado hasta ahora. El alcance completo
-de #74 (trust proxy, single-origin, CORS, cookies, Docker, shutdown, logs) **no
-se ha cubierto**: la investigación de pg-boss resultó más profunda de lo previsto
-y consumió la sesión.
+El resto de #74 (trust proxy, single-origin, CORS, cookies, Docker, shutdown,
+logs) **queda pendiente**: no se ha empezado.
 
 ---
 
-## A. Causa de la incidencia de #69 — identificada y reproducida
+## A. El "tercer emisor" no existía
 
-La hipótesis inicial ("pg-boss tumba el proceso") era **correcta en el mecanismo
-pero incompleta en el alcance**.
+La conclusión anterior —que faltaba una tercera fuente de `'error'` sin
+listener— **era incorrecta, y el error era de medición, no del código**.
 
-### El mecanismo
+El script de comprobación usaba `Invoke-WebRequest` sobre `/health` y trataba
+cualquier excepción como "proceso muerto". Pero con PostgreSQL caído la API
+responde **503**, y un 5xx también lanza excepción en PowerShell. Estaba
+confundiendo *"degrada correctamente"* con *"se ha muerto"*.
 
-`PgBoss` y el pool de `pg` son ambos `EventEmitter`. En Node, un emisor que emite
-`'error'` **sin ningún listener registrado** convierte ese evento en una
-excepción no capturada, y el proceso termina.
+Medido bien —comprobando si el puerto 3001 sigue escuchando— el resultado es el
+contrario.
 
-Estas conexiones se caen **estando ociosas**, no en respuesta a una consulta: no
-hay `try/catch` en ninguna parte del código que pueda recogerlas.
+## B. Inventario de conexiones en producción
 
-### La reproducción
+| consumidor | quién la crea | tipo | listener `error` | quién la cierra |
+|---|---|---|---|---|
+| aplicación | `createDatabase` (`packages/db`) | `pg.Pool` | **sí** (añadido) | `closeDatabase` en shutdown |
+| colas | `new PgBoss(...)` | `PgBoss` + pool propio | **sí** (añadido) | `BossLifecycle` en shutdown |
+| **Better Auth** | **ninguna** | — | — | — |
 
-Con la API en marcha y `/health` respondiendo 200, se paró PostgreSQL:
+Better Auth **no abre conexión propia**: recibe `drizzleAdapter(db, …)` con el
+`db` de la aplicación, así que hereda su pool y su listener. Era la sospecha
+principal y quedó descartada leyendo el código.
 
-```
-docker compose stop postgres
-```
+En producción sólo existen esas dos. El resto de `createDatabase` del repositorio
+están en ficheros de test.
 
-**La API murió en 2 segundos.** El log:
+## C. Causa de la caída original
 
-```
-node:events:487  throw er; // Unhandled 'error' event
-error: terminating connection due to administrator command   (57P01)
-Emitted 'error' event on PgBoss instance at: …
-```
+`PgBoss` y `pg.Pool` son `EventEmitter`. Un emisor que emite `'error'` **sin
+listener** convierte el evento en excepción no capturada y termina el proceso.
+Estas conexiones se caen **estando ociosas**, así que ningún `try/catch` del
+código puede recogerlas.
 
-No es un fallo exótico: `57P01` es lo que Postgres envía en **cualquier reinicio
-de la base de datos**, un failover o un corte de red.
+Reproducido: con `/health` en 200, `docker compose stop postgres` mató la API en
+**2 segundos** con `Unhandled 'error' event` y código `57P01` —lo que Postgres
+envía en cualquier reinicio o failover—.
 
-## B–C. Correcciones aplicadas
+## D. Cambios aplicados
 
-**1. `apps/api/src/jobs/jobs.module.ts`** — listener de `error` en pg-boss.
+1. **`apps/api/src/jobs/jobs.module.ts`** — listener de `error` en pg-boss, con
+   un serializador propio: lo que emite pg-boss no siempre es un `Error`, y
+   `String(...)` producía `[object Object]` en la mitad de los casos. Nunca se
+   serializa el objeto completo, que puede arrastrar la cadena de conexión.
+2. **`packages/db/src/client.ts`** — listener de `error` en el pool de la
+   aplicación.
 
-**Demostrada funcionando**: al repetir el corte, el log muestra cuatro errores
-registrados limpiamente como `[PgBoss] pg-boss: terminating connection…` **sin
-matar el proceso**. Antes, el primero lo mataba.
+Ningún `process.on('uncaughtException')`. Ningún listener silencioso.
 
-**2. `packages/db/src/client.ts`** — listener de `error` en el pool de la
-aplicación.
+## E. Con PostgreSQL caído
 
-Se añadió porque la segunda reproducción reveló que el proceso ya no moría por
-pg-boss sino por **otro emisor**: `Emitted 'error' event on BoundPool instance`,
-con `application_name: undefined` (el de pg-boss llevaba `'pgboss'`).
+- proceso **vivo**, puerto 3001 escuchando;
+- `/health` → **503**;
+- errores **registrados**, no tragados: `[PgBoss] pg-boss: terminating
+  connection due to administrator command`;
+- **cero** `Unhandled 'error' event`;
+- pg-boss reintenta cada ~2 s con `ECONNREFUSED` — insiste, no abandona;
+- el ritmo de log es el de sus reintentos, sin bucle desbocado.
 
-## D. BLOCKER ABIERTO
+## F–H. Al volver PostgreSQL, sin reiniciar Node
 
-**Con las dos correcciones aplicadas, la API sigue muriendo al parar PostgreSQL.**
+- `/health` → **200**;
+- `POST /v1/auth/login` → **401** (credenciales inválidas: la base contestó, así
+  que Better Auth y el pool se recuperaron);
+- **la cola procesa de verdad**: se dio de alta un gimnasio y se envió una
+  invitación por la vía normal, y el job quedó en estado `completed`.
 
-Verificado que el listener del pool está presente en el artefacto construido
-(`packages/db/dist`) y que la API se reinició después de reconstruirlo. Sólo hay
-un `createDatabase` en toda la API.
+Esto último es lo que distingue *"el objeto PgBoss existe"* de *"la cola
+funciona"*.
 
-Es decir: **existe al menos una tercera fuente de `'error'` sin listener** que no
-he identificado. Candidatos no descartados:
+## I. Regresión
 
-- el pool interno de Better Auth, que gestiona su propia conexión;
-- algún pool creado por una dependencia;
-- que en desarrollo la API resuelva `@gymlab/db` por otra vía y mi listener no
-  esté realmente activo en ese proceso.
+`packages/db/src/__tests__/resiliencia-conexion.test.ts` comprueba que el pool
+tiene listener de `'error'` y que emitirlo **no lanza** y **sí se registra**.
 
-**Método de reproducción, para quien lo retome:**
+**Falsificado**: comentando el listener, los 2 tests pasan a rojo con
+`expected [Function] to not throw` — es decir, con el `throw` exacto que mata el
+proceso. Restaurado, vuelven a verde.
 
-1. `pnpm --filter @gymlab/api dev` y esperar a `/health` → 200;
-2. `docker compose stop postgres`;
-3. observar el log: la línea `Emitted 'error' event on <X> instance` **dice qué
-   emisor** no tiene listener;
-4. registrar un listener en ese emisor y repetir.
+Sin este test, la línea del listener es fácil de borrar por "limpieza": no rompe
+ninguna prueba funcional y todo sigue verde hasta que la base de datos se
+reinicia un martes por la noche.
 
-El patrón es siempre el mismo; lo que falta es enumerar todos los emisores.
+## J. Apagado
 
-## Lo que NO se ha revisado todavía
+El cableado está y es correcto:
 
-Trust proxy · single-origin · CORS · cookies · headers del proxy · exposición de
-puertos · variables de producción · Docker/compose · shutdown · logs · health de
-cola.
+- `app.enableShutdownHooks()` en `main.ts`;
+- `DatabaseModule.onApplicationShutdown` → `closeDatabase`;
+- `BossLifecycle.onApplicationShutdown` → `boss.stop({ graceful: true })`.
+
+**No se ha probado con una señal real, y en este equipo no puede probarse
+honestamente**: en Windows `process.kill(pid, 'SIGINT')` no entrega una señal,
+aborta el proceso, así que la prueba diría lo que yo quisiera oír. El destino
+real es Linux en contenedor — la comprobación pertenece a la fase de Docker de
+este mismo PR, y queda ahí anotada.
+
+## Pendiente
+
+- **readiness de la cola**: `/health` distingue proceso y base de datos, pero no
+  demuestra que los workers consuman. Queda por evaluar si merece una
+  comprobación aparte.
+- **SIGTERM real** en contenedor (arriba).
 
 ---
 
-## PRE-PRODUCCIÓN TÉCNICA: NO APTA
+## BLOCKER DE CONEXIONES: CERRADO
 
-**Blocker único:** la API termina el proceso cuando PostgreSQL se reinicia o la
-conexión se pierde. En producción eso significa que un mantenimiento rutinario de
-la base de datos deja el gimnasio sin sistema —incluido el QR de la puerta— hasta
-que alguien reinicie la API a mano.
-
-Las dos correcciones aplicadas son necesarias y una está demostrada, pero **no
-suficientes**: el fallo persiste.
+```
+Postgres ON   → API funciona
+Postgres OFF  → API viva, /health 503, errores registrados, pg-boss reintentando
+Postgres ON   → API + auth + DB + cola recuperan SIN reiniciar el proceso
+```

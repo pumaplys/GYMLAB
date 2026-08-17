@@ -10,6 +10,21 @@ import { RetentionWorker } from './retention.worker';
 import { BOSS } from './jobs.tokens';
 
 /**
+ * Lo que emite pg-boss no siempre es un `Error`.
+ *
+ * A veces llega un objeto plano con `message`, y `String(...)` sobre el produce
+ * `[object Object]` — un log inutil justo cuando hace falta. Nunca se serializa
+ * el objeto entero: puede arrastrar la cadena de conexion con su contrasena.
+ */
+function mensajeDe(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'object' && error !== null && 'message' in error) {
+    return String((error as { message: unknown }).message);
+  }
+  return typeof error === 'string' ? error : 'error sin mensaje';
+}
+
+/**
  * Cierra pg-boss al apagar el proceso, para que los trabajos en curso terminen
  * en lugar de quedarse colgados en estado activo hasta agotar su tiempo.
  */
@@ -71,10 +86,13 @@ class BossLifecycle implements OnApplicationShutdown {
          * └──────────────────────────────────────────────────────────────────┘
          */
         boss.on('error', (error: unknown) => {
-          logger.error(
-            `pg-boss: ${error instanceof Error ? error.message : String(error)}`,
-            error instanceof Error ? error.stack : undefined,
-          );
+          /*
+           * `String(error)` daba `[object Object]` en la mitad de los casos: no
+           * todo lo que emite pg-boss es un `Error` —hay objetos planos con
+           * `message`— y un log que no dice que paso no sirve para diagnosticar
+           * a las tres de la manana.
+           */
+          logger.error(`pg-boss: ${mensajeDe(error)}`, error instanceof Error ? error.stack : undefined);
         });
 
         await boss.start();
