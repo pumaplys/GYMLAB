@@ -22,6 +22,7 @@ import {
 } from '@gymlab/db';
 import type {
   AssignedRoutine,
+  OwnRoutine,
   CreateExerciseInput,
   CreateRoutineInput,
   Exercise,
@@ -431,9 +432,18 @@ export class TrainingService {
    * Parte del `userId` de la sesion: no hay parametro con el que pedir las de
    * otro.
    */
-  async myRoutines(gymId: string, userId: string): Promise<AssignedRoutine[]> {
+  async myRoutines(gymId: string, userId: string): Promise<OwnRoutine[]> {
     const ficha = await this.members.getOwnProfile(gymId, userId);
-    return this.rutinasDe(gymId, ficha.id);
+    const suyas = await this.rutinasDe(gymId, ficha.id);
+
+    /*
+     * Se quita `activeAssignments` AQUI, no en la pantalla.
+     *
+     * Es cuanta gente del gimnasio sigue esa rutina: informacion del negocio,
+     * util para quien la escribio y muda para quien solo quiere saber que le
+     * toca hoy. Filtrarlo en el frontend lo dejaria viajando por la red igual.
+     */
+    return suyas.map(({ activeAssignments: _, ...resto }) => resto);
   }
 
   /**

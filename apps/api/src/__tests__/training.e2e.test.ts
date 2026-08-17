@@ -937,6 +937,56 @@ describe('el socio y sus rutinas', () => {
     return { token, memberId, userId: cuenta.rows[0]!.id };
   }
 
+  /*
+   * ┌──────────────────────────────────────────────────────────────────────────┐
+   * │ `activeAssignments` NO VIAJA AL SOCIO.                                   │
+   * │                                                                          │
+   * │ Es cuanta gente del gimnasio sigue esa rutina: informacion del negocio,  │
+   * │ util para quien la escribio —saber a cuantos afecta cambiarla— y muda    │
+   * │ para quien solo quiere saber que le toca hoy.                            │
+   * │                                                                          │
+   * │ No identifica a nadie, asi que no era una fuga de datos personales; pero │
+   * │ viajaba en cada respuesta sin que ninguna pantalla lo usara. Lo encontro │
+   * │ la auditoria de Socio V1 revisando el CONTRATO, no la pantalla — que es  │
+   * │ justo lo que esta prueba conserva.                                       │
+   * └──────────────────────────────────────────────────────────────────────────┘
+   */
+  it('la rutina del socio NO trae el contador de cuantos la siguen', async () => {
+    const { token, memberId } = await socioConCuenta(gymA, tokenOwnerA, 'socio-sin-contador');
+    const rutina = await crearRutina(
+      gymA,
+      tokenOwnerA,
+      'Sin contador',
+      await unEjercicio(gymA, tokenOwnerA),
+    );
+    await http()
+      .post(`/v1/gyms/${gymA}/routines/${rutina.id}/members`)
+      .set(conSesion(tokenOwnerA))
+      .send({ memberId })
+      .expect(201);
+
+    const mias = await http().get('/v1/me/routines').set(conSesion(token)).expect(200);
+    expect(mias.body[0]).not.toHaveProperty('activeAssignments');
+    expect(JSON.stringify(mias.body)).not.toContain('activeAssignments');
+
+    // Y lo demas sigue igual: nombre, descripcion, asignacion y ejercicios.
+    expect(Object.keys(mias.body[0]).sort()).toEqual([
+      'assignedAt',
+      'assignmentId',
+      'description',
+      'id',
+      'items',
+      'name',
+    ]);
+
+    // El contrato del PERSONAL no cambia: el entrenador si necesita el contador.
+    const delPersonal = await http()
+      .get(`/v1/gyms/${gymA}/routines`)
+      .set(conSesion(tokenOwnerA))
+      .expect(200);
+    expect(delPersonal.body[0]).toHaveProperty('activeAssignments');
+  });
+
   it('sin rutinas asignadas devuelve una lista vacia, no un error', async () => {
     const { token } = await socioConCuenta(gymA, tokenOwnerA, 'socio-sin-rutina');
     const mias = await http().get('/v1/me/routines').set(conSesion(token)).expect(200);

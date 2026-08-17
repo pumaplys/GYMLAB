@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { AssignedRoutine } from '@gymlab/contracts';
+import type { OwnRoutine } from '@gymlab/contracts';
 import { Aviso } from '@/componentes/aviso';
 import { Cargando } from '@/componentes/cargando';
 import { EncabezadoDePagina } from '@/componentes/encabezado-de-pagina';
@@ -46,7 +46,7 @@ export default function MiRutinaPage() {
 
 function MiRutina() {
   const { gymId, revisar } = useSesion();
-  const [rutinas, setRutinas] = useState<AssignedRoutine[] | null>(null);
+  const [rutinas, setRutinas] = useState<OwnRoutine[] | null>(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -131,7 +131,7 @@ function MiRutina() {
   );
 }
 
-function Rutina({ rutina }: { rutina: AssignedRoutine }) {
+function Rutina({ rutina }: { rutina: OwnRoutine }) {
   return (
     <section className={estilos.rutina} aria-labelledby={`rutina-${rutina.assignmentId}`}>
       <div className={estilos.cabecera}>

@@ -1,15 +1,3 @@
-.volver {
-  display: inline-block;
-  margin-bottom: var(--e3);
-  color: var(--texto-sutil);
-  font-size: var(--t-sm);
-  text-decoration: none;
-}
-
-.volver:hover {
-  text-decoration: underline;
-}
-
 .tarjeta {
   max-width: var(--ancho-lectura);
   margin-bottom: var(--e4);

@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import type { HealthConsentStatus } from '@gymlab/contracts';
 import { Aviso } from '@/componentes/aviso';
 import { Boton } from '@/componentes/boton';
@@ -114,10 +113,12 @@ function Privacidad() {
 
   return (
     <>
-      <Link className={estilos.volver} href="/socio">
-        ← Volver a tu cuenta
-      </Link>
-
+      {/*
+        Sin "volver": esta pantalla nacio colgando de Inicio, cuando el area del
+        socio no tenia barra de destinos. Ahora es uno de los siete, y ninguno de
+        los otros seis lleva un enlace de vuelta — tenerlo solo aqui hacia que
+        pareciera una subpantalla de algo, no una seccion mas.
+      */}
       <EncabezadoDePagina
         titulo="Datos de salud"
         entradilla="Tu peso y tus medidas solo se pueden registrar si tu lo autorizas."
