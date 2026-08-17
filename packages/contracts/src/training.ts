@@ -119,3 +119,26 @@ export const assignedRoutineSchema = routineSchema.extend({
   assignedAt: z.string(),
 });
 export type AssignedRoutine = z.infer<typeof assignedRoutineSchema>;
+
+/**
+ * La misma rutina, vista por el socio que la sigue.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ SIN `activeAssignments`.                                                 │
+ * │                                                                          │
+ * │ Ese contador dice cuantos socios del gimnasio siguen esta rutina. Es     │
+ * │ informacion del NEGOCIO —util para quien la escribio, para saber a       │
+ * │ cuanta gente afecta cambiarla— y no dice nada a quien solo quiere saber  │
+ * │ que ejercicios le tocan hoy.                                            │
+ * │                                                                          │
+ * │ No identifica a nadie, asi que no era una fuga de datos personales; pero │
+ * │ viajaba en cada respuesta de `/me/routines` sin que ninguna pantalla lo  │
+ * │ usara. Lo detecto la auditoria de Socio V1 revisando el contrato en      │
+ * │ lugar de la pantalla.                                                    │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * El contrato del personal —`assignedRoutineSchema`— se queda como estaba: el
+ * entrenador si necesita ese contador.
+ */
+export const ownRoutineSchema = assignedRoutineSchema.omit({ activeAssignments: true });
+export type OwnRoutine = z.infer<typeof ownRoutineSchema>;

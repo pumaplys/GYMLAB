@@ -119,13 +119,21 @@ siete destinos, la barra de navegación se desplaza sola: comprobado que los
    destinos; con siete secciones, hacía que pareciera una subpantalla de algo.
    Quitado.
 
+2. **`/me/routines` devolvía `activeAssignments`** — cuántos socios del gimnasio
+   siguen esa rutina. No identifica a nadie y no se pintaba en pantalla, pero
+   viajaba en cada respuesta sin que nada lo usara.
+
+   Corregido **en el servidor, no en la pantalla**: filtrarlo en el frontend lo
+   habría dejado viajando igual. Hay un contrato propio de autoservicio
+   (`ownRoutineSchema`) y el del personal se queda intacto — el entrenador sí
+   necesita ese contador.
+
+   Con test que inspecciona la respuesta y falla si reaparece, comprobado
+   falsificándolo: dejando pasar el campo, la prueba se pone en rojo.
+
 ## Encontrado y **no** arreglado
 
-2. **`/me/routines` devuelve `activeAssignments`** — cuántos socios siguen esa
-   rutina. Es un contador agregado del gimnasio, no un dato del socio, y **no se
-   pinta en pantalla**; pero viaja en la respuesta. No es fuga de datos
-   personales —no identifica a nadie— así que **no bloquea V1**. Corregirlo
-   requiere un DTO propio para el autoservicio, que es alcance nuevo.
+Ninguno.
 
 ## Fuera del alcance de esta auditoría (pre-producción)
 

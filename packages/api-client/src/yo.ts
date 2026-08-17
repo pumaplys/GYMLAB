@@ -4,7 +4,7 @@ import {
   assignedMemberSchema,
   ownAccessEventListSchema,
   ownPaymentListSchema,
-  assignedRoutineSchema,
+  ownRoutineSchema,
   bodyMetricSchema,
   duesStatusSchema,
   healthConsentStatusSchema,
@@ -14,7 +14,7 @@ import {
   type AssignedMember,
   type OwnAccessEventList,
   type OwnPaymentList,
-  type AssignedRoutine,
+  type OwnRoutine,
   type BodyMetric,
   type DuesStatus,
   type HealthConsentStatus,
@@ -121,7 +121,7 @@ export interface YoApi {
    *
    * Cada una viene entera, con sus ejercicios dentro y en orden.
    */
-  misRutinas(options?: RequestOptions): Promise<AssignedRoutine[]>;
+  misRutinas(options?: RequestOptions): Promise<OwnRoutine[]>;
 
   /**
    * Mis mediciones, de la mas reciente a la mas antigua.
@@ -241,7 +241,7 @@ export function createYoApi(http: Http): YoApi {
       http({
         method: 'GET',
         path: '/me/routines',
-        schema: z.array(assignedRoutineSchema),
+        schema: z.array(ownRoutineSchema),
         ...options,
       }),
 
