@@ -1,3 +1,32 @@
 gymlabfit.tech {
     reverse_proxy 127.0.0.1:3001
+
+    # Caddy no pone ninguna de estas por su cuenta. Se comprobo desde fuera
+    # durante el despliegue de #76: las cuatro faltaban.
+    header {
+        # Un ano. SIN includeSubDomains y SIN preload, y no es por prudencia
+        # generica: `www.gymlabfit.tech` TIENE registro A pero no responde por
+        # HTTPS —no hay bloque para ese nombre aqui, luego no hay certificado—.
+        # Con includeSubDomains, quien escribiera `www.` quedaria forzado a
+        # HTTPS contra un servidor sin certificado valido: fallo TLS duro, sin
+        # forma de saltarselo, y persistente durante todo el max-age.
+        # `preload` es practicamente irreversible y solo tiene sentido con lo
+        # anterior resuelto. Arreglar `www` es deuda aparte.
+        Strict-Transport-Security "max-age=31536000"
+
+        # El panel sirve JS y JSON estaticos. Que el navegador adivine el tipo
+        # cuando la cabecera no le convence solo puede acabar peor.
+        X-Content-Type-Options "nosniff"
+
+        # No hay un solo <iframe> en el frontend —comprobado en todo apps/web—,
+        # asi que DENY no rompe nada y cierra el clickjacking sobre las
+        # acciones del panel. La sesion viaja con SameSite=Lax, que no protege
+        # de que la pagina se enmarque, solo de que la peticion venga de fuera.
+        X-Frame-Options "DENY"
+
+        # Las URLs internas llevan identificadores de socio. Esto impide que
+        # salgan en el `Referer` hacia terceros y mantiene la ruta completa
+        # dentro del propio origen, donde si hace falta para navegar.
+        Referrer-Policy "strict-origin-when-cross-origin"
+    }
 }
