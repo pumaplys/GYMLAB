@@ -132,6 +132,64 @@ Borrar copias viejas no es solo espacio: el RGPD pide limitar el plazo de
 conservación, y una copia guardada para siempre es un dato personal guardado
 para siempre.
 
+## 3b. Copias de deploy: `predeploy` y `postdeploy`
+
+El mismo script, con un argumento:
+
+```bash
+./docker/backup.sh              # lo de siempre, y lo que lanza el temporizador
+./docker/backup.sh predeploy    # antes de migrar
+./docker/backup.sh postdeploy   # cuando la versión nueva está estable
+```
+
+```
+predeploy/gymlab-2026-08-18T171532Z-5d3f20a.sql.gz.age
+postdeploy/gymlab-2026-08-18T181104Z-5d3f20a.sql.gz.age
+```
+
+### Por qué el nombre diario no bastaba
+
+En el despliegue de #76 se hicieron **tres copias el mismo día** —una con la
+aplicación en marcha, otra con la aplicación parada y otra después de migrar— y
+las tres escribieron `diario/gymlab-2026-08-18.sql.gz.age`. El mismo nombre.
+
+Recuperar la de antes del deploy exigió listar versiones del objeto y deducir
+cuál era cuál **por su tamaño en bytes**. Funcionó porque B2 conservaba las
+versiones anteriores, pero eso es una propiedad del bucket, no una decisión de
+este sistema: si mañana una regla de ciclo de vida las retira antes, el camino
+de vuelta desaparece sin que nadie lo note.
+
+El sello va **en UTC y con segundos**, y lleva el **commit desplegado**. Dos
+copias del mismo minuto ya no colisionan, y el nombre dice por sí solo qué es y
+de qué versión.
+
+### El `fileId`, en el registro
+
+Cada copia de deploy deja una línea en `journalctl -u gymlab-backup.service`:
+
+```
+[copia] tipo=predeploy file=predeploy/gymlab-2026-08-18T171532Z-5d3f20a.sql.gz.age sha=5d3f20a fileId=4_z27c88...
+```
+
+El `fileId` **no se saca de lo que imprime la subida**: ese texto está pensado
+para leerlo una persona y ya cambió una vez entre versiones del CLI. Se pregunta
+después, listando por el nombre exacto en JSON. Si no se puede resolver —porque
+en el servidor no hay ni `python3` ni `jq`— se registra `no-resuelto` y **la
+copia no falla**: ya está subida, y descartarla por no saber su identificador
+sería absurdo.
+
+Con el `fileId` la restauración deja de depender del nombre:
+
+```bash
+b2 file download --no-progress b2id://<FILE_ID> gymlab.sql.gz.age
+```
+
+### Retención de estos prefijos
+
+`predeploy/` y `postdeploy/` **no tienen regla de ciclo de vida todavía**. Es
+deliberado: se decidirá aparte. Mientras tanto se acumulan, y son pocos —uno por
+despliegue— pero conviene no olvidarlo.
+
 ## 4. Las credenciales, fuera del repositorio
 
 Nada de esto entra en git. `.dockerignore` ya excluye `.env`, y se añadiría
@@ -187,7 +245,10 @@ no debe subir ahí.
 > El orden correcto es: **rol → restore → `db:migrate`**.
 
 ```bash
-# 1. Traer la copia
+# 1. Traer la copia — POR fileId si la conoces (ver «Copias de deploy»)
+b2 file download --no-progress b2id://4_z27c88f1d182b150646... gymlab.sql.gz.age
+
+#    …o por nombre, si es una copia diaria
 b2 file download b2://gymlab-copias/diario/gymlab-2026-08-11.sql.gz.age .
 
 # 2. Descifrar, DONDE ESTE LA CLAVE PRIVADA — nunca en el VPS
