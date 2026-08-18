@@ -146,20 +146,65 @@ curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo 
 sudo apt update && sudo apt install -y caddy
 ```
 
-El `Caddyfile` entero es esto:
+### La configuración vive en el repositorio
 
-```
-gimnasio.tudominio.com {
-	reverse_proxy 127.0.0.1:3001
-}
-```
+La fuente es **`docker/Caddyfile`**, no el fichero del servidor. Hasta #77 la
+configuración del proxy solo existía en `/etc/caddy/Caddyfile` y como un
+fragmento suelto en este documento: cualquier cambio era una edición a mano, sin
+revisión ni historial, y nadie podía decir con certeza qué había en producción.
+
+Caddy pide y renueva el certificado solo. **No hay que repartir rutas**: dentro
+del contenedor ya está decidido qué es API y qué es panel. Las cabeceras de
+seguridad sí se ponen aquí, porque Caddy no sirve ninguna por su cuenta.
+
+### Desplegar un cambio del proxy
+
+El orden importa: **copia de seguridad → comparar → validar → recargar →
+verificar**. `reload` y no `restart`: si la configuración nueva fuera inválida,
+Caddy mantiene la anterior en pie en lugar de dejar el dominio sin servir.
 
 ```bash
+cd /opt/gymlab
+
+# 1. Guardar el vivo antes de tocarlo, con fecha. Es el camino de vuelta.
+sudo cp /etc/caddy/Caddyfile /etc/caddy/Caddyfile.$(date -u +%Y%m%dT%H%M%SZ).bak
+
+# 2. Ver EXACTAMENTE que va a cambiar. Si aparece algo que no esperabas,
+#    alguien edito el servidor a mano: para y averigua que antes de seguir.
+diff -u /etc/caddy/Caddyfile docker/Caddyfile
+
+# 3. Instalar y validar. `validate` no aplica nada: solo comprueba sintaxis.
+sudo cp docker/Caddyfile /etc/caddy/Caddyfile
+sudo caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+
+# 4. Recargar sin cortar el servicio
+sudo systemctl reload caddy
+systemctl is-active caddy
+
+# 5. Comprobar desde FUERA que las cuatro cabeceras llegan
+curl -sI https://gymlabfit.tech/login | grep -iE \
+  'strict-transport|x-content-type|x-frame|referrer-policy'
+```
+
+El paso 5 no es un trámite: es la única comprobación que mira lo que recibe un
+navegador de verdad, en lugar de lo que dice el fichero.
+
+**Si algo falla**, la vuelta es la copia del paso 1:
+
+```bash
+sudo cp /etc/caddy/Caddyfile.<fecha>.bak /etc/caddy/Caddyfile
+sudo caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
 sudo systemctl reload caddy
 ```
 
-Caddy pide y renueva el certificado solo. **No hay que repartir rutas**: dentro
-del contenedor ya está decidido qué es API y qué es panel.
+### Comprobar que el repositorio y el servidor coinciden
+
+```bash
+sha256sum /etc/caddy/Caddyfile /opt/gymlab/docker/Caddyfile
+```
+
+Dos huellas iguales significan que producción es exactamente lo revisado. Si
+difieren, el servidor lleva cambios que nadie revisó.
 
 > Con Caddy delante, `TRUST_PROXY: 1` en el compose es correcto y necesario. Si
 > algún día se quita el proxy, hay que bajarlo a `0` — declarar más saltos de

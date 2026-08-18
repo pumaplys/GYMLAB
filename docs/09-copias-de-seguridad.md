@@ -184,6 +184,23 @@ Con el `fileId` la restauración deja de depender del nombre:
 b2 file download --no-progress b2id://<FILE_ID> gymlab.sql.gz.age
 ```
 
+### Lo que este formato NO resuelve
+
+El sello llega **al segundo**. Dos invocaciones dentro del mismo segundo, en la
+misma máquina y con el mismo commit producirían el mismo nombre y volveríamos a
+depender del versionado de B2.
+
+No se ha cerrado esa rendija, y es una decisión, no un olvido: estas copias las
+lanza una persona durante un despliegue, separadas por minutos, y las dos formas
+de eliminarla empeoran el nombre. Añadir el PID (`…-5d3f20a-31337.sql.gz.age`)
+mete en el nombre un número que no significa nada para quien lo lee meses
+después; subir la precisión a milisegundos (`T17153204Z`) convierte un sello
+legible en una cifra que hay que descifrar.
+
+Si algún día estas copias las lanza un script en bucle, el PID es el cambio
+mínimo y bastaría con añadirlo. Hoy, el riesgo real es cero y el coste en
+legibilidad no lo es.
+
 ### Retención de estos prefijos
 
 `predeploy/` y `postdeploy/` **no tienen regla de ciclo de vida todavía**. Es
