@@ -17,7 +17,15 @@ import { AREA_DE_ROL, areaDeRuta, destinoSegunArea, inicioPara } from './areas';
  * │ vacia, y que nada dependa de haber escondido un enlace.                  │
  * └──────────────────────────────────────────────────────────────────────────┘
  */
-const RUTAS_DEL_PANEL = ['/socios', '/socios/nuevo', '/socios/ficha', '/personal', '/planes'];
+const RUTAS_DEL_PANEL = [
+  '/socios',
+  '/socios/nuevo',
+  '/socios/ficha',
+  '/personal',
+  '/planes',
+  '/accesos',
+  '/configuracion',
+];
 
 describe('a que area pertenece cada rol', () => {
   it('el dueno y recepcion trabajan en el panel', () => {

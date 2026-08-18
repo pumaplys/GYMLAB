@@ -38,6 +38,7 @@
  */
 
 import { createAuthApi, type AuthApi } from './auth';
+import { createAccesosApi, type AccesosApi } from './accesos';
 import { createBillingApi, type BillingApi } from './billing';
 import { createEntrenadoresApi, type EntrenadoresApi } from './entrenadores';
 import { createLegalApi, type LegalApi } from './legal';
@@ -53,6 +54,7 @@ export interface ApiClient {
   auth: AuthApi;
   members: MembersApi;
   billing: BillingApi;
+  accesos: AccesosApi;
   legal: LegalApi;
   invitations: InvitationsApi;
   staff: StaffApi;
@@ -72,6 +74,7 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
     auth: createAuthApi(http),
     members: createMembersApi(http),
     billing: createBillingApi(http),
+    accesos: createAccesosApi(http),
     legal: createLegalApi(http),
     invitations: createInvitationsApi(http),
     staff: createStaffApi(http),
@@ -85,6 +88,7 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
 export type { AuthApi } from './auth';
 export type { MembersApi } from './members';
 export type { BillingApi } from './billing';
+export type { AccesosApi } from './accesos';
 export type { LegalApi } from './legal';
 export type { InvitationsApi } from './invitations';
 export type { StaffApi } from './staff';
