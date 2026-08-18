@@ -1,0 +1,109 @@
+.titulo {
+  margin: 0 0 var(--e4);
+  font-size: var(--t-lg);
+  font-weight: 600;
+  color: var(--texto);
+}
+
+.camara {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+  align-items: flex-start;
+  margin-bottom: var(--e5);
+}
+
+/*
+ * El vídeo se limita en ancho y se recorta: una cámara de tablet da 4:3 o 16:9
+ * y a 320 px un vídeo sin límite empuja el layout a lo ancho.
+ */
+.video {
+  width: 100%;
+  max-width: 22rem;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: var(--radio-s);
+  background: var(--fondo-hover);
+}
+
+/*
+ * Oculto pero PRESENTE en el DOM. El elemento tiene que existir antes de
+ * encender la cámara, porque el `ref` se asigna al montar: si se renderizara
+ * solo cuando el estado ya es «encendida», `srcObject` se asignaría a null.
+ */
+.videoOculto {
+  display: none;
+}
+
+.manual {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+  align-items: flex-start;
+  padding-top: var(--e4);
+  border-top: 1px solid var(--borde);
+}
+
+.veredicto {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+}
+
+/*
+ * Grande a propósito: quien está en la puerta lo lee de reojo con una persona
+ * delante. El tamaño es la información, no decoración.
+ */
+.decision {
+  margin: 0;
+  font-size: var(--t-2xl);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.allow {
+  color: var(--exito-fuerte, var(--exito));
+}
+
+.warn {
+  color: var(--aviso-fuerte, var(--aviso));
+}
+
+.deny {
+  color: var(--peligro-fuerte, var(--peligro));
+}
+
+.socio {
+  margin: 0;
+  font-size: var(--t-lg);
+  color: var(--texto);
+}
+
+.numero {
+  color: var(--texto-sutil);
+  font-variant-numeric: tabular-nums;
+}
+
+.sinSocio {
+  margin: 0;
+  color: var(--texto-sutil);
+  font-size: var(--t-base);
+}
+
+.reintento {
+  margin: 0;
+  color: var(--texto-sutil);
+  font-size: var(--t-sm);
+}
+
+.relectura {
+  margin-left: var(--e2);
+  color: var(--texto-sutil);
+  font-size: var(--t-xs);
+}
+
+.pie {
+  margin: var(--e4) 0 0;
+  color: var(--texto-sutil);
+  font-size: var(--t-sm);
+}

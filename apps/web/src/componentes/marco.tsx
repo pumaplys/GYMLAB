@@ -8,8 +8,8 @@ import { useSesion } from '@/lib/sesion';
 /**
  * Los destinos del panel de gimnasio. La lista es el sitio donde crece.
  *
- * Son CUATRO, y son los que existen: `/socios`, `/personal`, `/planes` y
- * `/configuracion`. No hay panel de inicio, ni entrenadores, ni rutinas — y
+ * Son CINCO, y son los que existen: `/socios`, `/personal`, `/planes`, `/accesos`
+ * y `/configuracion`. No hay panel de inicio, ni entrenadores, ni rutinas — y
  * mientras no los haya no se anuncian aqui. Un enlace que lleva a un 404 cuesta
  * mas confianza de la que ahorra tenerlo preparado.
  *
@@ -23,6 +23,7 @@ const DESTINOS = [
   { href: '/socios', texto: 'Socios', soloDueno: false },
   { href: '/personal', texto: 'Personal', soloDueno: false },
   { href: '/planes', texto: 'Planes', soloDueno: true },
+  { href: '/accesos', texto: 'Accesos', soloDueno: false },
   { href: '/configuracion', texto: 'Configuración', soloDueno: true },
 ] as const;
 
