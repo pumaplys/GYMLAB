@@ -23,12 +23,15 @@ import estilos from './accesos.module.css';
 /**
  * El escáner de la puerta.
  *
- * Dos caminos hacia la misma llamada: la cámara cuando el navegador la ofrece,
- * y el pegado manual siempre. **No hay lógica de decisión aquí** — quién pasa lo
- * decide el servidor, y esta pantalla solo lo cuenta.
+ * La cámara es el camino real: nativa donde existe `BarcodeDetector`, y con
+ * `jsqr` donde no. El campo manual se queda para soporte y pruebas — un token
+ * de ~118 caracteres que caduca en 60 segundos no se dicta en un mostrador.
+ *
+ * **No hay lógica de decisión aquí**: quién pasa lo decide el servidor, y esta
+ * pantalla solo lo cuenta.
  */
 export function Escaner({ alVerificar }: { alVerificar: () => void }) {
-    const { gymId, revisar } = useSesion();
+  const { gymId, revisar } = useSesion();
   const [resultado, setResultado] = useState<AccessResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [manual, setManual] = useState('');
@@ -79,17 +82,23 @@ export function Escaner({ alVerificar }: { alVerificar: () => void }) {
       <Tarjeta>
         <h2 className={estilos.titulo}>Escanear carné</h2>
 
+        {/*
+          NO se dice «funciona igual» del campo manual, y la primera versión lo
+          decía. El token son ~118 caracteres de base64 que caducan en 60
+          segundos: nadie los dicta en un mostrador. El campo es para soporte y
+          pruebas; quien lee carnés de verdad es la cámara.
+        */}
         {camara.estado === 'no-soportada' && (
-          <Aviso tono="informacion">
-            Este navegador no puede leer códigos con la cámara. Pide al socio el código de su
-            carné y pégalo abajo: funciona igual.
+          <Aviso>
+            Este navegador no puede leer códigos y no se pudo cargar el lector alternativo.
+            Comprueba la conexión y vuelve a intentarlo, o usa otro navegador.
           </Aviso>
         )}
 
         {camara.estado === 'denegada' && (
           <Aviso tono="informacion">
             No se pudo usar la cámara — puede que falte el permiso o que no haya ninguna
-            conectada. Usa el código manual.
+            conectada. Revísalo y vuelve a encenderla.
           </Aviso>
         )}
 
@@ -127,7 +136,7 @@ export function Escaner({ alVerificar }: { alVerificar: () => void }) {
         >
           <Campo
             etiqueta="Código del carné"
-            ayuda="Pega aquí el código si no usas la cámara."
+            ayuda="Entrada manual, para soporte y pruebas. En el mostrador se usa la cámara."
             valor={manual}
             alCambiar={setManual}
             deshabilitado={procesando}

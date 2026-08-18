@@ -116,3 +116,13 @@ export function debeEnviar(
  * de barras de producto en cada fotograma, que aqui no van a aparecer nunca.
  */
 export const FORMATOS_DEL_DETECTOR = ['qr_code'] as const;
+
+/**
+ * Cada cuanto se mira un fotograma en el camino de `jsqr`.
+ *
+ * A 60 fps se analizaria la imagen entera en el hilo principal sesenta veces
+ * por segundo. En una tablet eso calienta y gasta bateria sin leer nada mas
+ * rapido: un QR delante del objetivo se decodifica igual de bien mirando seis
+ * veces por segundo, y 166 ms es imperceptible para quien esta en la puerta.
+ */
+export const MS_ENTRE_LECTURAS = 166;
