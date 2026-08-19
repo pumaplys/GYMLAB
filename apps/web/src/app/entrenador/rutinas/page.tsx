@@ -124,7 +124,11 @@ function Rutinas() {
                         Lo que cambia es que no se pueden asignar, y eso hay que
                         poder verlo sin abrir la ficha de cada una.
                       */}
-                      {rutina.status === 'archived' && <Etiqueta tono="neutro">Archivada</Etiqueta>}
+                      {rutina.status === 'archived' && (
+                        <Etiqueta tono="neutro" className={estilos.etiquetaJunto}>
+                          Archivada
+                        </Etiqueta>
+                      )}
                       {rutina.description && (
                         <span className={estilos.descripcion}>{rutina.description}</span>
                       )}
@@ -143,8 +147,12 @@ function Rutinas() {
                   href={fichaDe(rutina)}
                   titulo={
                     <>
-                      {rutina.name}{' '}
-                      {rutina.status === 'archived' && <Etiqueta tono="neutro">Archivada</Etiqueta>}
+                      {rutina.name}
+                      {rutina.status === 'archived' && (
+                        <Etiqueta tono="neutro" className={estilos.etiquetaJunto}>
+                          Archivada
+                        </Etiqueta>
+                      )}
                       {rutina.description && (
                         <span className={estilos.descripcion}>{rutina.description}</span>
                       )}

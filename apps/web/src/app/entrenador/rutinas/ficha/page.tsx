@@ -140,10 +140,14 @@ function Ficha() {
         entradilla={rutina.description ?? undefined}
         junto={
           <span className={estilos.numero}>
-            {rutina.status === 'archived' && <Etiqueta tono="neutro">Archivada</Etiqueta>}{' '}
             {rutina.activeAssignments === 1
               ? '1 socio la sigue'
               : `${rutina.activeAssignments} socios la siguen`}
+            {rutina.status === 'archived' && (
+              <Etiqueta tono="neutro" className={estilos.etiquetaJunto}>
+                Archivada
+              </Etiqueta>
+            )}
           </span>
         }
         acciones={

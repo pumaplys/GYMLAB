@@ -424,8 +424,11 @@ export class TrainingService {
      * asignable por API y el estado no significaria nada.
      */
     if (rutina.status === 'archived') {
+      // Sin "duplicala": duplicar una rutina no existe en el producto, y un
+      // mensaje que manda a hacer algo que no se puede hacer es peor que uno
+      // escueto. Lo que si se puede es crear una nueva.
       throw new BadRequestException(
-        'Esa rutina esta archivada y ya no se puede asignar. Duplicala si quieres volver a usarla.',
+        'Esa rutina esta archivada y ya no se puede asignar. Crea una rutina nueva si quieres volver a usarla.',
       );
     }
 
