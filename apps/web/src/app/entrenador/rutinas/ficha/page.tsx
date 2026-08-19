@@ -5,9 +5,11 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import type { Routine } from '@gymlab/contracts';
 import { Aviso } from '@/componentes/aviso';
-import { BotonEnlace } from '@/componentes/boton';
+import { Boton, BotonEnlace } from '@/componentes/boton';
+import { ConfirmacionEnLinea } from '@/componentes/confirmacion-en-linea';
 import { Cargando } from '@/componentes/cargando';
 import { EncabezadoDePagina } from '@/componentes/encabezado-de-pagina';
+import { Etiqueta } from '@/componentes/etiqueta';
 import { Dato, FilaApilada, ListaApilada } from '@/componentes/lista-apilada';
 import { MarcoEntrenador } from '@/componentes/marco-entrenador';
 import { RutaPrivada } from '@/componentes/ruta-privada';
@@ -29,8 +31,12 @@ import estilos from '../../entrenador.module.css';
  * estado —items que se anaden, se quitan y se mueven— y mezclarlo con la vista
  * de lectura obliga a que cada fila sepa en cual de los dos mundos vive.
  *
- * La puede editar cualquier entrenador del gimnasio. Lo que solo puede hacer su
- * creador —o el dueno— es borrarla, y eso todavia no esta en ninguna pantalla.
+ * La puede editar cualquier entrenador del gimnasio. Archivarla solo su creador
+ * —o el dueno—, que es la misma regla que ya gobernaba borrarla. Borrar de
+ * verdad no esta en ninguna pantalla a proposito: en el servidor solo se
+ * permite si la rutina no se asigno NUNCA a nadie, asi que es una salida para
+ * equivocaciones recien creadas, no una operacion de uso diario. Lo normal es
+ * archivar.
  */
 export default function FichaDeRutinaPage() {
   return (
@@ -51,6 +57,31 @@ function Ficha() {
   const [rutina, setRutina] = useState<Routine | null>(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [archivando, setArchivando] = useState(false);
+  const [trabajando, setTrabajando] = useState(false);
+  const [errorAlArchivar, setErrorAlArchivar] = useState<string | null>(null);
+
+  /**
+   * Archiva la rutina y se queda con lo que devuelve el servidor.
+   *
+   * No se supone el resultado: quien decide si esta persona puede archivarla es
+   * el servidor —solo su creador, o el dueno— y su respuesta trae el estado ya
+   * calculado.
+   */
+  const archivar = async () => {
+    if (!gymId || !rutina || trabajando) return;
+    setTrabajando(true);
+    setErrorAlArchivar(null);
+    try {
+      setRutina(await api.entrenamiento.archivarRutina(gymId, rutina.id));
+      setArchivando(false);
+    } catch (problema: unknown) {
+      if (esSesionCaducada(problema)) return void revisar();
+      setErrorAlArchivar(mensajeDeError(problema));
+    } finally {
+      setTrabajando(false);
+    }
+  };
 
   useEffect(() => {
     if (!gymId || !id) {
@@ -109,17 +140,52 @@ function Ficha() {
         entradilla={rutina.description ?? undefined}
         junto={
           <span className={estilos.numero}>
+            {rutina.status === 'archived' && <Etiqueta tono="neutro">Archivada</Etiqueta>}{' '}
             {rutina.activeAssignments === 1
               ? '1 socio la sigue'
               : `${rutina.activeAssignments} socios la siguen`}
           </span>
         }
         acciones={
-          <BotonEnlace href={`/entrenador/rutinas/editar?id=${encodeURIComponent(rutina.id)}`}>
-            Editar
-          </BotonEnlace>
+          <>
+            {/*
+              EDITAR SIGUE AHI AUNQUE ESTE ARCHIVADA, y es deliberado: los
+              socios que la seguian la siguen entrenando, asi que corregir una
+              serie mal puesta tiene que poder hacerse. El servidor tampoco lo
+              impide, y una regla que solo existe en la pantalla se cae sola.
+            */}
+            <BotonEnlace href={`/entrenador/rutinas/editar?id=${encodeURIComponent(rutina.id)}`}>
+              Editar
+            </BotonEnlace>
+
+            {/* Archivar no: ya lo esta, y en V1 no hay vuelta atras. */}
+            {rutina.status === 'active' &&
+              (archivando ? (
+                <ConfirmacionEnLinea
+                  /*
+                   * Se dice lo que pasa Y lo que no: quien archiva teme perder
+                   * el historial de sus socios, y es justo lo que se conserva.
+                   */
+                  pregunta="¿Archivarla? Dejara de poder asignarse. Lo ya asignado se conserva."
+                  confirmando={trabajando}
+                  onConfirmar={archivar}
+                  onCancelar={() => setArchivando(false)}
+                />
+              ) : (
+                <Boton onClick={() => setArchivando(true)}>Archivar</Boton>
+              ))}
+          </>
         }
       />
+
+      {errorAlArchivar && <Aviso>{errorAlArchivar}</Aviso>}
+
+      {rutina.status === 'archived' && (
+        <Aviso tono="informacion">
+          Esta rutina esta archivada: ya no puede asignarse a nadie. Los socios que la
+          siguieron conservan su historial.
+        </Aviso>
+      )}
 
       <Tarjeta variante="lista" className={estilos.panelRutina}>
         {/*

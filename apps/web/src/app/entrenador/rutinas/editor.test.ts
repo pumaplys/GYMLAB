@@ -201,6 +201,7 @@ describe('cargar una rutina para editarla', () => {
       name: 'R',
       description: null,
       activeAssignments: 0,
+      status: 'active' as const,
       items: [
         {
           id: 'i1',
@@ -241,6 +242,7 @@ describe('cargar una rutina para editarla', () => {
       name: 'R',
       description: null,
       activeAssignments: 0,
+      status: 'active' as const,
       items: [1, 2].map((n) => ({
         id: `i${n}`,
         exerciseId: '00000000-0000-4000-8000-000000000111',

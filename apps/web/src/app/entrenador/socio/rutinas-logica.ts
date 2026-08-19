@@ -28,15 +28,26 @@ export interface RutinaElegible {
 /**
  * Cruza las rutinas del gimnasio con las que el socio ya sigue.
  *
- * No las quita de la lista: se marcan. Esconderlas dejaria a quien busca
- * "Fuerza principiantes" sin entender por que no aparece.
+ * Las que YA SIGUE no se quitan de la lista: se marcan. Esconderlas dejaria a
+ * quien busca "Fuerza principiantes" sin entender por que no aparece.
+ *
+ * Las ARCHIVADAS si se quitan, y la diferencia no es de estilo. "Ya la sigue"
+ * es un choque temporal —se termina la asignacion y vuelve a poder elegirse—,
+ * asi que verla marcada explica el bloqueo. Archivada es definitivo: en V1 no
+ * se desarchiva, no va a poder elegirse nunca, y dejarla en el selector es
+ * ofrecer algo que el servidor rechaza siempre.
+ *
+ * Esto NO esconde el pasado: lo que el socio ya sigue viene de
+ * `rutinasDeSocio`, se pinta aparte y ahi las archivadas siguen estando.
  */
 export function elegibles(
   delGimnasio: readonly Routine[],
   asignadas: readonly AssignedRoutine[],
 ): RutinaElegible[] {
   const vigentes = new Set(asignadas.map((a) => a.id));
-  return delGimnasio.map((rutina) => ({ rutina, yaLaSigue: vigentes.has(rutina.id) }));
+  return delGimnasio
+    .filter((rutina) => rutina.status === 'active')
+    .map((rutina) => ({ rutina, yaLaSigue: vigentes.has(rutina.id) }));
 }
 
 /** Filtra por nombre y descripcion. Mismo criterio que la biblioteca de ejercicios. */

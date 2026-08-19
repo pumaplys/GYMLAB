@@ -106,6 +106,9 @@ export function RutinasDelSocio({ memberId, nombre }: { memberId: string; nombre
     [delGimnasio, asignadas],
   );
 
+  /** Hay rutinas, pero ninguna asignable. Se dice distinto que no tener ninguna. */
+  const todasArchivadas = (delGimnasio?.length ?? 0) > 0 && candidatas.length === 0;
+
   const asignar = async (routineId: string) => {
     if (!gymId || guardando) return;
     setGuardando(routineId);
@@ -188,8 +191,20 @@ export function RutinasDelSocio({ memberId, nombre }: { memberId: string; nombre
             etiqueta={`Asignar una rutina a ${nombre}`}
             placeholder="Buscar por nombre o descripcion"
             conBuscador={candidatas.length >= DESDE_CUANTAS_SE_BUSCA}
-            tituloVacio="Este gimnasio no tiene rutinas"
-            textoVacio="Crea una en la seccion de rutinas y vuelve aqui."
+            /*
+              Vacio por archivadas y vacio de verdad no son lo mismo. Si el
+              gimnasio tiene rutinas pero todas estan archivadas, decir "no
+              tiene rutinas" manda a crear una a quien las esta viendo en la
+              otra pantalla.
+            */
+            tituloVacio={
+              todasArchivadas ? 'Todas las rutinas estan archivadas' : 'Este gimnasio no tiene rutinas'
+            }
+            textoVacio={
+              todasArchivadas
+                ? 'Una rutina archivada ya no puede asignarse. Crea una nueva en la seccion de rutinas.'
+                : 'Crea una en la seccion de rutinas y vuelve aqui.'
+            }
             onElegir={(clave) => void asignar(clave)}
             onCancelar={() => setEligiendo(false)}
           />
@@ -223,6 +238,12 @@ export function RutinasDelSocio({ memberId, nombre }: { memberId: string; nombre
                   <span className={estilos.nombre}>{rutina.name}</span>
                   <span className={estilos.detalle}>
                     {cuantosEjercicios(rutina)} · Asignada el {comoFecha(rutina.assignedAt)}
+                    {/*
+                      El socio la sigue igual —archivar no le quita nada—, pero
+                      su entrenador tiene que saber que si la quita no va a
+                      poder volver a ponersela.
+                    */}
+                    {rutina.status === 'archived' && ' · Archivada'}
                   </span>
                   {rutina.description && (
                     <span className={estilos.descripcion}>{rutina.description}</span>

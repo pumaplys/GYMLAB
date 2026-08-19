@@ -8,6 +8,7 @@ import { BotonEnlace } from '@/componentes/boton';
 import { Cargando } from '@/componentes/cargando';
 import { EncabezadoDePagina } from '@/componentes/encabezado-de-pagina';
 import { EstadoVacio } from '@/componentes/estado-vacio';
+import { Etiqueta } from '@/componentes/etiqueta';
 import { Dato, FilaApilada, ListaApilada } from '@/componentes/lista-apilada';
 import { MarcoEntrenador } from '@/componentes/marco-entrenador';
 import { RutaPrivada } from '@/componentes/ruta-privada';
@@ -117,6 +118,13 @@ function Rutinas() {
                       <Link className={estilos.enlace} href={fichaDe(rutina)}>
                         <span className={estilos.nombreRutina}>{rutina.name}</span>
                       </Link>
+                      {/*
+                        Las archivadas siguen en la lista a proposito: son el
+                        historial del gimnasio y sus socios las siguen viendo.
+                        Lo que cambia es que no se pueden asignar, y eso hay que
+                        poder verlo sin abrir la ficha de cada una.
+                      */}
+                      {rutina.status === 'archived' && <Etiqueta tono="neutro">Archivada</Etiqueta>}
                       {rutina.description && (
                         <span className={estilos.descripcion}>{rutina.description}</span>
                       )}
@@ -135,7 +143,8 @@ function Rutinas() {
                   href={fichaDe(rutina)}
                   titulo={
                     <>
-                      {rutina.name}
+                      {rutina.name}{' '}
+                      {rutina.status === 'archived' && <Etiqueta tono="neutro">Archivada</Etiqueta>}
                       {rutina.description && (
                         <span className={estilos.descripcion}>{rutina.description}</span>
                       )}
