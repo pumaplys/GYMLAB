@@ -97,6 +97,10 @@ export const routineItemSchema = z.object({
 });
 export type RoutineItem = z.infer<typeof routineItemSchema>;
 
+export const ROUTINE_STATUSES = ['active', 'archived'] as const;
+export const routineStatusSchema = z.enum(ROUTINE_STATUSES);
+export type RoutineStatus = z.infer<typeof routineStatusSchema>;
+
 export const routineSchema = z.object({
   id: z.string().uuid(),
   name: z.string(),
@@ -104,6 +108,14 @@ export const routineSchema = z.object({
   items: z.array(routineItemSchema),
   /** Cuantos socios la siguen ahora mismo. */
   activeAssignments: z.number().int(),
+  /**
+   * Archivada = retirada del uso, pero su historia se conserva.
+   *
+   * No admite asignaciones nuevas —lo impone el servicio— y en V1 no se
+   * desarchiva. Es lo que sustituye al borrado, que cascadeaba las
+   * asignaciones y con ellas el registro de quien siguio la rutina.
+   */
+  status: routineStatusSchema,
 });
 export type Routine = z.infer<typeof routineSchema>;
 

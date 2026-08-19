@@ -109,6 +109,8 @@ export const exercises = pgTable(
  * La misma rutina puede estar asignada a varios socios a la vez — es justo el
  * motivo de que exista como entidad y no como una lista dentro de cada socio.
  */
+export const routineStatus = pgEnum('routine_status', ['active', 'archived']);
+
 export const routines = pgTable(
   'routines',
   {
@@ -116,6 +118,18 @@ export const routines = pgTable(
     gymId: tenantId().references(() => gyms.id, { onDelete: 'cascade' }),
     name: text('name').notNull(),
     description: text('description'),
+    /**
+     * Archivada = ya no se usa, pero su historia se queda.
+     *
+     * Mismo patron que `plans`: la accion normal es ARCHIVAR, no borrar. El
+     * borrado cascadea `routine_assignments` y eliminaria el registro de que un
+     * socio siguio esta rutina — justo lo contrario de como el resto del
+     * producto trata el historico.
+     *
+     * Una rutina archivada no admite asignaciones nuevas, y eso lo impone el
+     * SERVICIO, no la pantalla. En V1 no se desarchiva.
+     */
+    status: routineStatus('status').notNull().default('active'),
     /** Quien la creo. Nulo si esa cuenta se borro. */
     createdByUserId: uuid('created_by_user_id').references(() => users.id, {
       onDelete: 'set null',

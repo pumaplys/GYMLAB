@@ -26,6 +26,7 @@ const rutina = (id: string, name: string, items = 1): Routine => ({
   name,
   description: null,
   activeAssignments: 0,
+  status: 'active' as const,
   items: Array.from({ length: items }, (_, i) => ({
     id: `item-${id}-${i}`,
     exerciseId: '00000000-0000-4000-8000-000000000001',
@@ -91,6 +92,27 @@ describe('que rutinas se pueden asignar', () => {
     expect(lista).toHaveLength(1);
     expect(lista[0]!.rutina.id).toBe('r1');
     expect(lista[0]!.yaLaSigue).toBe(false);
+  });
+
+  it('una rutina archivada no se ofrece: el servidor la rechazaria siempre', () => {
+    // Y aqui SI se esconde, al reves que "ya la sigue". Esa se desbloquea
+    // terminando la asignacion; esta no se desbloquea nunca —en V1 no se
+    // desarchiva— asi que ofrecerla es prometer algo que no va a pasar.
+    const viva = rutina('r1', 'Fuerza');
+    const archivada = { ...rutina('r2', 'Movilidad'), status: 'archived' as const };
+    const lista = elegibles([viva, archivada], []);
+
+    expect(lista.map((c) => c.rutina.id)).toEqual(['r1']);
+  });
+
+  it('archivar no borra el pasado: la que el socio ya sigue se sigue viendo', () => {
+    // La lista de asignadas viene de otra peticion y no pasa por aqui. Esta
+    // prueba fija que el filtro no arrastra con el lo que el socio ya tiene:
+    // el selector se queda vacio, pero `asignadas` no es cosa de `elegibles`.
+    const archivada = { ...rutina('r1', 'Fuerza'), status: 'archived' as const };
+    const lista = elegibles([archivada], [asignada(archivada)]);
+
+    expect(lista).toEqual([]);
   });
 });
 

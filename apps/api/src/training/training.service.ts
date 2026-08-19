@@ -11,6 +11,7 @@ import {
   desc,
   eq,
   exercises,
+  count,
   inArray,
   isNull,
   routineAssignments,
@@ -239,6 +240,7 @@ export class TrainingService {
       description: f.description,
       items: porRutina.get(f.id) ?? [],
       activeAssignments: activas.get(f.id) ?? 0,
+      status: f.status,
     }));
   }
 
@@ -296,10 +298,26 @@ export class TrainingService {
    * Editar sigue abierto a cualquier entrenador: es compartido por diseno y se
    * puede deshacer. Borrar no.
    */
-  async deleteRoutine(gymId: string, id: string): Promise<{ ok: true }> {
+  /**
+   * Retira una rutina del uso SIN tocar su historia.
+   *
+   * Es la accion normal, y el espejo de `archivePlan`: la rutina se queda
+   * entera —ejercicios, notas y asignaciones pasadas— pero deja de poder
+   * asignarse. Lo impide `assignRoutine`, no la pantalla.
+   *
+   * Misma regla de autoria que tenia el borrado: un entrenador solo archiva
+   * las suyas, porque puede haber socios de otro entrenador siguiendola.
+   *
+   * En V1 no se desarchiva. Si hiciera falta volver a usarla, se duplica.
+   */
+  async archiveRoutine(gymId: string, id: string): Promise<Routine> {
     const tx = requireTransaction();
     const { userId: actorUserId, role } = requireRequestContext();
-    await this.getRoutine(gymId, id);
+    const actual = await this.getRoutine(gymId, id);
+
+    if (actual.status === 'archived') {
+      throw new BadRequestException('Esa rutina ya esta archivada.');
+    }
 
     if (role === 'trainer') {
       const [rutina] = await tx
@@ -310,10 +328,67 @@ export class TrainingService {
 
       if (rutina?.creador !== actorUserId) {
         throw new ForbiddenException(
-          'Solo puede borrar esta rutina quien la creo, o el dueno del gimnasio. ' +
+          'Solo puede archivar esta rutina quien la creo, o el dueno del gimnasio. ' +
             'Puede haber socios de otro entrenador siguiendola.',
         );
       }
+    }
+
+    await tx
+      .update(routines)
+      .set({ status: 'archived', updatedAt: new Date() })
+      .where(and(eq(routines.gymId, gymId), eq(routines.id, id)));
+
+    await tx.insert(auditLog).values({
+      gymId,
+      actorUserId,
+      action: 'routine.archived',
+      entityType: 'routine',
+      entityId: id,
+    });
+
+    return this.getRoutine(gymId, id);
+  }
+
+  async deleteRoutine(gymId: string, id: string): Promise<{ ok: true }> {
+    const tx = requireTransaction();
+    const { userId: actorUserId, role } = requireRequestContext();
+    await this.getRoutine(gymId, id);
+
+    /*
+     * ┌──────────────────────────────────────────────────────────────────────┐
+     * │ BORRAR CASCADEA `routine_assignments`. POR ESO CASI NADIE PUEDE.     │
+     * │                                                                      │
+     * │ La clave ajena borra en cascada, asi que eliminar una rutina borra   │
+     * │ tambien el registro de que un socio la siguio. Eso contradice como   │
+     * │ el resto del producto trata el historico, y un entrenador podia      │
+     * │ hacerlo sin enterarse.                                                │
+     * │                                                                      │
+     * │ Queda para el unico caso inofensivo: una rutina creada por error que │
+     * │ NUNCA se asigno a nadie. Todo lo demas se archiva.                    │
+     * └──────────────────────────────────────────────────────────────────────┘
+     */
+    if (role !== 'owner') {
+      throw new ForbiddenException(
+        'Solo el dueno puede borrar una rutina, y solo si nunca se asigno a nadie. ' +
+          'Para retirar una rutina en uso, archivala.',
+      );
+    }
+
+    const [{ n } = { n: 0 }] = await tx
+      .select({ n: count() })
+      .from(routineAssignments)
+      .where(
+        and(eq(routineAssignments.gymId, gymId), eq(routineAssignments.routineId, id)),
+      );
+
+    // Cualquier asignacion, incluidas las TERMINADAS: lo que se protege es el
+    // historico, y una asignacion terminada es exactamente eso.
+    if (Number(n) > 0) {
+      throw new BadRequestException(
+        'Esta rutina se asigno a alguien alguna vez, asi que borrarla eliminaria ese ' +
+          'historial. Archivala en su lugar: deja de poder asignarse y se conserva.',
+      );
     }
 
     await tx.delete(routines).where(and(eq(routines.gymId, gymId), eq(routines.id, id)));
@@ -341,7 +416,21 @@ export class TrainingService {
   async assignRoutine(gymId: string, routineId: string, memberId: string): Promise<void> {
     const tx = requireTransaction();
     const { userId: actorUserId, role } = requireRequestContext();
-    await this.getRoutine(gymId, routineId);
+    const rutina = await this.getRoutine(gymId, routineId);
+
+    /*
+     * En el SERVICIO y no solo en la pantalla, igual que `subscribe` con un
+     * plan archivado: si «archivada» solo escondiera un boton, seguiria siendo
+     * asignable por API y el estado no significaria nada.
+     */
+    if (rutina.status === 'archived') {
+      // Sin "duplicala": duplicar una rutina no existe en el producto, y un
+      // mensaje que manda a hacer algo que no se puede hacer es peor que uno
+      // escueto. Lo que si se puede es crear una nueva.
+      throw new BadRequestException(
+        'Esa rutina esta archivada y ya no se puede asignar. Crea una rutina nueva si quieres volver a usarla.',
+      );
+    }
 
     let trainerId: string | null = null;
     if (role === 'trainer') {

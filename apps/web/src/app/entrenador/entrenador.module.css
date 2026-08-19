@@ -95,6 +95,14 @@
   font-weight: 500;
 }
 
+/* La pastilla "Archivada" va al lado del nombre, y sin esto lo toca: el nombre
+   es un enlace en linea, asi que los dos cuadros quedan pegados y se lee
+   "Rutina de fuerzaArchivada". El hueco es cosa de quien la coloca, no del
+   componente. */
+.etiquetaJunto {
+  margin-left: var(--e2);
+}
+
 /* Debajo del nombre, no a su lado: en la tarjeta estrecha va dentro del titulo
    y suelto se leeria "RutinaDescripcion". */
 .descripcion {
