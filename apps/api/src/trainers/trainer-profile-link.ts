@@ -28,15 +28,31 @@ export class TrainerProfileLink implements InvitationAcceptedHook {
   async onInvitationAccepted(evento: InvitationAcceptedEvent): Promise<void> {
     if (evento.role !== 'trainer') return;
 
-    // `ON CONFLICT DO NOTHING` hace la creacion idempotente: si esa cuenta ya
-    // tiene perfil en este gimnasio —reinvitacion, o alguien que fue entrenador,
-    // se fue y vuelve— se respeta el perfil existente con su bio y su historial
-    // en lugar de crear uno vacio. El indice unico (gym_id, user_id) es lo que
-    // lo hace posible.
+    /*
+     * `ON CONFLICT` hace la creacion idempotente: si esa cuenta ya tiene perfil
+     * en este gimnasio —reinvitacion, o alguien que fue entrenador, se fue y
+     * vuelve— se respeta el existente con su bio y su historial en lugar de
+     * crear uno vacio. El indice unico (gym_id, user_id) es lo que lo permite.
+     *
+     * ┌──────────────────────────────────────────────────────────────────────┐
+     * │ Y VUELVE A `active`, QUE ANTES NO PASABA.                            │
+     * │                                                                      │
+     * │ Era `DO NOTHING`. Desde que retirar el acceso cierra tambien el      │
+     * │ perfil, ese `NOTHING` dejaba a quien volvia con el acceso restaurado │
+     * │ pero el perfil `inactive`: no podia recibir socios y nadie entendia  │
+     * │ por que. Reinvitar ES el camino de reactivacion en V1.               │
+     * │                                                                      │
+     * │ Solo toca el estado. La bio, el telefono y el historial se quedan —  │
+     * │ y las asignaciones antiguas NO se restauran: volver a asignar es una │
+     * │ decision del gimnasio, no un efecto secundario de aceptar un correo. │
+     * └──────────────────────────────────────────────────────────────────────┘
+     */
     await evento.tx.execute(sql`
       INSERT INTO trainers (gym_id, user_id)
       VALUES (${evento.gymId}, ${evento.userId})
-      ON CONFLICT (gym_id, user_id) DO NOTHING
+      ON CONFLICT (gym_id, user_id) DO UPDATE
+        SET status = 'active', updated_at = now()
+        WHERE trainers.status <> 'active'
     `);
   }
 }

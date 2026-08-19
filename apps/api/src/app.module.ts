@@ -17,6 +17,7 @@ import { InvitationsModule } from './invitations/invitations.module';
 import { JobsModule } from './jobs/jobs.module';
 import { MailModule } from './mail/mail.module';
 import { MembersModule } from './members/members.module';
+import { AccessRevokedHooksModule } from './access-revoked-hooks.module';
 import { MemberErasedHooksModule } from './member-erased-hooks.module';
 import { PersonalDataModule } from './personal-data.module';
 import { TrainersModule } from './trainers/trainers.module';
@@ -63,6 +64,7 @@ import { TrainingModule } from './training/training.module';
     // los dos puntos de extension. Ver ADR-0010 y ADR-0011.
     InvitationHooksModule,
     MemberErasedHooksModule,
+    AccessRevokedHooksModule,
     PersonalDataModule,
     GymHooksModule,
   ],

@@ -41,6 +41,7 @@ import type {
 import { ipDe } from '../common/http';
 import { env } from '../config/env';
 import { DATABASE } from '../database/database.module';
+import { ACCESS_REVOKED_HOOK, type AccessRevokedHooks } from '../common/access-revoked-hooks';
 import { GYM_CREATED_HOOK, type GymCreatedHooks } from '../common/gym-hooks';
 import type { Auth } from './auth.instance';
 import { AUTH } from './auth.tokens';
@@ -80,6 +81,16 @@ export class AuthService {
     @Optional()
     @Inject(GYM_CREATED_HOOK)
     private readonly gymHooks: GymCreatedHooks = [],
+    /**
+     * Quienes reaccionan a que alguien pierda el acceso.
+     *
+     * Mismo motivo que arriba: `auth` no puede tocar `trainers` —es tabla de
+     * otro modulo— asi que anuncia la revocacion y quien corresponda cierra el
+     * perfil. Ver `common/access-revoked-hooks.ts`.
+     */
+    @Optional()
+    @Inject(ACCESS_REVOKED_HOOK)
+    private readonly accessRevokedHooks: AccessRevokedHooks = [],
   ) {}
 
   /**
@@ -355,6 +366,23 @@ export class AuthService {
             entityId: userId,
             metadata: { role: filas[0].role },
           });
+
+          /*
+           * DENTRO de la transaccion y despues del asiento: quien reacciona
+           * actua sobre un hecho consumado, y si su parte falla no se retira
+           * el acceso tampoco. Media revocacion —sin acceso pero con perfil
+           * activo y socios asignados— es peor que ninguna, y es exactamente
+           * lo que pasaba antes de que existiera este punto de extension.
+           */
+          for (const hook of this.accessRevokedHooks) {
+            await hook.onAccessRevoked({
+              gymId,
+              userId,
+              role: filas[0].role,
+              actorUserId,
+              tx,
+            });
+          }
         }
         return filas;
       },
