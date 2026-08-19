@@ -16,6 +16,9 @@ import { api } from '@/lib/api';
 import { NOMBRE_DEL_GRUPO, filtrarEjercicios } from '@/lib/ejercicios';
 import { mensajeDeError } from '@/lib/errores';
 import { esSesionCaducada, useSesion } from '@/lib/sesion';
+import { ConfirmacionEnLinea } from '@/componentes/confirmacion-en-linea';
+import { Boton } from '@/componentes/boton';
+import { FormularioDeEjercicio } from './formulario';
 import estilos from '../entrenador.module.css';
 
 /**
@@ -34,8 +37,9 @@ import estilos from '../entrenador.module.css';
  * │ anadido por su cuenta, que es informacion util al escribir una rutina.   │
  * └──────────────────────────────────────────────────────────────────────────┘
  *
- * SOLO LECTURA. Crear y editar ejercicios existe en la API y llegara con la
- * pantalla que lo use; aqui no hay ningun boton que lo insinue.
+ * Dueno y entrenador pueden crear, editar y borrar: es su biblioteca. Borrar
+ * uno NO rompe las rutinas que lo usaban —la clave ajena es `SET NULL`— pero
+ * si las deja senaladas, y por eso se confirma antes.
  */
 export default function EjerciciosPage() {
   return (
@@ -53,6 +57,9 @@ function Biblioteca() {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busqueda, setBusqueda] = useState('');
+  /** `null` = nada abierto; `'nuevo'` = alta; un Exercise = edicion. */
+  const [editando, setEditando] = useState<Exercise | 'nuevo' | null>(null);
+  const [borrando, setBorrando] = useState<string | null>(null);
 
   useEffect(() => {
     if (!gymId) return;
@@ -79,6 +86,24 @@ function Biblioteca() {
     return () => control.abort();
   }, [gymId, revisar]);
 
+  /** Relee la biblioteca del servidor. El resultado no se deduce en local. */
+  const recargar = async () => {
+    if (!gymId) return;
+    setEjercicios(await api.entrenamiento.ejercicios(gymId));
+  };
+
+  const borrar = async (id: string) => {
+    if (!gymId) return;
+    try {
+      setError(null);
+      await api.entrenamiento.eliminarEjercicio(gymId, id);
+      setBorrando(null);
+      await recargar();
+    } catch (problema: unknown) {
+      setError(mensajeDeError(problema));
+    }
+  };
+
   /*
    * Busqueda local, y aqui si esta justificada por el tamano.
    *
@@ -97,11 +122,26 @@ function Biblioteca() {
   return (
     <>
       <EncabezadoDePagina
+        acciones={
+          !editando && <Boton onClick={() => setEditando('nuevo')}>Nuevo ejercicio</Boton>
+        }
         titulo="Ejercicios"
         entradilla="La biblioteca de este gimnasio. Es suya: nace del catalogo de GYMLAB y el gimnasio la ajusta."
       />
 
       {error && <Aviso>{error}</Aviso>}
+
+      {editando && gymId && (
+        <FormularioDeEjercicio
+          gymId={gymId}
+          ejercicio={editando === 'nuevo' ? null : editando}
+          onGuardado={async () => {
+            setEditando(null);
+            await recargar();
+          }}
+          onCancelar={() => setEditando(null)}
+        />
+      )}
 
       {ejercicios && ejercicios.length > 0 && (
         <div className={estilos.herramientas}>
@@ -126,14 +166,14 @@ function Biblioteca() {
           <EstadoVacio
             titulo={buscando ? 'Ningun ejercicio coincide' : 'La biblioteca esta vacia'}
             /*
-             * Sin sugerir crear: anadir ejercicios llega despues. Y el caso de
-             * biblioteca vacia es raro —el alta del gimnasio la siembra— asi
-             * que el texto apunta a lo que de verdad habria pasado.
+             * El caso de biblioteca vacia es raro —el alta del gimnasio la
+             * siembra— asi que el texto dice lo que de verdad habria pasado, y
+             * ahora si apunta a la salida: crear uno.
              */
             texto={
               buscando
                 ? 'Prueba con otro nombre, con el material o con el grupo muscular.'
-                : 'Este gimnasio ha borrado todos los ejercicios de su biblioteca.'
+                : 'Este gimnasio ha borrado todos los ejercicios. Puedes crear uno nuevo.'
             }
           />
         ) : (
@@ -145,6 +185,7 @@ function Biblioteca() {
                   <th scope="col">Grupo</th>
                   <th scope="col">Material</th>
                   <th scope="col">Origen</th>
+                  <th scope="col" />
                 </tr>
               </thead>
               <tbody>
@@ -157,6 +198,31 @@ function Biblioteca() {
                       <Etiqueta tono={ejercicio.fromTemplate ? 'neutro' : 'acento'}>
                         {ejercicio.fromTemplate ? 'Del catalogo' : 'Del gimnasio'}
                       </Etiqueta>
+                    </td>
+                    <td className={celda.acciones}>
+                      {borrando === ejercicio.id ? (
+                        <ConfirmacionEnLinea
+                          /*
+                           * Se avisa de lo que pasa con las rutinas: el
+                           * ejercicio no desaparece de ellas, queda senalado
+                           * como que ya no esta en la biblioteca. Quien borra
+                           * espera lo contrario si nadie se lo dice.
+                           */
+                          pregunta="¿Borrarlo? Las rutinas que lo usen lo marcaran como no disponible."
+                          confirmando={false}
+                          onConfirmar={() => void borrar(ejercicio.id)}
+                          onCancelar={() => setBorrando(null)}
+                        />
+                      ) : (
+                        <>
+                          <Boton variante="sutil" onClick={() => setEditando(ejercicio)}>
+                            Editar
+                          </Boton>
+                          <Boton variante="sutil" onClick={() => setBorrando(ejercicio.id)}>
+                            Borrar
+                          </Boton>
+                        </>
+                      )}
                     </td>
                   </tr>
                 ))}

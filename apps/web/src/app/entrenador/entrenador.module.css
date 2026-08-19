@@ -114,3 +114,11 @@
     gap: var(--e1) var(--e4);
   }
 }
+
+/* Los dos botones de un formulario, en fila y plegables en estrecho. */
+.accionesDelFormulario {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e3);
+  margin-top: var(--e4);
+}

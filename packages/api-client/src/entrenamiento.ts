@@ -4,9 +4,11 @@ import {
   exerciseSchema,
   routineSchema,
   type AssignedRoutine,
+  type CreateExerciseInput,
   type CreateRoutineInput,
   type Exercise,
   type Routine,
+  type UpdateExerciseInput,
   type UpdateRoutineInput,
 } from '@gymlab/contracts';
 import type { Http, RequestOptions } from './http';
@@ -40,6 +42,28 @@ export interface EntrenamientoApi {
    * fila pertenece a un gimnasio, y `fromTemplate` solo dice de donde vino.
    */
   ejercicios(gymId: string, options?: RequestOptions): Promise<Exercise[]>;
+
+  crearEjercicio(
+    gymId: string,
+    input: CreateExerciseInput,
+    options?: RequestOptions,
+  ): Promise<Exercise>;
+
+  actualizarEjercicio(
+    gymId: string,
+    id: string,
+    input: UpdateExerciseInput,
+    options?: RequestOptions,
+  ): Promise<Exercise>;
+
+  /**
+   * Borra un ejercicio de la biblioteca.
+   *
+   * Las rutinas que lo usaban NO se rompen: la clave ajena es `SET NULL`, asi
+   * que el item conserva nombre, series, repeticiones y notas y queda marcado
+   * como que ya no esta en la biblioteca. Editar esa rutina exige sustituirlo.
+   */
+  eliminarEjercicio(gymId: string, id: string, options?: RequestOptions): Promise<void>;
 
   /**
    * Las rutinas del gimnasio, con sus ejercicios ya dentro.
@@ -148,6 +172,32 @@ export function createEntrenamientoApi(http: Http): EntrenamientoApi {
         schema: z.array(exerciseSchema),
         ...options,
       }),
+
+    crearEjercicio: (gymId, input, options) =>
+      http({
+        method: 'POST',
+        path: `${raiz(gymId)}/exercises`,
+        body: input,
+        schema: exerciseSchema,
+        ...options,
+      }),
+
+    actualizarEjercicio: (gymId, id, input, options) =>
+      http({
+        method: 'PATCH',
+        path: `${raiz(gymId)}/exercises/${encodeURIComponent(id)}`,
+        body: input,
+        schema: exerciseSchema,
+        ...options,
+      }),
+
+    eliminarEjercicio: (gymId, id, options) =>
+      http({
+        method: 'DELETE',
+        path: `${raiz(gymId)}/exercises/${encodeURIComponent(id)}`,
+        schema: z.unknown(),
+        ...options,
+      }).then(() => undefined),
 
     rutinas: (gymId, options) =>
       http({

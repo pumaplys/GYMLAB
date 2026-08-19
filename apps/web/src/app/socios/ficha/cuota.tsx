@@ -12,6 +12,7 @@ import { Aviso } from '@/componentes/aviso';
 import { Boton } from '@/componentes/boton';
 import { Campo } from '@/componentes/campo';
 import { Cargando } from '@/componentes/cargando';
+import { ConfirmacionEnLinea } from '@/componentes/confirmacion-en-linea';
 import { Etiqueta, type TonoDeEtiqueta } from '@/componentes/etiqueta';
 import { Dato, FilaApilada, ListaApilada } from '@/componentes/lista-apilada';
 import { Selector } from '@/componentes/selector';
@@ -21,6 +22,7 @@ import { api } from '@/lib/api';
 import { mensajeDeError } from '@/lib/errores';
 import { aCentimos, comoFecha, comoImporte } from '@/lib/formato';
 import { useSesion } from '@/lib/sesion';
+import { accionesDeCuota, sinAcciones } from './acciones-de-cuota';
 import estilos from './cuota.module.css';
 
 /**
@@ -78,7 +80,7 @@ const METODOS = [
 ] as const;
 
 export function Cuota({ memberId }: { memberId: string }) {
-  const { gymId, revisar: _revisar } = useSesion();
+  const { gymId, rol, revisar: _revisar } = useSesion();
 
   const [cuota, setCuota] = useState<DuesStatus | null>(null);
   const [pagos, setPagos] = useState<Payment[]>([]);
@@ -86,6 +88,9 @@ export function Cuota({ memberId }: { memberId: string }) {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [cobrando, setCobrando] = useState(false);
+  /** Qué acción de ciclo de vida se está confirmando, si alguna. */
+  const [confirmando, setConfirmando] = useState<'congelar' | 'reanudar' | 'baja' | null>(null);
+  const [trabajando, setTrabajando] = useState(false);
 
   useEffect(() => {
     if (!gymId) return;
@@ -133,6 +138,35 @@ export function Cuota({ memberId }: { memberId: string }) {
     setPagos(await api.billing.listPayments(gymId, memberId));
   };
 
+  /**
+   * Congelar, reanudar o dar de baja.
+   *
+   * Las tres comparten camino porque comparten forma: confirmar, llamar,
+   * releer el estado del servidor. El estado resultante NO se deduce aquí —
+   * congelar cambia los días guardados y dar de baja deja al socio sin cuota,
+   * y eso lo calcula `dues`.
+   */
+  const ejecutar = async (accion: 'congelar' | 'reanudar' | 'baja') => {
+    if (!gymId || trabajando) return;
+    setTrabajando(true);
+    setError(null);
+
+    try {
+      if (accion === 'congelar') await api.billing.pause(gymId, memberId);
+      else if (accion === 'reanudar') await api.billing.resume(gymId, memberId);
+      else await api.billing.cancel(gymId, memberId);
+
+      setConfirmando(null);
+      await refrescar();
+    } catch (problema: unknown) {
+      // El servidor manda: si rechaza la transición, se enseña su motivo en
+      // lugar de dejar la pantalla como si no hubiera pasado nada.
+      setError(mensajeDeError(problema));
+    } finally {
+      setTrabajando(false);
+    }
+  };
+
   if (!gymId) return null;
 
   if (cargando) {
@@ -160,7 +194,18 @@ export function Cuota({ memberId }: { memberId: string }) {
         acciones={
           cuota &&
           cuota.estado !== 'SIN_SUSCRIPCION' &&
-          !cobrando && <Boton onClick={() => setCobrando(true)}>Registrar pago</Boton>
+          !cobrando && (
+            <span className={estilos.acciones}>
+              <Boton onClick={() => setCobrando(true)}>Registrar pago</Boton>
+              <AccionesDeCiclo
+                estado={cuota.estado}
+                confirmando={confirmando}
+                trabajando={trabajando}
+                onElegir={setConfirmando}
+                onConfirmar={ejecutar}
+              />
+            </span>
+          )
         }
       >
         {error && <Aviso>{error}</Aviso>}
@@ -202,7 +247,12 @@ export function Cuota({ memberId }: { memberId: string }) {
         esta pantalla se pintara sus propios margenes.
       */}
       <Tarjeta variante="lista" className={estilos.bloque} titulo={<h2>Pagos</h2>}>
-        <Pagos pagos={pagos} />
+        <Pagos
+          pagos={pagos}
+          gymId={gymId}
+          puedeAnular={rol === 'owner'}
+          onAnulado={refrescar}
+        />
       </Tarjeta>
     </>
   );
@@ -407,13 +457,35 @@ function FormularioDePago({
  * anulados aqui haria que el historial no cuadrara con la contabilidad del
  * gimnasio, que es justo para lo que se mira.
  */
-function Pagos({ pagos }: { pagos: Payment[] }) {
+function Pagos({
+  pagos,
+  gymId,
+  puedeAnular,
+  onAnulado,
+}: {
+  pagos: Payment[];
+  gymId: string;
+  /** Solo el dueno anula. El servidor lo impone; aqui no se ofrece. */
+  puedeAnular: boolean;
+  onAnulado: () => Promise<void>;
+}) {
+  const [anulando, setAnulando] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
   if (pagos.length === 0) {
     return <p className={estilos.vacio}>Todavia no hay ningun pago registrado.</p>;
   }
 
+  /*
+   * Un pago ya anulado NO vuelve a ofrecer la accion: el servidor responde
+   * «Ese pago ya esta anulado» y ensenar el boton solo invita a ese error.
+   */
+  const anulable = (pago: Payment) => puedeAnular && !pago.voidedAt;
+
   return (
     <>
+      {error && <Aviso>{error}</Aviso>}
+
       <Tabla conListaEstrecha>
         <thead>
         <tr>
@@ -423,6 +495,7 @@ function Pagos({ pagos }: { pagos: Payment[] }) {
           <th scope="col" className={celda.numerica}>
             Importe
           </th>
+          {puedeAnular && <th scope="col" />}
         </tr>
       </thead>
       <tbody>
@@ -435,10 +508,33 @@ function Pagos({ pagos }: { pagos: Payment[] }) {
               {comoImporte(pago.amountCents, pago.currency)}
               {pago.voidedAt && <span className={estilos.motivo}>Anulado: {pago.voidReason}</span>}
             </td>
+            {puedeAnular && (
+              <td className={celda.acciones}>
+                {anulable(pago) && (
+                  <Boton variante="sutil" onClick={() => setAnulando(pago.id)}>
+                    Anular
+                  </Boton>
+                )}
+              </td>
+            )}
           </tr>
         ))}
         </tbody>
       </Tabla>
+
+      {anulando && (
+        <FormularioDeAnulacion
+          gymId={gymId}
+          paymentId={anulando}
+          onCancelar={() => setAnulando(null)}
+          onAnulado={async () => {
+            setAnulando(null);
+            setError(null);
+            await onAnulado();
+          }}
+          onError={setError}
+        />
+      )}
 
       {/*
         En estrecho, el importe sube al titulo de la tarjeta junto al concepto:
@@ -470,5 +566,141 @@ function Pagos({ pagos }: { pagos: Payment[] }) {
         ))}
       </ListaApilada>
     </>
+  );
+}
+
+/**
+ * Congelar, reanudar y dar de baja.
+ *
+ * Solo aparece lo que el estado permite: `acciones-de-cuota` copia las reglas
+ * del servidor para no ofrecer un boton que va a fallar seguro. Si aun asi el
+ * servidor rechazara la transicion, su mensaje se pinta arriba.
+ *
+ * Confirmacion EN LINEA y no modal, como el resto del panel: dar de baja una
+ * cuota deja al socio sin poder entrar, y congelar mueve el vencimiento.
+ */
+function AccionesDeCiclo({
+  estado,
+  confirmando,
+  trabajando,
+  onElegir,
+  onConfirmar,
+}: {
+  estado: DuesState;
+  confirmando: 'congelar' | 'reanudar' | 'baja' | null;
+  trabajando: boolean;
+  onElegir: (accion: 'congelar' | 'reanudar' | 'baja' | null) => void;
+  onConfirmar: (accion: 'congelar' | 'reanudar' | 'baja') => void;
+}) {
+  const puede = accionesDeCuota(estado);
+  if (sinAcciones(estado)) return null;
+
+  if (confirmando) {
+    return (
+      <ConfirmacionEnLinea
+        pregunta={PREGUNTA[confirmando]}
+        confirmando={trabajando}
+        onConfirmar={() => onConfirmar(confirmando)}
+        onCancelar={() => onElegir(null)}
+      />
+    );
+  }
+
+  return (
+    <>
+      {puede.congelar && (
+        <Boton variante="sutil" onClick={() => onElegir('congelar')}>
+          Congelar
+        </Boton>
+      )}
+      {puede.reanudar && (
+        <Boton variante="sutil" onClick={() => onElegir('reanudar')}>
+          Reanudar
+        </Boton>
+      )}
+      {puede.darDeBaja && (
+        <Boton variante="sutil" onClick={() => onElegir('baja')}>
+          Dar de baja
+        </Boton>
+      )}
+    </>
+  );
+}
+
+const PREGUNTA: Record<'congelar' | 'reanudar' | 'baja', string> = {
+  // Se dice lo que PASA, no solo lo que se pulsa: los dias guardados y la
+  // perdida de acceso son justo lo que alguien necesita saber antes de decidir.
+  congelar: '¿Congelar la cuota? Los dias que queden se guardan para despues.',
+  reanudar: '¿Reanudar la cuota? Se recuperan los dias guardados.',
+  baja: '¿Dar de baja la cuota? Dejara de poder entrar hasta que se le de otra.',
+};
+
+/**
+ * Anular un cobro. Pide el motivo porque el servidor lo exige.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ ANULAR NO BORRA, Y LA PANTALLA TIENE QUE DECIRLO.                       │
+ * │                                                                          │
+ * │ La tabla de pagos es append-only: la fila se queda, tachada y con este   │
+ * │ motivo al lado. Quien anula un cobro suele esperar que desaparezca, y si │
+ * │ nadie se lo advierte se queda pensando que no funciono.                  │
+ * │                                                                          │
+ * │ Y el motivo no es burocracia: seis meses despues, «anulado» sin explicar │
+ * │ por que es un descuadre que nadie puede justificar.                      │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ */
+function FormularioDeAnulacion({
+  gymId,
+  paymentId,
+  onCancelar,
+  onAnulado,
+  onError,
+}: {
+  gymId: string;
+  paymentId: string;
+  onCancelar: () => void;
+  onAnulado: () => Promise<void>;
+  onError: (mensaje: string) => void;
+}) {
+  const [motivo, setMotivo] = useState('');
+  const [guardando, setGuardando] = useState(false);
+
+  return (
+    <form
+      className={estilos.anulacion}
+      onSubmit={(evento) => {
+        evento.preventDefault();
+        if (guardando) return;
+        setGuardando(true);
+        void api.billing
+          .voidPayment(gymId, paymentId, motivo.trim())
+          .then(onAnulado)
+          .catch((problema: unknown) => onError(mensajeDeError(problema)))
+          .finally(() => setGuardando(false));
+      }}
+    >
+      <Campo
+        etiqueta="Motivo de la anulacion"
+        ayuda="El pago no se borra: queda tachado en el historial con este motivo."
+        valor={motivo}
+        alCambiar={setMotivo}
+        deshabilitado={guardando}
+        foco
+      />
+      <div className={estilos.acciones}>
+        {/* Minimo tres caracteres, como el contrato del servidor. */}
+        <Boton
+          type="submit"
+          variante="peligro"
+          cargando={guardando}
+          disabled={motivo.trim().length < 3}
+        >
+          Anular el pago
+        </Boton>
+        <Boton onClick={onCancelar} disabled={guardando}>
+          Cancelar
+        </Boton>
+      </div>
+    </form>
   );
 }

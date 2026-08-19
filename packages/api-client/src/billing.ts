@@ -110,6 +110,32 @@ export interface BillingApi {
 
   /** Historial, incluidos los anulados: la tabla es append-only. */
   listPayments(gymId: string, memberId: string, options?: RequestOptions): Promise<Payment[]>;
+
+  /**
+   * Anula un pago. NO lo borra.
+   *
+   * La tabla es append-only: anular marca `voidedAt` y `voidReason` y la fila
+   * sigue en el historial. Un cobro que desaparece deja un descuadre que nadie
+   * puede explicar seis meses despues.
+   *
+   * El motivo es OBLIGATORIO —minimo tres caracteres, lo exige el contrato— y
+   * por eso viaja como argumento propio: sin el, la anulacion no cuenta nada.
+   */
+  voidPayment(
+    gymId: string,
+    paymentId: string,
+    reason: string,
+    options?: RequestOptions,
+  ): Promise<Payment>;
+
+  /** Congela la cuota. Falla si ya esta congelada o si esta vencida. */
+  pause(gymId: string, memberId: string, options?: RequestOptions): Promise<Subscription>;
+
+  /** Reanuda una cuota congelada. Falla si no lo estaba. */
+  resume(gymId: string, memberId: string, options?: RequestOptions): Promise<Subscription>;
+
+  /** Da de baja la cuota. No devuelve nada: deja de haber suscripcion vigente. */
+  cancel(gymId: string, memberId: string, options?: RequestOptions): Promise<void>;
 }
 
 export function createBillingApi(http: Http): BillingApi {
@@ -174,5 +200,43 @@ export function createBillingApi(http: Http): BillingApi {
         schema: z.array(paymentSchema),
         ...options,
       }),
+
+    voidPayment: (gymId, paymentId, reason, options) =>
+      http({
+        method: 'POST',
+        // Cuelga del gimnasio y no del socio: un pago se identifica solo, y
+        // exigir el socio abriria la puerta a anular el pago de otro pasando
+        // el suyo. Es la ruta que ya expone el servidor.
+        path: `/gyms/${encodeURIComponent(gymId)}/payments/${encodeURIComponent(paymentId)}/void`,
+        body: { reason },
+        schema: paymentSchema,
+        ...options,
+      }),
+
+    pause: (gymId, memberId, options) =>
+      http({
+        method: 'POST',
+        path: `${socio(gymId, memberId)}/subscription/pause`,
+        schema: subscriptionSchema,
+        ...options,
+      }),
+
+    resume: (gymId, memberId, options) =>
+      http({
+        method: 'POST',
+        path: `${socio(gymId, memberId)}/subscription/resume`,
+        schema: subscriptionSchema,
+        ...options,
+      }),
+
+    cancel: (gymId, memberId, options) =>
+      http({
+        method: 'DELETE',
+        path: `${socio(gymId, memberId)}/subscription`,
+        // El servidor no devuelve cuerpo: deja de haber cuota vigente y no hay
+        // nada que describir. `z.unknown()` en vez de inventar una respuesta.
+        schema: z.unknown(),
+        ...options,
+      }).then(() => undefined),
   };
 }
