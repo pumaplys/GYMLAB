@@ -1,6 +1,11 @@
 import { DUES_STATES } from '@gymlab/contracts';
 import { describe, expect, it } from 'vitest';
-import { ACCIONES_POR_ESTADO, accionesDeCuota, sinAcciones } from './acciones-de-cuota';
+import {
+  ACCIONES_POR_ESTADO,
+  ETIQUETA_DE_BAJA,
+  accionesDeCuota,
+  sinAcciones,
+} from './acciones-de-cuota';
 
 describe('que se puede hacer con cada estado de cuota', () => {
   it('los SEIS estados del contrato estan cubiertos', () => {
@@ -64,5 +69,23 @@ describe('que se puede hacer con cada estado de cuota', () => {
       if (estado === 'SIN_SUSCRIPCION') continue;
       expect(accionesDeCuota(estado).darDeBaja, estado).toBe(true);
     }
+  });
+});
+
+describe('la etiqueta de dar de baja', () => {
+  it('dice EXPLICITAMENTE que se da de baja la cuota', () => {
+    /*
+     * La cabecera de la ficha ya tiene un «Dar de baja» que da de baja al
+     * SOCIO. Se detecto probando en navegador: dos botones destructivos con la
+     * misma etiqueta en la misma pantalla, y significando cosas distintas.
+     *
+     * Acortarla «para que quepa» devolveria esa ambiguedad, asi que se vigila.
+     */
+    expect(ETIQUETA_DE_BAJA).toBe('Dar de baja la cuota');
+  });
+
+  it('no se queda en el texto ambiguo a secas', () => {
+    expect(ETIQUETA_DE_BAJA).not.toBe('Dar de baja');
+    expect(ETIQUETA_DE_BAJA.toLowerCase()).toContain('cuota');
   });
 });

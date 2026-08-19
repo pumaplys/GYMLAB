@@ -22,7 +22,7 @@ import { api } from '@/lib/api';
 import { mensajeDeError } from '@/lib/errores';
 import { aCentimos, comoFecha, comoImporte } from '@/lib/formato';
 import { useSesion } from '@/lib/sesion';
-import { accionesDeCuota, sinAcciones } from './acciones-de-cuota';
+import { ETIQUETA_DE_BAJA, accionesDeCuota, sinAcciones } from './acciones-de-cuota';
 import estilos from './cuota.module.css';
 
 /**
@@ -619,8 +619,14 @@ function AccionesDeCiclo({
         </Boton>
       )}
       {puede.darDeBaja && (
+        /*
+         * «la cuota» NO sobra, y se descubrio probandolo: la cabecera de la
+         * ficha ya tiene un «Dar de baja» que da de baja AL SOCIO. Dos botones
+         * destructivos con la misma etiqueta en la misma pantalla, significando
+         * cosas distintas, es como se pulsa el que no era.
+         */
         <Boton variante="sutil" onClick={() => onElegir('baja')}>
-          Dar de baja
+          {ETIQUETA_DE_BAJA}
         </Boton>
       )}
     </>

@@ -62,3 +62,22 @@ export function sinAcciones(estado: DuesState): boolean {
   const acciones = accionesDeCuota(estado);
   return !acciones.congelar && !acciones.reanudar && !acciones.darDeBaja;
 }
+
+/**
+ * El texto del boton que da de baja LA CUOTA.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ «LA CUOTA» NO SOBRA. LO DEMOSTRO UNA PRUEBA EN NAVEGADOR.               │
+ * │                                                                          │
+ * │ La cabecera de la ficha ya tiene un «Dar de baja» que da de baja AL      │
+ * │ SOCIO. Al anadir el ciclo de vida de la cuota aparecieron DOS botones    │
+ * │ destructivos con la misma etiqueta en la misma pantalla, significando    │
+ * │ cosas distintas: uno deja al socio sin poder entrar y el otro lo saca    │
+ * │ del gimnasio.                                                            │
+ * │                                                                          │
+ * │ Vive aqui, y no suelto en el JSX, para que la prueba pueda vigilarlo:    │
+ * │ es una etiqueta que alguien acortaria «para que quepa» sin saber por que │
+ * │ estaba asi.                                                              │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ */
+export const ETIQUETA_DE_BAJA = 'Dar de baja la cuota';
