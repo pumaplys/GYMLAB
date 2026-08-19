@@ -466,7 +466,14 @@ describe('un entrenador solo asigna rutinas a SUS socios', () => {
       .delete(`/v1/gyms/${gymA}/routines/${ajena.id}`)
       .set(conSesion(tokenEntrenador1))
       .expect(403);
-    expect(res.body.message).toMatch(/quien la creo/i);
+    expect(res.body.message).toMatch(/solo el dueno/i);
+
+    // Y ni el dueno: la rutina esta asignada, y eso ya no se borra nunca.
+    const niElDueno = await http()
+      .delete(`/v1/gyms/${gymA}/routines/${ajena.id}`)
+      .set(conSesion(tokenOwnerA))
+      .expect(400);
+    expect(niElDueno.body.message).toMatch(/archivala/i);
 
     // Y la asignacion del socio ajeno sigue en pie.
     const sigue = await http()
@@ -476,7 +483,18 @@ describe('un entrenador solo asigna rutinas a SUS socios', () => {
     expect(sigue.body.activeAssignments).toBe(1);
   });
 
-  it('SI puede borrar la que creo el mismo', async () => {
+  it('NO puede borrar ni la que creo el mismo: lo suyo es archivarla', async () => {
+    /*
+     * ESTO ANTES ERA UN 200, Y EL CAMBIO ES DELIBERADO (#78C).
+     *
+     * Borrar una rutina se lleva por cascada las asignaciones, y por tanto el
+     * rastro de que un socio la entreno. Que eso dependiera de quien la
+     * escribio era la regla equivocada: no es una cuestion de autoria, es que
+     * el historial del gimnasio no se destruye desde una ficha.
+     *
+     * El entrenador conserva la accion que necesitaba —retirarla del uso— por
+     * la via de archivar, con las mismas reglas de autoria de siempre.
+     */
     const propia = await crearRutina(
       gymA,
       tokenEntrenador1,
@@ -487,10 +505,16 @@ describe('un entrenador solo asigna rutinas a SUS socios', () => {
     await http()
       .delete(`/v1/gyms/${gymA}/routines/${propia.id}`)
       .set(conSesion(tokenEntrenador1))
-      .expect(200);
+      .expect(403);
+
+    // Pero archivarla si, que es la salida real.
+    await http()
+      .post(`/v1/gyms/${gymA}/routines/${propia.id}/archive`)
+      .set(conSesion(tokenEntrenador1))
+      .expect(201);
   });
 
-  it('el dueno puede borrar cualquiera', async () => {
+  it('el dueno borra cualquiera SIEMPRE QUE no se haya asignado nunca', async () => {
     const deOtro = await crearRutina(
       gymA,
       tokenEntrenador1,
@@ -498,6 +522,7 @@ describe('un entrenador solo asigna rutinas a SUS socios', () => {
       await unEjercicio(gymA, tokenEntrenador1),
     );
 
+    // Nadie la siguio jamas: no hay historial que romper, asi que se borra.
     await http()
       .delete(`/v1/gyms/${gymA}/routines/${deOtro.id}`)
       .set(conSesion(tokenOwnerA))
@@ -970,6 +995,8 @@ describe('el socio y sus rutinas', () => {
     expect(JSON.stringify(mias.body)).not.toContain('activeAssignments');
 
     // Y lo demas sigue igual: nombre, descripcion, asignacion y ejercicios.
+    // `status` se suma en #78C: el socio puede estar siguiendo una rutina que
+    // el gimnasio ya archivo, y omitirlo obligaria a un contrato aparte.
     expect(Object.keys(mias.body[0]).sort()).toEqual([
       'assignedAt',
       'assignmentId',
@@ -977,6 +1004,7 @@ describe('el socio y sus rutinas', () => {
       'id',
       'items',
       'name',
+      'status',
     ]);
 
     // El contrato del PERSONAL no cambia: el entrenador si necesita el contador.

@@ -118,6 +118,18 @@ export class RoutinesController {
     return this.training.updateRoutine(this.gym(gymId), id, body);
   }
 
+  /** La forma normal de retirar una rutina: conserva su historia. */
+  @Post(':id/archive')
+  archive(@Param('gymId', ParseUUIDPipe) gymId: string, @Param('id', ParseUUIDPipe) id: string) {
+    return this.training.archiveRoutine(this.gym(gymId), id);
+  }
+
+  /**
+   * Borrado de verdad. Solo el dueno, y solo si NUNCA se asigno a nadie.
+   *
+   * Cascadea `routine_assignments`, asi que en cualquier otro caso destruiria
+   * historial. El servicio lo rechaza con un 400 que remite a archivar.
+   */
   @Delete(':id')
   remove(@Param('gymId', ParseUUIDPipe) gymId: string, @Param('id', ParseUUIDPipe) id: string) {
     return this.training.deleteRoutine(this.gym(gymId), id);

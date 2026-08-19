@@ -57,6 +57,14 @@ export interface EntrenamientoApi {
   ): Promise<Exercise>;
 
   /**
+   * Retira una rutina del uso conservando su historia.
+   *
+   * Es la accion normal. La rutina se queda entera —ejercicios, notas y
+   * asignaciones pasadas— pero deja de poder asignarse. En V1 no se desarchiva.
+   */
+  archivarRutina(gymId: string, id: string, options?: RequestOptions): Promise<Routine>;
+
+  /**
    * Borra un ejercicio de la biblioteca.
    *
    * Las rutinas que lo usaban NO se rompen: la clave ajena es `SET NULL`, asi
@@ -170,6 +178,14 @@ export function createEntrenamientoApi(http: Http): EntrenamientoApi {
         method: 'GET',
         path: `${raiz(gymId)}/exercises`,
         schema: z.array(exerciseSchema),
+        ...options,
+      }),
+
+    archivarRutina: (gymId, id, options) =>
+      http({
+        method: 'POST',
+        path: `${raiz(gymId)}/routines/${encodeURIComponent(id)}/archive`,
+        schema: routineSchema,
         ...options,
       }),
 
