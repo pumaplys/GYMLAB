@@ -1,0 +1,4 @@
+
+# Lo genera `pnpm --filter @gymlab/web auditar --guardar`. Su formato lo decide
+# el script, no prettier.
+apps/web/auditoria/baseline.json

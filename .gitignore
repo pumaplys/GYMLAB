@@ -46,3 +46,6 @@ coverage/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Credenciales del gimnasio de auditoria visual (D0). Locales, nunca al repo.
+apps/web/auditoria/credenciales.local.json

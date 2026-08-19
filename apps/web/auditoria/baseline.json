@@ -1,0 +1,6187 @@
+{
+  "generado": "2026-08-19T23:35:01.174Z",
+  "resumen": {
+    "porRegla": {
+      "rutaCarga": {
+        "PASS": 84,
+        "WARN": 0,
+        "FAIL": 0,
+        "bloquea": true
+      },
+      "accionesPresentes": {
+        "PASS": 84,
+        "WARN": 0,
+        "FAIL": 0,
+        "bloquea": true
+      },
+      "accionesAusentes": {
+        "PASS": 84,
+        "WARN": 0,
+        "FAIL": 0,
+        "bloquea": true
+      },
+      "rolSinDestinosProhibidos": {
+        "PASS": 84,
+        "WARN": 0,
+        "FAIL": 0,
+        "bloquea": true
+      },
+      "navegacionAlcanzable": {
+        "PASS": 71,
+        "WARN": 0,
+        "FAIL": 13,
+        "bloquea": false
+      },
+      "rutaActiva": {
+        "PASS": 84,
+        "WARN": 0,
+        "FAIL": 0,
+        "bloquea": true
+      },
+      "sinDesbordeHorizontal": {
+        "PASS": 84,
+        "WARN": 0,
+        "FAIL": 0,
+        "bloquea": true
+      },
+      "nadaFueraDeVista": {
+        "PASS": 77,
+        "WARN": 0,
+        "FAIL": 7,
+        "bloquea": false
+      },
+      "objetivosTactiles": {
+        "PASS": 0,
+        "WARN": 42,
+        "FAIL": 42,
+        "bloquea": false
+      },
+      "contraste": {
+        "PASS": 84,
+        "WARN": 0,
+        "FAIL": 0,
+        "bloquea": true
+      }
+    },
+    "bloqueantesFallando": 0,
+    "filas": 84
+  },
+  "filas": [
+    {
+      "rol": "owner",
+      "ruta": "/socios",
+      "viewport": "movil",
+      "ancho": 375,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "FAIL",
+          "causa": "1 fuera de pantalla (Configuración); recorte 94px"
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "FAIL",
+          "causa": "6 controles por debajo de 44px (el menor, 36px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 1564,
+        "interactivos": 19,
+        "pequenos": 6,
+        "navRecorte": 94,
+        "tablaVisible": false,
+        "filaAlto": 0,
+        "tamanos": [
+          "14px x35",
+          "13px x27",
+          "15px x25",
+          "12px x8",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "owner",
+      "ruta": "/socios/ficha?id=e093d4ab-6f65-4d0f-a968-2413fd9769f2",
+      "viewport": "movil",
+      "ancho": 375,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "FAIL",
+          "causa": "1 fuera de pantalla (Configuración); recorte 94px"
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "FAIL",
+          "causa": "12 controles por debajo de 44px (el menor, 21px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 1766,
+        "interactivos": 17,
+        "pequenos": 12,
+        "navRecorte": 94,
+        "tablaVisible": false,
+        "filaAlto": 0,
+        "tamanos": [
+          "14px x42",
+          "13px x9",
+          "15px x4",
+          "17px x4",
+          "12px x2",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "owner",
+      "ruta": "/personal",
+      "viewport": "movil",
+      "ancho": 375,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "FAIL",
+          "causa": "1 fuera de pantalla (Configuración); recorte 94px"
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "FAIL",
+          "causa": "9 controles por debajo de 44px (el menor, 36px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 2220,
+        "interactivos": 14,
+        "pequenos": 9,
+        "navRecorte": 94,
+        "tablaVisible": false,
+        "filaAlto": 0,
+        "tamanos": [
+          "14px x33",
+          "13px x22",
+          "15px x7",
+          "12px x4",
+          "17px x2",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "owner",
+      "ruta": "/planes",
+      "viewport": "movil",
+      "ancho": 375,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "FAIL",
+          "causa": "1 fuera de pantalla (Configuración); recorte 94px"
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "FAIL",
+          "causa": "13 controles por debajo de 44px (el menor, 36px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 1581,
+        "interactivos": 18,
+        "pequenos": 13,
+        "navRecorte": 94,
+        "tablaVisible": false,
+        "filaAlto": 0,
+        "tamanos": [
+          "14px x25",
+          "13px x21",
+          "15px x3",
+          "17px x1",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "owner",
+      "ruta": "/accesos",
+      "viewport": "movil",
+      "ancho": 375,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "FAIL",
+          "causa": "1 fuera de pantalla (Configuración); recorte 94px"
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "FAIL",
+          "causa": "5 controles por debajo de 44px (el menor, 36px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 812,
+        "interactivos": 10,
+        "pequenos": 5,
+        "navRecorte": 94,
+        "tablaVisible": null,
+        "filaAlto": null,
+        "tamanos": [
+          "14px x12",
+          "13px x4",
+          "15px x1",
+          "17px x1",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "owner",
+      "ruta": "/configuracion",
+      "viewport": "movil",
+      "ancho": 375,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "FAIL",
+          "causa": "1 fuera de pantalla (Configuración); recorte 94px"
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "FAIL",
+          "causa": "6 controles por debajo de 44px (el menor, 36px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 1362,
+        "interactivos": 12,
+        "pequenos": 6,
+        "navRecorte": 94,
+        "tablaVisible": null,
+        "filaAlto": null,
+        "tamanos": [
+          "15px x13",
+          "14px x12",
+          "13px x10",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "receptionist",
+      "ruta": "/socios",
+      "viewport": "movil",
+      "ancho": 375,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "FAIL",
+          "causa": "6 controles por debajo de 44px (el menor, 36px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 1564,
+        "interactivos": 17,
+        "pequenos": 6,
+        "navRecorte": 0,
+        "tablaVisible": false,
+        "filaAlto": 0,
+        "tamanos": [
+          "14px x33",
+          "13px x27",
+          "15px x25",
+          "12px x8",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "receptionist",
+      "ruta": "/accesos",
+      "viewport": "movil",
+      "ancho": 375,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "FAIL",
+          "causa": "5 controles por debajo de 44px (el menor, 36px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 812,
+        "interactivos": 8,
+        "pequenos": 5,
+        "navRecorte": 0,
+        "tablaVisible": null,
+        "filaAlto": null,
+        "tamanos": [
+          "14px x10",
+          "13px x4",
+          "15px x1",
+          "17px x1",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "trainer",
+      "ruta": "/entrenador",
+      "viewport": "movil",
+      "ancho": 375,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "FAIL",
+          "causa": "3 controles por debajo de 44px (el menor, 36px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 812,
+        "interactivos": 10,
+        "pequenos": 3,
+        "navRecorte": 0,
+        "tablaVisible": false,
+        "filaAlto": 0,
+        "tamanos": [
+          "14px x15",
+          "15px x13",
+          "13px x10",
+          "12px x4",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "trainer",
+      "ruta": "/entrenador/rutinas",
+      "viewport": "movil",
+      "ancho": 375,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "FAIL",
+          "causa": "3 controles por debajo de 44px (el menor, 36px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 867,
+        "interactivos": 10,
+        "pequenos": 3,
+        "navRecorte": 0,
+        "tablaVisible": false,
+        "filaAlto": 0,
+        "tamanos": [
+          "14px x16",
+          "13px x13",
+          "15px x4",
+          "12px x1",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "trainer",
+      "ruta": "/entrenador/rutinas/ficha?id=46e0bd1c-86e5-49c6-ac4e-4c7a5a784946",
+      "viewport": "movil",
+      "ancho": 375,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "FAIL",
+          "causa": "5 controles por debajo de 44px (el menor, 21px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 1179,
+        "interactivos": 8,
+        "pequenos": 5,
+        "navRecorte": 0,
+        "tablaVisible": false,
+        "filaAlto": 0,
+        "tamanos": [
+          "14px x27",
+          "13px x18",
+          "15px x10",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "trainer",
+      "ruta": "/entrenador/rutinas/ficha?id=66828f21-419d-441c-a28e-e76e0d68b581",
+      "viewport": "movil",
+      "ancho": 375,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "FAIL",
+          "causa": "4 controles por debajo de 44px (el menor, 21px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 1108,
+        "interactivos": 7,
+        "pequenos": 4,
+        "navRecorte": 0,
+        "tablaVisible": false,
+        "filaAlto": 0,
+        "tamanos": [
+          "14px x24",
+          "13px x15",
+          "15px x8",
+          "12px x1",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "trainer",
+      "ruta": "/entrenador/rutinas/editar?id=46e0bd1c-86e5-49c6-ac4e-4c7a5a784946",
+      "viewport": "movil",
+      "ancho": 375,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "FAIL",
+          "causa": "33 controles por debajo de 44px (el menor, 21px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 3296,
+        "interactivos": 46,
+        "pequenos": 33,
+        "navRecorte": 0,
+        "tablaVisible": null,
+        "filaAlto": null,
+        "tamanos": [
+          "13px x76",
+          "14px x11",
+          "15px x10",
+          "17px x1",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "trainer",
+      "ruta": "/entrenador/ejercicios",
+      "viewport": "movil",
+      "ancho": 375,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "FAIL",
+          "causa": "4 controles por debajo de 44px (el menor, 36px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 9282,
+        "interactivos": 7,
+        "pequenos": 4,
+        "navRecorte": 0,
+        "tablaVisible": false,
+        "filaAlto": 0,
+        "tamanos": [
+          "14px x156",
+          "13px x150",
+          "15px x75",
+          "12px x74",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "member",
+      "ruta": "/socio",
+      "viewport": "movil",
+      "ancho": 375,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "FAIL",
+          "causa": "2 fuera de pantalla (Accesos, Privacidad); recorte 198px"
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "FAIL",
+          "causa": "2: Accesos, Privacidad"
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "FAIL",
+          "causa": "3 controles por debajo de 44px (el menor, 36px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 994,
+        "interactivos": 10,
+        "pequenos": 3,
+        "navRecorte": 198,
+        "tablaVisible": null,
+        "filaAlto": null,
+        "tamanos": [
+          "14px x28",
+          "13px x4",
+          "15px x3",
+          "12px x1",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "member",
+      "ruta": "/socio/rutina",
+      "viewport": "movil",
+      "ancho": 375,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "FAIL",
+          "causa": "2 fuera de pantalla (Accesos, Privacidad); recorte 198px"
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "FAIL",
+          "causa": "2: Accesos, Privacidad"
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "FAIL",
+          "causa": "2 controles por debajo de 44px (el menor, 36px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 1758,
+        "interactivos": 9,
+        "pequenos": 2,
+        "navRecorte": 198,
+        "tablaVisible": null,
+        "filaAlto": null,
+        "tamanos": [
+          "15px x42",
+          "13px x28",
+          "14px x17",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "member",
+      "ruta": "/socio/carne",
+      "viewport": "movil",
+      "ancho": 375,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "FAIL",
+          "causa": "2 fuera de pantalla (Accesos, Privacidad); recorte 198px"
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "FAIL",
+          "causa": "2: Accesos, Privacidad"
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "FAIL",
+          "causa": "3 controles por debajo de 44px (el menor, 16px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 812,
+        "interactivos": 11,
+        "pequenos": 3,
+        "navRecorte": 198,
+        "tablaVisible": null,
+        "filaAlto": null,
+        "tamanos": [
+          "14px x16",
+          "13px x4",
+          "17px x1",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "member",
+      "ruta": "/socio/pagos",
+      "viewport": "movil",
+      "ancho": 375,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "FAIL",
+          "causa": "2 fuera de pantalla (Accesos, Privacidad); recorte 198px"
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "FAIL",
+          "causa": "2: Accesos, Privacidad"
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "FAIL",
+          "causa": "4 controles por debajo de 44px (el menor, 36px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 812,
+        "interactivos": 11,
+        "pequenos": 4,
+        "navRecorte": 198,
+        "tablaVisible": null,
+        "filaAlto": null,
+        "tamanos": [
+          "14px x13",
+          "13px x5",
+          "15px x4",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "member",
+      "ruta": "/socio/progreso",
+      "viewport": "movil",
+      "ancho": 375,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "FAIL",
+          "causa": "2 fuera de pantalla (Accesos, Privacidad); recorte 198px"
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "FAIL",
+          "causa": "2: Accesos, Privacidad"
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "FAIL",
+          "causa": "3 controles por debajo de 44px (el menor, 16px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 812,
+        "interactivos": 10,
+        "pequenos": 3,
+        "navRecorte": 198,
+        "tablaVisible": null,
+        "filaAlto": null,
+        "tamanos": [
+          "14px x12",
+          "13px x4",
+          "15px x1",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "member",
+      "ruta": "/socio/accesos",
+      "viewport": "movil",
+      "ancho": 375,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "FAIL",
+          "causa": "2 fuera de pantalla (Accesos, Privacidad); recorte 198px"
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "FAIL",
+          "causa": "2: Accesos, Privacidad"
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "FAIL",
+          "causa": "2 controles por debajo de 44px (el menor, 36px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 812,
+        "interactivos": 9,
+        "pequenos": 2,
+        "navRecorte": 198,
+        "tablaVisible": null,
+        "filaAlto": null,
+        "tamanos": [
+          "14px x12",
+          "13px x2",
+          "15px x1",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "member",
+      "ruta": "/socio/privacidad",
+      "viewport": "movil",
+      "ancho": 375,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "FAIL",
+          "causa": "2 fuera de pantalla (Accesos, Privacidad); recorte 198px"
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "FAIL",
+          "causa": "2: Accesos, Privacidad"
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "FAIL",
+          "causa": "2 controles por debajo de 44px (el menor, 36px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 812,
+        "interactivos": 9,
+        "pequenos": 2,
+        "navRecorte": 198,
+        "tablaVisible": null,
+        "filaAlto": null,
+        "tamanos": [
+          "14px x12",
+          "13px x2",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "owner",
+      "ruta": "/socios",
+      "viewport": "tableta",
+      "ancho": 768,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "FAIL",
+          "causa": "6 controles por debajo de 44px (el menor, 36px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 1564,
+        "interactivos": 19,
+        "pequenos": 6,
+        "navRecorte": 0,
+        "tablaVisible": false,
+        "filaAlto": 0,
+        "tamanos": [
+          "14px x35",
+          "13px x27",
+          "15px x25",
+          "12px x8",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "owner",
+      "ruta": "/socios/ficha?id=e093d4ab-6f65-4d0f-a968-2413fd9769f2",
+      "viewport": "tableta",
+      "ancho": 768,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "FAIL",
+          "causa": "12 controles por debajo de 44px (el menor, 21px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 1615,
+        "interactivos": 17,
+        "pequenos": 12,
+        "navRecorte": 0,
+        "tablaVisible": false,
+        "filaAlto": 0,
+        "tamanos": [
+          "14px x42",
+          "13px x9",
+          "15px x4",
+          "17px x4",
+          "12px x2",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "owner",
+      "ruta": "/personal",
+      "viewport": "tableta",
+      "ancho": 768,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "FAIL",
+          "causa": "9 controles por debajo de 44px (el menor, 36px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 1985,
+        "interactivos": 14,
+        "pequenos": 9,
+        "navRecorte": 0,
+        "tablaVisible": false,
+        "filaAlto": 0,
+        "tamanos": [
+          "14px x33",
+          "13px x22",
+          "15px x7",
+          "12px x4",
+          "17px x2",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "owner",
+      "ruta": "/planes",
+      "viewport": "tableta",
+      "ancho": 768,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "FAIL",
+          "causa": "13 controles por debajo de 44px (el menor, 36px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 1501,
+        "interactivos": 18,
+        "pequenos": 13,
+        "navRecorte": 0,
+        "tablaVisible": false,
+        "filaAlto": 0,
+        "tamanos": [
+          "14px x25",
+          "13px x21",
+          "15px x3",
+          "17px x1",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "owner",
+      "ruta": "/accesos",
+      "viewport": "tableta",
+      "ancho": 768,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "FAIL",
+          "causa": "5 controles por debajo de 44px (el menor, 36px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 1024,
+        "interactivos": 10,
+        "pequenos": 5,
+        "navRecorte": 0,
+        "tablaVisible": null,
+        "filaAlto": null,
+        "tamanos": [
+          "14px x12",
+          "13px x4",
+          "15px x1",
+          "17px x1",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "owner",
+      "ruta": "/configuracion",
+      "viewport": "tableta",
+      "ancho": 768,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "FAIL",
+          "causa": "6 controles por debajo de 44px (el menor, 36px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 1122,
+        "interactivos": 12,
+        "pequenos": 6,
+        "navRecorte": 0,
+        "tablaVisible": null,
+        "filaAlto": null,
+        "tamanos": [
+          "15px x13",
+          "14px x12",
+          "13px x10",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "receptionist",
+      "ruta": "/socios",
+      "viewport": "tableta",
+      "ancho": 768,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "FAIL",
+          "causa": "6 controles por debajo de 44px (el menor, 36px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 1564,
+        "interactivos": 17,
+        "pequenos": 6,
+        "navRecorte": 0,
+        "tablaVisible": false,
+        "filaAlto": 0,
+        "tamanos": [
+          "14px x33",
+          "13px x27",
+          "15px x25",
+          "12px x8",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "receptionist",
+      "ruta": "/accesos",
+      "viewport": "tableta",
+      "ancho": 768,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "FAIL",
+          "causa": "5 controles por debajo de 44px (el menor, 36px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 1024,
+        "interactivos": 8,
+        "pequenos": 5,
+        "navRecorte": 0,
+        "tablaVisible": null,
+        "filaAlto": null,
+        "tamanos": [
+          "14px x10",
+          "13px x4",
+          "15px x1",
+          "17px x1",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "trainer",
+      "ruta": "/entrenador",
+      "viewport": "tableta",
+      "ancho": 768,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "FAIL",
+          "causa": "3 controles por debajo de 44px (el menor, 36px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 1024,
+        "interactivos": 10,
+        "pequenos": 3,
+        "navRecorte": 0,
+        "tablaVisible": false,
+        "filaAlto": 0,
+        "tamanos": [
+          "14px x15",
+          "15px x13",
+          "13px x10",
+          "12px x4",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "trainer",
+      "ruta": "/entrenador/rutinas",
+      "viewport": "tableta",
+      "ancho": 768,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "FAIL",
+          "causa": "3 controles por debajo de 44px (el menor, 36px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 1024,
+        "interactivos": 10,
+        "pequenos": 3,
+        "navRecorte": 0,
+        "tablaVisible": false,
+        "filaAlto": 0,
+        "tamanos": [
+          "14px x16",
+          "13px x13",
+          "15px x4",
+          "12px x1",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "trainer",
+      "ruta": "/entrenador/rutinas/ficha?id=46e0bd1c-86e5-49c6-ac4e-4c7a5a784946",
+      "viewport": "tableta",
+      "ancho": 768,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "FAIL",
+          "causa": "5 controles por debajo de 44px (el menor, 21px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 1158,
+        "interactivos": 8,
+        "pequenos": 5,
+        "navRecorte": 0,
+        "tablaVisible": false,
+        "filaAlto": 0,
+        "tamanos": [
+          "14px x27",
+          "13px x18",
+          "15px x10",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "trainer",
+      "ruta": "/entrenador/rutinas/ficha?id=66828f21-419d-441c-a28e-e76e0d68b581",
+      "viewport": "tableta",
+      "ancho": 768,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "FAIL",
+          "causa": "4 controles por debajo de 44px (el menor, 21px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 1032,
+        "interactivos": 7,
+        "pequenos": 4,
+        "navRecorte": 0,
+        "tablaVisible": false,
+        "filaAlto": 0,
+        "tamanos": [
+          "14px x24",
+          "13px x15",
+          "15px x8",
+          "12px x1",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "trainer",
+      "ruta": "/entrenador/rutinas/editar?id=46e0bd1c-86e5-49c6-ac4e-4c7a5a784946",
+      "viewport": "tableta",
+      "ancho": 768,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "FAIL",
+          "causa": "33 controles por debajo de 44px (el menor, 21px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 3255,
+        "interactivos": 46,
+        "pequenos": 33,
+        "navRecorte": 0,
+        "tablaVisible": null,
+        "filaAlto": null,
+        "tamanos": [
+          "13px x76",
+          "14px x11",
+          "15px x10",
+          "17px x1",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "trainer",
+      "ruta": "/entrenador/ejercicios",
+      "viewport": "tableta",
+      "ancho": 768,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "FAIL",
+          "causa": "4 controles por debajo de 44px (el menor, 36px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 9059,
+        "interactivos": 7,
+        "pequenos": 4,
+        "navRecorte": 0,
+        "tablaVisible": false,
+        "filaAlto": 0,
+        "tamanos": [
+          "14px x156",
+          "13px x150",
+          "15px x75",
+          "12px x74",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "member",
+      "ruta": "/socio",
+      "viewport": "tableta",
+      "ancho": 768,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "FAIL",
+          "causa": "3 controles por debajo de 44px (el menor, 36px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 1024,
+        "interactivos": 10,
+        "pequenos": 3,
+        "navRecorte": 0,
+        "tablaVisible": null,
+        "filaAlto": null,
+        "tamanos": [
+          "14px x28",
+          "13px x4",
+          "15px x3",
+          "12px x1",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "member",
+      "ruta": "/socio/rutina",
+      "viewport": "tableta",
+      "ancho": 768,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "FAIL",
+          "causa": "2 controles por debajo de 44px (el menor, 36px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 1716,
+        "interactivos": 9,
+        "pequenos": 2,
+        "navRecorte": 0,
+        "tablaVisible": null,
+        "filaAlto": null,
+        "tamanos": [
+          "15px x42",
+          "13px x28",
+          "14px x17",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "member",
+      "ruta": "/socio/carne",
+      "viewport": "tableta",
+      "ancho": 768,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "FAIL",
+          "causa": "3 controles por debajo de 44px (el menor, 16px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 1024,
+        "interactivos": 11,
+        "pequenos": 3,
+        "navRecorte": 0,
+        "tablaVisible": null,
+        "filaAlto": null,
+        "tamanos": [
+          "14px x16",
+          "13px x4",
+          "17px x1",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "member",
+      "ruta": "/socio/pagos",
+      "viewport": "tableta",
+      "ancho": 768,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "FAIL",
+          "causa": "4 controles por debajo de 44px (el menor, 36px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 1024,
+        "interactivos": 11,
+        "pequenos": 4,
+        "navRecorte": 0,
+        "tablaVisible": null,
+        "filaAlto": null,
+        "tamanos": [
+          "14px x13",
+          "13px x5",
+          "15px x4",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "member",
+      "ruta": "/socio/progreso",
+      "viewport": "tableta",
+      "ancho": 768,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "FAIL",
+          "causa": "3 controles por debajo de 44px (el menor, 16px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 1024,
+        "interactivos": 10,
+        "pequenos": 3,
+        "navRecorte": 0,
+        "tablaVisible": null,
+        "filaAlto": null,
+        "tamanos": [
+          "14px x12",
+          "13px x4",
+          "15px x1",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "member",
+      "ruta": "/socio/accesos",
+      "viewport": "tableta",
+      "ancho": 768,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "FAIL",
+          "causa": "2 controles por debajo de 44px (el menor, 36px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 1024,
+        "interactivos": 9,
+        "pequenos": 2,
+        "navRecorte": 0,
+        "tablaVisible": null,
+        "filaAlto": null,
+        "tamanos": [
+          "14px x12",
+          "13px x2",
+          "15px x1",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "member",
+      "ruta": "/socio/privacidad",
+      "viewport": "tableta",
+      "ancho": 768,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "FAIL",
+          "causa": "2 controles por debajo de 44px (el menor, 36px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 1024,
+        "interactivos": 9,
+        "pequenos": 2,
+        "navRecorte": 0,
+        "tablaVisible": null,
+        "filaAlto": null,
+        "tamanos": [
+          "14px x12",
+          "13px x2",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "owner",
+      "ruta": "/socios",
+      "viewport": "compacto",
+      "ancho": 1024,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "WARN",
+          "causa": "14 controles por debajo de 44px (el menor, 17px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 779,
+        "interactivos": 19,
+        "pequenos": 14,
+        "navRecorte": 0,
+        "tablaVisible": true,
+        "filaAlto": 47,
+        "tamanos": [
+          "14px x51",
+          "12px x15",
+          "13px x3",
+          "15px x1",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "owner",
+      "ruta": "/socios/ficha?id=e093d4ab-6f65-4d0f-a968-2413fd9769f2",
+      "viewport": "compacto",
+      "ancho": 1024,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "WARN",
+          "causa": "14 controles por debajo de 44px (el menor, 21px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 1380,
+        "interactivos": 19,
+        "pequenos": 14,
+        "navRecorte": 0,
+        "tablaVisible": true,
+        "filaAlto": 61,
+        "tamanos": [
+          "14px x48",
+          "12px x7",
+          "13px x5",
+          "17px x4",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "owner",
+      "ruta": "/personal",
+      "viewport": "compacto",
+      "ancho": 1024,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "WARN",
+          "causa": "9 controles por debajo de 44px (el menor, 36px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 1339,
+        "interactivos": 14,
+        "pequenos": 9,
+        "navRecorte": 0,
+        "tablaVisible": true,
+        "filaAlto": 67,
+        "tamanos": [
+          "14px x40",
+          "12px x15",
+          "13px x5",
+          "17px x2",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "owner",
+      "ruta": "/planes",
+      "viewport": "compacto",
+      "ancho": 1024,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "WARN",
+          "causa": "13 controles por debajo de 44px (el menor, 36px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 1112,
+        "interactivos": 18,
+        "pequenos": 13,
+        "navRecorte": 0,
+        "tablaVisible": true,
+        "filaAlto": 61,
+        "tamanos": [
+          "14px x28",
+          "13px x12",
+          "12px x6",
+          "17px x1",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "owner",
+      "ruta": "/accesos",
+      "viewport": "compacto",
+      "ancho": 1024,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "WARN",
+          "causa": "5 controles por debajo de 44px (el menor, 36px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 768,
+        "interactivos": 10,
+        "pequenos": 5,
+        "navRecorte": 0,
+        "tablaVisible": null,
+        "filaAlto": null,
+        "tamanos": [
+          "14px x12",
+          "13px x4",
+          "12px x1",
+          "15px x1",
+          "17px x1",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "owner",
+      "ruta": "/configuracion",
+      "viewport": "compacto",
+      "ancho": 1024,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "WARN",
+          "causa": "6 controles por debajo de 44px (el menor, 36px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 1171,
+        "interactivos": 12,
+        "pequenos": 6,
+        "navRecorte": 0,
+        "tablaVisible": null,
+        "filaAlto": null,
+        "tamanos": [
+          "15px x13",
+          "14px x12",
+          "13px x10",
+          "12px x1",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "receptionist",
+      "ruta": "/socios",
+      "viewport": "compacto",
+      "ancho": 1024,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "WARN",
+          "causa": "14 controles por debajo de 44px (el menor, 17px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 779,
+        "interactivos": 17,
+        "pequenos": 14,
+        "navRecorte": 0,
+        "tablaVisible": true,
+        "filaAlto": 47,
+        "tamanos": [
+          "14px x49",
+          "12px x15",
+          "13px x3",
+          "15px x1",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "receptionist",
+      "ruta": "/accesos",
+      "viewport": "compacto",
+      "ancho": 1024,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "WARN",
+          "causa": "5 controles por debajo de 44px (el menor, 36px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 768,
+        "interactivos": 8,
+        "pequenos": 5,
+        "navRecorte": 0,
+        "tablaVisible": null,
+        "filaAlto": null,
+        "tamanos": [
+          "14px x10",
+          "13px x4",
+          "12px x1",
+          "15px x1",
+          "17px x1",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "trainer",
+      "ruta": "/entrenador",
+      "viewport": "compacto",
+      "ancho": 1024,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "WARN",
+          "causa": "7 controles por debajo de 44px (el menor, 17px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 768,
+        "interactivos": 10,
+        "pequenos": 7,
+        "navRecorte": 0,
+        "tablaVisible": true,
+        "filaAlto": 47,
+        "tamanos": [
+          "14px x23",
+          "12px x10",
+          "13px x2",
+          "15px x1",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "trainer",
+      "ruta": "/entrenador/rutinas",
+      "viewport": "compacto",
+      "ancho": 1024,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "WARN",
+          "causa": "7 controles por debajo de 44px (el menor, 17px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 768,
+        "interactivos": 10,
+        "pequenos": 7,
+        "navRecorte": 0,
+        "tablaVisible": true,
+        "filaAlto": 69,
+        "tamanos": [
+          "14px x20",
+          "12px x5",
+          "13px x5",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "trainer",
+      "ruta": "/entrenador/rutinas/ficha?id=46e0bd1c-86e5-49c6-ac4e-4c7a5a784946",
+      "viewport": "compacto",
+      "ancho": 1024,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "WARN",
+          "causa": "5 controles por debajo de 44px (el menor, 21px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 768,
+        "interactivos": 8,
+        "pequenos": 5,
+        "navRecorte": 0,
+        "tablaVisible": true,
+        "filaAlto": 46,
+        "tamanos": [
+          "14px x41",
+          "12px x7",
+          "13px x2",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "trainer",
+      "ruta": "/entrenador/rutinas/ficha?id=66828f21-419d-441c-a28e-e76e0d68b581",
+      "viewport": "compacto",
+      "ancho": 1024,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "WARN",
+          "causa": "4 controles por debajo de 44px (el menor, 21px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 768,
+        "interactivos": 7,
+        "pequenos": 4,
+        "navRecorte": 0,
+        "tablaVisible": true,
+        "filaAlto": 46,
+        "tamanos": [
+          "14px x35",
+          "12px x8",
+          "13px x2",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "trainer",
+      "ruta": "/entrenador/rutinas/editar?id=46e0bd1c-86e5-49c6-ac4e-4c7a5a784946",
+      "viewport": "compacto",
+      "ancho": 1024,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "WARN",
+          "causa": "33 controles por debajo de 44px (el menor, 21px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 2573,
+        "interactivos": 46,
+        "pequenos": 33,
+        "navRecorte": 0,
+        "tablaVisible": null,
+        "filaAlto": null,
+        "tamanos": [
+          "13px x76",
+          "14px x11",
+          "15px x10",
+          "12px x1",
+          "17px x1",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "trainer",
+      "ruta": "/entrenador/ejercicios",
+      "viewport": "compacto",
+      "ancho": 1024,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "WARN",
+          "causa": "152 controles por debajo de 44px (el menor, 36px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 4889,
+        "interactivos": 155,
+        "pequenos": 152,
+        "navRecorte": 0,
+        "tablaVisible": true,
+        "filaAlto": 61,
+        "tamanos": [
+          "14px x378",
+          "12px x79",
+          "13px x2",
+          "15px x1",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "member",
+      "ruta": "/socio",
+      "viewport": "compacto",
+      "ancho": 1024,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "WARN",
+          "causa": "3 controles por debajo de 44px (el menor, 36px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 885,
+        "interactivos": 10,
+        "pequenos": 3,
+        "navRecorte": 0,
+        "tablaVisible": null,
+        "filaAlto": null,
+        "tamanos": [
+          "14px x28",
+          "13px x4",
+          "15px x3",
+          "12px x2",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "member",
+      "ruta": "/socio/rutina",
+      "viewport": "compacto",
+      "ancho": 1024,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "WARN",
+          "causa": "2 controles por debajo de 44px (el menor, 36px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 1861,
+        "interactivos": 9,
+        "pequenos": 2,
+        "navRecorte": 0,
+        "tablaVisible": null,
+        "filaAlto": null,
+        "tamanos": [
+          "15px x42",
+          "13px x28",
+          "14px x17",
+          "12px x1",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "member",
+      "ruta": "/socio/carne",
+      "viewport": "compacto",
+      "ancho": 1024,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "WARN",
+          "causa": "3 controles por debajo de 44px (el menor, 16px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 768,
+        "interactivos": 11,
+        "pequenos": 3,
+        "navRecorte": 0,
+        "tablaVisible": null,
+        "filaAlto": null,
+        "tamanos": [
+          "14px x16",
+          "13px x4",
+          "12px x1",
+          "17px x1",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "member",
+      "ruta": "/socio/pagos",
+      "viewport": "compacto",
+      "ancho": 1024,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "WARN",
+          "causa": "4 controles por debajo de 44px (el menor, 36px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 768,
+        "interactivos": 11,
+        "pequenos": 4,
+        "navRecorte": 0,
+        "tablaVisible": null,
+        "filaAlto": null,
+        "tamanos": [
+          "14px x13",
+          "13px x5",
+          "15px x4",
+          "12px x1",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "member",
+      "ruta": "/socio/progreso",
+      "viewport": "compacto",
+      "ancho": 1024,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "WARN",
+          "causa": "3 controles por debajo de 44px (el menor, 16px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 768,
+        "interactivos": 10,
+        "pequenos": 3,
+        "navRecorte": 0,
+        "tablaVisible": null,
+        "filaAlto": null,
+        "tamanos": [
+          "14px x12",
+          "13px x4",
+          "12px x1",
+          "15px x1",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "member",
+      "ruta": "/socio/accesos",
+      "viewport": "compacto",
+      "ancho": 1024,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "WARN",
+          "causa": "2 controles por debajo de 44px (el menor, 36px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 768,
+        "interactivos": 9,
+        "pequenos": 2,
+        "navRecorte": 0,
+        "tablaVisible": null,
+        "filaAlto": null,
+        "tamanos": [
+          "14px x12",
+          "13px x2",
+          "12px x1",
+          "15px x1",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "member",
+      "ruta": "/socio/privacidad",
+      "viewport": "compacto",
+      "ancho": 1024,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "WARN",
+          "causa": "2 controles por debajo de 44px (el menor, 36px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 768,
+        "interactivos": 9,
+        "pequenos": 2,
+        "navRecorte": 0,
+        "tablaVisible": null,
+        "filaAlto": null,
+        "tamanos": [
+          "14px x12",
+          "13px x2",
+          "12px x1",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "owner",
+      "ruta": "/socios",
+      "viewport": "escritorio",
+      "ancho": 1440,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "WARN",
+          "causa": "14 controles por debajo de 44px (el menor, 17px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 900,
+        "interactivos": 19,
+        "pequenos": 14,
+        "navRecorte": 0,
+        "tablaVisible": true,
+        "filaAlto": 47,
+        "tamanos": [
+          "14px x51",
+          "12px x15",
+          "13px x3",
+          "15px x1",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "owner",
+      "ruta": "/socios/ficha?id=e093d4ab-6f65-4d0f-a968-2413fd9769f2",
+      "viewport": "escritorio",
+      "ancho": 1440,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "WARN",
+          "causa": "14 controles por debajo de 44px (el menor, 21px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 1380,
+        "interactivos": 19,
+        "pequenos": 14,
+        "navRecorte": 0,
+        "tablaVisible": true,
+        "filaAlto": 61,
+        "tamanos": [
+          "14px x48",
+          "12px x7",
+          "13px x5",
+          "17px x4",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "owner",
+      "ruta": "/personal",
+      "viewport": "escritorio",
+      "ancho": 1440,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "WARN",
+          "causa": "9 controles por debajo de 44px (el menor, 36px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 1339,
+        "interactivos": 14,
+        "pequenos": 9,
+        "navRecorte": 0,
+        "tablaVisible": true,
+        "filaAlto": 67,
+        "tamanos": [
+          "14px x40",
+          "12px x15",
+          "13px x5",
+          "17px x2",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "owner",
+      "ruta": "/planes",
+      "viewport": "escritorio",
+      "ancho": 1440,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "WARN",
+          "causa": "13 controles por debajo de 44px (el menor, 36px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 1112,
+        "interactivos": 18,
+        "pequenos": 13,
+        "navRecorte": 0,
+        "tablaVisible": true,
+        "filaAlto": 61,
+        "tamanos": [
+          "14px x28",
+          "13px x12",
+          "12px x6",
+          "17px x1",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "owner",
+      "ruta": "/accesos",
+      "viewport": "escritorio",
+      "ancho": 1440,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "WARN",
+          "causa": "5 controles por debajo de 44px (el menor, 36px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 900,
+        "interactivos": 10,
+        "pequenos": 5,
+        "navRecorte": 0,
+        "tablaVisible": null,
+        "filaAlto": null,
+        "tamanos": [
+          "14px x12",
+          "13px x4",
+          "12px x1",
+          "15px x1",
+          "17px x1",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "owner",
+      "ruta": "/configuracion",
+      "viewport": "escritorio",
+      "ancho": 1440,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "WARN",
+          "causa": "6 controles por debajo de 44px (el menor, 36px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 1171,
+        "interactivos": 12,
+        "pequenos": 6,
+        "navRecorte": 0,
+        "tablaVisible": null,
+        "filaAlto": null,
+        "tamanos": [
+          "15px x13",
+          "14px x12",
+          "13px x10",
+          "12px x1",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "receptionist",
+      "ruta": "/socios",
+      "viewport": "escritorio",
+      "ancho": 1440,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "WARN",
+          "causa": "14 controles por debajo de 44px (el menor, 17px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 900,
+        "interactivos": 17,
+        "pequenos": 14,
+        "navRecorte": 0,
+        "tablaVisible": true,
+        "filaAlto": 47,
+        "tamanos": [
+          "14px x49",
+          "12px x15",
+          "13px x3",
+          "15px x1",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "receptionist",
+      "ruta": "/accesos",
+      "viewport": "escritorio",
+      "ancho": 1440,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "WARN",
+          "causa": "5 controles por debajo de 44px (el menor, 36px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 900,
+        "interactivos": 8,
+        "pequenos": 5,
+        "navRecorte": 0,
+        "tablaVisible": null,
+        "filaAlto": null,
+        "tamanos": [
+          "14px x10",
+          "13px x4",
+          "12px x1",
+          "15px x1",
+          "17px x1",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "trainer",
+      "ruta": "/entrenador",
+      "viewport": "escritorio",
+      "ancho": 1440,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "WARN",
+          "causa": "7 controles por debajo de 44px (el menor, 17px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 900,
+        "interactivos": 10,
+        "pequenos": 7,
+        "navRecorte": 0,
+        "tablaVisible": true,
+        "filaAlto": 47,
+        "tamanos": [
+          "14px x23",
+          "12px x10",
+          "13px x2",
+          "15px x1",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "trainer",
+      "ruta": "/entrenador/rutinas",
+      "viewport": "escritorio",
+      "ancho": 1440,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "WARN",
+          "causa": "7 controles por debajo de 44px (el menor, 17px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 900,
+        "interactivos": 10,
+        "pequenos": 7,
+        "navRecorte": 0,
+        "tablaVisible": true,
+        "filaAlto": 69,
+        "tamanos": [
+          "14px x20",
+          "12px x5",
+          "13px x5",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "trainer",
+      "ruta": "/entrenador/rutinas/ficha?id=46e0bd1c-86e5-49c6-ac4e-4c7a5a784946",
+      "viewport": "escritorio",
+      "ancho": 1440,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "WARN",
+          "causa": "5 controles por debajo de 44px (el menor, 21px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 900,
+        "interactivos": 8,
+        "pequenos": 5,
+        "navRecorte": 0,
+        "tablaVisible": true,
+        "filaAlto": 46,
+        "tamanos": [
+          "14px x41",
+          "12px x7",
+          "13px x2",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "trainer",
+      "ruta": "/entrenador/rutinas/ficha?id=66828f21-419d-441c-a28e-e76e0d68b581",
+      "viewport": "escritorio",
+      "ancho": 1440,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "WARN",
+          "causa": "4 controles por debajo de 44px (el menor, 21px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 900,
+        "interactivos": 7,
+        "pequenos": 4,
+        "navRecorte": 0,
+        "tablaVisible": true,
+        "filaAlto": 46,
+        "tamanos": [
+          "14px x35",
+          "12px x8",
+          "13px x2",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "trainer",
+      "ruta": "/entrenador/rutinas/editar?id=46e0bd1c-86e5-49c6-ac4e-4c7a5a784946",
+      "viewport": "escritorio",
+      "ancho": 1440,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "WARN",
+          "causa": "33 controles por debajo de 44px (el menor, 21px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 2573,
+        "interactivos": 46,
+        "pequenos": 33,
+        "navRecorte": 0,
+        "tablaVisible": null,
+        "filaAlto": null,
+        "tamanos": [
+          "13px x76",
+          "14px x11",
+          "15px x10",
+          "12px x1",
+          "17px x1",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "trainer",
+      "ruta": "/entrenador/ejercicios",
+      "viewport": "escritorio",
+      "ancho": 1440,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "WARN",
+          "causa": "152 controles por debajo de 44px (el menor, 36px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 4889,
+        "interactivos": 155,
+        "pequenos": 152,
+        "navRecorte": 0,
+        "tablaVisible": true,
+        "filaAlto": 61,
+        "tamanos": [
+          "14px x378",
+          "12px x79",
+          "13px x2",
+          "15px x1",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "member",
+      "ruta": "/socio",
+      "viewport": "escritorio",
+      "ancho": 1440,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "WARN",
+          "causa": "3 controles por debajo de 44px (el menor, 36px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 900,
+        "interactivos": 10,
+        "pequenos": 3,
+        "navRecorte": 0,
+        "tablaVisible": null,
+        "filaAlto": null,
+        "tamanos": [
+          "14px x28",
+          "13px x4",
+          "15px x3",
+          "12px x2",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "member",
+      "ruta": "/socio/rutina",
+      "viewport": "escritorio",
+      "ancho": 1440,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "WARN",
+          "causa": "2 controles por debajo de 44px (el menor, 36px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 1861,
+        "interactivos": 9,
+        "pequenos": 2,
+        "navRecorte": 0,
+        "tablaVisible": null,
+        "filaAlto": null,
+        "tamanos": [
+          "15px x42",
+          "13px x28",
+          "14px x17",
+          "12px x1",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "member",
+      "ruta": "/socio/carne",
+      "viewport": "escritorio",
+      "ancho": 1440,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "WARN",
+          "causa": "3 controles por debajo de 44px (el menor, 16px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 900,
+        "interactivos": 11,
+        "pequenos": 3,
+        "navRecorte": 0,
+        "tablaVisible": null,
+        "filaAlto": null,
+        "tamanos": [
+          "14px x16",
+          "13px x4",
+          "12px x1",
+          "17px x1",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "member",
+      "ruta": "/socio/pagos",
+      "viewport": "escritorio",
+      "ancho": 1440,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "WARN",
+          "causa": "4 controles por debajo de 44px (el menor, 36px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 900,
+        "interactivos": 11,
+        "pequenos": 4,
+        "navRecorte": 0,
+        "tablaVisible": null,
+        "filaAlto": null,
+        "tamanos": [
+          "14px x13",
+          "13px x5",
+          "15px x4",
+          "12px x1",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "member",
+      "ruta": "/socio/progreso",
+      "viewport": "escritorio",
+      "ancho": 1440,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "WARN",
+          "causa": "3 controles por debajo de 44px (el menor, 16px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 900,
+        "interactivos": 10,
+        "pequenos": 3,
+        "navRecorte": 0,
+        "tablaVisible": null,
+        "filaAlto": null,
+        "tamanos": [
+          "14px x12",
+          "13px x4",
+          "12px x1",
+          "15px x1",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "member",
+      "ruta": "/socio/accesos",
+      "viewport": "escritorio",
+      "ancho": 1440,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "WARN",
+          "causa": "2 controles por debajo de 44px (el menor, 36px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 900,
+        "interactivos": 9,
+        "pequenos": 2,
+        "navRecorte": 0,
+        "tablaVisible": null,
+        "filaAlto": null,
+        "tamanos": [
+          "14px x12",
+          "13px x2",
+          "12px x1",
+          "15px x1",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "member",
+      "ruta": "/socio/privacidad",
+      "viewport": "escritorio",
+      "ancho": 1440,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "WARN",
+          "causa": "2 controles por debajo de 44px (el menor, 36px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 900,
+        "interactivos": 9,
+        "pequenos": 2,
+        "navRecorte": 0,
+        "tablaVisible": null,
+        "filaAlto": null,
+        "tamanos": [
+          "14px x12",
+          "13px x2",
+          "12px x1",
+          "22px x1"
+        ]
+      }
+    }
+  ]
+}

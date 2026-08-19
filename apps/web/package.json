@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint src",
     "test": "vitest run --passWithNoTests",
-    "clean": "rimraf .next out .turbo"
+    "clean": "rimraf .next out .turbo",
+    "auditar": "node auditoria/auditar.mjs"
   },
   "dependencies": {
     "@gymlab/api-client": "workspace:*",
