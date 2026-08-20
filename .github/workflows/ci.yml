@@ -21,7 +21,7 @@ jobs:
   verify:
     name: Verificacion
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     # PostgreSQL real, no un mock ni una base en memoria.
     #
@@ -110,6 +110,47 @@ jobs:
         # una carrera latente. Los builds ya son acierto de cache aqui, asi que
         # serializar no cuesta tiempo.
         run: pnpm test
+
+      # ---------------------------------------------------------------- D0
+      #
+      # La red de seguridad de Design 2.0. Mide el panel con Chrome sin ventana
+      # en cuatro anchos y con los cuatro roles.
+      #
+      # Se sirve TODO desde la API —el panel incluido, que es como funciona en
+      # produccion— asi que no hace falta un segundo proceso: `pnpm build` ya
+      # dejo `apps/web/out` y `montarPanel` lo sirve bajo el mismo origen.
+      #
+      # `--ci` solo mira las reglas ya cerradas. Las que representan deuda
+      # visual conocida —navegacion recortada, objetivos tactiles— se imprimen
+      # en el informe pero NO tumban main: documentarlas bien no puede ser lo
+      # que rompa la rama. Cada una tiene su fase de cierre escrita en
+      # apps/web/auditoria/reglas.mjs.
+      - name: Arrancar la API con el panel
+        # WEB_DIST_PATH es obligatorio aqui: por defecto el panel se busca en
+        # `<cwd>/web`, que es donde lo deja la imagen de Docker. Arrancando
+        # desde la raiz del repo hay que decirle donde quedo la exportacion.
+        #
+        # Y ABSOLUTA. Con una ruta relativa la API arranca, dice que sirve el
+        # panel y responde 301 -> 404 a todas las pantallas: la reescritura a
+        # `.html` se desactiva sola porque compara la ruta ya resuelta contra
+        # el valor sin resolver. Ver docs/16-diseno-2-0.md.
+        env:
+          WEB_DIST_PATH: ${{ github.workspace }}/apps/web/out
+        run: |
+          node apps/api/dist/main.js &
+          echo $! > /tmp/api.pid
+          for i in $(seq 1 40); do
+            curl -sf http://localhost:3001/health >/dev/null && break
+            sleep 1
+          done
+          curl -sf http://localhost:3001/health
+
+      - name: D0 — auditoria visual
+        run: pnpm --filter @gymlab/web auditar --ci
+
+      - name: Parar la API
+        if: always()
+        run: kill "$(cat /tmp/api.pid)" 2>/dev/null || true
 
       # Diagnostico para cuando un fallo no se reproduce en local. Un
       # ECONNRESET desde el cliente no dice nada; el log del servidor sí:
