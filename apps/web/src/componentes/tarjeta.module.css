@@ -53,6 +53,26 @@
   padding: 0;
 }
 
+/*
+ * Un bloque SIN caja. La separacion la hace el espacio, no un borde.
+ *
+ * Es lo que va a permitir a D3-D5 deshacer la pila de tarjetas iguales: donde
+ * hoy hay cinco cajas del mismo peso, quedaran una o dos tarjetas de verdad y
+ * el resto secciones. Aqui solo se deja disponible.
+ */
+.seccion {
+  position: relative;
+}
+
+.seccion .cabecera {
+  padding: 0 0 var(--e3);
+  border-bottom: none;
+}
+
+.cuerpoSeccion {
+  padding: 0;
+}
+
 @media (max-width: 48rem) {
   .cabecera {
     padding: var(--e3) var(--e4);

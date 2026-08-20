@@ -82,13 +82,35 @@ export const SONDA_PANTALLA = `(() => {
     'button, a[href], input:not([type=hidden]), select, textarea, [role="button"], [tabindex]:not([tabindex="-1"])'
   )].filter(visible);
 
+  /*
+   * Un enlace DENTRO de una frase no cuenta como objetivo pequeno.
+   *
+   * Lo exime la propia WCAG 2.5.8: un enlace en linea con el texto no puede
+   * medir 44 px de alto sin romper el parrafo que lo contiene. "Mirala en
+   * Inicio." es una frase, no una barra de acciones.
+   *
+   * Se detecta por estructura, no por una lista de excepciones a mano: si el
+   * padre tiene texto propio ademas del enlace, el enlace vive dentro de una
+   * frase. Se siguen contando aparte para que no desaparezcan del informe.
+   */
+  const enFrase = (el) => {
+    if (el.tagName !== 'A') return false;
+    const padre = el.parentElement;
+    if (!padre) return false;
+    return [...padre.childNodes].some(
+      (n) => n.nodeType === 3 && n.textContent.trim().length > 0,
+    );
+  };
+
   const pequenos = [];
+  const pequenosEnFrase = [];
   const fueraDeVista = [];
   for (const el of interactivos) {
     const r = el.getBoundingClientRect();
     const nombre = nombreDe(el).slice(0, 40);
     if (r.height < 44 || r.width < 44) {
-      pequenos.push({ que: el.tagName.toLowerCase(), nombre, w: Math.round(r.width), h: Math.round(r.height) });
+      const ficha = { que: el.tagName.toLowerCase(), nombre, w: Math.round(r.width), h: Math.round(r.height) };
+      (enFrase(el) ? pequenosEnFrase : pequenos).push(ficha);
     }
     // Completamente fuera: ni un pixel dentro del viewport horizontalmente.
     if (r.right < 0 || r.left > anchoVista) {
@@ -169,6 +191,7 @@ export const SONDA_PANTALLA = `(() => {
     navRecorte,
     interactivos: interactivos.length,
     pequenos,
+    pequenosEnFrase,
     fueraDeVista,
     desbordaPagina,
     culpables,

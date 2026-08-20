@@ -17,8 +17,8 @@ export type VarianteDeBoton = 'primario' | 'secundario' | 'peligro' | 'sutil';
 
 interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
   variante?: VarianteDeBoton;
-  /** `sm` solo para acciones dentro de una fila de tabla. */
-  tamano?: 'sm' | 'md';
+  /** `sm` para acciones dentro de una fila; `lg` para la unica accion de una pantalla. */
+  tamano?: 'sm' | 'md' | 'lg';
   /** Deshabilita y anuncia que hay algo en marcha. */
   cargando?: boolean;
   bloque?: boolean;
@@ -56,7 +56,7 @@ export function Boton({
       className={[
         estilos.boton,
         estilos[variante],
-        tamano === 'sm' ? estilos.sm : '',
+        tamano === 'md' ? '' : estilos[tamano],
         bloque ? estilos.bloque : '',
         className ?? '',
       ]
@@ -86,13 +86,13 @@ export function BotonEnlace({
 }: {
   href: string;
   variante?: VarianteDeBoton;
-  tamano?: 'sm' | 'md';
+  tamano?: 'sm' | 'md' | 'lg';
   children: ReactNode;
 }) {
   return (
     <Link
       href={href}
-      className={[estilos.boton, estilos[variante], tamano === 'sm' ? estilos.sm : '']
+      className={[estilos.boton, estilos[variante], tamano === 'md' ? '' : estilos[tamano]]
         .filter(Boolean)
         .join(' ')}
     >

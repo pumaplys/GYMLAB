@@ -81,4 +81,6 @@ export const celda = {
   numerica: estilos.numerica,
   acciones: estilos.acciones,
   tenue: estilos.tenue,
+  /** La columna que se viene a leer: el nombre, el concepto. Una por tabla. */
+  dato: estilos.dato,
 } as const;

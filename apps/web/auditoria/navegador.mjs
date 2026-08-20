@@ -225,6 +225,33 @@ export async function abrirNavegador() {
           return false;
         },
 
+        /**
+         * Espera a que la pagina deje de CRECER.
+         *
+         * Que esten las acciones no significa que este la lista: en
+         * `/entrenador/ejercicios` el boton "Nuevo ejercicio" aparece al
+         * instante y los 74 ejercicios tardan. Se midio esa pantalla en 812 px
+         * de alto —exactamente el viewport— cuando de verdad mide 9.159.
+         *
+         * Y `scrollAlto` no es un dato de adorno: es el criterio de salida de
+         * D6 para la ficha del socio y el editor de rutinas. Un numero que
+         * depende de cuando miraste no sirve para eso.
+         *
+         * Dos lecturas iguales seguidas bastan; no hace falta saber que se
+         * estaba cargando.
+         */
+        async esperarEstable(ms = 6000) {
+          const limite = Date.now() + ms;
+          let previo = -1;
+          while (Date.now() < limite) {
+            const alto = await this.evaluar('document.documentElement.scrollHeight');
+            if (alto === previo && alto > 0) return true;
+            previo = alto;
+            await dormir(250);
+          }
+          return false;
+        },
+
         async cerrar() {
           await enviar('Target.closeTarget', { targetId });
           if (browserContextId) {

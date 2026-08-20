@@ -1,5 +1,5 @@
 {
-  "generado": "2026-08-19T23:35:01.174Z",
+  "generado": "2026-08-20T03:09:11.297Z",
   "resumen": {
     "porRegla": {
       "rutaCarga": {
@@ -51,10 +51,10 @@
         "bloquea": false
       },
       "objetivosTactiles": {
-        "PASS": 0,
+        "PASS": 42,
         "WARN": 42,
-        "FAIL": 42,
-        "bloquea": false
+        "FAIL": 0,
+        "bloquea": true
       },
       "contraste": {
         "PASS": 84,
@@ -115,8 +115,8 @@
         },
         {
           "regla": "objetivosTactiles",
-          "estado": "FAIL",
-          "causa": "6 controles por debajo de 44px (el menor, 36px)"
+          "estado": "PASS",
+          "causa": ""
         },
         {
           "regla": "contraste",
@@ -125,17 +125,19 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1564,
+        "scrollAlto": 1576,
         "interactivos": 19,
-        "pequenos": 6,
+        "pequenos": 0,
+        "pequenosEnFrase": 0,
         "navRecorte": 94,
         "tablaVisible": false,
         "filaAlto": 0,
         "tamanos": [
           "14px x35",
-          "13px x27",
-          "15px x25",
-          "12px x8",
+          "12px x32",
+          "16px x24",
+          "13px x3",
+          "15px x1",
           "22px x1"
         ]
       }
@@ -188,8 +190,8 @@
         },
         {
           "regla": "objetivosTactiles",
-          "estado": "FAIL",
-          "causa": "12 controles por debajo de 44px (el menor, 21px)"
+          "estado": "PASS",
+          "causa": ""
         },
         {
           "regla": "contraste",
@@ -198,18 +200,19 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1766,
+        "scrollAlto": 1845,
         "interactivos": 17,
-        "pequenos": 12,
+        "pequenos": 0,
+        "pequenosEnFrase": 0,
         "navRecorte": 94,
         "tablaVisible": false,
         "filaAlto": 0,
         "tamanos": [
           "14px x42",
-          "13px x9",
-          "15px x4",
+          "12px x6",
+          "13px x5",
+          "16px x4",
           "17px x4",
-          "12px x2",
           "22px x1"
         ]
       }
@@ -262,8 +265,8 @@
         },
         {
           "regla": "objetivosTactiles",
-          "estado": "FAIL",
-          "causa": "9 controles por debajo de 44px (el menor, 36px)"
+          "estado": "PASS",
+          "causa": ""
         },
         {
           "regla": "contraste",
@@ -272,17 +275,18 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 2220,
+        "scrollAlto": 2254,
         "interactivos": 14,
-        "pequenos": 9,
+        "pequenos": 0,
+        "pequenosEnFrase": 0,
         "navRecorte": 94,
         "tablaVisible": false,
         "filaAlto": 0,
         "tamanos": [
           "14px x33",
-          "13px x22",
-          "15px x7",
-          "12px x4",
+          "12px x21",
+          "16px x7",
+          "13px x5",
           "17px x2",
           "22px x1"
         ]
@@ -336,8 +340,8 @@
         },
         {
           "regla": "objetivosTactiles",
-          "estado": "FAIL",
-          "causa": "13 controles por debajo de 44px (el menor, 36px)"
+          "estado": "PASS",
+          "causa": ""
         },
         {
           "regla": "contraste",
@@ -346,16 +350,18 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1581,
+        "scrollAlto": 1637,
         "interactivos": 18,
-        "pequenos": 13,
+        "pequenos": 0,
+        "pequenosEnFrase": 0,
         "navRecorte": 94,
         "tablaVisible": false,
         "filaAlto": 0,
         "tamanos": [
           "14px x25",
-          "13px x21",
-          "15px x3",
+          "13px x12",
+          "12px x9",
+          "16px x3",
           "17px x1",
           "22px x1"
         ]
@@ -409,8 +415,8 @@
         },
         {
           "regla": "objetivosTactiles",
-          "estado": "FAIL",
-          "causa": "5 controles por debajo de 44px (el menor, 36px)"
+          "estado": "PASS",
+          "causa": ""
         },
         {
           "regla": "contraste",
@@ -421,7 +427,8 @@
       "metricas": {
         "scrollAlto": 812,
         "interactivos": 10,
-        "pequenos": 5,
+        "pequenos": 0,
+        "pequenosEnFrase": 0,
         "navRecorte": 94,
         "tablaVisible": null,
         "filaAlto": null,
@@ -482,8 +489,8 @@
         },
         {
           "regla": "objetivosTactiles",
-          "estado": "FAIL",
-          "causa": "6 controles por debajo de 44px (el menor, 36px)"
+          "estado": "PASS",
+          "causa": ""
         },
         {
           "regla": "contraste",
@@ -492,9 +499,10 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1362,
+        "scrollAlto": 1399,
         "interactivos": 12,
-        "pequenos": 6,
+        "pequenos": 0,
+        "pequenosEnFrase": 0,
         "navRecorte": 94,
         "tablaVisible": null,
         "filaAlto": null,
@@ -554,8 +562,8 @@
         },
         {
           "regla": "objetivosTactiles",
-          "estado": "FAIL",
-          "causa": "6 controles por debajo de 44px (el menor, 36px)"
+          "estado": "PASS",
+          "causa": ""
         },
         {
           "regla": "contraste",
@@ -564,17 +572,19 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1564,
+        "scrollAlto": 1576,
         "interactivos": 17,
-        "pequenos": 6,
+        "pequenos": 0,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": false,
         "filaAlto": 0,
         "tamanos": [
           "14px x33",
-          "13px x27",
-          "15px x25",
-          "12px x8",
+          "12px x32",
+          "16px x24",
+          "13px x3",
+          "15px x1",
           "22px x1"
         ]
       }
@@ -627,8 +637,8 @@
         },
         {
           "regla": "objetivosTactiles",
-          "estado": "FAIL",
-          "causa": "5 controles por debajo de 44px (el menor, 36px)"
+          "estado": "PASS",
+          "causa": ""
         },
         {
           "regla": "contraste",
@@ -639,7 +649,8 @@
       "metricas": {
         "scrollAlto": 812,
         "interactivos": 8,
-        "pequenos": 5,
+        "pequenos": 0,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": null,
         "filaAlto": null,
@@ -700,8 +711,8 @@
         },
         {
           "regla": "objetivosTactiles",
-          "estado": "FAIL",
-          "causa": "3 controles por debajo de 44px (el menor, 36px)"
+          "estado": "PASS",
+          "causa": ""
         },
         {
           "regla": "contraste",
@@ -710,17 +721,19 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 812,
+        "scrollAlto": 813,
         "interactivos": 10,
-        "pequenos": 3,
+        "pequenos": 0,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": false,
         "filaAlto": 0,
         "tamanos": [
           "14px x15",
-          "15px x13",
-          "13px x10",
-          "12px x4",
+          "12px x12",
+          "16px x12",
+          "13px x2",
+          "15px x1",
           "22px x1"
         ]
       }
@@ -773,8 +786,8 @@
         },
         {
           "regla": "objetivosTactiles",
-          "estado": "FAIL",
-          "causa": "3 controles por debajo de 44px (el menor, 36px)"
+          "estado": "PASS",
+          "causa": ""
         },
         {
           "regla": "contraste",
@@ -783,17 +796,18 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 867,
+        "scrollAlto": 865,
         "interactivos": 10,
-        "pequenos": 3,
+        "pequenos": 0,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": false,
         "filaAlto": 0,
         "tamanos": [
           "14px x16",
-          "13px x13",
-          "15px x4",
-          "12px x1",
+          "12px x9",
+          "13px x5",
+          "16px x4",
           "22px x1"
         ]
       }
@@ -846,8 +860,8 @@
         },
         {
           "regla": "objetivosTactiles",
-          "estado": "FAIL",
-          "causa": "5 controles por debajo de 44px (el menor, 21px)"
+          "estado": "PASS",
+          "causa": ""
         },
         {
           "regla": "contraste",
@@ -856,16 +870,18 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1179,
+        "scrollAlto": 1206,
         "interactivos": 8,
-        "pequenos": 5,
+        "pequenos": 0,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": false,
         "filaAlto": 0,
         "tamanos": [
           "14px x27",
-          "13px x18",
-          "15px x10",
+          "12px x16",
+          "16px x10",
+          "13px x2",
           "22px x1"
         ]
       }
@@ -918,8 +934,8 @@
         },
         {
           "regla": "objetivosTactiles",
-          "estado": "FAIL",
-          "causa": "4 controles por debajo de 44px (el menor, 21px)"
+          "estado": "PASS",
+          "causa": ""
         },
         {
           "regla": "contraste",
@@ -928,17 +944,18 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1108,
+        "scrollAlto": 1128,
         "interactivos": 7,
-        "pequenos": 4,
+        "pequenos": 0,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": false,
         "filaAlto": 0,
         "tamanos": [
           "14px x24",
-          "13px x15",
-          "15px x8",
-          "12px x1",
+          "12px x14",
+          "16px x8",
+          "13px x2",
           "22px x1"
         ]
       }
@@ -991,8 +1008,8 @@
         },
         {
           "regla": "objetivosTactiles",
-          "estado": "FAIL",
-          "causa": "33 controles por debajo de 44px (el menor, 21px)"
+          "estado": "PASS",
+          "causa": ""
         },
         {
           "regla": "contraste",
@@ -1001,9 +1018,10 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 3296,
+        "scrollAlto": 3509,
         "interactivos": 46,
-        "pequenos": 33,
+        "pequenos": 0,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": null,
         "filaAlto": null,
@@ -1064,8 +1082,8 @@
         },
         {
           "regla": "objetivosTactiles",
-          "estado": "FAIL",
-          "causa": "4 controles por debajo de 44px (el menor, 36px)"
+          "estado": "PASS",
+          "causa": ""
         },
         {
           "regla": "contraste",
@@ -1074,17 +1092,19 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 9282,
+        "scrollAlto": 9159,
         "interactivos": 7,
-        "pequenos": 4,
+        "pequenos": 0,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": false,
         "filaAlto": 0,
         "tamanos": [
+          "12px x222",
           "14px x156",
-          "13px x150",
-          "15px x75",
-          "12px x74",
+          "16px x74",
+          "13px x2",
+          "15px x1",
           "22px x1"
         ]
       }
@@ -1137,8 +1157,8 @@
         },
         {
           "regla": "objetivosTactiles",
-          "estado": "FAIL",
-          "causa": "3 controles por debajo de 44px (el menor, 36px)"
+          "estado": "PASS",
+          "causa": ""
         },
         {
           "regla": "contraste",
@@ -1147,9 +1167,10 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 994,
+        "scrollAlto": 1006,
         "interactivos": 10,
-        "pequenos": 3,
+        "pequenos": 0,
+        "pequenosEnFrase": 0,
         "navRecorte": 198,
         "tablaVisible": null,
         "filaAlto": null,
@@ -1210,8 +1231,8 @@
         },
         {
           "regla": "objetivosTactiles",
-          "estado": "FAIL",
-          "causa": "2 controles por debajo de 44px (el menor, 36px)"
+          "estado": "PASS",
+          "causa": ""
         },
         {
           "regla": "contraste",
@@ -1220,9 +1241,10 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1758,
+        "scrollAlto": 1763,
         "interactivos": 9,
-        "pequenos": 2,
+        "pequenos": 0,
+        "pequenosEnFrase": 0,
         "navRecorte": 198,
         "tablaVisible": null,
         "filaAlto": null,
@@ -1282,8 +1304,8 @@
         },
         {
           "regla": "objetivosTactiles",
-          "estado": "FAIL",
-          "causa": "3 controles por debajo de 44px (el menor, 16px)"
+          "estado": "PASS",
+          "causa": "(+1 en linea con el texto, exentos)"
         },
         {
           "regla": "contraste",
@@ -1294,7 +1316,8 @@
       "metricas": {
         "scrollAlto": 812,
         "interactivos": 11,
-        "pequenos": 3,
+        "pequenos": 0,
+        "pequenosEnFrase": 1,
         "navRecorte": 198,
         "tablaVisible": null,
         "filaAlto": null,
@@ -1354,8 +1377,8 @@
         },
         {
           "regla": "objetivosTactiles",
-          "estado": "FAIL",
-          "causa": "4 controles por debajo de 44px (el menor, 36px)"
+          "estado": "PASS",
+          "causa": ""
         },
         {
           "regla": "contraste",
@@ -1366,7 +1389,8 @@
       "metricas": {
         "scrollAlto": 812,
         "interactivos": 11,
-        "pequenos": 4,
+        "pequenos": 0,
+        "pequenosEnFrase": 0,
         "navRecorte": 198,
         "tablaVisible": null,
         "filaAlto": null,
@@ -1426,8 +1450,8 @@
         },
         {
           "regla": "objetivosTactiles",
-          "estado": "FAIL",
-          "causa": "3 controles por debajo de 44px (el menor, 16px)"
+          "estado": "PASS",
+          "causa": "(+1 en linea con el texto, exentos)"
         },
         {
           "regla": "contraste",
@@ -1438,7 +1462,8 @@
       "metricas": {
         "scrollAlto": 812,
         "interactivos": 10,
-        "pequenos": 3,
+        "pequenos": 0,
+        "pequenosEnFrase": 1,
         "navRecorte": 198,
         "tablaVisible": null,
         "filaAlto": null,
@@ -1498,8 +1523,8 @@
         },
         {
           "regla": "objetivosTactiles",
-          "estado": "FAIL",
-          "causa": "2 controles por debajo de 44px (el menor, 36px)"
+          "estado": "PASS",
+          "causa": ""
         },
         {
           "regla": "contraste",
@@ -1510,7 +1535,8 @@
       "metricas": {
         "scrollAlto": 812,
         "interactivos": 9,
-        "pequenos": 2,
+        "pequenos": 0,
+        "pequenosEnFrase": 0,
         "navRecorte": 198,
         "tablaVisible": null,
         "filaAlto": null,
@@ -1570,8 +1596,8 @@
         },
         {
           "regla": "objetivosTactiles",
-          "estado": "FAIL",
-          "causa": "2 controles por debajo de 44px (el menor, 36px)"
+          "estado": "PASS",
+          "causa": ""
         },
         {
           "regla": "contraste",
@@ -1582,7 +1608,8 @@
       "metricas": {
         "scrollAlto": 812,
         "interactivos": 9,
-        "pequenos": 2,
+        "pequenos": 0,
+        "pequenosEnFrase": 0,
         "navRecorte": 198,
         "tablaVisible": null,
         "filaAlto": null,
@@ -1641,8 +1668,8 @@
         },
         {
           "regla": "objetivosTactiles",
-          "estado": "FAIL",
-          "causa": "6 controles por debajo de 44px (el menor, 36px)"
+          "estado": "PASS",
+          "causa": ""
         },
         {
           "regla": "contraste",
@@ -1651,17 +1678,19 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1564,
+        "scrollAlto": 1576,
         "interactivos": 19,
-        "pequenos": 6,
+        "pequenos": 0,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": false,
         "filaAlto": 0,
         "tamanos": [
           "14px x35",
-          "13px x27",
-          "15px x25",
-          "12px x8",
+          "12px x32",
+          "16px x24",
+          "13px x3",
+          "15px x1",
           "22px x1"
         ]
       }
@@ -1714,8 +1743,8 @@
         },
         {
           "regla": "objetivosTactiles",
-          "estado": "FAIL",
-          "causa": "12 controles por debajo de 44px (el menor, 21px)"
+          "estado": "PASS",
+          "causa": ""
         },
         {
           "regla": "contraste",
@@ -1724,18 +1753,19 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1615,
+        "scrollAlto": 1678,
         "interactivos": 17,
-        "pequenos": 12,
+        "pequenos": 0,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": false,
         "filaAlto": 0,
         "tamanos": [
           "14px x42",
-          "13px x9",
-          "15px x4",
+          "12px x6",
+          "13px x5",
+          "16px x4",
           "17px x4",
-          "12px x2",
           "22px x1"
         ]
       }
@@ -1788,8 +1818,8 @@
         },
         {
           "regla": "objetivosTactiles",
-          "estado": "FAIL",
-          "causa": "9 controles por debajo de 44px (el menor, 36px)"
+          "estado": "PASS",
+          "causa": ""
         },
         {
           "regla": "contraste",
@@ -1798,17 +1828,18 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1985,
+        "scrollAlto": 2028,
         "interactivos": 14,
-        "pequenos": 9,
+        "pequenos": 0,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": false,
         "filaAlto": 0,
         "tamanos": [
           "14px x33",
-          "13px x22",
-          "15px x7",
-          "12px x4",
+          "12px x21",
+          "16px x7",
+          "13px x5",
           "17px x2",
           "22px x1"
         ]
@@ -1862,8 +1893,8 @@
         },
         {
           "regla": "objetivosTactiles",
-          "estado": "FAIL",
-          "causa": "13 controles por debajo de 44px (el menor, 36px)"
+          "estado": "PASS",
+          "causa": ""
         },
         {
           "regla": "contraste",
@@ -1872,16 +1903,18 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1501,
+        "scrollAlto": 1558,
         "interactivos": 18,
-        "pequenos": 13,
+        "pequenos": 0,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": false,
         "filaAlto": 0,
         "tamanos": [
           "14px x25",
-          "13px x21",
-          "15px x3",
+          "13px x12",
+          "12px x9",
+          "16px x3",
           "17px x1",
           "22px x1"
         ]
@@ -1935,8 +1968,8 @@
         },
         {
           "regla": "objetivosTactiles",
-          "estado": "FAIL",
-          "causa": "5 controles por debajo de 44px (el menor, 36px)"
+          "estado": "PASS",
+          "causa": ""
         },
         {
           "regla": "contraste",
@@ -1947,7 +1980,8 @@
       "metricas": {
         "scrollAlto": 1024,
         "interactivos": 10,
-        "pequenos": 5,
+        "pequenos": 0,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": null,
         "filaAlto": null,
@@ -2008,8 +2042,8 @@
         },
         {
           "regla": "objetivosTactiles",
-          "estado": "FAIL",
-          "causa": "6 controles por debajo de 44px (el menor, 36px)"
+          "estado": "PASS",
+          "causa": ""
         },
         {
           "regla": "contraste",
@@ -2018,9 +2052,10 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1122,
+        "scrollAlto": 1159,
         "interactivos": 12,
-        "pequenos": 6,
+        "pequenos": 0,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": null,
         "filaAlto": null,
@@ -2080,8 +2115,8 @@
         },
         {
           "regla": "objetivosTactiles",
-          "estado": "FAIL",
-          "causa": "6 controles por debajo de 44px (el menor, 36px)"
+          "estado": "PASS",
+          "causa": ""
         },
         {
           "regla": "contraste",
@@ -2090,17 +2125,19 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1564,
+        "scrollAlto": 1576,
         "interactivos": 17,
-        "pequenos": 6,
+        "pequenos": 0,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": false,
         "filaAlto": 0,
         "tamanos": [
           "14px x33",
-          "13px x27",
-          "15px x25",
-          "12px x8",
+          "12px x32",
+          "16px x24",
+          "13px x3",
+          "15px x1",
           "22px x1"
         ]
       }
@@ -2153,8 +2190,8 @@
         },
         {
           "regla": "objetivosTactiles",
-          "estado": "FAIL",
-          "causa": "5 controles por debajo de 44px (el menor, 36px)"
+          "estado": "PASS",
+          "causa": ""
         },
         {
           "regla": "contraste",
@@ -2165,7 +2202,8 @@
       "metricas": {
         "scrollAlto": 1024,
         "interactivos": 8,
-        "pequenos": 5,
+        "pequenos": 0,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": null,
         "filaAlto": null,
@@ -2226,8 +2264,8 @@
         },
         {
           "regla": "objetivosTactiles",
-          "estado": "FAIL",
-          "causa": "3 controles por debajo de 44px (el menor, 36px)"
+          "estado": "PASS",
+          "causa": ""
         },
         {
           "regla": "contraste",
@@ -2238,15 +2276,17 @@
       "metricas": {
         "scrollAlto": 1024,
         "interactivos": 10,
-        "pequenos": 3,
+        "pequenos": 0,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": false,
         "filaAlto": 0,
         "tamanos": [
           "14px x15",
-          "15px x13",
-          "13px x10",
-          "12px x4",
+          "12px x12",
+          "16px x12",
+          "13px x2",
+          "15px x1",
           "22px x1"
         ]
       }
@@ -2299,8 +2339,8 @@
         },
         {
           "regla": "objetivosTactiles",
-          "estado": "FAIL",
-          "causa": "3 controles por debajo de 44px (el menor, 36px)"
+          "estado": "PASS",
+          "causa": ""
         },
         {
           "regla": "contraste",
@@ -2311,15 +2351,16 @@
       "metricas": {
         "scrollAlto": 1024,
         "interactivos": 10,
-        "pequenos": 3,
+        "pequenos": 0,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": false,
         "filaAlto": 0,
         "tamanos": [
           "14px x16",
-          "13px x13",
-          "15px x4",
-          "12px x1",
+          "12px x9",
+          "13px x5",
+          "16px x4",
           "22px x1"
         ]
       }
@@ -2372,8 +2413,8 @@
         },
         {
           "regla": "objetivosTactiles",
-          "estado": "FAIL",
-          "causa": "5 controles por debajo de 44px (el menor, 21px)"
+          "estado": "PASS",
+          "causa": ""
         },
         {
           "regla": "contraste",
@@ -2382,16 +2423,18 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1158,
+        "scrollAlto": 1185,
         "interactivos": 8,
-        "pequenos": 5,
+        "pequenos": 0,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": false,
         "filaAlto": 0,
         "tamanos": [
           "14px x27",
-          "13px x18",
-          "15px x10",
+          "12px x16",
+          "16px x10",
+          "13px x2",
           "22px x1"
         ]
       }
@@ -2444,8 +2487,8 @@
         },
         {
           "regla": "objetivosTactiles",
-          "estado": "FAIL",
-          "causa": "4 controles por debajo de 44px (el menor, 21px)"
+          "estado": "PASS",
+          "causa": ""
         },
         {
           "regla": "contraste",
@@ -2454,17 +2497,18 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1032,
+        "scrollAlto": 1053,
         "interactivos": 7,
-        "pequenos": 4,
+        "pequenos": 0,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": false,
         "filaAlto": 0,
         "tamanos": [
           "14px x24",
-          "13px x15",
-          "15px x8",
-          "12px x1",
+          "12px x14",
+          "16px x8",
+          "13px x2",
           "22px x1"
         ]
       }
@@ -2517,8 +2561,8 @@
         },
         {
           "regla": "objetivosTactiles",
-          "estado": "FAIL",
-          "causa": "33 controles por debajo de 44px (el menor, 21px)"
+          "estado": "PASS",
+          "causa": ""
         },
         {
           "regla": "contraste",
@@ -2527,9 +2571,10 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 3255,
+        "scrollAlto": 3469,
         "interactivos": 46,
-        "pequenos": 33,
+        "pequenos": 0,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": null,
         "filaAlto": null,
@@ -2590,8 +2635,8 @@
         },
         {
           "regla": "objetivosTactiles",
-          "estado": "FAIL",
-          "causa": "4 controles por debajo de 44px (el menor, 36px)"
+          "estado": "PASS",
+          "causa": ""
         },
         {
           "regla": "contraste",
@@ -2600,17 +2645,19 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 9059,
+        "scrollAlto": 8898,
         "interactivos": 7,
-        "pequenos": 4,
+        "pequenos": 0,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": false,
         "filaAlto": 0,
         "tamanos": [
+          "12px x222",
           "14px x156",
-          "13px x150",
-          "15px x75",
-          "12px x74",
+          "16px x74",
+          "13px x2",
+          "15px x1",
           "22px x1"
         ]
       }
@@ -2663,8 +2710,8 @@
         },
         {
           "regla": "objetivosTactiles",
-          "estado": "FAIL",
-          "causa": "3 controles por debajo de 44px (el menor, 36px)"
+          "estado": "PASS",
+          "causa": ""
         },
         {
           "regla": "contraste",
@@ -2675,7 +2722,8 @@
       "metricas": {
         "scrollAlto": 1024,
         "interactivos": 10,
-        "pequenos": 3,
+        "pequenos": 0,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": null,
         "filaAlto": null,
@@ -2736,8 +2784,8 @@
         },
         {
           "regla": "objetivosTactiles",
-          "estado": "FAIL",
-          "causa": "2 controles por debajo de 44px (el menor, 36px)"
+          "estado": "PASS",
+          "causa": ""
         },
         {
           "regla": "contraste",
@@ -2746,9 +2794,10 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1716,
+        "scrollAlto": 1721,
         "interactivos": 9,
-        "pequenos": 2,
+        "pequenos": 0,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": null,
         "filaAlto": null,
@@ -2808,8 +2857,8 @@
         },
         {
           "regla": "objetivosTactiles",
-          "estado": "FAIL",
-          "causa": "3 controles por debajo de 44px (el menor, 16px)"
+          "estado": "PASS",
+          "causa": "(+1 en linea con el texto, exentos)"
         },
         {
           "regla": "contraste",
@@ -2820,7 +2869,8 @@
       "metricas": {
         "scrollAlto": 1024,
         "interactivos": 11,
-        "pequenos": 3,
+        "pequenos": 0,
+        "pequenosEnFrase": 1,
         "navRecorte": 0,
         "tablaVisible": null,
         "filaAlto": null,
@@ -2880,8 +2930,8 @@
         },
         {
           "regla": "objetivosTactiles",
-          "estado": "FAIL",
-          "causa": "4 controles por debajo de 44px (el menor, 36px)"
+          "estado": "PASS",
+          "causa": ""
         },
         {
           "regla": "contraste",
@@ -2892,7 +2942,8 @@
       "metricas": {
         "scrollAlto": 1024,
         "interactivos": 11,
-        "pequenos": 4,
+        "pequenos": 0,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": null,
         "filaAlto": null,
@@ -2952,8 +3003,8 @@
         },
         {
           "regla": "objetivosTactiles",
-          "estado": "FAIL",
-          "causa": "3 controles por debajo de 44px (el menor, 16px)"
+          "estado": "PASS",
+          "causa": "(+1 en linea con el texto, exentos)"
         },
         {
           "regla": "contraste",
@@ -2964,7 +3015,8 @@
       "metricas": {
         "scrollAlto": 1024,
         "interactivos": 10,
-        "pequenos": 3,
+        "pequenos": 0,
+        "pequenosEnFrase": 1,
         "navRecorte": 0,
         "tablaVisible": null,
         "filaAlto": null,
@@ -3024,8 +3076,8 @@
         },
         {
           "regla": "objetivosTactiles",
-          "estado": "FAIL",
-          "causa": "2 controles por debajo de 44px (el menor, 36px)"
+          "estado": "PASS",
+          "causa": ""
         },
         {
           "regla": "contraste",
@@ -3036,7 +3088,8 @@
       "metricas": {
         "scrollAlto": 1024,
         "interactivos": 9,
-        "pequenos": 2,
+        "pequenos": 0,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": null,
         "filaAlto": null,
@@ -3096,8 +3149,8 @@
         },
         {
           "regla": "objetivosTactiles",
-          "estado": "FAIL",
-          "causa": "2 controles por debajo de 44px (el menor, 36px)"
+          "estado": "PASS",
+          "causa": ""
         },
         {
           "regla": "contraste",
@@ -3108,7 +3161,8 @@
       "metricas": {
         "scrollAlto": 1024,
         "interactivos": 9,
-        "pequenos": 2,
+        "pequenos": 0,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": null,
         "filaAlto": null,
@@ -3168,7 +3222,7 @@
         {
           "regla": "objetivosTactiles",
           "estado": "WARN",
-          "causa": "14 controles por debajo de 44px (el menor, 17px)"
+          "causa": "14 controles por debajo de 44px (el menor, 20px)"
         },
         {
           "regla": "contraste",
@@ -3177,15 +3231,17 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 779,
+        "scrollAlto": 775,
         "interactivos": 19,
         "pequenos": 14,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": true,
         "filaAlto": 47,
         "tamanos": [
-          "14px x51",
+          "14px x43",
           "12px x15",
+          "16px x8",
           "13px x3",
           "15px x1",
           "22px x1"
@@ -3241,7 +3297,7 @@
         {
           "regla": "objetivosTactiles",
           "estado": "WARN",
-          "causa": "14 controles por debajo de 44px (el menor, 21px)"
+          "causa": "14 controles por debajo de 44px (el menor, 28px)"
         },
         {
           "regla": "contraste",
@@ -3250,9 +3306,10 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1380,
+        "scrollAlto": 1384,
         "interactivos": 19,
         "pequenos": 14,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": true,
         "filaAlto": 61,
@@ -3323,9 +3380,10 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1339,
+        "scrollAlto": 1336,
         "interactivos": 14,
         "pequenos": 9,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": true,
         "filaAlto": 67,
@@ -3396,9 +3454,10 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1112,
+        "scrollAlto": 1111,
         "interactivos": 18,
         "pequenos": 13,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": true,
         "filaAlto": 61,
@@ -3472,6 +3531,7 @@
         "scrollAlto": 768,
         "interactivos": 10,
         "pequenos": 5,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": null,
         "filaAlto": null,
@@ -3543,9 +3603,10 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1171,
+        "scrollAlto": 1168,
         "interactivos": 12,
         "pequenos": 6,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": null,
         "filaAlto": null,
@@ -3607,7 +3668,7 @@
         {
           "regla": "objetivosTactiles",
           "estado": "WARN",
-          "causa": "14 controles por debajo de 44px (el menor, 17px)"
+          "causa": "14 controles por debajo de 44px (el menor, 20px)"
         },
         {
           "regla": "contraste",
@@ -3616,15 +3677,17 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 779,
+        "scrollAlto": 775,
         "interactivos": 17,
         "pequenos": 14,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": true,
         "filaAlto": 47,
         "tamanos": [
-          "14px x49",
+          "14px x41",
           "12px x15",
+          "16px x8",
           "13px x3",
           "15px x1",
           "22px x1"
@@ -3692,6 +3755,7 @@
         "scrollAlto": 768,
         "interactivos": 8,
         "pequenos": 5,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": null,
         "filaAlto": null,
@@ -3766,6 +3830,7 @@
         "scrollAlto": 768,
         "interactivos": 10,
         "pequenos": 7,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": true,
         "filaAlto": 47,
@@ -3839,13 +3904,15 @@
         "scrollAlto": 768,
         "interactivos": 10,
         "pequenos": 7,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": true,
-        "filaAlto": 69,
+        "filaAlto": 68,
         "tamanos": [
-          "14px x20",
+          "14px x16",
           "12px x5",
           "13px x5",
+          "16px x4",
           "22px x1"
         ]
       }
@@ -3899,7 +3966,7 @@
         {
           "regla": "objetivosTactiles",
           "estado": "WARN",
-          "causa": "5 controles por debajo de 44px (el menor, 21px)"
+          "causa": "5 controles por debajo de 44px (el menor, 36px)"
         },
         {
           "regla": "contraste",
@@ -3911,12 +3978,14 @@
         "scrollAlto": 768,
         "interactivos": 8,
         "pequenos": 5,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": true,
         "filaAlto": 46,
         "tamanos": [
-          "14px x41",
+          "14px x36",
           "12px x7",
+          "16px x5",
           "13px x2",
           "22px x1"
         ]
@@ -3971,7 +4040,7 @@
         {
           "regla": "objetivosTactiles",
           "estado": "WARN",
-          "causa": "4 controles por debajo de 44px (el menor, 21px)"
+          "causa": "4 controles por debajo de 44px (el menor, 36px)"
         },
         {
           "regla": "contraste",
@@ -3983,12 +4052,14 @@
         "scrollAlto": 768,
         "interactivos": 7,
         "pequenos": 4,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": true,
         "filaAlto": 46,
         "tamanos": [
-          "14px x35",
+          "14px x31",
           "12px x8",
+          "16px x4",
           "13px x2",
           "22px x1"
         ]
@@ -4043,7 +4114,7 @@
         {
           "regla": "objetivosTactiles",
           "estado": "WARN",
-          "causa": "33 controles por debajo de 44px (el menor, 21px)"
+          "causa": "33 controles por debajo de 44px (el menor, 28px)"
         },
         {
           "regla": "contraste",
@@ -4052,9 +4123,10 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 2573,
+        "scrollAlto": 2578,
         "interactivos": 46,
         "pequenos": 33,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": null,
         "filaAlto": null,
@@ -4126,15 +4198,17 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 4889,
+        "scrollAlto": 4939,
         "interactivos": 155,
         "pequenos": 152,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": true,
         "filaAlto": 61,
         "tamanos": [
-          "14px x378",
+          "14px x304",
           "12px x79",
+          "16px x74",
           "13px x2",
           "15px x1",
           "22px x1"
@@ -4199,9 +4273,10 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 885,
+        "scrollAlto": 880,
         "interactivos": 10,
         "pequenos": 3,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": null,
         "filaAlto": null,
@@ -4272,9 +4347,10 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1861,
+        "scrollAlto": 1858,
         "interactivos": 9,
         "pequenos": 2,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": null,
         "filaAlto": null,
@@ -4336,7 +4412,7 @@
         {
           "regla": "objetivosTactiles",
           "estado": "WARN",
-          "causa": "3 controles por debajo de 44px (el menor, 16px)"
+          "causa": "2 controles por debajo de 44px (el menor, 36px) (+1 en linea con el texto, exentos)"
         },
         {
           "regla": "contraste",
@@ -4347,7 +4423,8 @@
       "metricas": {
         "scrollAlto": 768,
         "interactivos": 11,
-        "pequenos": 3,
+        "pequenos": 2,
+        "pequenosEnFrase": 1,
         "navRecorte": 0,
         "tablaVisible": null,
         "filaAlto": null,
@@ -4421,6 +4498,7 @@
         "scrollAlto": 768,
         "interactivos": 11,
         "pequenos": 4,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": null,
         "filaAlto": null,
@@ -4482,7 +4560,7 @@
         {
           "regla": "objetivosTactiles",
           "estado": "WARN",
-          "causa": "3 controles por debajo de 44px (el menor, 16px)"
+          "causa": "2 controles por debajo de 44px (el menor, 36px) (+1 en linea con el texto, exentos)"
         },
         {
           "regla": "contraste",
@@ -4493,7 +4571,8 @@
       "metricas": {
         "scrollAlto": 768,
         "interactivos": 10,
-        "pequenos": 3,
+        "pequenos": 2,
+        "pequenosEnFrase": 1,
         "navRecorte": 0,
         "tablaVisible": null,
         "filaAlto": null,
@@ -4567,6 +4646,7 @@
         "scrollAlto": 768,
         "interactivos": 9,
         "pequenos": 2,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": null,
         "filaAlto": null,
@@ -4640,6 +4720,7 @@
         "scrollAlto": 768,
         "interactivos": 9,
         "pequenos": 2,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": null,
         "filaAlto": null,
@@ -4700,7 +4781,7 @@
         {
           "regla": "objetivosTactiles",
           "estado": "WARN",
-          "causa": "14 controles por debajo de 44px (el menor, 17px)"
+          "causa": "14 controles por debajo de 44px (el menor, 20px)"
         },
         {
           "regla": "contraste",
@@ -4712,12 +4793,14 @@
         "scrollAlto": 900,
         "interactivos": 19,
         "pequenos": 14,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": true,
         "filaAlto": 47,
         "tamanos": [
-          "14px x51",
+          "14px x43",
           "12px x15",
+          "16px x8",
           "13px x3",
           "15px x1",
           "22px x1"
@@ -4773,7 +4856,7 @@
         {
           "regla": "objetivosTactiles",
           "estado": "WARN",
-          "causa": "14 controles por debajo de 44px (el menor, 21px)"
+          "causa": "14 controles por debajo de 44px (el menor, 28px)"
         },
         {
           "regla": "contraste",
@@ -4782,9 +4865,10 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1380,
+        "scrollAlto": 1384,
         "interactivos": 19,
         "pequenos": 14,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": true,
         "filaAlto": 61,
@@ -4855,9 +4939,10 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1339,
+        "scrollAlto": 1336,
         "interactivos": 14,
         "pequenos": 9,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": true,
         "filaAlto": 67,
@@ -4928,9 +5013,10 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1112,
+        "scrollAlto": 1111,
         "interactivos": 18,
         "pequenos": 13,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": true,
         "filaAlto": 61,
@@ -5004,6 +5090,7 @@
         "scrollAlto": 900,
         "interactivos": 10,
         "pequenos": 5,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": null,
         "filaAlto": null,
@@ -5075,9 +5162,10 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1171,
+        "scrollAlto": 1168,
         "interactivos": 12,
         "pequenos": 6,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": null,
         "filaAlto": null,
@@ -5139,7 +5227,7 @@
         {
           "regla": "objetivosTactiles",
           "estado": "WARN",
-          "causa": "14 controles por debajo de 44px (el menor, 17px)"
+          "causa": "14 controles por debajo de 44px (el menor, 20px)"
         },
         {
           "regla": "contraste",
@@ -5151,12 +5239,14 @@
         "scrollAlto": 900,
         "interactivos": 17,
         "pequenos": 14,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": true,
         "filaAlto": 47,
         "tamanos": [
-          "14px x49",
+          "14px x41",
           "12px x15",
+          "16px x8",
           "13px x3",
           "15px x1",
           "22px x1"
@@ -5224,6 +5314,7 @@
         "scrollAlto": 900,
         "interactivos": 8,
         "pequenos": 5,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": null,
         "filaAlto": null,
@@ -5298,6 +5389,7 @@
         "scrollAlto": 900,
         "interactivos": 10,
         "pequenos": 7,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": true,
         "filaAlto": 47,
@@ -5371,13 +5463,15 @@
         "scrollAlto": 900,
         "interactivos": 10,
         "pequenos": 7,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": true,
-        "filaAlto": 69,
+        "filaAlto": 68,
         "tamanos": [
-          "14px x20",
+          "14px x16",
           "12px x5",
           "13px x5",
+          "16px x4",
           "22px x1"
         ]
       }
@@ -5431,7 +5525,7 @@
         {
           "regla": "objetivosTactiles",
           "estado": "WARN",
-          "causa": "5 controles por debajo de 44px (el menor, 21px)"
+          "causa": "5 controles por debajo de 44px (el menor, 36px)"
         },
         {
           "regla": "contraste",
@@ -5443,12 +5537,14 @@
         "scrollAlto": 900,
         "interactivos": 8,
         "pequenos": 5,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": true,
         "filaAlto": 46,
         "tamanos": [
-          "14px x41",
+          "14px x36",
           "12px x7",
+          "16px x5",
           "13px x2",
           "22px x1"
         ]
@@ -5503,7 +5599,7 @@
         {
           "regla": "objetivosTactiles",
           "estado": "WARN",
-          "causa": "4 controles por debajo de 44px (el menor, 21px)"
+          "causa": "4 controles por debajo de 44px (el menor, 36px)"
         },
         {
           "regla": "contraste",
@@ -5515,12 +5611,14 @@
         "scrollAlto": 900,
         "interactivos": 7,
         "pequenos": 4,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": true,
         "filaAlto": 46,
         "tamanos": [
-          "14px x35",
+          "14px x31",
           "12px x8",
+          "16px x4",
           "13px x2",
           "22px x1"
         ]
@@ -5575,7 +5673,7 @@
         {
           "regla": "objetivosTactiles",
           "estado": "WARN",
-          "causa": "33 controles por debajo de 44px (el menor, 21px)"
+          "causa": "33 controles por debajo de 44px (el menor, 28px)"
         },
         {
           "regla": "contraste",
@@ -5584,9 +5682,10 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 2573,
+        "scrollAlto": 2578,
         "interactivos": 46,
         "pequenos": 33,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": null,
         "filaAlto": null,
@@ -5661,12 +5760,14 @@
         "scrollAlto": 4889,
         "interactivos": 155,
         "pequenos": 152,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": true,
         "filaAlto": 61,
         "tamanos": [
-          "14px x378",
+          "14px x304",
           "12px x79",
+          "16px x74",
           "13px x2",
           "15px x1",
           "22px x1"
@@ -5734,6 +5835,7 @@
         "scrollAlto": 900,
         "interactivos": 10,
         "pequenos": 3,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": null,
         "filaAlto": null,
@@ -5804,9 +5906,10 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1861,
+        "scrollAlto": 1858,
         "interactivos": 9,
         "pequenos": 2,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": null,
         "filaAlto": null,
@@ -5868,7 +5971,7 @@
         {
           "regla": "objetivosTactiles",
           "estado": "WARN",
-          "causa": "3 controles por debajo de 44px (el menor, 16px)"
+          "causa": "2 controles por debajo de 44px (el menor, 36px) (+1 en linea con el texto, exentos)"
         },
         {
           "regla": "contraste",
@@ -5879,7 +5982,8 @@
       "metricas": {
         "scrollAlto": 900,
         "interactivos": 11,
-        "pequenos": 3,
+        "pequenos": 2,
+        "pequenosEnFrase": 1,
         "navRecorte": 0,
         "tablaVisible": null,
         "filaAlto": null,
@@ -5953,6 +6057,7 @@
         "scrollAlto": 900,
         "interactivos": 11,
         "pequenos": 4,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": null,
         "filaAlto": null,
@@ -6014,7 +6119,7 @@
         {
           "regla": "objetivosTactiles",
           "estado": "WARN",
-          "causa": "3 controles por debajo de 44px (el menor, 16px)"
+          "causa": "2 controles por debajo de 44px (el menor, 36px) (+1 en linea con el texto, exentos)"
         },
         {
           "regla": "contraste",
@@ -6025,7 +6130,8 @@
       "metricas": {
         "scrollAlto": 900,
         "interactivos": 10,
-        "pequenos": 3,
+        "pequenos": 2,
+        "pequenosEnFrase": 1,
         "navRecorte": 0,
         "tablaVisible": null,
         "filaAlto": null,
@@ -6099,6 +6205,7 @@
         "scrollAlto": 900,
         "interactivos": 9,
         "pequenos": 2,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": null,
         "filaAlto": null,
@@ -6172,6 +6279,7 @@
         "scrollAlto": 900,
         "interactivos": 9,
         "pequenos": 2,
+        "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": null,
         "filaAlto": null,

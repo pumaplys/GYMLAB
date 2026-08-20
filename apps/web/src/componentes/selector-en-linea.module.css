@@ -24,7 +24,7 @@
 
 .buscador {
   width: 100%;
-  min-height: 2.25rem;
+  min-height: var(--control-alto);
   padding: 0 var(--e3);
   background: var(--fondo);
   border: 1px solid var(--borde-fuerte);

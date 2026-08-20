@@ -16,7 +16,7 @@
 .buscador {
   width: 100%;
   max-width: 22rem;
-  min-height: 2.25rem;
+  min-height: var(--control-alto);
   padding: 0 var(--e3);
   background: var(--fondo);
   border: 1px solid var(--borde-fuerte);
@@ -29,7 +29,9 @@
 }
 
 .nombre {
-  font-weight: 500;
+  font-size: var(--t-dato);
+  font-weight: 600;
+  line-height: var(--lh-compacta);
   white-space: nowrap;
 }
 

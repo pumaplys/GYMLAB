@@ -116,6 +116,8 @@ async function main() {
             if (pantalla.acciones?.length) {
               await pestana.esperarA(sondaAcciones(pantalla.acciones), 9000);
             }
+            // Y a que deje de crecer, o se miden listas a medio llegar.
+            await pestana.esperarEstable(6000);
             const medida = await pestana.evaluar(SONDA_PANTALLA);
 
             suyas.push({
@@ -129,6 +131,7 @@ async function main() {
                 scrollAlto: medida?.scrollAlto ?? null,
                 interactivos: medida?.interactivos ?? 0,
                 pequenos: (medida?.pequenos ?? []).length,
+                pequenosEnFrase: (medida?.pequenosEnFrase ?? []).length,
                 navRecorte: medida?.navRecorte ?? 0,
                 tablaVisible: medida?.tablaVisible ?? null,
                 filaAlto: medida?.filaAlto ?? null,
