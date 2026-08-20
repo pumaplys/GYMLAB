@@ -12,9 +12,12 @@
  */
 .salto {
   position: absolute;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--control-alto);
   top: var(--e2);
   left: var(--e2);
-  z-index: 20;
+  z-index: var(--z-flotante);
   padding: var(--e2) var(--e3);
   background: var(--fondo);
   border: 1px solid var(--borde-fuerte);
@@ -41,7 +44,7 @@
 .cabecera {
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: var(--z-pegajoso);
   background: var(--fondo);
   border-bottom: 1px solid var(--borde);
 }

@@ -1,34 +1,59 @@
+/*
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ EL COLOR ES EL SEGUNDO CANAL, NUNCA EL PRIMERO.                          │
+ * │                                                                          │
+ * │ El primero es la palabra: "Activo", "Archivada", "Vencida". Se lee igual │
+ * │ en escala de grises, con daltonismo o con el brillo al minimo bajo el    │
+ * │ fluorescente de un mostrador.                                            │
+ * │                                                                          │
+ * │ El borde es lo que se anade en D1: da forma a la pastilla sin subir la   │
+ * │ saturacion. Antes, sobre una fila resaltada, el fondo suave de la        │
+ * │ etiqueta casi desaparecia y quedaba texto de color suelto. Ahora la      │
+ * │ pastilla se ve como pastilla aunque el fondo cambie debajo.              │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ */
 .etiqueta {
-  display: inline-block;
-  padding: 0.0625rem var(--e2);
+  display: inline-flex;
+  align-items: center;
+  /* La altura la fija el interlineado, no el relleno: asi una pastilla dentro
+     de una celda no estira la fila. */
+  min-height: 1.25rem;
+  padding: 0 var(--e2);
+  border: 1px solid transparent;
   border-radius: var(--radio-pastilla);
   font-size: var(--t-xs);
   font-weight: 500;
+  line-height: var(--lh-compacta);
   white-space: nowrap;
 }
 
 .exito {
   background: var(--exito-suave);
   color: var(--exito);
+  border-color: color-mix(in srgb, var(--exito) 22%, transparent);
 }
 
 .peligro {
   background: var(--peligro-suave);
   color: var(--peligro);
+  border-color: color-mix(in srgb, var(--peligro) 22%, transparent);
 }
 
 .aviso {
   background: var(--aviso-suave);
   color: var(--aviso);
+  border-color: color-mix(in srgb, var(--aviso) 22%, transparent);
 }
 
 /* Sin carga: archivado, revocado, dado de baja. Estados que no alarman. */
 .neutro {
   background: var(--fondo-activo);
   color: var(--texto-sutil);
+  border-color: var(--borde);
 }
 
 .acento {
   background: var(--acento-suave);
   color: var(--acento-hover);
+  border-color: color-mix(in srgb, var(--acento) 22%, transparent);
 }

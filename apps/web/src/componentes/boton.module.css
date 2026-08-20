@@ -18,12 +18,18 @@
   align-items: center;
   justify-content: center;
   gap: var(--e2);
-  min-height: 2.25rem;
+  /*
+   * La altura la decide el token, no este fichero: con raton 36 px y con dedo
+   * 44. Ver el bloque `@media (pointer: coarse)` de globals.css — cambiarla
+   * aqui volveria a partir el sistema en dos sitios.
+   */
+  min-height: var(--control-alto);
   padding: 0 var(--e4);
   border: 1px solid transparent;
   border-radius: var(--radio-s);
   font-size: var(--t-base);
   font-weight: 500;
+  line-height: var(--lh-normal);
   white-space: nowrap;
   cursor: pointer;
   transition:
@@ -34,19 +40,47 @@
 /*
  * `sm` para acciones dentro de una fila de tabla.
  *
- * 1.75rem son 28 px: por encima del minimo de 24 que pide WCAG 2.2 para un
- * objetivo, y suficiente para que una tabla de diez filas no parezca una lista
- * de botones. El tamano normal se queda para todo lo demas.
+ * Con raton son 28 px: por encima del minimo de 24 que pide WCAG 2.2 y
+ * suficiente para que una tabla de diez filas no parezca una lista de botones.
+ * Con dedo sube a 44 como los demas —el token lo iguala— porque en un telefono
+ * la tabla ya no es una tabla: es una lista apilada donde cada accion se pulsa.
  */
 .sm {
-  min-height: 1.75rem;
+  min-height: var(--control-alto-sm);
   padding: 0 var(--e3);
   font-size: var(--t-sm);
+}
+
+/*
+ * `lg` para la accion principal de una pantalla en movil, donde el boton ocupa
+ * el ancho y es lo unico que se va a pulsar.
+ */
+.lg {
+  min-height: var(--control-alto-lg);
+  padding: 0 var(--e5);
+  font-size: var(--t-md);
 }
 
 .boton:disabled {
   cursor: not-allowed;
   opacity: 0.55;
+}
+
+/*
+ * Pulsado: un paso, no una animacion.
+ *
+ * Se hunde con `translateY` de un pixel en lugar de cambiar de color, porque
+ * el color ya lo usa `hover` y encadenar los dos deja el boton parpadeando
+ * mientras se mantiene pulsado. Un pixel se siente y no se ve.
+ */
+.boton:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .boton:active:not(:disabled) {
+    transform: none;
+  }
 }
 
 .primario {

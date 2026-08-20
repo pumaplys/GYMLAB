@@ -30,13 +30,38 @@
  * boton que lo acompana en una fila queden alineados por arriba y por abajo.
  */
 .control {
-  min-height: 2.25rem;
+  min-height: var(--control-alto);
   padding: 0 var(--e3);
   background: var(--fondo);
   border: 1px solid var(--borde-fuerte);
   border-radius: var(--radio-s);
   color: var(--texto);
   font-size: var(--t-base);
+  line-height: var(--lh-normal);
+}
+
+/*
+ * Un campo de texto no crece indefinidamente.
+ *
+ * MEDIDO en /configuracion: 1.054 px de ancho para un nombre y un NIF. Un
+ * campo largo no se lee mejor — se lee peor, porque el ojo pierde el punto de
+ * partida al saltar de linea. `--ancho-campo` son 26rem, que caben unos 45
+ * caracteres.
+ *
+ * Se aplica al control y no al contenedor para que un campo dentro de una
+ * rejilla de dos columnas siga ocupando su celda entera.
+ */
+.control:not(textarea) {
+  max-width: var(--ancho-campo);
+}
+
+/* El area de texto es otra cosa: se lee en parrafos y quiere el ancho de
+   lectura, no el de un campo. */
+textarea.control {
+  max-width: var(--ancho-lectura);
+  padding: var(--e2) var(--e3);
+  line-height: var(--lh-holgada);
+  resize: vertical;
 }
 
 .control::placeholder {

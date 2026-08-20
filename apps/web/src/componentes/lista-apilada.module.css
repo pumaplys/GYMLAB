@@ -61,8 +61,12 @@
 }
 
 .titulo {
-  font-size: var(--t-md);
-  font-weight: 500;
+  /* Es el dato que se busca al recorrer la lista con el pulgar: el nombre
+     del socio, el de la rutina. Sube a --t-dato/600 para que se separe de
+     los pares etiqueta/valor de debajo, que son el detalle. */
+  font-size: var(--t-dato);
+  font-weight: 600;
+  line-height: var(--lh-compacta);
   /* Que un nombre largo no empuje la etiqueta de estado fuera de la tarjeta. */
   min-width: 0;
   overflow-wrap: anywhere;
@@ -87,8 +91,11 @@
 }
 
 .nombreDelDato {
+  /* Baja a --t-xs: es la pregunta, no la respuesta. Antes pesaba casi lo
+     mismo que el valor y la tarjeta se leia como una lista plana. */
   color: var(--texto-sutil);
-  font-size: var(--t-sm);
+  font-size: var(--t-xs);
+  line-height: var(--lh-normal);
 }
 
 .valor {

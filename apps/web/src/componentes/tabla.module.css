@@ -62,7 +62,9 @@
 }
 
 .tabla td {
-  padding: var(--e3) var(--e5);
+  /* Densidad UNICA. Medido antes de D1: 47 px de fila en socios, 61 en
+     planes y 67 en personal, sin motivo. El relleno sube solo con el dedo. */
+  padding: var(--fila-relleno) var(--e5);
   border-bottom: 1px solid var(--borde);
   vertical-align: middle;
 }
@@ -97,6 +99,18 @@
 .acciones {
   text-align: right;
   white-space: nowrap;
+}
+
+/*
+ * La celda que se viene a leer.
+ *
+ * En una tabla de socios lo que se busca es el NOMBRE; el telefono y la fecha
+ * acompanan. Sin esto pesan los tres igual y hay que leer la fila entera.
+ */
+.dato {
+  font-size: var(--t-dato);
+  font-weight: 600;
+  line-height: var(--lh-compacta);
 }
 
 .tenue {

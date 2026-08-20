@@ -99,9 +99,34 @@
   --t-xs: 0.75rem; /* cabeceras de tabla, etiquetas de estado */
   --t-sm: 0.8125rem; /* ayudas, metadatos */
   --t-base: 0.875rem; /* texto de trabajo: tablas y formularios */
-  --t-md: 0.9375rem; /* cuerpo de lectura */
+  --t-md: 0.9375rem; /* cuerpo de lectura, y titulo de bloque en 600 */
+  --t-dato: 1rem; /* el valor que se viene a leer: importe, nombre, estado */
   --t-lg: 1.0625rem; /* titulo de seccion */
   --t-xl: 1.375rem; /* titulo de pantalla */
+
+  /*
+   * ┌────────────────────────────────────────────────────────────────────────┐
+   * │ EL ESCALON QUE FALTABA ERA `--t-dato`, Y SE NOTA AL MEDIR.             │
+   * │                                                                        │
+   * │ Habia seis tamanos declarados y en pantalla salian tres: 14 px hacia   │
+   * │ 43 elementos en /socios, 12 hacia 14, y un solo 22 en el titulo. Sin   │
+   * │ nada entre el texto de trabajo y el titulo de pantalla, un nombre, un  │
+   * │ importe y la etiqueta que los describe pesan igual — y entonces no hay │
+   * │ vistazo posible: hay que leerlo todo.                                  │
+   * │                                                                        │
+   * │ 16/600 es poco mas que el texto de trabajo y basta para que el ojo     │
+   * │ separe el dato de su etiqueta. Subir mas convertiria una tabla         │
+   * │ administrativa en un cartel.                                           │
+   * └────────────────────────────────────────────────────────────────────────┘
+   *
+   * Interlineado. Tres, y cada uno tiene su sitio:
+   *   compacta  titulos, donde el salto de linea no debe abrir un hueco
+   *   normal    texto de trabajo: filas, campos, etiquetas
+   *   holgada   parrafos que se leen seguidos
+   */
+  --lh-compacta: 1.25;
+  --lh-normal: 1.5;
+  --lh-holgada: 1.6;
 
   /*
    * Numeros tabulares, y no es un detalle de gusto.
@@ -125,21 +150,77 @@
   --ancho-lectura: 44rem;
   /* Ancho de trabajo: listados y tablas. */
   --ancho-maximo: 72rem;
+  /* Ancho de UN campo suelto. Un input de texto de 1.054 px —medido en
+     /configuracion— no se lee mejor por ser mas largo: se lee peor. */
+  --ancho-campo: 26rem;
+
+  /*
+   * ┌────────────────────────────────────────────────────────────────────────┐
+   * │ LA ALTURA DE LOS CONTROLES DEPENDE DEL DEDO, NO DEL ANCHO DE VENTANA.  │
+   * │                                                                        │
+   * │ Todo control media 36 px: botones, campos y desplegables, en las nueve │
+   * │ pantallas y en los cuatro anchos. En un mostrador con raton esta bien; │
+   * │ en un telefono son 8 px por debajo de lo que se acierta con el pulgar. │
+   * │                                                                        │
+   * │ Y la ventana no lo dice: un portatil tactil de 1440 px necesita el     │
+   * │ objetivo grande, y un monitor de 1024 no lo necesita nunca. Quien lo   │
+   * │ sabe es `pointer`, asi que la conmutacion va ahi abajo y no en un      │
+   * │ `@media (max-width)`.                                                  │
+   * └────────────────────────────────────────────────────────────────────────┘
+   */
+  --control-alto: 2.25rem; /* 36 px */
+  --control-alto-sm: 1.75rem; /* 28 px, acciones dentro de una fila */
+  --control-alto-lg: 2.75rem; /* 44 px, acciones de pantalla completa */
+
+  /* Alto de fila de tabla. Se separa del control porque una fila no se pulsa
+     con la misma precision que un boton. */
+  --fila-relleno: var(--e3);
+
+  /* Tamanos de icono. Todavia no hay iconos —ver docs/16-diseno-2-0.md— pero
+     el hueco de la navegacion de D2 ya tiene medida. */
+  --icono: 1.25rem;
+  --icono-sm: 1rem;
+
+  /* Capas. Solo dos, y con nombre para que D2 no invente un tercero. */
+  --z-pegajoso: 10; /* cabecera que se queda arriba */
+  --z-flotante: 20; /* lo que se superpone al contenido */
 }
 
 /*
- * PUNTOS DE RUPTURA — 48rem y 64rem.
+ * Con dedo, todo crece de golpe.
  *
- * Van como comentario y no como variables porque `@media` no admite
- * `var()`: no es una decision, es una limitacion de CSS. Se anotan aqui para
- * que exista UNA lista y nadie invente un tercero, que es justo lo que paso —
- * hoy conviven 34rem, 40rem y 48rem.
+ * Es UN bloque y cambia el producto entero, porque cada componente lee el
+ * token en lugar de escribir su propia altura. `--fila-relleno` sube tambien:
+ * una fila de 47 px es comoda con raton y estrecha con el pulgar.
+ */
+@media (pointer: coarse) {
+  :root {
+    --control-alto: 2.75rem; /* 44 px */
+    --control-alto-sm: 2.75rem;
+    --control-alto-lg: 3rem;
+    --fila-relleno: var(--e4);
+  }
+}
+
+/*
+ * PUNTOS DE RUPTURA. Cuatro escalones, y estos son los cuatro.
  *
- *   < 48rem   movil     una columna; las tablas dejan de ser tablas
- *   < 64rem   tableta   navegacion en cajon
- *   >= 64rem  escritorio
+ * Van como comentario y no como variables porque `@media` no admite `var()`:
+ * no es una decision, es una limitacion de CSS. Se anotan aqui para que exista
+ * UNA lista y nadie invente un quinto.
  *
- * Unificarlos es trabajo del paso de responsive, no de este.
+ *   < 48rem      768    movil       una columna; las tablas se apilan
+ *   48–64rem  768–1024  tableta     vuelve la tabla; dos columnas donde quepan
+ *   64–90rem 1024–1440  compacto    escritorio con poco ancho
+ *   >= 90rem    1440    escritorio  ancho de trabajo completo
+ *
+ * MEDIDO: hoy solo existe 48rem (15 usos) y su espejo 48.0625rem (5). Los
+ * 34rem y 40rem que denunciaba el comentario anterior ya se habian unificado;
+ * lo que no existe todavia es el escalon de TABLETA, y por eso un iPad en
+ * vertical recibe el diseño de un telefono con 768 px de ancho desperdiciados.
+ *
+ * D1 deja la escala escrita y los componentes base funcionando en los cuatro.
+ * Construir el escalon de tableta en cada pantalla es trabajo de D6.
  */
 
 *,
@@ -184,28 +265,43 @@ figure {
  * sola. Si una pantalla necesita otra cosa, es senal de que falta un nivel
  * aqui — no de que haya que escribirlo alli.
  *
- *   h1        titulo de pantalla        --t-xl   600
- *   h2        titulo de seccion         --t-lg   600
- *   cuerpo    texto de lectura          --t-md   400
+ *   h1        titulo de pantalla        --t-xl    600
+ *   h2        titulo de seccion         --t-lg    600
+ *   h3        titulo de bloque          --t-md    600
+ *   --t-dato  el valor que se consulta  600
+ *   cuerpo    texto de lectura          --t-md    400
  *   --t-base  texto de trabajo          tablas y formularios
  *   --t-sm    etiquetas y ayudas
  *   --t-xs    cabeceras de tabla y pastillas de estado
  *
- * El interletrado negativo solo en los dos titulos: a tamano pequeno separa
- * las letras de mas y en un titulo grande sobra.
+ * Son SEIS niveles y ahora se distinguen los seis, que es lo que fallaba: los
+ * tamanos estaban declarados pero solo tres llegaban a pintarse.
+ *
+ * `h3` no existia. Un bloque dentro de una tarjeta —"Plan", "Acceso hoy"—
+ * tenia el mismo peso que su valor, asi que la tarjeta era una lista plana de
+ * pares sin cabeza.
+ *
+ * El interletrado negativo solo en los titulos grandes: a tamano pequeno
+ * separa las letras de mas y en un titulo grande sobra.
  */
 h1 {
   font-size: var(--t-xl);
   font-weight: 600;
   letter-spacing: -0.01em;
-  line-height: 1.25;
+  line-height: var(--lh-compacta);
 }
 
 h2 {
   font-size: var(--t-lg);
   font-weight: 600;
   letter-spacing: -0.005em;
-  line-height: 1.35;
+  line-height: var(--lh-compacta);
+}
+
+h3 {
+  font-size: var(--t-md);
+  font-weight: 600;
+  line-height: var(--lh-compacta);
 }
 
 a {

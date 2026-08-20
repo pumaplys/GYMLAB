@@ -11,7 +11,7 @@
 .buscador {
   width: 100%;
   max-width: 22rem;
-  min-height: 2.25rem;
+  min-height: var(--control-alto);
   padding: 0 var(--e3);
   background: var(--fondo);
   border: 1px solid var(--borde-fuerte);
@@ -52,8 +52,18 @@
 /* --- Ficha del socio asignado ------------------------------------------- */
 
 .volver {
-  display: inline-block;
-  margin-bottom: var(--e4);
+  /* Es el unico camino de vuelta en una ficha, y con el pulgar hay que
+     acertarlo. En linea y flexible para que la altura del token se aplique de
+     verdad: como bloque en linea, un enlace de una sola linea mide lo que mide
+     la linea —21 px medidos—. El margen negativo devuelve el hueco que anade
+     el alto minimo, para que la ficha no baje de sitio. */
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--control-alto);
+  margin-bottom: var(--e2);
+  margin-left: calc(var(--e2) * -1);
+  padding: 0 var(--e2);
+  border-radius: var(--radio-s);
   font-size: var(--t-base);
 }
 
@@ -92,7 +102,9 @@
 /* --- Rutinas y biblioteca ------------------------------------------------ */
 
 .nombreRutina {
-  font-weight: 500;
+  font-size: var(--t-dato);
+  font-weight: 600;
+  line-height: var(--lh-compacta);
 }
 
 /* La pastilla "Archivada" va al lado del nombre, y sin esto lo toca: el nombre

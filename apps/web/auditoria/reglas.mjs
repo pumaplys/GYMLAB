@@ -16,8 +16,15 @@
  * └──────────────────────────────────────────────────────────────────────────┘
  */
 
-/** Fases ya cerradas. Al cerrar D2, se anade aqui y sus reglas pasan a bloquear. */
-export const FASES_CERRADAS = new Set(['D0']);
+/**
+ * Fases ya cerradas. Al cerrar D2, se anade aqui y sus reglas pasan a bloquear.
+ *
+ * `D1` entra al terminar el sistema de diseño: los objetivos tactiles pasaron
+ * de 42 fallos a 0 —las alturas las decide `pointer: coarse`, no el ancho de
+ * ventana— y las dos unicas excepciones que quedan son enlaces dentro de una
+ * frase, que la propia WCAG 2.5.8 exime y la sonda cuenta aparte.
+ */
+export const FASES_CERRADAS = new Set(['D0', 'D1']);
 
 export const REGLAS = {
   rutaCarga: {
@@ -158,14 +165,16 @@ export function evaluar({ medida, pantalla, viewport, areas }) {
   // En tactil es fallo; con raton es aviso, porque un panel denso con filas de
   // 36px sigue siendo perfectamente usable con puntero fino.
   const pequenos = medida?.pequenos ?? [];
+  const enFrase = (medida?.pequenosEnFrase ?? []).length;
+  const nota = enFrase ? ` (+${enFrase} en linea con el texto, exentos)` : '';
   if (pequenos.length === 0) {
-    anota('objetivosTactiles', 'PASS', '');
+    anota('objetivosTactiles', 'PASS', nota.trim());
   } else {
     const minimo = Math.min(...pequenos.map((p) => p.h));
     anota(
       'objetivosTactiles',
       viewport.tactil ? 'FAIL' : 'WARN',
-      `${pequenos.length} controles por debajo de 44px (el menor, ${minimo}px)`,
+      `${pequenos.length} controles por debajo de 44px (el menor, ${minimo}px)${nota}`,
     );
   }
 
