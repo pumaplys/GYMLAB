@@ -1,0 +1,79 @@
+.capa {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-flotante);
+}
+
+.velo {
+  position: absolute;
+  inset: 0;
+  background: rgb(20 22 26 / 45%);
+}
+
+.panel {
+  position: absolute;
+  inset: 0 auto 0 0;
+  display: flex;
+  flex-direction: column;
+  width: min(19rem, 86vw);
+  background: var(--fondo);
+  border-right: 1px solid var(--borde);
+  box-shadow: var(--sombra-elevada);
+  /* La muesca del telefono y la barra de gestos: el panel llega de arriba
+     abajo, asi que tiene que respetar las dos. Sin numeros de un modelo
+     concreto — `env()` los da el propio dispositivo. */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  overflow-y: auto;
+  animation: entrar 0.16s ease-out;
+}
+
+@keyframes entrar {
+  from {
+    transform: translateX(-100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel {
+    animation: none;
+  }
+}
+
+.cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e3);
+  padding: var(--e3) var(--e3) var(--e3) var(--e4);
+  border-bottom: 1px solid var(--borde);
+}
+
+.titulo {
+  font-size: var(--t-sm);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--texto-sutil);
+}
+
+.cerrar {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  /* Cuadrado y del alto de un control: se pulsa con el pulgar. */
+  width: var(--control-alto);
+  height: var(--control-alto);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radio-s);
+  color: var(--texto-sutil);
+  cursor: pointer;
+}
+
+.cerrar:hover {
+  background: var(--fondo-hover);
+  color: var(--texto);
+}

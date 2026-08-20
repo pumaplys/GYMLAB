@@ -1,53 +1,39 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { Armazon } from '@/componentes/armazon';
-import { NavegacionDeArea } from '@/componentes/navegacion-de-area';
-
-/**
- * Los destinos del socio. Los cuatro existen.
- *
- * No estan su carne con QR, sus pagos ni sus accesos: la regla del proyecto es
- * que la navegacion solo muestra destinos reales, y un enlace a una pantalla que
- * no existe es peor que no tener el enlace. Ademas dos de ellos necesitan
- * endpoints `me/*` que todavia no existen.
- *
- * "Privacidad" y no "Consentimiento": es la palabra que usa quien lo busca.
- * "Rutina" en singular aunque puedan ser varias: es como se dice.
- */
-const DESTINOS = [
-  { href: '/socio', texto: 'Inicio' },
-  { href: '/socio/rutina', texto: 'Rutina' },
-  { href: '/socio/progreso', texto: 'Progreso' },
-  { href: '/socio/carne', texto: 'Carne' },
-  { href: '/socio/pagos', texto: 'Pagos' },
-  { href: '/socio/accesos', texto: 'Accesos' },
-  { href: '/socio/privacidad', texto: 'Privacidad' },
-] as const;
+import { Shell } from '@/componentes/shell';
+import {
+  DESTINOS_SOCIO,
+  DESTINOS_SOCIO_SECUNDARIOS,
+  DESTINOS_SOCIO_TODOS,
+} from '@/lib/navegacion';
 
 /**
  * El marco del area de socio.
  *
  * ┌──────────────────────────────────────────────────────────────────────────┐
- * │ MOVIL PRIMERO, Y POR ESO UNA COLUMNA.                                    │
+ * │ AQUI SI BARRA INFERIOR, Y POR UNA RAZON DE USO.                          │
  * │                                                                          │
- * │ El socio abre esto en la puerta del gimnasio, con una mano, para enseñar │
- * │ su QR o mirar si esta al corriente. No es un escritorio con tablas: es   │
- * │ una columna de cosas.                                                    │
+ * │ El socio abre esto DE PIE, en la puerta del gimnasio, con una mano y a   │
+ * │ menudo con prisa. Lo que necesita esta en la mitad de abajo de la        │
+ * │ pantalla, que es donde llega el pulgar; un cajon exigiria dos toques     │
+ * │ para todo y el primero arriba del todo.                                  │
  * │                                                                          │
- * │ De ahi el ancho de LECTURA y no el de trabajo. En un movil da igual —los │
- * │ dos ocupan el ancho de la pantalla— pero en un portatil la diferencia es │
- * │ entre una columna legible y cuatro datos perdidos en 1152 px de blanco.  │
- * │ Que sea movil primero no significa que en escritorio se vea mal.         │
+ * │ En ancho la barra desaparece: una barra inferior en un monitor de 27     │
+ * │ pulgadas es un patron de telefono estirado. Ahi manda la lateral, con    │
+ * │ los SIETE destinos, que es donde si caben.                               │
  * └──────────────────────────────────────────────────────────────────────────┘
- *
- * Ya con fila de destinos: hay dos pantallas reales. El carne, la rutina y el
- * progreso llegan en PRs posteriores y hasta entonces no se anuncian.
  */
 export function MarcoSocio({ children }: { children: ReactNode }) {
   return (
-    <Armazon ancho="lectura" navegacion={<NavegacionDeArea destinos={DESTINOS} />}>
+    <Shell
+      destinos={DESTINOS_SOCIO_TODOS}
+      barraPrincipales={DESTINOS_SOCIO}
+      barraSecundarios={DESTINOS_SOCIO_SECUNDARIOS}
+      modoMovil="barra"
+      ancho="lectura"
+    >
       {children}
-    </Armazon>
+    </Shell>
   );
 }

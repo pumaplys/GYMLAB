@@ -31,7 +31,7 @@ import estilos from './entrenador.module.css';
  * │ a donde ya estas no informa de nada.                                     │
  * │                                                                          │
  * │ Cuando lleguen rutinas y progreso habra mas de un destino real y el      │
- * │ hueco ya esta preparado en `Armazon`.                                    │
+ * │ hueco ya esta preparado en el `Shell`.                                      │
  * └──────────────────────────────────────────────────────────────────────────┘
  */
 export default function EntrenadorPage() {

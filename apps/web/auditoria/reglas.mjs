@@ -17,14 +17,18 @@
  */
 
 /**
- * Fases ya cerradas. Al cerrar D2, se anade aqui y sus reglas pasan a bloquear.
+ * Fases ya cerradas. Al cerrar una, se anade aqui y sus reglas pasan a bloquear.
+ *
+ * `D2` entra con el shell nuevo: la barra lateral, el rail y el cajon pintan
+ * los MISMOS destinos, asi que ya no queda ninguno fuera de la pantalla en
+ * ningun ancho. De 13 fallos a 0, y sin excepciones permanentes.
  *
  * `D1` entra al terminar el sistema de diseño: los objetivos tactiles pasaron
  * de 42 fallos a 0 —las alturas las decide `pointer: coarse`, no el ancho de
  * ventana— y las dos unicas excepciones que quedan son enlaces dentro de una
  * frase, que la propia WCAG 2.5.8 exime y la sonda cuenta aparte.
  */
-export const FASES_CERRADAS = new Set(['D0', 'D1']);
+export const FASES_CERRADAS = new Set(['D0', 'D1', 'D2']);
 
 export const REGLAS = {
   rutaCarga: {

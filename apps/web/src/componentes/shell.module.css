@@ -1,0 +1,348 @@
+/*
+ * El armazon: lateral fija + columna de contenido.
+ *
+ * Es una rejilla de dos columnas donde la primera desaparece por debajo de
+ * 768 px. Rejilla y no `position: fixed` porque asi el contenido no necesita
+ * saber cuanto mide la barra: la propia rejilla le da el hueco que sobra.
+ */
+.shell {
+  min-height: 100dvh;
+  display: grid;
+  grid-template-columns: 1fr;
+}
+
+/* --- El salto al contenido ----------------------------------------------- */
+
+.salto {
+  position: absolute;
+  top: var(--e2);
+  left: var(--e2);
+  z-index: var(--z-flotante);
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--control-alto);
+  padding: var(--e2) var(--e3);
+  background: var(--fondo);
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radio-s);
+  box-shadow: var(--sombra-elevada);
+  font-size: var(--t-base);
+  font-weight: 500;
+  transform: translateY(-200%);
+}
+
+/*
+ * `:focus` y no `:focus-visible`: a este enlace solo se llega tabulando, asi
+ * que la distincion no aporta y si quita —no casa con un foco dado por codigo—.
+ */
+.salto:focus {
+  transform: translateY(0);
+  text-decoration: none;
+}
+
+/* --- Lateral ------------------------------------------------------------- */
+
+.lateral {
+  display: none;
+  flex-direction: column;
+  background: var(--fondo);
+  border-right: 1px solid var(--borde);
+}
+
+.marca {
+  display: flex;
+  align-items: center;
+  min-height: 3.5rem;
+  padding: 0 var(--e4);
+  border-bottom: 1px solid var(--borde);
+}
+
+.logotipo,
+.logotipoCorto {
+  font-size: var(--t-md);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--tinta);
+}
+
+.logotipoCorto {
+  display: none;
+  font-size: var(--t-lg);
+}
+
+.navLateral,
+.navRail {
+  display: none;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.pieLateral {
+  border-top: 1px solid var(--borde);
+  padding: var(--e3);
+}
+
+/* --- Cuenta -------------------------------------------------------------- */
+
+.cuenta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e3);
+  min-width: 0;
+}
+
+.identidad {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.nombre {
+  font-size: var(--t-sm);
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rol {
+  font-size: var(--t-xs);
+  color: var(--texto-tenue);
+}
+
+/* --- Columna de contenido ------------------------------------------------ */
+
+.columna {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.cabecera {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-pegajoso);
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+  min-height: 3.5rem;
+  padding: 0 var(--e4);
+  background: var(--fondo);
+  border-bottom: 1px solid var(--borde);
+  /* La muesca del telefono, sin numeros de un modelo concreto. */
+  padding-top: env(safe-area-inset-top);
+}
+
+.botonMenu {
+  display: inline-flex;
+  /* `flex: none` NO es decorativo: dentro de la cabecera flexible el boton se
+     encogia a 42 px de ancho —medido— y dejaba de cumplir los 44. */
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--control-alto);
+  height: var(--control-alto);
+  /* El margen negativo alinea el icono con el borde del contenido, no con el
+     borde de su caja: si no, la cabecera parece descuadrada. */
+  margin-left: calc(var(--e2) * -1);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radio-s);
+  color: var(--texto-sutil);
+  cursor: pointer;
+}
+
+.botonMenu:hover {
+  background: var(--fondo-hover);
+  color: var(--texto);
+}
+
+.marcaMovil {
+  font-size: var(--t-md);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--tinta);
+}
+
+.contexto {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  margin-left: auto;
+}
+
+.gimnasio {
+  font-size: var(--t-sm);
+  font-weight: 500;
+  color: var(--texto-sutil);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.selectorDeGimnasio {
+  max-width: 12rem;
+  min-height: var(--control-alto);
+  padding: 0 var(--e2);
+  background: var(--fondo);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-s);
+  font-size: var(--t-sm);
+}
+
+/* En ancho, la cuenta vive en la lateral; aqui sobra. */
+.cuentaCabecera {
+  display: flex;
+  min-width: 0;
+}
+
+.contenido {
+  flex: 1;
+  width: 100%;
+  max-width: var(--ancho-maximo);
+  margin: 0 auto;
+  padding: var(--e6) var(--e5) var(--e7);
+}
+
+/*
+ * Una sola columna de lectura, en TODOS los anchos.
+ *
+ * Es lo que usa el area de socio, y se queda estrecha a proposito tambien en
+ * escritorio: ahi no hay tablas ni operativa, hay una cuota, una rutina y un
+ * carne. Estirar eso a 1.152 px no daria mas informacion, daria mas distancia
+ * entre la etiqueta y su valor.
+ *
+ * El panel es lo contrario y por eso NO lleva esta clase: la ficha del socio
+ * dispone del ancho de trabajo entero para que D3 pueda repartirla en dos
+ * columnas. El shell ya no la obliga a ser estrecha.
+ */
+.lectura {
+  max-width: var(--ancho-lectura);
+}
+
+.contenido:focus {
+  outline: none;
+}
+
+.pieCajon {
+  margin-top: auto;
+  padding: var(--e3);
+  border-top: 1px solid var(--borde);
+}
+
+/* --- Movil < 768 --------------------------------------------------------- */
+
+@media (max-width: 47.9375rem) {
+  .contenido {
+    padding: var(--e5) var(--e4) var(--e7);
+  }
+
+  /*
+   * Con barra inferior, el contenido termina por encima de ella: si no, el
+   * ultimo boton de cada pantalla queda tapado y no se puede pulsar.
+   */
+  .conBarra .contenido {
+    padding-bottom: calc(var(--control-alto-lg) + var(--e6) + env(safe-area-inset-bottom));
+  }
+}
+
+/* La barra inferior solo existe en movil. */
+@media (min-width: 48rem) {
+  .soloMovil {
+    display: none;
+  }
+}
+
+/*
+ * --- Tableta 768-1023: rail de iconos ------------------------------------
+ *
+ * El corte esta en 48rem EXACTOS y no en 48.0625 como en las tablas. A 768 px
+ * —un iPad en vertical— la navegacion tiene que ser ya la de tableta; medido,
+ * con el corte en 769 ese ancho recibia la cabecera de movil con su boton de
+ * menu, que es justo el "movil estirado" que habia que evitar.
+ *
+ * Las tablas siguen apilandose hasta 769: traerlas de vuelta en tableta es
+ * trabajo de D6, no del shell.
+ */
+
+@media (min-width: 48rem) {
+  .shell {
+    /* 4rem de rail: un icono de 20 px con su objetivo de 44 y aire. */
+    grid-template-columns: 4rem 1fr;
+  }
+
+  .lateral {
+    display: flex;
+  }
+
+  .navRail {
+    display: block;
+  }
+
+  .marca {
+    justify-content: center;
+    padding: 0;
+  }
+
+  /* En el rail no cabe la palabra: se enseña la inicial. */
+  .logotipo {
+    display: none;
+  }
+
+  .logotipoCorto {
+    display: block;
+  }
+
+  .botonMenu,
+  .marcaMovil {
+    display: none;
+  }
+
+  .pieLateral {
+    display: none;
+  }
+}
+
+/* --- Escritorio >= 1024: barra lateral completa --------------------------- */
+
+@media (min-width: 64rem) {
+  .shell {
+    grid-template-columns: 14rem 1fr;
+  }
+
+  .navLateral {
+    display: block;
+  }
+
+  .navRail {
+    display: none;
+  }
+
+  .marca {
+    justify-content: flex-start;
+    padding: 0 var(--e4);
+  }
+
+  .logotipo {
+    display: block;
+  }
+
+  .logotipoCorto {
+    display: none;
+  }
+
+  .pieLateral {
+    display: block;
+  }
+
+  /* Con la cuenta abajo en la lateral, la cabecera se queda solo con el
+     contexto del gimnasio. */
+  .cuentaCabecera {
+    display: none;
+  }
+
+  .contenido {
+    padding: var(--e6) var(--e6) var(--e7);
+  }
+}
