@@ -38,13 +38,20 @@
   border-top: 1px solid var(--borde);
 }
 
+/*
+ * Las tablas usan el ancho de TRABAJO, no el de lectura.
+ *
+ * Estaban las dos limitadas a 704 px dentro de un lienzo de 1.152: la de
+ * personal partia "Ultimo acceso" en dos lineas y la de invitaciones apretaba
+ * el correo, y las dos crecian hacia abajo por un sitio que sobraba al lado.
+ * El ancho de lectura existe para PROSA y para formularios; una tabla es dato.
+ */
 .panel {
-  max-width: var(--ancho-lectura);
+  max-width: none;
 }
 
 /* Dos secciones —personal activo e invitaciones— una debajo de la otra. */
 .seccion {
-  max-width: var(--ancho-lectura);
   margin-bottom: var(--e6);
 }
 

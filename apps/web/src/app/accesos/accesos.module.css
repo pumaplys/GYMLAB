@@ -27,6 +27,24 @@
 }
 
 /*
+ * En el mostrador, la camara manda.
+ *
+ * 22rem son 352 px, y en un lienzo de 1.152 la ventana de escaneo quedaba del
+ * tamano de un sello mientras el resto de la pantalla era historial. Quien
+ * atiende la puerta esta apuntando un carne a esa ventana, no leyendo la
+ * tabla: a partir de 1024 crece a 30rem, que sigue dejando sitio al resultado
+ * al lado sin convertirla en un televisor.
+ *
+ * El limite estrecho se queda tal cual por debajo: ahi el ancho de la pantalla
+ * ya es el limite, y sin el, a 320 px el video empujaba el layout a lo ancho.
+ */
+@media (min-width: 64rem) {
+  .video {
+    max-width: 30rem;
+  }
+}
+
+/*
  * Oculto pero PRESENTE en el DOM. El elemento tiene que existir antes de
  * encender la cámara, porque el `ref` se asigna al montar: si se renderizara
  * solo cuando el estado ya es «encendida», `srcObject` se asignaría a null.

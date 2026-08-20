@@ -1,5 +1,5 @@
 {
-  "generado": "2026-08-20T13:00:28.824Z",
+  "generado": "2026-08-20T16:46:45.405Z",
   "resumen": {
     "porRegla": {
       "rutaCarga": {
@@ -200,7 +200,7 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1787,
+        "scrollAlto": 1873,
         "interactivos": 13,
         "pequenos": 0,
         "pequenosEnFrase": 0,
@@ -211,8 +211,8 @@
           "14px x35",
           "12px x7",
           "13px x6",
+          "17px x5",
           "16px x4",
-          "17px x4",
           "15px x1",
           "22px x1"
         ]
@@ -662,8 +662,8 @@
         "tamanos": [
           "13px x5",
           "14px x5",
-          "15px x2",
           "12px x1",
+          "15px x1",
           "17px x1",
           "22px x1"
         ]
@@ -1772,7 +1772,7 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1628,
+        "scrollAlto": 1714,
         "interactivos": 17,
         "pequenos": 0,
         "pequenosEnFrase": 0,
@@ -1783,7 +1783,7 @@
           "14px x40",
           "12px x7",
           "13px x6",
-          "17px x5",
+          "17px x6",
           "16px x4",
           "22px x1"
         ]
@@ -2299,18 +2299,16 @@
       ],
       "metricas": {
         "scrollAlto": 1024,
-        "interactivos": 10,
+        "interactivos": 5,
         "pequenos": 0,
         "pequenosEnFrase": 0,
         "navRecorte": 0,
-        "tablaVisible": false,
-        "filaAlto": 0,
+        "tablaVisible": null,
+        "filaAlto": null,
         "tamanos": [
-          "12px x13",
-          "14px x13",
-          "16px x12",
+          "14px x6",
           "13px x3",
-          "15px x1",
+          "12px x1",
           "17px x1",
           "22px x1"
         ]
@@ -2975,16 +2973,15 @@
       ],
       "metricas": {
         "scrollAlto": 1024,
-        "interactivos": 11,
+        "interactivos": 9,
         "pequenos": 0,
         "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": null,
         "filaAlto": null,
         "tamanos": [
-          "14px x11",
-          "13px x6",
-          "15px x4",
+          "14px x10",
+          "13px x3",
           "12px x1",
           "17px x1",
           "22px x1"
@@ -3348,7 +3345,7 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1334,
+        "scrollAlto": 1100,
         "interactivos": 19,
         "pequenos": 19,
         "pequenosEnFrase": 0,
@@ -3359,7 +3356,7 @@
           "14px x46",
           "12px x7",
           "13px x6",
-          "17px x4",
+          "17px x5",
           "15px x1",
           "22px x1"
         ]
@@ -3423,7 +3420,7 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1286,
+        "scrollAlto": 1265,
         "interactivos": 14,
         "pequenos": 14,
         "pequenosEnFrase": 0,
@@ -3489,7 +3486,7 @@
         {
           "regla": "objetivosTactiles",
           "estado": "WARN",
-          "causa": "18 controles por debajo de 44px (el menor, 28px)"
+          "causa": "12 controles por debajo de 44px (el menor, 28px)"
         },
         {
           "regla": "contraste",
@@ -3498,17 +3495,17 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1061,
-        "interactivos": 18,
-        "pequenos": 18,
+        "scrollAlto": 863,
+        "interactivos": 12,
+        "pequenos": 12,
         "pequenosEnFrase": 0,
         "navRecorte": 0,
-        "tablaVisible": true,
-        "filaAlto": 61,
+        "tablaVisible": null,
+        "filaAlto": null,
         "tamanos": [
-          "14px x26",
-          "13px x13",
-          "12px x6",
+          "13px x11",
+          "14px x9",
+          "12px x1",
           "15px x1",
           "17px x1",
           "22px x1"
@@ -3807,8 +3804,8 @@
         "tamanos": [
           "14px x8",
           "13px x5",
-          "15px x2",
           "12px x1",
+          "15px x1",
           "17px x1",
           "22px x1"
         ]
@@ -3863,7 +3860,7 @@
         {
           "regla": "objetivosTactiles",
           "estado": "WARN",
-          "causa": "10 controles por debajo de 44px (el menor, 17px)"
+          "causa": "5 controles por debajo de 44px (el menor, 28px)"
         },
         {
           "regla": "contraste",
@@ -3873,17 +3870,17 @@
       ],
       "metricas": {
         "scrollAlto": 768,
-        "interactivos": 10,
-        "pequenos": 10,
+        "interactivos": 5,
+        "pequenos": 5,
         "pequenosEnFrase": 0,
         "navRecorte": 0,
-        "tablaVisible": true,
-        "filaAlto": 47,
+        "tablaVisible": null,
+        "filaAlto": null,
         "tamanos": [
-          "14px x21",
-          "12px x10",
+          "14px x6",
           "13px x3",
-          "15px x2",
+          "12px x1",
+          "15px x1",
           "22px x1"
         ]
       }
@@ -4535,7 +4532,7 @@
         {
           "regla": "objetivosTactiles",
           "estado": "WARN",
-          "causa": "11 controles por debajo de 44px (el menor, 28px)"
+          "causa": "9 controles por debajo de 44px (el menor, 28px)"
         },
         {
           "regla": "contraste",
@@ -4545,17 +4542,17 @@
       ],
       "metricas": {
         "scrollAlto": 768,
-        "interactivos": 11,
-        "pequenos": 11,
+        "interactivos": 9,
+        "pequenos": 9,
         "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": null,
         "filaAlto": null,
         "tamanos": [
-          "14px x11",
-          "13px x6",
-          "15px x5",
+          "14px x10",
+          "13px x3",
           "12px x1",
+          "15px x1",
           "22px x1"
         ]
       }
@@ -4915,7 +4912,7 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1334,
+        "scrollAlto": 968,
         "interactivos": 19,
         "pequenos": 19,
         "pequenosEnFrase": 0,
@@ -4926,7 +4923,7 @@
           "14px x46",
           "12px x7",
           "13px x6",
-          "17px x4",
+          "17px x5",
           "15px x1",
           "22px x1"
         ]
@@ -4990,13 +4987,13 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1286,
+        "scrollAlto": 1159,
         "interactivos": 14,
         "pequenos": 14,
         "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": true,
-        "filaAlto": 67,
+        "filaAlto": 61,
         "tamanos": [
           "14px x38",
           "12px x15",
@@ -5150,8 +5147,8 @@
         "tamanos": [
           "14px x10",
           "13px x5",
-          "15px x2",
           "12px x1",
+          "15px x1",
           "17px x1",
           "22px x1"
         ]
@@ -5374,8 +5371,8 @@
         "tamanos": [
           "14px x8",
           "13px x5",
-          "15px x2",
           "12px x1",
+          "15px x1",
           "17px x1",
           "22px x1"
         ]
@@ -5430,7 +5427,7 @@
         {
           "regla": "objetivosTactiles",
           "estado": "WARN",
-          "causa": "10 controles por debajo de 44px (el menor, 17px)"
+          "causa": "5 controles por debajo de 44px (el menor, 28px)"
         },
         {
           "regla": "contraste",
@@ -5440,17 +5437,17 @@
       ],
       "metricas": {
         "scrollAlto": 900,
-        "interactivos": 10,
-        "pequenos": 10,
+        "interactivos": 5,
+        "pequenos": 5,
         "pequenosEnFrase": 0,
         "navRecorte": 0,
-        "tablaVisible": true,
-        "filaAlto": 47,
+        "tablaVisible": null,
+        "filaAlto": null,
         "tamanos": [
-          "14px x21",
-          "12px x10",
+          "14px x6",
           "13px x3",
-          "15px x2",
+          "12px x1",
+          "15px x1",
           "22px x1"
         ]
       }

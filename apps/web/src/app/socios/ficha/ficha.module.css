@@ -34,9 +34,51 @@
   max-width: var(--ancho-lectura);
 }
 
-/* Solo el ancho: la superficie la pone Tarjeta. */
-.tarjeta {
-  max-width: var(--ancho-lectura);
+/*
+ * El cuerpo de la ficha: dos columnas en escritorio, una en todo lo demas.
+ *
+ * 'minmax(0, …)' en las dos: sin el, una tabla de pagos ancha estira su
+ * columna y empuja la otra fuera. Con rejilla no hace falta que ninguna sepa
+ * cuanto mide la vecina.
+ */
+.cuerpo {
+  display: grid;
+  gap: var(--e5);
+}
+
+.principal,
+.lateral {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e5);
+  min-width: 0;
+}
+
+/*
+ * A partir de 1024. En tableta NO se parte: a 768 dos columnas dejarian la
+ * tabla de pagos en 340 px, que es peor que una sola columna comoda.
+ */
+@media (min-width: 64rem) {
+  .cuerpo {
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+/*
+ * Mientras la ficha va en UNA columna —todo por debajo de 1024— los huecos
+ * se aprietan.
+ *
+ * Hay cinco separaciones en lugar de dos, asi que el mismo valor que da aire
+ * repartido en dos columnas son 40 px de recorrido extra apilado. El filete de
+ * cada tarjeta ya separa; el hueco solo tiene que evitar que se toquen.
+ */
+@media (max-width: 63.9375rem) {
+  .cuerpo,
+  .principal,
+  .lateral {
+    gap: var(--e4);
+  }
 }
 
 /* Lista de definiciones: cada dato con su nombre, sin tabla. */
@@ -80,10 +122,10 @@
   border-top: 1px solid var(--borde);
 }
 
-/* El bloque del RGPD: al final de la ficha, separado de las acciones del dia. */
+/* El bloque del RGPD. El ancho y el hueco los pone la columna que lo
+   contiene: aqui ya no se limitan, o no cabria en la rejilla. */
 .datosPersonales {
-  max-width: var(--ancho-lectura);
-  margin-top: var(--e5);
+  margin-top: 0;
 }
 
 .explicacionLegal {
