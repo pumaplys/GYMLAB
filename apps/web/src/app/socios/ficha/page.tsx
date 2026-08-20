@@ -134,37 +134,60 @@ function Ficha() {
         }
       />
 
-      <Tarjeta className={estilos.tarjeta}>
-        {editando ? (
-          <Edicion
-            socio={socio}
-            onGuardado={(actualizado) => {
-              setSocio(actualizado);
-              setEditando(false);
-            }}
-            onCancelar={() => setEditando(false)}
-          />
-        ) : (
-          <Datos socio={socio} />
-        )}
-      </Tarjeta>
-
       {/*
-        La cuota va debajo de la ficha y no en otra pantalla: recepcion abre
-        esto para responder "¿este puede entrar?" y "¿me debe algo?", y esas dos
-        preguntas viven juntas.
+        ┌────────────────────────────────────────────────────────────────────┐
+        │ DOS COLUMNAS, Y EL REPARTO SIGUE AL MOSTRADOR.                     │
+        │                                                                    │
+        │ Antes eran cuatro superficies del mismo peso apiladas en una       │
+        │ columna: 1.334 px de recorrido a 1.440 de ancho, con la mitad      │
+        │ derecha del lienzo vacia. Y la tarjeta de datos estaba ademas      │
+        │ limitada al ancho de LECTURA, asi que no podia crecer aunque       │
+        │ hubiera sitio.                                                     │
+        │                                                                    │
+        │ El reparto no es "lo grande a la izquierda": es por frecuencia.    │
+        │ Recepcion abre esto para responder dos preguntas —"¿puede entrar?" │
+        │ y "¿me debe algo?"— y las dos las contesta la cuota. Eso manda en  │
+        │ la columna principal, con su historial de pagos debajo.            │
+        │                                                                    │
+        │ A la derecha, lo que se CONSULTA: quien es, quien lo lleva, y las  │
+        │ dos operaciones del RGPD que se usan una vez al ano.               │
+        │                                                                    │
+        │ En estrecho vuelve a una sola columna y al orden de siempre. El    │
+        │ orden del DOM ya es ese, asi que no hay nada que reordenar.        │
+        └────────────────────────────────────────────────────────────────────┘
       */}
-      <Cuota memberId={socio.id} />
+      <div className={estilos.cuerpo}>
+        <div className={estilos.principal}>
+          <Cuota memberId={socio.id} />
+        </div>
 
-      {/*
-        Y el entrenador debajo, por el mismo motivo: quien da de alta a alguien
-        decide en ese momento quien lo lleva. La otra opcion era gestionarlo
-        desde la ficha del entrenador, que responde la pregunta inversa —"¿a
-        quien lleva Marta?"— y se hace mucho menos veces.
-      */}
-      <EntrenadoresDelSocio memberId={socio.id} />
+        <div className={estilos.lateral}>
+          <Tarjeta titulo={<h2>Datos del socio</h2>}>
+            {editando ? (
+              <Edicion
+                socio={socio}
+                onGuardado={(actualizado) => {
+                  setSocio(actualizado);
+                  setEditando(false);
+                }}
+                onCancelar={() => setEditando(false)}
+              />
+            ) : (
+              <Datos socio={socio} />
+            )}
+          </Tarjeta>
 
-      <DatosPersonales socio={socio} />
+          {/*
+            El entrenador se gestiona desde aqui y no desde la ficha del
+            entrenador: quien da de alta a alguien decide en ese momento quien
+            lo lleva. La pregunta inversa —"¿a quien lleva Marta?"— se hace
+            mucho menos veces.
+          */}
+          <EntrenadoresDelSocio memberId={socio.id} />
+
+          <DatosPersonales socio={socio} />
+        </div>
+      </div>
     </>
   );
 }
