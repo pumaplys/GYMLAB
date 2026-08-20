@@ -56,8 +56,22 @@ const dormir = (ms) => new Promise((r) => setTimeout(r, ms));
 /**
  * Arranca Chrome sin ventana y se conecta.
  *
- * El puerto 0 deja que el sistema elija uno libre: dos auditorias a la vez no
- * se pisan, y en CI no hay que reservar nada.
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ EL PUERTO LO ELIGE EL SISTEMA, Y EL PLAZO ES LARGO. LAS DOS COSAS.       │
+ * │                                                                          │
+ * │ `--remote-debugging-port=0` y se lee el elegido de la linea "DevTools    │
+ * │ listening on ws://..." del stderr. Se probo fijar el puerto para no      │
+ * │ depender de ese mensaje, y fue peor: en Windows hay rangos RESERVADOS    │
+ * │ —Hyper-V— donde `bind()` responde 0x271D "acceso prohibido", asi que     │
+ * │ elegir a mano un puerto acierta unas veces y otras no. Medido: tres de   │
+ * │ cada cuatro arranques caian en un rango reservado.                       │
+ * │                                                                          │
+ * │ El cero se lo deja elegir al sistema, que sabe cuales estan permitidos.  │
+ * │                                                                          │
+ * │ Y el plazo pasa de 20 s a 60. Esa era la causa REAL del rojo en CI: un   │
+ * │ runner frio tarda mas de veinte segundos en escribir esa linea, y el     │
+ * │ producto no tenia nada que ver.                                          │
+ * └──────────────────────────────────────────────────────────────────────────┘
  */
 export async function abrirNavegador() {
   const binario = buscarChrome();
@@ -73,24 +87,40 @@ export async function abrirNavegador() {
       '--disable-gpu',
       // En contenedores sin espacio compartido, Chrome se cae sin esto.
       '--disable-dev-shm-usage',
+      // Trabajo de arranque que no necesitamos y que en un runner cargado
+      // cuesta segundos: telemetria, extensiones, sincronizacion, sonido.
+      '--disable-background-networking',
+      '--disable-extensions',
+      '--disable-sync',
+      '--metrics-recording-only',
+      '--mute-audio',
       // CI corre como root en el contenedor de GitHub.
-      ...(process.env.CI ? ['--no-sandbox'] : []),
+      ...(process.env.CI ? ['--no-sandbox', '--disable-setuid-sandbox'] : []),
       `--user-data-dir=${perfil}`,
       'about:blank',
     ],
-    { stdio: ['ignore', 'ignore', 'pipe'] },
+    {
+      stdio: ['ignore', 'ignore', 'pipe'],
+      // Grupo de procesos propio, para poder matarlo entero al cerrar.
+      detached: process.platform !== 'win32',
+    },
   );
 
-  // El puerto elegido lo escribe Chrome en su stderr al arrancar.
+  /*
+   * El puerto que eligio el sistema, anunciado por Chrome en su stderr.
+   *
+   * Hasta 60 s: un runner frio tarda mucho mas que un portatil y el coste de
+   * esperar de mas es cero — en cuanto lo anuncia, seguimos.
+   */
+  let ruido = '';
   const puerto = await new Promise((resolve, reject) => {
-    let salida = '';
     const alTiempo = setTimeout(
-      () => reject(new Error('Chrome no anuncio su puerto en 20 s.\n' + salida)),
-      20_000,
+      () => reject(new Error(`Chrome no anuncio su puerto en 60 s.\n${ruido}`)),
+      60_000,
     );
     proceso.stderr.on('data', (trozo) => {
-      salida += trozo;
-      const m = salida.match(/ws:\/\/127\.0\.0\.1:(\d+)\//);
+      ruido = (ruido + trozo).slice(-2000);
+      const m = ruido.match(/ws:\/\/127\.0\.0\.1:(\d+)\//);
       if (m) {
         clearTimeout(alTiempo);
         resolve(Number(m[1]));
@@ -98,12 +128,12 @@ export async function abrirNavegador() {
     });
     proceso.on('exit', (codigo) => {
       clearTimeout(alTiempo);
-      reject(new Error(`Chrome termino antes de arrancar (codigo ${codigo}).\n` + salida));
+      reject(new Error(`Chrome termino antes de arrancar (codigo ${codigo}).\n${ruido}`));
     });
   });
 
   let version;
-  for (let i = 0; i < 40; i++) {
+  for (let i = 0; i < 60; i++) {
     try {
       version = await (await fetch(`http://127.0.0.1:${puerto}/json/version`)).json();
       break;
@@ -111,7 +141,10 @@ export async function abrirNavegador() {
       await dormir(250);
     }
   }
-  if (!version) throw new Error('Chrome arranco pero no responde en su puerto.');
+  if (!version) {
+    proceso.kill();
+    throw new Error(`Chrome anuncio el puerto ${puerto} pero no responde.\n${ruido}`);
+  }
 
   const ws = new WebSocket(version.webSocketDebuggerUrl);
   await new Promise((resolve, reject) => {
@@ -261,13 +294,50 @@ export async function abrirNavegador() {
       };
     },
 
+    /**
+     * Cierra el navegador ENTERO, no solo el proceso que lanzamos.
+     *
+     * ┌──────────────────────────────────────────────────────────────────────┐
+     * │ UN CHROME ZOMBI ROMPE TODAS LAS EJECUCIONES SIGUIENTES.              │
+     * │                                                                      │
+     * │ Chrome se abre en varios procesos y el que lanzamos no es el que se  │
+     * │ queda. Matando solo ese, en Windows quedaba uno escuchando — medido, │
+     * │ el PID 4852 en el 9247— y a partir de ahi CADA arranque nuevo se le  │
+     * │ entregaba a el y salia sin abrir su propio puerto: dos de cada tres  │
+     * │ auditorias en rojo, con Chrome perfectamente vivo.                   │
+     * │                                                                      │
+     * │ Asi que se mata el arbol. `taskkill /T` en Windows; en el resto, el  │
+     * │ grupo de procesos, que es para lo que se lanza `detached`.           │
+     * └──────────────────────────────────────────────────────────────────────┘
+     */
     async cerrar() {
       try {
         ws.close();
       } catch {
         /* da igual: el proceso se mata igualmente */
       }
-      proceso.kill();
+
+      if (proceso.pid) {
+        if (process.platform === 'win32') {
+          try {
+            spawn('taskkill', ['/pid', String(proceso.pid), '/f', '/t'], {
+              stdio: 'ignore',
+            });
+          } catch {
+            proceso.kill();
+          }
+        } else {
+          try {
+            process.kill(-proceso.pid);
+          } catch {
+            proceso.kill();
+          }
+        }
+      }
+
+      // Un momento para que Chrome suelte los ficheros del perfil: en Windows
+      // borrarlo mientras los tiene abiertos falla.
+      await dormir(300);
       try {
         rmSync(perfil, { recursive: true, force: true });
       } catch {
