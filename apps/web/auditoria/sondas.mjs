@@ -193,11 +193,35 @@ export const sondaEntrar = (origen, email, clave) => `(async () => {
   return r.status;
 })()`;
 
-/** Hay sesion viva? Se usa para esperar a que la pantalla termine de montarse. */
+/** La pantalla ha montado algo? Minimo comun para las que no esperan acciones. */
 export const SONDA_LISTA = `(() => {
   const m = document.querySelector('main');
   if (!m) return false;
   const t = m.innerText || '';
   if (/Cargando|Abriendo/i.test(t) && t.length < 80) return false;
   return t.trim().length > 0;
+})()`;
+
+/**
+ * La pantalla esta ENTERA?
+ *
+ * Que `main` tenga texto no significa que haya terminado: la ficha del socio
+ * pinta su cabecera y despues, en peticiones aparte, la cuota, los pagos y el
+ * entrenador. Midiendo en cuanto hay texto se fotografia media pantalla — y
+ * con los cuatro anchos corriendo a la vez, eso pasaba de verdad.
+ *
+ * Asi que se espera a lo que se va a comprobar. Si nunca aparece, salta el
+ * tiempo limite y el fallo es real, no una carrera.
+ */
+export const sondaAcciones = (acciones) => `(() => {
+  const nombre = (el) => (
+    el.getAttribute('aria-label') ||
+    (el.labels && el.labels[0] && el.labels[0].textContent) ||
+    el.textContent || el.getAttribute('placeholder') || el.value || ''
+  ).replace(/\\s+/g, ' ').trim().toLowerCase();
+  const todos = [...document.querySelectorAll(
+    'button, a[href], input:not([type=hidden]), select, textarea, [role="button"]'
+  )].map(nombre);
+  return ${JSON.stringify(acciones.map((a) => a.toLowerCase()))}
+    .every((esperada) => todos.some((t) => t.includes(esperada)));
 })()`;

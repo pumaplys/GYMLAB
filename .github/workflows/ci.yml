@@ -21,7 +21,7 @@ jobs:
   verify:
     name: Verificacion
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     # PostgreSQL real, no un mock ni una base en memoria.
     #

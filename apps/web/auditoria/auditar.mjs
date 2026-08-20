@@ -18,7 +18,7 @@ import { writeFileSync, readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { abrirNavegador } from './navegador.mjs';
-import { SONDA_PANTALLA, SONDA_LISTA, sondaEntrar } from './sondas.mjs';
+import { SONDA_PANTALLA, SONDA_LISTA, sondaAcciones, sondaEntrar } from './sondas.mjs';
 import { AREAS, VIEWPORTS, pantallas } from './plan.mjs';
 import { REGLAS, bloquea, evaluar } from './reglas.mjs';
 import { obtenerFixture } from './sembrar.mjs';
@@ -54,58 +54,76 @@ async function main() {
   const nav = await abrirNavegador();
   log(`  navegador: ${nav.navegador}\n`);
 
-  const filas = [];
   const lista = pantallas(fixture);
+  let filas = [];
 
+  /*
+   * Los cuatro anchos, a la vez.
+   *
+   * Cada uno en su propio contexto de navegador —cookies separadas— porque si
+   * no, entrar como entrenador en una pestana echaria a la duena de las otras
+   * tres. Secuencial esto tardaba trece minutos y medio en CI y se comia el
+   * limite del job; en paralelo cuesta lo que el ancho mas lento.
+   */
   try {
-    for (const vp of VIEWPORTS) {
-      const pestana = await nav.pestana();
-      await pestana.viewport(vp.ancho, vp.alto, vp.tactil);
-      // La sesion se establece desde una pagina del mismo origen: la cookie es
-      // httpOnly y SameSite=Lax, asi que no hay forma de inyectarla desde fuera.
-      await pestana.ir(`${WEB}/login`);
+    const porViewport = await Promise.all(
+      VIEWPORTS.map(async (vp) => {
+        const pestana = await nav.pestana({ contextoAislado: true });
+        try {
+          await pestana.viewport(vp.ancho, vp.alto, vp.tactil);
+          // La sesion se establece desde una pagina del MISMO origen: la cookie
+          // es httpOnly y SameSite=Lax, y no hay forma de inyectarla desde fuera.
+          await pestana.ir(`${WEB}/login`);
 
-      let rolActual = null;
-      for (const pantalla of lista) {
-        if (pantalla.rol !== rolActual) {
-          const cuenta = fixture.cuentas[pantalla.rol];
-          const estado = await pestana.evaluar(sondaEntrar(API, cuenta.email, cuenta.clave));
-          if (estado >= 400) throw new Error(`No se pudo entrar como ${pantalla.rol}: ${estado}`);
-          rolActual = pantalla.rol;
+          const suyas = [];
+          let rolActual = null;
+          for (const pantalla of lista) {
+            if (pantalla.rol !== rolActual) {
+              const cuenta = fixture.cuentas[pantalla.rol];
+              const estado = await pestana.evaluar(sondaEntrar(API, cuenta.email, cuenta.clave));
+              if (estado >= 400) {
+                throw new Error(`No se pudo entrar como ${pantalla.rol}: ${estado}`);
+              }
+              rolActual = pantalla.rol;
+            }
+
+            await pestana.ir(`${WEB}${pantalla.ruta}`);
+            await pestana.esperarA(SONDA_LISTA, 9000);
+            // Y ademas se espera a lo que se va a comprobar: la ficha del socio
+            // pinta cuota, pagos y entrenador en peticiones aparte, asi que
+            // "hay texto" no significa "ha terminado". Si no aparece nunca,
+            // salta el limite y el fallo es real, no una carrera.
+            if (pantalla.acciones?.length) {
+              await pestana.esperarA(sondaAcciones(pantalla.acciones), 9000);
+            }
+            const medida = await pestana.evaluar(SONDA_PANTALLA);
+
+            suyas.push({
+              rol: pantalla.rol,
+              ruta: pantalla.ruta,
+              viewport: vp.nombre,
+              ancho: vp.ancho,
+              hallazgos: evaluar({ medida, pantalla, viewport: vp, areas: AREAS[pantalla.rol] }),
+              // Datos crudos que interesan para comparar antes/despues.
+              metricas: {
+                scrollAlto: medida?.scrollAlto ?? null,
+                interactivos: medida?.interactivos ?? 0,
+                pequenos: (medida?.pequenos ?? []).length,
+                navRecorte: medida?.navRecorte ?? 0,
+                tablaVisible: medida?.tablaVisible ?? null,
+                filaAlto: medida?.filaAlto ?? null,
+                tamanos: medida?.tamanos ?? [],
+              },
+            });
+          }
+          log(`  ${vp.nombre} (${vp.ancho}px) — ${lista.length} pantallas medidas`);
+          return suyas;
+        } finally {
+          await pestana.cerrar().catch(() => {});
         }
-
-        await pestana.ir(`${WEB}${pantalla.ruta}`);
-        await pestana.esperarA(SONDA_LISTA, 9000);
-        const medida = await pestana.evaluar(SONDA_PANTALLA);
-
-        const hallazgos = evaluar({
-          medida,
-          pantalla,
-          viewport: vp,
-          areas: AREAS[pantalla.rol],
-        });
-
-        filas.push({
-          rol: pantalla.rol,
-          ruta: pantalla.ruta,
-          viewport: vp.nombre,
-          ancho: vp.ancho,
-          hallazgos,
-          // Datos crudos que interesan para comparar antes/despues.
-          metricas: {
-            scrollAlto: medida?.scrollAlto ?? null,
-            interactivos: medida?.interactivos ?? 0,
-            pequenos: (medida?.pequenos ?? []).length,
-            navRecorte: medida?.navRecorte ?? 0,
-            tablaVisible: medida?.tablaVisible ?? null,
-            filaAlto: medida?.filaAlto ?? null,
-            tamanos: medida?.tamanos ?? [],
-          },
-        });
-      }
-      await pestana.cerrar();
-      log(`  ${vp.nombre} (${vp.ancho}px) — ${lista.length} pantallas medidas`);
-    }
+      }),
+    );
+    filas = porViewport.flat();
   } finally {
     await nav.cerrar();
   }

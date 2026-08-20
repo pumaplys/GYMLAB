@@ -148,9 +148,24 @@ export async function abrirNavegador() {
     navegador: version.Browser,
     binario,
 
-    /** Una pestana nueva, ya adjunta. */
-    async pestana() {
-      const { targetId } = await enviar('Target.createTarget', { url: 'about:blank' });
+    /**
+     * Una pestana nueva, ya adjunta.
+     *
+     * Con `contextoAislado`, la pestana vive en su propio contexto de
+     * navegador: cookies separadas. Es lo que permite auditar los cuatro
+     * anchos A LA VEZ —cada uno entrando con su rol— sin que la sesion de una
+     * pestana pise la de las otras, que es justo lo que pasaria compartiendo
+     * el perfil.
+     */
+    async pestana({ contextoAislado = false } = {}) {
+      let browserContextId;
+      if (contextoAislado) {
+        ({ browserContextId } = await enviar('Target.createBrowserContext', {}));
+      }
+      const { targetId } = await enviar('Target.createTarget', {
+        url: 'about:blank',
+        ...(browserContextId ? { browserContextId } : {}),
+      });
       const { sessionId } = await enviar('Target.attachToTarget', { targetId, flatten: true });
       await enviar('Page.enable', {}, sessionId);
       await enviar('Runtime.enable', {}, sessionId);
@@ -178,9 +193,10 @@ export async function abrirNavegador() {
         async ir(url) {
           await enviar('Page.navigate', { url }, sessionId);
           // La aplicacion se pinta en el cliente: esperar al evento de carga no
-          // basta, hay que darle su turno a React. Se comprueba abajo con
-          // `esperarA`, esto solo evita medir la pagina en blanco.
-          await dormir(400);
+          // basta, hay que darle su turno a React. Quien decide de verdad
+          // cuando esta lista es `esperarA`; esto solo evita el primer sondeo
+          // contra una pagina todavia en blanco.
+          await dormir(120);
         },
 
         /** Ejecuta javascript en la pagina y devuelve el valor ya serializado. */
@@ -209,7 +225,12 @@ export async function abrirNavegador() {
           return false;
         },
 
-        cerrar: () => enviar('Target.closeTarget', { targetId }),
+        async cerrar() {
+          await enviar('Target.closeTarget', { targetId });
+          if (browserContextId) {
+            await enviar('Target.disposeBrowserContext', { browserContextId });
+          }
+        },
       };
     },
 
