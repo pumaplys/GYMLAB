@@ -49,6 +49,26 @@ async function main() {
     process.exit(2);
   }
 
+  /*
+   * Que el panel se SIRVE, antes de gastar cinco minutos midiendo paginas en
+   * blanco.
+   *
+   * Paso de verdad: la API busca la exportacion en `<cwd>/web` —donde la deja
+   * la imagen— asi que arrancandola desde la raiz del repo sin `WEB_DIST_PATH`
+   * responde 404 a todas las pantallas. D0 lo reportaba como "nada monta" en
+   * 84 mediciones, que es cierto y completamente inutil.
+   */
+  const portada = await fetch(`${WEB}/login`).catch(() => null);
+  const html = portada?.ok ? await portada.text() : '';
+  if (!html.includes('<script')) {
+    console.error(
+      `\nEn ${WEB}/login no hay panel que auditar (HTTP ${portada?.status ?? 'sin respuesta'}).\n` +
+        'Construyelo con `pnpm build` y sirvelo: o `next dev` con D0_WEB=http://localhost:3000,\n' +
+        'o la propia API con WEB_DIST_PATH apuntando a apps/web/out.',
+    );
+    process.exit(2);
+  }
+
   const fixture = await obtenerFixture({ api: API, ficheroCredenciales: CREDENCIALES, log: (m) => log('  ' + m) });
 
   const nav = await abrirNavegador();

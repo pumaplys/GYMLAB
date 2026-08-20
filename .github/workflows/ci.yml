@@ -126,6 +126,16 @@ jobs:
       # que rompa la rama. Cada una tiene su fase de cierre escrita en
       # apps/web/auditoria/reglas.mjs.
       - name: Arrancar la API con el panel
+        # WEB_DIST_PATH es obligatorio aqui: por defecto el panel se busca en
+        # `<cwd>/web`, que es donde lo deja la imagen de Docker. Arrancando
+        # desde la raiz del repo hay que decirle donde quedo la exportacion.
+        #
+        # Y ABSOLUTA. Con una ruta relativa la API arranca, dice que sirve el
+        # panel y responde 301 -> 404 a todas las pantallas: la reescritura a
+        # `.html` se desactiva sola porque compara la ruta ya resuelta contra
+        # el valor sin resolver. Ver docs/16-diseno-2-0.md.
+        env:
+          WEB_DIST_PATH: ${{ github.workspace }}/apps/web/out
         run: |
           node apps/api/dist/main.js &
           echo $! > /tmp/api.pid
