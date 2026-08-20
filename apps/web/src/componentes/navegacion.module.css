@@ -1,0 +1,160 @@
+/* --- Lista de destinos: barra lateral, rail y cajon --------------------- */
+
+.lista {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: var(--e2);
+  list-style: none;
+}
+
+.destino {
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+  min-height: var(--control-alto);
+  padding: 0 var(--e3);
+  /* El filete del activo va a la izquierda y ocupa sitio siempre, para que
+     marcar un destino no desplace los demas. */
+  border-left: 2px solid transparent;
+  border-radius: var(--radio-s);
+  color: var(--texto-sutil);
+  font-size: var(--t-base);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.destino:hover {
+  background: var(--fondo-hover);
+  color: var(--texto);
+  text-decoration: none;
+}
+
+/*
+ * El activo se dice de TRES formas y ninguna es solo el color: fondo, filete a
+ * la izquierda y peso de la letra. En escala de grises se sigue viendo, y
+ * `aria-current` lo dice para quien no ve la pantalla.
+ */
+.activo {
+  background: var(--acento-suave);
+  border-left-color: var(--acento);
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  color: var(--acento-hover);
+  font-weight: 600;
+}
+
+.activo:hover {
+  background: var(--acento-suave);
+  color: var(--acento-hover);
+}
+
+.texto {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* El rail: solo iconos, centrados y cuadrados. */
+.listaCompacta .destino {
+  justify-content: center;
+  gap: 0;
+  padding: 0;
+}
+
+/* --- Barra inferior del socio ------------------------------------------- */
+
+.barra {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: var(--z-pegajoso);
+  display: flex;
+  background: var(--fondo);
+  border-top: 1px solid var(--borde);
+  /* La barra de gestos del telefono. Sin esto, el ultimo destino queda debajo
+     de ella y no se puede pulsar. Nada de medidas de un iPhone concreto. */
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.pestana {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  /* 44 px de alto ademas del hueco de la barra de gestos. */
+  min-height: var(--control-alto-lg);
+  padding: var(--e2) var(--e1);
+  background: none;
+  border: none;
+  border-top: 2px solid transparent;
+  color: var(--texto-sutil);
+  font: inherit;
+  font-size: var(--t-xs);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.pestana:hover {
+  text-decoration: none;
+}
+
+.pestanaActiva {
+  border-top-color: var(--acento);
+  color: var(--acento-hover);
+  font-weight: 600;
+}
+
+.etiquetaPestana {
+  /* El texto es obligatorio: un icono solo no dice si esto es Progreso o
+     Pagos. `1` porque a 375 px con cinco pestañas el hueco es de 75 px. */
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* --- La hoja de "Mas" ---------------------------------------------------- */
+
+.hoja {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-flotante);
+}
+
+.veloHoja {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  background: rgb(20 22 26 / 45%);
+  border: none;
+  cursor: pointer;
+}
+
+.panelHoja {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: var(--fondo);
+  border-top: 1px solid var(--borde);
+  border-radius: var(--radio-l) var(--radio-l) 0 0;
+  box-shadow: var(--sombra-elevada);
+  /* Se apoya justo encima de la barra, que mide un control mas la zona de
+     gestos. */
+  padding-bottom: calc(var(--control-alto-lg) + env(safe-area-inset-bottom));
+  animation: subir 0.16s ease-out;
+}
+
+@keyframes subir {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panelHoja {
+    animation: none;
+  }
+}

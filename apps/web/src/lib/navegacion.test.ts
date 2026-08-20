@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { destinoActivo } from '@/lib/navegacion';
 
 /**
  * CUAL DE LOS DESTINOS SE MARCA COMO ACTIVO.
@@ -13,17 +14,12 @@ import { describe, expect, it } from 'vitest';
  * │ porque todo empieza por `/entrenador`.                                   │
  * │                                                                          │
  * │ La regla real es "gana el prefijo mas largo", y eso se puede comprobar   │
- * │ sin navegador. La copia esta a proposito: extraer la funcion solo para   │
- * │ probarla obligaria a exportar un detalle interno del componente.         │
+ * │ sin navegador. En D2 se usa desde TRES sitios —lateral, cajon y barra    │
+ * │ inferior—, asi que dejo de ser un detalle interno y esta prueba pasa a   │
+ * │ importar la funcion de verdad en lugar de copiarla.                      │
  * └──────────────────────────────────────────────────────────────────────────┘
  */
-function activoPara(destinos: readonly string[], ruta: string): string | null {
-  return destinos.reduce<string | null>((mejor, href) => {
-    const coincide = ruta === href || ruta.startsWith(`${href}/`);
-    if (!coincide) return mejor;
-    return mejor === null || href.length > mejor.length ? href : mejor;
-  }, null);
-}
+const activoPara = destinoActivo;
 
 const ENTRENADOR = ['/entrenador', '/entrenador/rutinas', '/entrenador/ejercicios'] as const;
 const PANEL = ['/socios', '/personal', '/planes'] as const;
