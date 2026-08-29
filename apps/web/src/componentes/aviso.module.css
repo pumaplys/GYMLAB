@@ -19,8 +19,19 @@
   color: var(--exito);
 }
 
+
+
 .informacion {
   background: var(--acento-suave);
   border-color: color-mix(in srgb, var(--acento) 20%, transparent);
   color: var(--acento-hover);
+}
+
+/* Ni error ni exito: algo PENDIENTE. Mismo par de ambar que la pastilla
+   "Por vencer" de una cuota, para que el mismo concepto se diga igual en
+   todo el producto. */
+.avisoTono {
+  background: var(--aviso-suave);
+  border-color: color-mix(in srgb, var(--aviso) 25%, transparent);
+  color: var(--aviso);
 }

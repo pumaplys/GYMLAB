@@ -1,91 +1,92 @@
-.titulo {
-  margin: 0 0 var(--espacio-2);
-  font-size: var(--texto-lg);
-  font-weight: 600;
-  color: var(--tinta);
-}
+/*
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ ESTA PANTALLA NO ESTABA MAL DISENADA: ESTABA SIN DISENAR.                │
+ * │                                                                          │
+ * │ El fichero usaba `--espacio-2`, `--texto-lg`, `--tinta-suave`,           │
+ * │ `--radio-md`, `--fondo-suave`, `--texto-sm` y `--texto-xs`. NINGUNO      │
+ * │ existe: los tokens del proyecto son `--e1..--e7`, `--t-xs..--t-xl`,      │
+ * │ `--texto-sutil`, `--radio` y `--fondo-sutil`.                            │
+ * │                                                                          │
+ * │ Y una declaracion con una variable indefinida es invalida, asi que el    │
+ * │ navegador la descarta ENTERA. Once de las trece variables del fichero    │
+ * │ eran fantasmas: ni margenes, ni tamanos, ni colores, ni radios. De ahi   │
+ * │ que se viera "casi HTML sin disenar" — porque literalmente lo era.       │
+ * │                                                                          │
+ * │ No se ve al escribirlo, no lo detiene el compilador y no lo detiene el   │
+ * │ linter. Lo delata mirar la pantalla al lado de otra.                     │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ */
 
 .introduccion {
-  margin: 0 0 var(--espacio-4);
+  margin: 0 0 var(--e5);
   max-width: 60ch;
-  color: var(--tinta-suave);
-  font-size: var(--texto-sm);
-  line-height: 1.6;
+  color: var(--texto-sutil);
+  font-size: var(--t-base);
+  line-height: var(--lh-holgada);
 }
 
-.estado {
-  margin-bottom: var(--espacio-5);
-  padding: var(--espacio-3) var(--espacio-4);
-  border: 1px solid var(--borde);
-  border-radius: var(--radio-md);
-  background: var(--fondo-suave);
-  font-size: var(--texto-sm);
-  color: var(--tinta);
-}
-
-.faltan {
-  display: block;
-  margin-top: var(--espacio-2);
-  color: var(--tinta-suave);
-}
-
-.lista {
-  margin: var(--espacio-1) 0 0;
-  padding-left: var(--espacio-5);
-  color: var(--tinta);
-}
-
-.lista li + li {
-  margin-top: var(--espacio-1);
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e4);
+  margin-top: var(--e4);
 }
 
 /*
- * Rejilla que se pliega sola. Las direcciones de correo y los domicilios son
- * largos: a 320 px, dos columnas parten «privacidad@deportesdelnorte.test» por
- * la mitad, y `minmax(0, ...)` es lo que impide que el contenido empuje la
- * columna mas alla del ancho de la pantalla.
+ * Dos columnas donde caben, emparejadas por afinidad: razon social con su
+ * identificador fiscal, domicilio con el correo de privacidad.
+ *
+ * El corte esta en 48rem —tableta— y no antes: por debajo, dos columnas dejan
+ * cada campo en unos 150 px, y un domicilio no cabe. `minmax(0, 1fr)` es lo que
+ * impide que un correo largo empuje su columna mas alla del ancho disponible.
+ */
+.campos {
+  display: grid;
+  gap: var(--e4) var(--e5);
+}
+
+@media (min-width: 48rem) {
+  .campos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* El mismo pie que el resto de formularios del panel: filete y accion. */
+.pie {
+  display: flex;
+  padding-top: var(--e4);
+  border-top: 1px solid var(--borde);
+}
+
+/*
+ * Las dos versiones del documento, una al lado de la otra.
+ *
+ * Se comparan entre si —"¿la mia es la de la plataforma?"— y esa comparacion
+ * es imposible si estan en dos parrafos separados. Se pliega sola: a 320 px,
+ * dos columnas parten «privacidad@deportesdelnorte.test» por la mitad.
  */
 .detalles {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
-  gap: var(--espacio-4);
-  margin: var(--espacio-4) 0 0;
+  gap: var(--e4);
+  margin: var(--e5) 0 0;
 }
 
 .detalles dt {
-  margin-bottom: var(--espacio-1);
-  color: var(--tinta-suave);
-  font-size: var(--texto-xs);
-}
-
-/*
- * ┌──────────────────────────────────────────────────────────────────────────┐
- * │ 44 px DE ALTO, Y POR QUE SE ARREGLA AQUI Y NO EN `Boton`.                │
- * │                                                                          │
- * │ El boton normal mide 2.25rem —36 px—, por debajo del objetivo tactil de  │
- * │ 44 que este proyecto ya aplica en otros controles. `Boton` solo ofrece   │
- * │ `sm` (28 px) y el normal: NO hay variante que garantice 44, asi que no   │
- * │ hay nada existente que reutilizar.                                       │
- * │                                                                          │
- * │ Subirlo en el componente afectaria a todos los botones del producto, y   │
- * │ eso es un cambio del sistema de diseno que no pertenece a este PR: hay   │
- * │ pantallas con varios botones en fila cuyo espaciado esta medido para la  │
- * │ altura actual. Se corrige donde se detecto.                              │
- * │                                                                          │
- * │ El selector va DUPLICADO a proposito. `Boton` compone su clase con la    │
- * │ que recibe, pero ambas tienen la misma especificidad (0-1-0) y entonces  │
- * │ gana la que el empaquetador ponga despues en la hoja — que no controlo.  │
- * │ `.guardar.guardar` da 0-2-0 y deja de depender del orden de carga.       │
- * └──────────────────────────────────────────────────────────────────────────┘
- */
-.guardar.guardar {
-  min-height: 2.75rem;
+  margin-bottom: var(--e1);
+  color: var(--texto-sutil);
+  font-size: var(--t-xs);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .detalles dd {
   margin: 0;
-  color: var(--tinta);
-  font-size: var(--texto-sm);
+  color: var(--texto);
+  font-size: var(--t-dato);
+  font-weight: 600;
+  font-variant-numeric: var(--numeros);
   /* Las versiones y los correos no tienen espacios donde partir. */
   overflow-wrap: anywhere;
 }

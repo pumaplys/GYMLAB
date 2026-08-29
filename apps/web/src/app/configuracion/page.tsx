@@ -7,6 +7,7 @@ import { Boton } from '@/componentes/boton';
 import { Campo } from '@/componentes/campo';
 import { Cargando } from '@/componentes/cargando';
 import { EncabezadoDePagina } from '@/componentes/encabezado-de-pagina';
+import { Etiqueta } from '@/componentes/etiqueta';
 import { Marco } from '@/componentes/marco';
 import { RutaPrivada } from '@/componentes/ruta-privada';
 import { Tarjeta } from '@/componentes/tarjeta';
@@ -157,8 +158,21 @@ function Configuracion() {
     <>
       <EncabezadoDePagina titulo="Configuración" entradilla="Datos legales y privacidad" />
 
-      <Tarjeta>
-        <h2 className={estilos.titulo}>Datos del responsable</h2>
+      <Tarjeta
+        titulo={<h2>Datos del responsable</h2>}
+        acciones={
+          /*
+            El estado, en la cabecera y como pastilla.
+            Era un `<strong>` suelto dentro de una caja gris con una lista de
+            vinetas debajo: ocupaba cinco lineas para decir una cosa, y no se
+            parecia a ningun otro estado del producto. La pastilla es la misma
+            que dice "Activo" en un socio o "Archivada" en una rutina.
+          */
+          <Etiqueta tono={completa ? 'exito' : 'aviso'}>
+            {completa ? 'Configuración completa' : 'Configuración incompleta'}
+          </Etiqueta>
+        }
+      >
         <p className={estilos.introduccion}>
           Es quien figura ante tus socios como responsable del tratamiento de sus datos. Se
           copia dentro del documento de privacidad al publicarlo, y los documentos ya
@@ -166,48 +180,45 @@ function Configuracion() {
         </p>
 
         {/*
-          El estado va ANTES del formulario: quien entra a arreglar algo necesita
-          saber que falta antes de leer cuatro campos.
+          Lo que falta va ANTES del formulario y en una sola linea: quien entra
+          a arreglar algo necesita saber que falta antes de leer cuatro campos,
+          pero no necesita una lista con vinetas para cuatro nombres.
         */}
-        <div className={estilos.estado} role="status">
-          <strong>{completa ? 'Configuración completa' : 'Configuración incompleta'}</strong>
-          {!completa && (
-            <>
-              <span className={estilos.faltan}>Faltan:</span>
-              <ul className={estilos.lista}>
-                {faltan.map((campo) => (
-                  <li key={campo}>{campo}</li>
-                ))}
-              </ul>
-            </>
-          )}
-        </div>
+        {!completa && (
+          <Aviso tono="aviso">Faltan por rellenar: {faltan.join(', ')}.</Aviso>
+        )}
 
-        <form onSubmit={guardar} noValidate>
-          {CAMPOS.map((campo) => (
-            <Campo
-              key={campo.clave}
-              etiqueta={campo.etiqueta}
-              ayuda={campo.ayuda}
-              tipo={campo.tipo}
-              autoComplete={campo.autoComplete}
-              valor={valores[campo.clave] ?? ''}
-              alCambiar={(valor) => setValores((previo) => ({ ...previo, [campo.clave]: valor }))}
-              deshabilitado={guardando}
-            />
-          ))}
+        <form onSubmit={guardar} noValidate className={estilos.formulario}>
+          {/*
+            Dos columnas donde caben, y emparejadas por afinidad: la razon
+            social con su identificador fiscal, el domicilio con el correo de
+            privacidad. En estrecho la rejilla se pliega sola a una.
+          */}
+          <div className={estilos.campos}>
+            {CAMPOS.map((campo) => (
+              <Campo
+                key={campo.clave}
+                etiqueta={campo.etiqueta}
+                ayuda={campo.ayuda}
+                tipo={campo.tipo}
+                autoComplete={campo.autoComplete}
+                valor={valores[campo.clave] ?? ''}
+                alCambiar={(valor) => setValores((previo) => ({ ...previo, [campo.clave]: valor }))}
+                deshabilitado={guardando}
+              />
+            ))}
+          </div>
 
           {error && <Aviso>{error}</Aviso>}
           {exito && <Aviso tono="exito">{exito}</Aviso>}
 
-          <Boton
-            type="submit"
-            variante="primario"
-            cargando={guardando}
-            className={estilos.guardar}
-          >
-            Guardar
-          </Boton>
+          {/* Filete y accion a la derecha: el mismo pie que el resto de
+              formularios del panel. */}
+          <div className={estilos.pie}>
+            <Boton type="submit" variante="primario" cargando={guardando}>
+              Guardar
+            </Boton>
+          </div>
         </form>
       </Tarjeta>
 
@@ -230,9 +241,7 @@ function EstadoDelDocumento({ estado }: { estado: PrivacyDocumentStatus }) {
   const explicacion = explicarDocumento(estado.state);
 
   return (
-    <Tarjeta>
-      <h2 className={estilos.titulo}>Documento de privacidad</h2>
-
+    <Tarjeta titulo={<h2>Documento de privacidad</h2>}>
       <Aviso tono={explicacion.tono}>
         <strong>{explicacion.titulo}</strong>
         <br />

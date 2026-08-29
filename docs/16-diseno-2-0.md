@@ -33,6 +33,49 @@ Cosas encontradas durante el rediseño que **no se arreglan aquí**: Design 2.0 
 toca comportamiento. Quedan escritas para decidir qué hacer con ellas fuera de
 estas fases.
 
+### 0. Tokens fantasma: una declaración con `var()` indefinida se descarta entera
+
+Un `var(--que-no-existe)` **sin respaldo** invalida la declaración completa. No
+lo ve el compilador, no lo ve el linter, y el único síntoma es mirar la pantalla
+al lado de otra.
+
+Apareció en `/configuracion` —**once de trece** variables eran fantasmas, de ahí
+que se viera «casi HTML sin diseñar»— y en `/accesos`, donde `--t-2xl` dejaba el
+veredicto del escáner a 15 px cuando su propio comentario decía «grande a
+propósito». Los dos corregidos en D3b.
+
+**Auditoría de `apps/web/src` tras D3b**: 43 ficheros `.css`, **828 referencias
+`var(--…)`**, **1 sin definir**:
+
+| Fichero                                         | Token           | ¿Se pinta?                     | Fase   |
+| ----------------------------------------------- | --------------- | ------------------------------ | ------ |
+| `app/socio/privacidad/privacidad.module.css:72` | `--exito-texto` | Sí, lleva respaldo a `--texto` | **D5** |
+
+`globals.css:246` referencia `--fuente`, que **no** es un fantasma: la define
+`next/font/local` en `<html>` (`inter.variable`). Verificado en el navegador —
+resuelve a `"inter", "inter Fallback", …`. Es un falso positivo de cualquier
+auditoría que solo lea `globals.css`.
+
+Merece la pena convertir esa comprobación en una regla de D0 algún día: son
+veinte líneas y ataja una clase de fallo que ninguna otra herramienta ve.
+
+### 0b. El fixture de auditoría envejece solo
+
+`credenciales.local.json` apunta a **«Gimnasio Vista»**, que se sembró una vez y
+se conserva durante todo Design 2.0. Sus **invitaciones caducan de verdad**: la
+que estaba pendiente pasó a «Caducada», perdió su botón _Revocar_ —
+comportamiento correcto del producto — y D0 falló en `accionesPresentes`
+señalando una regresión que no existía.
+
+Se resolvió emitiendo una invitación pendiente nueva por la API. **Volverá a
+pasar** cuando esa caduque.
+
+**Propuesta para cuando toque, no incluida en D3b**: que `obtenerFixture()`
+compruebe al arrancar si queda alguna invitación pendiente sin caducar y, si no,
+emita una. Son unas diez líneas contra la API pública, no tocan la lógica de
+invitaciones y dejan la auditoría estable indefinidamente. Es lo único
+«temporal» del fixture; el resto —socios, planes, rutinas— no caduca.
+
 ### 1. `WEB_DIST_PATH` relativa desactiva el panel en silencio
 
 **Dónde**: `apps/api/src/panel.ts`, `reescribirAHtml()`.
