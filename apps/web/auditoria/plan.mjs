@@ -150,6 +150,14 @@ export function pantallas(fixture) {
       acciones: ['Nuevo ejercicio'],
       contiene: ['Ejercicios'],
     },
+    {
+      // La ficha del socio VISTA POR SU ENTRENADOR. Se anade en D4: es una de
+      // las pantallas del area y no estaba medida por nadie.
+      rol: 'trainer',
+      ruta: `/entrenador/socio?id=${socio}`,
+      acciones: ['Asignar rutina'],
+      contiene: ['Rutinas'],
+    },
 
     // -------------------------------------------------------------- SOCIO
     { rol: 'member', ruta: '/socio', acciones: [], contiene: ['Tu cuota'] },

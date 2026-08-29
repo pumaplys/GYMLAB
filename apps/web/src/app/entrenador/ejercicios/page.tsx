@@ -215,10 +215,26 @@ function Biblioteca() {
                         />
                       ) : (
                         <>
-                          <Boton variante="sutil" onClick={() => setEditando(ejercicio)}>
+                          {/*
+                            `sm` es lo que D1 creo para esto: una accion dentro
+                            de una fila de tabla. Con el tamano normal cada fila
+                            medía 65 px por el alto del boton, y la biblioteca
+                            tiene 74 ejercicios — 4.839 px de recorrido solo por
+                            dos botones. Con el dedo sigue en 44 px, que el
+                            token lo sube solo.
+                          */}
+                          <Boton
+                            variante="sutil"
+                            tamano="sm"
+                            onClick={() => setEditando(ejercicio)}
+                          >
                             Editar
                           </Boton>
-                          <Boton variante="sutil" onClick={() => setBorrando(ejercicio.id)}>
+                          <Boton
+                            variante="sutil"
+                            tamano="sm"
+                            onClick={() => setBorrando(ejercicio.id)}
+                          >
                             Borrar
                           </Boton>
                         </>
@@ -240,9 +256,21 @@ function Biblioteca() {
                     </Etiqueta>
                   }
                 >
-                  <Dato etiqueta="Grupo">{NOMBRE_DEL_GRUPO[ejercicio.muscleGroup]}</Dato>
-                  <Dato etiqueta="Material">
-                    {ejercicio.equipment ?? <span className={celda.tenue}>Sin material</span>}
+                  {/*
+                    Grupo y material en UNA linea, no en dos pares de
+                    etiqueta y valor.
+                    La biblioteca son 74 ejercicios y se recorre buscando uno:
+                    con dos filas por tarjeta la pantalla medía 9.101 px a 375.
+                    Los valores se explican solos —"Pecho · Barra"— y la
+                    etiqueta que los nombraba ocupaba mas que ellos.
+                  */}
+                  <Dato etiqueta="Grupo y material">
+                    {NOMBRE_DEL_GRUPO[ejercicio.muscleGroup]}
+                    {ejercicio.equipment ? (
+                      ` · ${ejercicio.equipment}`
+                    ) : (
+                      <span className={celda.tenue}> · Sin material</span>
+                    )}
                   </Dato>
                 </FilaApilada>
               ))}
