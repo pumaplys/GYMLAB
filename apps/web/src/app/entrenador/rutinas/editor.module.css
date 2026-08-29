@@ -1,5 +1,15 @@
+/*
+ * El ancho de LECTURA no es el de este editor.
+ *
+ * Cada ejercicio son cuatro datos cortos —series, repeticiones, descanso y una
+ * nota— y estaban los cuatro apilados uno por fila dentro de una caja de
+ * 704 px, con el resto del lienzo vacio al lado. Medido: 2.528 px de recorrido
+ * a 1.440 de ancho para una rutina de cinco ejercicios.
+ *
+ * Aqui manda el ancho de trabajo: lo que se edita es una tabla de numeros, no
+ * un texto que se lea de corrido.
+ */
 .tarjeta {
-  max-width: var(--ancho-lectura);
   margin-bottom: var(--e4);
 }
 
@@ -68,22 +78,66 @@
  * notas quieren espacio. Con la rejilla, los cuatro caben en dos filas en
  * cuanto la pantalla lo permite.
  */
+/*
+ * Tres columnas cortas y la nota a lo ancho.
+ *
+ * Series, repeticiones y descanso son tres campos de dos o tres caracteres:
+ * apilarlos gasta tres filas para nada. La nota si es texto y se queda con el
+ * ancho entero, debajo.
+ *
+ * Por debajo de 48rem vuelven a una columna: a 375 px, tres campos con su
+ * etiqueta y su ayuda no caben en una fila sin partir las palabras.
+ */
 .camposItem {
   display: grid;
   grid-template-columns: 1fr;
   gap: var(--e4);
 }
 
+@media (min-width: 48rem) {
+  .camposItem {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  /* La nota: cuarta hija, ocupa la fila entera. */
+  .camposItem > :nth-child(4) {
+    grid-column: 1 / -1;
+  }
+}
+
 /*
- * Subir y bajar son los botones que mas se pulsan aqui, y se pulsan con el
- * pulgar: ordenar una rutina de diez ejercicios son muchos toques seguidos. Un
- * `sm` normal se queda en 37x28 px, por debajo de los 44 px que el resto del
- * proyecto respeta, asi que aqui se ensanchan. Solo estos dos: "Quitar" se pulsa
- * una vez y ademas pide confirmacion.
+ * En escritorio, los cuatro en UNA fila.
+ *
+ * Series, repeticiones y descanso no necesitan mas de cinco o seis caracteres,
+ * asi que se les da su ancho justo y la nota se queda con todo lo demas —unos
+ * 400 px, mas que suficiente para "calentar bien antes de la primera serie"—.
+ * Cada ejercicio pasa de dos filas de campos a una, y una rutina de cinco
+ * ejercicios se acorta en unos 400 px.
+ */
+@media (min-width: 64rem) {
+  .camposItem {
+    grid-template-columns: 6rem 6rem 7rem minmax(0, 1fr);
+  }
+
+  .camposItem > :nth-child(4) {
+    grid-column: auto;
+  }
+}
+
+/*
+ * Subir y bajar son los botones que mas se pulsan aqui: ordenar una rutina de
+ * diez ejercicios son muchos toques seguidos.
+ *
+ * Estaban clavados a 44 px porque cuando se escribio esto `Boton` no tenia
+ * forma de garantizarlos. Desde D1 si la tiene: `--control-alto-sm` vale 28 px
+ * con raton y 44 con el dedo, que es exactamente lo que pedia el comentario
+ * anterior — y sin dejar el boton mas alto que sus vecinos en escritorio.
+ *
+ * El ancho minimo se queda: son botones de un solo caracter y el token solo
+ * gobierna el alto.
  */
 .reordenar {
-  min-width: 2.75rem;
-  min-height: 2.75rem;
+  min-width: var(--control-alto-sm);
 }
 
 .accionesItem {
@@ -101,10 +155,4 @@
   flex-wrap: wrap;
   gap: var(--e3);
   max-width: var(--ancho-lectura);
-}
-
-@media (min-width: 48.0625rem) {
-  .camposItem {
-    grid-template-columns: 1fr 1fr;
-  }
 }

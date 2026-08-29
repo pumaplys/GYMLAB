@@ -1,70 +1,70 @@
 {
-  "generado": "2026-08-20T16:46:45.405Z",
+  "generado": "2026-08-29T17:31:23.828Z",
   "resumen": {
     "porRegla": {
       "rutaCarga": {
-        "PASS": 84,
+        "PASS": 88,
         "WARN": 0,
         "FAIL": 0,
         "bloquea": true
       },
       "accionesPresentes": {
-        "PASS": 84,
+        "PASS": 88,
         "WARN": 0,
         "FAIL": 0,
         "bloquea": true
       },
       "accionesAusentes": {
-        "PASS": 84,
+        "PASS": 88,
         "WARN": 0,
         "FAIL": 0,
         "bloquea": true
       },
       "rolSinDestinosProhibidos": {
-        "PASS": 84,
+        "PASS": 88,
         "WARN": 0,
         "FAIL": 0,
         "bloquea": true
       },
       "navegacionAlcanzable": {
-        "PASS": 84,
+        "PASS": 88,
         "WARN": 0,
         "FAIL": 0,
         "bloquea": true
       },
       "rutaActiva": {
-        "PASS": 84,
+        "PASS": 88,
         "WARN": 0,
         "FAIL": 0,
         "bloquea": true
       },
       "sinDesbordeHorizontal": {
-        "PASS": 84,
+        "PASS": 88,
         "WARN": 0,
         "FAIL": 0,
         "bloquea": true
       },
       "nadaFueraDeVista": {
-        "PASS": 84,
+        "PASS": 88,
         "WARN": 0,
         "FAIL": 0,
         "bloquea": true
       },
       "objetivosTactiles": {
-        "PASS": 42,
-        "WARN": 42,
+        "PASS": 44,
+        "WARN": 44,
         "FAIL": 0,
         "bloquea": true
       },
       "contraste": {
-        "PASS": 84,
+        "PASS": 88,
         "WARN": 0,
         "FAIL": 0,
         "bloquea": true
       }
     },
     "bloqueantesFallando": 0,
-    "filas": 84
+    "filas": 88
   },
   "filas": [
     {
@@ -276,7 +276,7 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 2196,
+        "scrollAlto": 2331,
         "interactivos": 10,
         "pequenos": 0,
         "pequenosEnFrase": 0,
@@ -284,9 +284,9 @@
         "tablaVisible": false,
         "filaAlto": 0,
         "tamanos": [
-          "14px x26",
-          "12px x22",
-          "16px x7",
+          "14px x28",
+          "12px x25",
+          "16px x8",
           "13px x6",
           "17px x2",
           "15px x1",
@@ -503,7 +503,7 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1341,
+        "scrollAlto": 1500,
         "interactivos": 8,
         "pequenos": 0,
         "pequenosEnFrase": 0,
@@ -511,10 +511,12 @@
         "tablaVisible": null,
         "filaAlto": null,
         "tamanos": [
-          "15px x14",
           "13px x11",
-          "14px x5",
-          "12px x1",
+          "14px x7",
+          "12px x4",
+          "16px x2",
+          "17px x2",
+          "15px x1",
           "22px x1"
         ]
       }
@@ -662,8 +664,8 @@
         "tamanos": [
           "13px x5",
           "14px x5",
+          "15px x2",
           "12px x1",
-          "15px x1",
           "17px x1",
           "22px x1"
         ]
@@ -1102,19 +1104,94 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 9101,
-        "interactivos": 5,
+        "scrollAlto": 12103,
+        "interactivos": 153,
         "pequenos": 0,
         "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": false,
         "filaAlto": 0,
         "tamanos": [
-          "12px x223",
-          "14px x151",
+          "13px x299",
+          "12px x149",
+          "14px x77",
           "16px x74",
-          "13px x3",
           "15px x2",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "trainer",
+      "ruta": "/entrenador/socio?id=e093d4ab-6f65-4d0f-a968-2413fd9769f2",
+      "viewport": "movil",
+      "ancho": 375,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 1212,
+        "interactivos": 9,
+        "pequenos": 0,
+        "pequenosEnFrase": 0,
+        "navRecorte": 0,
+        "tablaVisible": null,
+        "filaAlto": null,
+        "tamanos": [
+          "14px x18",
+          "13px x11",
+          "12px x2",
+          "15px x2",
+          "17px x2",
           "22px x1"
         ]
       }
@@ -1847,7 +1924,7 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1999,
+        "scrollAlto": 2114,
         "interactivos": 14,
         "pequenos": 0,
         "pequenosEnFrase": 0,
@@ -1855,9 +1932,9 @@
         "tablaVisible": false,
         "filaAlto": 0,
         "tamanos": [
-          "14px x31",
-          "12px x22",
-          "16px x7",
+          "14px x33",
+          "12px x25",
+          "16px x8",
           "13px x6",
           "17px x3",
           "22px x1"
@@ -2072,7 +2149,7 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1109,
+        "scrollAlto": 1024,
         "interactivos": 12,
         "pequenos": 0,
         "pequenosEnFrase": 0,
@@ -2080,11 +2157,11 @@
         "tablaVisible": null,
         "filaAlto": null,
         "tamanos": [
-          "15px x13",
+          "14px x12",
           "13px x11",
-          "14px x10",
-          "12px x1",
-          "17px x1",
+          "12px x4",
+          "17px x3",
+          "16px x2",
           "22px x1"
         ]
       }
@@ -2299,16 +2376,18 @@
       ],
       "metricas": {
         "scrollAlto": 1024,
-        "interactivos": 5,
+        "interactivos": 10,
         "pequenos": 0,
         "pequenosEnFrase": 0,
         "navRecorte": 0,
-        "tablaVisible": null,
-        "filaAlto": null,
+        "tablaVisible": false,
+        "filaAlto": 0,
         "tamanos": [
-          "14px x6",
+          "12px x13",
+          "14px x13",
+          "16px x12",
           "13px x3",
-          "12px x1",
+          "15px x1",
           "17px x1",
           "22px x1"
         ]
@@ -2597,7 +2676,7 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 3419,
+        "scrollAlto": 2406,
         "interactivos": 46,
         "pequenos": 0,
         "pequenosEnFrase": 0,
@@ -2672,20 +2751,95 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 8848,
-        "interactivos": 7,
+        "scrollAlto": 11808,
+        "interactivos": 155,
         "pequenos": 0,
         "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": false,
         "filaAlto": 0,
         "tamanos": [
-          "12px x223",
-          "14px x154",
+          "13px x299",
+          "12px x149",
+          "14px x80",
           "16px x74",
-          "13px x3",
           "15px x1",
           "17px x1",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "trainer",
+      "ruta": "/entrenador/socio?id=e093d4ab-6f65-4d0f-a968-2413fd9769f2",
+      "viewport": "tableta",
+      "ancho": 768,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 1157,
+        "interactivos": 11,
+        "pequenos": 0,
+        "pequenosEnFrase": 0,
+        "navRecorte": 0,
+        "tablaVisible": null,
+        "filaAlto": null,
+        "tamanos": [
+          "14px x21",
+          "13px x11",
+          "17px x3",
+          "12px x2",
+          "15px x1",
           "22px x1"
         ]
       }
@@ -2973,15 +3127,16 @@
       ],
       "metricas": {
         "scrollAlto": 1024,
-        "interactivos": 9,
+        "interactivos": 11,
         "pequenos": 0,
         "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": null,
         "filaAlto": null,
         "tamanos": [
-          "14px x10",
-          "13px x3",
+          "14px x11",
+          "13px x6",
+          "15px x4",
           "12px x1",
           "17px x1",
           "22px x1"
@@ -3420,7 +3575,7 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1265,
+        "scrollAlto": 1332,
         "interactivos": 14,
         "pequenos": 14,
         "pequenosEnFrase": 0,
@@ -3428,8 +3583,8 @@
         "tablaVisible": true,
         "filaAlto": 67,
         "tamanos": [
-          "14px x38",
-          "12px x15",
+          "14px x41",
+          "12px x16",
           "13px x6",
           "17px x2",
           "15px x1",
@@ -3486,7 +3641,7 @@
         {
           "regla": "objetivosTactiles",
           "estado": "WARN",
-          "causa": "12 controles por debajo de 44px (el menor, 28px)"
+          "causa": "18 controles por debajo de 44px (el menor, 28px)"
         },
         {
           "regla": "contraste",
@@ -3495,17 +3650,17 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 863,
-        "interactivos": 12,
-        "pequenos": 12,
+        "scrollAlto": 1061,
+        "interactivos": 18,
+        "pequenos": 18,
         "pequenosEnFrase": 0,
         "navRecorte": 0,
-        "tablaVisible": null,
-        "filaAlto": null,
+        "tablaVisible": true,
+        "filaAlto": 61,
         "tamanos": [
-          "13px x11",
-          "14px x9",
-          "12px x1",
+          "14px x26",
+          "13px x13",
+          "12px x6",
           "15px x1",
           "17px x1",
           "22px x1"
@@ -3636,7 +3791,7 @@
         {
           "regla": "objetivosTactiles",
           "estado": "WARN",
-          "causa": "11 controles por debajo de 44px (el menor, 28px)"
+          "causa": "12 controles por debajo de 44px (el menor, 28px)"
         },
         {
           "regla": "contraste",
@@ -3645,18 +3800,20 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1118,
+        "scrollAlto": 1057,
         "interactivos": 12,
-        "pequenos": 11,
+        "pequenos": 12,
         "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": null,
         "filaAlto": null,
         "tamanos": [
-          "15px x14",
+          "14px x12",
           "13px x11",
-          "14px x10",
-          "12px x1",
+          "12px x4",
+          "16px x2",
+          "17px x2",
+          "15px x1",
           "22px x1"
         ]
       }
@@ -3804,8 +3961,8 @@
         "tamanos": [
           "14px x8",
           "13px x5",
+          "15px x2",
           "12px x1",
-          "15px x1",
           "17px x1",
           "22px x1"
         ]
@@ -3860,7 +4017,7 @@
         {
           "regla": "objetivosTactiles",
           "estado": "WARN",
-          "causa": "5 controles por debajo de 44px (el menor, 28px)"
+          "causa": "10 controles por debajo de 44px (el menor, 17px)"
         },
         {
           "regla": "contraste",
@@ -3870,17 +4027,17 @@
       ],
       "metricas": {
         "scrollAlto": 768,
-        "interactivos": 5,
-        "pequenos": 5,
+        "interactivos": 10,
+        "pequenos": 10,
         "pequenosEnFrase": 0,
         "navRecorte": 0,
-        "tablaVisible": null,
-        "filaAlto": null,
+        "tablaVisible": true,
+        "filaAlto": 47,
         "tamanos": [
-          "14px x6",
+          "14px x21",
+          "12px x10",
           "13px x3",
-          "12px x1",
-          "15px x1",
+          "15px x2",
           "22px x1"
         ]
       }
@@ -4159,7 +4316,7 @@
         {
           "regla": "objetivosTactiles",
           "estado": "WARN",
-          "causa": "36 controles por debajo de 44px (el menor, 28px)"
+          "causa": "46 controles por debajo de 44px (el menor, 28px)"
         },
         {
           "regla": "contraste",
@@ -4168,9 +4325,9 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 2528,
+        "scrollAlto": 2011,
         "interactivos": 46,
-        "pequenos": 36,
+        "pequenos": 46,
         "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": null,
@@ -4243,7 +4400,7 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 5142,
+        "scrollAlto": 4902,
         "interactivos": 155,
         "pequenos": 155,
         "pequenosEnFrase": 0,
@@ -4251,11 +4408,86 @@
         "tablaVisible": true,
         "filaAlto": 65,
         "tamanos": [
-          "14px x302",
+          "14px x154",
+          "13px x151",
           "12px x79",
           "16px x74",
-          "13px x3",
           "15px x2",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "trainer",
+      "ruta": "/entrenador/socio?id=e093d4ab-6f65-4d0f-a968-2413fd9769f2",
+      "viewport": "compacto",
+      "ancho": 1024,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "WARN",
+          "causa": "9 controles por debajo de 44px (el menor, 28px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 969,
+        "interactivos": 11,
+        "pequenos": 9,
+        "pequenosEnFrase": 0,
+        "navRecorte": 0,
+        "tablaVisible": null,
+        "filaAlto": null,
+        "tamanos": [
+          "14px x21",
+          "13px x11",
+          "12px x2",
+          "15px x2",
+          "17px x2",
           "22px x1"
         ]
       }
@@ -4532,7 +4764,7 @@
         {
           "regla": "objetivosTactiles",
           "estado": "WARN",
-          "causa": "9 controles por debajo de 44px (el menor, 28px)"
+          "causa": "11 controles por debajo de 44px (el menor, 28px)"
         },
         {
           "regla": "contraste",
@@ -4542,17 +4774,17 @@
       ],
       "metricas": {
         "scrollAlto": 768,
-        "interactivos": 9,
-        "pequenos": 9,
+        "interactivos": 11,
+        "pequenos": 11,
         "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": null,
         "filaAlto": null,
         "tamanos": [
-          "14px x10",
-          "13px x3",
+          "14px x11",
+          "13px x6",
+          "15px x5",
           "12px x1",
-          "15px x1",
           "22px x1"
         ]
       }
@@ -4987,7 +5219,7 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1159,
+        "scrollAlto": 1205,
         "interactivos": 14,
         "pequenos": 14,
         "pequenosEnFrase": 0,
@@ -4995,8 +5227,8 @@
         "tablaVisible": true,
         "filaAlto": 61,
         "tamanos": [
-          "14px x38",
-          "12px x15",
+          "14px x41",
+          "12px x16",
           "13px x6",
           "17px x2",
           "15px x1",
@@ -5147,8 +5379,8 @@
         "tamanos": [
           "14px x10",
           "13px x5",
+          "15px x2",
           "12px x1",
-          "15px x1",
           "17px x1",
           "22px x1"
         ]
@@ -5203,7 +5435,7 @@
         {
           "regla": "objetivosTactiles",
           "estado": "WARN",
-          "causa": "11 controles por debajo de 44px (el menor, 28px)"
+          "causa": "12 controles por debajo de 44px (el menor, 28px)"
         },
         {
           "regla": "contraste",
@@ -5212,18 +5444,20 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1118,
+        "scrollAlto": 1018,
         "interactivos": 12,
-        "pequenos": 11,
+        "pequenos": 12,
         "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": null,
         "filaAlto": null,
         "tamanos": [
-          "15px x14",
+          "14px x12",
           "13px x11",
-          "14px x10",
-          "12px x1",
+          "12px x4",
+          "16px x2",
+          "17px x2",
+          "15px x1",
           "22px x1"
         ]
       }
@@ -5371,8 +5605,8 @@
         "tamanos": [
           "14px x8",
           "13px x5",
+          "15px x2",
           "12px x1",
-          "15px x1",
           "17px x1",
           "22px x1"
         ]
@@ -5427,7 +5661,7 @@
         {
           "regla": "objetivosTactiles",
           "estado": "WARN",
-          "causa": "5 controles por debajo de 44px (el menor, 28px)"
+          "causa": "10 controles por debajo de 44px (el menor, 17px)"
         },
         {
           "regla": "contraste",
@@ -5437,17 +5671,17 @@
       ],
       "metricas": {
         "scrollAlto": 900,
-        "interactivos": 5,
-        "pequenos": 5,
+        "interactivos": 10,
+        "pequenos": 10,
         "pequenosEnFrase": 0,
         "navRecorte": 0,
-        "tablaVisible": null,
-        "filaAlto": null,
+        "tablaVisible": true,
+        "filaAlto": 47,
         "tamanos": [
-          "14px x6",
+          "14px x21",
+          "12px x10",
           "13px x3",
-          "12px x1",
-          "15px x1",
+          "15px x2",
           "22px x1"
         ]
       }
@@ -5726,7 +5960,7 @@
         {
           "regla": "objetivosTactiles",
           "estado": "WARN",
-          "causa": "36 controles por debajo de 44px (el menor, 28px)"
+          "causa": "46 controles por debajo de 44px (el menor, 28px)"
         },
         {
           "regla": "contraste",
@@ -5735,9 +5969,9 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 2528,
+        "scrollAlto": 2011,
         "interactivos": 46,
-        "pequenos": 36,
+        "pequenos": 46,
         "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": null,
@@ -5810,19 +6044,94 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 4839,
+        "scrollAlto": 4247,
         "interactivos": 155,
         "pequenos": 155,
         "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": true,
-        "filaAlto": 61,
+        "filaAlto": 53,
         "tamanos": [
-          "14px x302",
+          "14px x154",
+          "13px x151",
           "12px x79",
           "16px x74",
-          "13px x3",
           "15px x2",
+          "22px x1"
+        ]
+      }
+    },
+    {
+      "rol": "trainer",
+      "ruta": "/entrenador/socio?id=e093d4ab-6f65-4d0f-a968-2413fd9769f2",
+      "viewport": "escritorio",
+      "ancho": 1440,
+      "hallazgos": [
+        {
+          "regla": "rutaCarga",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesPresentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "accionesAusentes",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rolSinDestinosProhibidos",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "navegacionAlcanzable",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "rutaActiva",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "sinDesbordeHorizontal",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "nadaFueraDeVista",
+          "estado": "PASS",
+          "causa": ""
+        },
+        {
+          "regla": "objetivosTactiles",
+          "estado": "WARN",
+          "causa": "9 controles por debajo de 44px (el menor, 28px)"
+        },
+        {
+          "regla": "contraste",
+          "estado": "PASS",
+          "causa": ""
+        }
+      ],
+      "metricas": {
+        "scrollAlto": 969,
+        "interactivos": 11,
+        "pequenos": 9,
+        "pequenosEnFrase": 0,
+        "navRecorte": 0,
+        "tablaVisible": null,
+        "filaAlto": null,
+        "tamanos": [
+          "14px x21",
+          "13px x11",
+          "12px x2",
+          "15px x2",
+          "17px x2",
           "22px x1"
         ]
       }
