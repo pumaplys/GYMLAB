@@ -1,5 +1,5 @@
 {
-  "generado": "2026-08-29T17:15:23.822Z",
+  "generado": "2026-08-29T17:31:23.828Z",
   "resumen": {
     "porRegla": {
       "rutaCarga": {
@@ -1104,18 +1104,18 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 6997,
-        "interactivos": 5,
+        "scrollAlto": 12103,
+        "interactivos": 153,
         "pequenos": 0,
         "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": false,
         "filaAlto": 0,
         "tamanos": [
+          "13px x299",
           "12px x149",
           "14px x77",
           "16px x74",
-          "13px x3",
           "15px x2",
           "22px x1"
         ]
@@ -2751,18 +2751,18 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 6702,
-        "interactivos": 7,
+        "scrollAlto": 11808,
+        "interactivos": 155,
         "pequenos": 0,
         "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": false,
         "filaAlto": 0,
         "tamanos": [
+          "13px x299",
           "12px x149",
           "14px x80",
           "16px x74",
-          "13px x3",
           "15px x1",
           "17px x1",
           "22px x1"

@@ -145,9 +145,28 @@ export function pantallas(fixture) {
       contiene: ['Editar'],
     },
     {
+      /*
+       * ┌──────────────────────────────────────────────────────────────────┐
+       * │ EDITAR Y BORRAR SE COMPRUEBAN EN LOS CUATRO ANCHOS, A PROPOSITO. │
+       * │                                                                  │
+       * │ El entrenador podia editar y borrar desde la tabla, y la lista   │
+       * │ apilada —lo unico visible por debajo de 769 px— no ofrecia       │
+       * │ ninguna de las dos. D0 no lo vio porque nadie se lo habia pedido:│
+       * │ solo vigilaba "Nuevo ejercicio", que si estaba en los dos sitios.│
+       * │                                                                  │
+       * │ Con las tres declaradas, la regla se evalua en movil, tableta,   │
+       * │ compacto y escritorio, asi que cubre las DOS representaciones.   │
+       * │                                                                  │
+       * │ Y comprueba alcanzables, no presentes: la sonda recoge acciones  │
+       * │ solo de elementos VISIBLES —descarta lo que este en un subarbol  │
+       * │ con `display: none`, que es justo como se esconde la tabla en    │
+       * │ estrecho y la lista en ancho—. Un boton oculto en el DOM no      │
+       * │ cuenta. Sin tocar una sola clase CSS.                            │
+       * └──────────────────────────────────────────────────────────────────┘
+       */
       rol: 'trainer',
       ruta: '/entrenador/ejercicios',
-      acciones: ['Nuevo ejercicio'],
+      acciones: ['Nuevo ejercicio', 'Editar', 'Borrar'],
       contiene: ['Ejercicios'],
     },
     {

@@ -255,6 +255,53 @@ function Biblioteca() {
                       {ejercicio.fromTemplate ? 'Del catalogo' : 'Del gimnasio'}
                     </Etiqueta>
                   }
+                  acciones={
+                    /*
+                      ┌────────────────────────────────────────────────────────┐
+                      │ EDITAR Y BORRAR NO SON NUEVOS: FALTABAN AQUI.          │
+                      │                                                        │
+                      │ El entrenador podia editar y borrar un ejercicio desde │
+                      │ la tabla, y la lista apilada —lo unico que se ve por   │
+                      │ debajo de 769 px— no los ofrecia. La capacidad existia │
+                      │ y la representacion responsive la dejaba caer: en un   │
+                      │ telefono la biblioteca era de solo lectura sin que     │
+                      │ nada lo dijera.                                        │
+                      │                                                        │
+                      │ Misma confirmacion, mismo texto y mismos manejadores   │
+                      │ que la tabla. No hay logica nueva: hay dos botones que │
+                      │ llaman a lo que ya estaba escrito.                     │
+                      └────────────────────────────────────────────────────────┘
+
+                      `sm` en una fila: con el dedo el token lo sube a 44 px, y
+                      la confirmacion sustituye a los dos botones en lugar de
+                      anadir una fila mas.
+                    */
+                    borrando === ejercicio.id ? (
+                      <ConfirmacionEnLinea
+                        pregunta="¿Borrarlo? Las rutinas que lo usen lo marcaran como no disponible."
+                        confirmando={false}
+                        onConfirmar={() => void borrar(ejercicio.id)}
+                        onCancelar={() => setBorrando(null)}
+                      />
+                    ) : (
+                      <>
+                        <Boton
+                          variante="sutil"
+                          tamano="sm"
+                          onClick={() => setEditando(ejercicio)}
+                        >
+                          Editar<span className="solo-lectores"> {ejercicio.name}</span>
+                        </Boton>
+                        <Boton
+                          variante="sutil"
+                          tamano="sm"
+                          onClick={() => setBorrando(ejercicio.id)}
+                        >
+                          Borrar<span className="solo-lectores"> {ejercicio.name}</span>
+                        </Boton>
+                      </>
+                    )
+                  }
                 >
                   {/*
                     Grupo y material en UNA linea, no en dos pares de
