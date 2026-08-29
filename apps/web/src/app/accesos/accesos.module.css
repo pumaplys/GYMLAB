@@ -71,24 +71,50 @@
 /*
  * Grande a propósito: quien está en la puerta lo lee de reojo con una persona
  * delante. El tamaño es la información, no decoración.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ Y NO ERA GRANDE. `--t-2xl` NUNCA EXISTIÓ.                                │
+ * │                                                                          │
+ * │ La escala llega hasta `--t-xl`. Como esta declaración no llevaba          │
+ * │ respaldo, el navegador la descartaba entera y el veredicto se pintaba al  │
+ * │ tamaño HEREDADO —15 px— aunque el peso y el interletrado sí se aplicaran. │
+ * │ Justo lo contrario de lo que dice el comentario de arriba, y sin ningún   │
+ * │ síntoma salvo mirarlo.                                                    │
+ * │                                                                          │
+ * │ `--t-xl` son 22 px: el mayor que el sistema define hoy. Si el mostrador   │
+ * │ pide más, eso es añadir un escalón a la escala y se decide aparte.        │
+ * └──────────────────────────────────────────────────────────────────────────┘
  */
 .decision {
   margin: 0;
-  font-size: var(--t-2xl);
+  font-size: var(--t-xl);
   font-weight: 700;
   letter-spacing: -0.01em;
 }
 
+/*
+ * Los tres colores del veredicto.
+ *
+ * Estos SÍ se estaban pintando: llevaban respaldo, así que `--exito-fuerte` y
+ * `--aviso-fuerte` —que tampoco existen— caían en `--exito` y `--aviso`. Se
+ * quitan las referencias fantasma sin tocar el color resultante: lo que se ve
+ * hoy en la puerta es exactamente lo que se seguirá viendo.
+ *
+ * `--peligro-fuerte` sí existe y por eso el DENY es un rojo un paso más
+ * oscuro que el ámbar y el verde de sus hermanos. Esa asimetría es real y
+ * queda anotada, pero igualarla cambiaría un color en pantalla y esto es una
+ * corrección de tokens, no un retoque de paleta.
+ */
 .allow {
-  color: var(--exito-fuerte, var(--exito));
+  color: var(--exito);
 }
 
 .warn {
-  color: var(--aviso-fuerte, var(--aviso));
+  color: var(--aviso);
 }
 
 .deny {
-  color: var(--peligro-fuerte, var(--peligro));
+  color: var(--peligro-fuerte);
 }
 
 .socio {
