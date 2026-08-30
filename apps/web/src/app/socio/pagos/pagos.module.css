@@ -1,15 +1,38 @@
+/*
+ * El historial entero en una superficie; cada pago, una fila.
+ *
+ * El relleno lo ponen las filas para que la linea que las separa llegue de
+ * borde a borde.
+ */
+.bloque {
+  margin-bottom: var(--e4);
+  padding: 0;
+  overflow: hidden;
+}
+
 .lista {
-  display: flex;
-  flex-direction: column;
-  gap: var(--e3);
-  margin: 0 0 var(--e4);
+  margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .pago,
 .pagoAnulado {
-  padding: var(--e3) var(--e4);
+  padding: var(--e4);
+}
+
+.pago + .pago,
+.pago + .pagoAnulado,
+.pagoAnulado + .pago,
+.pagoAnulado + .pagoAnulado {
+  border-top: 1px solid var(--borde);
+}
+
+@media (min-width: 48rem) {
+  .pago,
+  .pagoAnulado {
+    padding: var(--e4) var(--e5);
+  }
 }
 
 /* Atenuado, pero legible: sigue siendo parte de su historial. */
@@ -67,4 +90,15 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--e3);
+}
+
+/*
+ * La tarjeta de estado vacio, a medida de lectura.
+ *
+ * Desde D5 el area dispone del ancho de trabajo, y un mensaje de "todavia no hay nada" centrado dentro de una superficie de 1.088 px se convertia en
+ * una banda plana con dos lineas perdidas en medio. El mensaje es prosa; el
+ * ancho de trabajo era para los datos.
+ */
+.tarjetaVacia {
+  max-width: var(--ancho-lectura);
 }

@@ -112,7 +112,16 @@ function Privacidad() {
   if (cargando) return <Cargando>Cargando…</Cargando>;
 
   return (
-    <>
+    /*
+     * ANCHO DE LECTURA, y aqui SI.
+     *
+     * D5 le quito al marco del socio el ancho de lectura fijo porque estaba
+     * estrangulando pantallas de datos. Esta es la excepcion legitima: son
+     * parrafos sobre que se hace con el peso y las medidas de alguien, y una
+     * linea de 1.150 px de prosa se lee peor, no mejor. Decidido pantalla a
+     * pantalla, que era la instruccion.
+     */
+    <div className={estilos.columna}>
       {/*
         Sin "volver": esta pantalla nacio colgando de Inicio, cuando el area del
         socio no tenia barra de destinos. Ahora es uno de los siete, y ninguno de
@@ -212,6 +221,6 @@ function Privacidad() {
           </Tarjeta>
         </>
       )}
-    </>
+    </div>
   );
 }

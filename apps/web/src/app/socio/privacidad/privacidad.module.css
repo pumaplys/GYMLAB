@@ -68,7 +68,33 @@
   font-size: var(--t-base);
 }
 
+/*
+ * "Lo has autorizado", en el verde del sistema.
+ *
+ * Estaba escrito `var(--exito-texto, var(--texto))` y ese token NO EXISTE:
+ * nunca ha existido. El fallback se tragaba el fallo en silencio y la frase se
+ * pintaba en negro corriente, asi que el unico rastro del estado era la
+ * negrita. Ni el compilador ni el linter lo ven —para CSS es una variable mas—
+ * y en pantalla no se nota hasta que se compara con otra pantalla.
+ *
+ * El token real para texto afirmativo es `--exito`, que es el mismo que usan
+ * `aviso` y `etiqueta` para su tono de exito. Se elige por lo que la
+ * declaracion INTENTABA decir, no por parecido de nombre.
+ *
+ * Y sin fallback a proposito: si algun dia se renombra, que se rompa a la
+ * vista en lugar de degradarse a negro otros seis meses.
+ */
 .aceptado {
-  color: var(--exito-texto, var(--texto));
+  color: var(--exito);
   font-weight: 600;
+}
+
+/*
+ * La columna de lectura de esta pantalla.
+ *
+ * Ver el comentario del `return` en `page.tsx`: es prosa, y la prosa quiere
+ * medida de lectura aunque el area ya disponga del ancho de trabajo.
+ */
+.columna {
+  max-width: var(--ancho-lectura);
 }

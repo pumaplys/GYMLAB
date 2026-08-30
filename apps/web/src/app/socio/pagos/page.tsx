@@ -125,12 +125,18 @@ function MisPagos() {
         <Cargando>Cargando tus pagos…</Cargando>
       ) : datos && datos.items.length > 0 ? (
         <>
-          <ul className={estilos.lista}>
-            {datos.items.map((pago) => {
-              const anulado = pago.voidedAt !== null;
-              return (
-                <li key={pago.id}>
-                  <Tarjeta className={anulado ? estilos.pagoAnulado : estilos.pago}>
+          {/*
+            UNA superficie con filas, no una tarjeta por pago.
+            Cada pago eran dos lineas dentro de su propio recuadro, y dos pagos
+            ocupaban media pantalla de telefono. Como filas de un mismo bloque
+            se leen como lo que son: un historial en orden.
+          */}
+          <Tarjeta className={estilos.bloque}>
+            <ul className={estilos.lista}>
+              {datos.items.map((pago) => {
+                const anulado = pago.voidedAt !== null;
+                return (
+                  <li key={pago.id} className={anulado ? estilos.pagoAnulado : estilos.pago}>
                     <div className={estilos.cabecera}>
                       <span className={estilos.concepto}>{CONCEPTO[pago.concept]}</span>
                       <span className={estilos.importe}>
@@ -151,11 +157,11 @@ function MisPagos() {
                         )}
                       </div>
                     )}
-                  </Tarjeta>
-                </li>
-              );
-            })}
-          </ul>
+                  </li>
+                );
+              })}
+            </ul>
+          </Tarjeta>
 
           <Paginacion
             pagina={datos.page}
@@ -166,7 +172,7 @@ function MisPagos() {
           />
         </>
       ) : (
-        <Tarjeta>
+        <Tarjeta className={estilos.tarjetaVacia}>
           <EstadoVacio
             titulo="Todavia no hay pagos"
             /* Sin "paga aqui": no se puede pagar desde GYMLAB. */

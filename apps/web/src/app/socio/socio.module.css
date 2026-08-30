@@ -1,39 +1,60 @@
 /*
- * Movil primero: los pares dato/valor se apilan por defecto y solo pasan a dos
- * columnas cuando hay sitio. Es al reves que en el panel, y a proposito — el
- * socio abre esto en un telefono, no en un mostrador.
+ * Los pares dato/valor del area de socio.
+ *
+ * Movil primero —el socio abre esto en un telefono, no en un mostrador— pero
+ * ya no una fila por dato: eran cinco seguidas para nombre, numero, correo,
+ * telefono y alta, y ocupaban media pantalla con lo que menos se consulta.
+ *
+ * `auto-fit` reparte en las columnas que quepan y baja sola a una en estrecho,
+ * sin `@media`. `min(100%, 11rem)` es lo que impide que un correo largo estire
+ * su columna mas alla de la pantalla.
  */
 .datos {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--e1) var(--e4);
+  /*
+   * 8rem, y la cifra sale de una medicion, no de un gusto.
+   *
+   * A 375 la tarjeta deja 309 px utiles y el hueco entre columnas es de 24.
+   * Con un minimo de 9rem, dos columnas pedian 2x144+24 = 312: TRES pixeles
+   * de mas, y `auto-fit` caia a una sola columna — cinco filas otra vez. Con
+   * 8rem piden 280 y entran de sobra, dejando 142 px por columna, que es mas
+   * de lo que ocupa "Lucia Fernandez".
+   */
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr));
+  gap: var(--e4) var(--e5);
   margin: 0;
 }
 
+/*
+ * El correo, a lo ancho de la rejilla.
+ *
+ * Con 13rem de columna minima —lo que pide un correo entero— a 375 solo cabia
+ * UNA columna y los cinco datos volvian a ser cinco filas. Sacando el unico
+ * valor largo a su propia fila, los otros cuatro caben de dos en dos con
+ * 9rem: de cinco filas a tres, sin partir ningun valor.
+ */
+.anchoCompleto {
+  grid-column: 1 / -1;
+}
+
 .datos dt {
+  margin-bottom: var(--e1);
   color: var(--texto-sutil);
-  font-size: var(--t-base);
+  font-size: var(--t-xs);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .datos dd {
   margin: 0;
   font-size: var(--t-base);
+  /* Un correo no tiene espacios donde partir. */
+  overflow-wrap: anywhere;
 }
 
 .numero {
   font-variant-numeric: var(--numeros);
-}
-
-/*
- * 48rem, el unico punto de ruptura del sistema. Se escribe en `min-width` y no
- * en `max-width` porque aqui la base es el movil: lo que se declara arriba es
- * lo que ve un telefono, y esto es la excepcion para pantallas grandes.
- */
-@media (min-width: 48.0625rem) {
-  .datos {
-    grid-template-columns: 9rem 1fr;
-    gap: var(--e3) var(--e4);
-  }
 }
 
 .enlace {
@@ -59,25 +80,122 @@
   font-weight: 600;
 }
 
+.vacio {
+  color: var(--texto-tenue);
+}
+
+/* --- La cuota, que es a lo que se abre la pantalla ----------------------- */
+
+/*
+ * Se distingue del resto por SUPERFICIE, no por adorno.
+ *
+ * Un borde algo mas marcado y mas aire dentro. Nada de degradado ni de color
+ * de fondo: el estado ya lo dice la pastilla, y pintar la tarjeta entera de
+ * verde o de rojo convierte el color en el portador principal del mensaje.
+ */
+.cuota {
+  padding: var(--e5);
+  border-color: var(--borde-fuerte);
+}
+
+.tituloCuota {
+  font-size: var(--t-lg);
+  font-weight: 600;
+  line-height: var(--lh-compacta);
+}
+
 .cabeceraCuota {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--e2);
-  margin-bottom: var(--e2);
+  /*
+   * La pastilla PEGADA al titulo, no en la otra punta.
+   *
+   * Con `space-between` y la tarjeta ya al ancho de trabajo, "Al corriente"
+   * acababa a mil pixeles de "Tu cuota": dos cosas que se leen juntas puestas
+   * lo mas lejos posible una de otra.
+   */
+  gap: var(--e3);
+  margin-bottom: var(--e3);
 }
 
 .explicacion {
-  margin-bottom: var(--e3);
-  font-size: var(--t-base);
-  line-height: 1.5;
+  margin: 0 0 var(--e4);
+  font-size: var(--t-md);
+  line-height: var(--lh-normal);
+}
+
+/*
+ * Plan y Hasta, en fila y separados de la frase por una linea.
+ *
+ * Son DOS datos, no una lista: en rejilla de fracciones cada uno se quedaba
+ * con media tarjeta —550 px para la palabra "Mensual"— y el par se leia como
+ * dos columnas sin relacion. En flujo se colocan uno tras otro con un hueco
+ * generoso, y se apilan solos cuando no caben.
+ */
+.datosCuota {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e3) var(--e7);
+  margin: 0;
+  padding-top: var(--e4);
+  border-top: 1px solid var(--borde);
+}
+
+.datosCuota dt {
+  margin-bottom: var(--e1);
+  color: var(--texto-sutil);
+  font-size: var(--t-xs);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.datosCuota dd {
+  margin: 0;
+  font-size: var(--t-dato);
+  font-weight: 500;
 }
 
 .dias {
   color: var(--texto-sutil);
+  font-weight: 400;
 }
 
-.vacio {
-  color: var(--texto-tenue);
+/* --- Lo secundario, en dos columnas cuando hay sitio --------------------- */
+
+/*
+ * "Tus datos" y "Tus datos de salud" no se consultan a diario, y apiladas
+ * empujaban la segunda fuera de la pantalla del telefono. En cuanto hay ancho
+ * van una al lado de otra.
+ *
+ * `align-items: start` para que la de salud —dos lineas— no se estire hasta el
+ * alto de la de datos, que es lo que deja una tarjeta medio vacia al lado.
+ */
+.secundario {
+  display: grid;
+  gap: var(--e4);
+  align-items: start;
+}
+
+/*
+ * LAS DOS COLUMNAS, A PARTIR DE 64rem Y NO DE 48.
+ *
+ * Se probaron en la tableta y salio peor: con 640 px repartidos, la tarjeta de
+ * datos se quedaba en 395 y su rejilla interior bajaba a UNA columna — cinco
+ * filas de alto al lado de una tarjeta de dos, medido 375 px contra 165.
+ *
+ * A 768 gana que "Tus datos" ocupe el ancho entero: dentro le caben dos
+ * columnas de pares y pasa de cinco filas a tres. Las dos superficies lado a
+ * lado vuelven en 64rem, donde hay ancho para las dos cosas a la vez.
+ *
+ * (El escalon de tableta esta documentado en `globals.css` como 48-64rem, y el
+ * corte se escribe en 48rem EXACTOS —no en 48.0625— para que coincida con el
+ * del shell; ver el comentario de `rutina.module.css`.)
+ */
+@media (min-width: 64rem) {
+  .secundario {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    gap: var(--e5);
+  }
 }
