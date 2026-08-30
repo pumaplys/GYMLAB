@@ -73,26 +73,54 @@
   font-variant-numeric: var(--numeros);
 }
 
+/*
+ * La tarjeta de datos del socio, al ancho de sus vecinas.
+ *
+ * Estaba en `--ancho-lectura` —704 px— mientras las secciones de debajo,
+ * "Rutinas" y "Progreso", median 1.088. En la misma pantalla, y con 384 px de
+ * diferencia: la ficha parecia dos disenos pegados uno encima del otro.
+ *
+ * No lo delataba ninguna medida —no hay desbordamiento ni recorrido de mas—,
+ * lo delato mirarla. El ancho de lectura es para prosa; esto es una lista de
+ * datos y le toca el de trabajo, como al resto de la pantalla.
+ */
 .tarjeta {
-  max-width: var(--ancho-lectura);
+  max-width: none;
 }
 
 /* Lista de definiciones: cada dato con su nombre, sin tabla. */
+/*
+ * Los datos del socio, repartidos en columnas que se pliegan solas.
+ *
+ * Antes era una fila por dato —etiqueta a la izquierda, valor a la derecha— y
+ * con la tarjeta ya al ancho de la pantalla eso dejaba un telefono de nueve
+ * cifras dentro de una columna de 830 px, cinco veces seguidas.
+ *
+ * `auto-fit` reparte lo que quepa y baja a una sola columna en un telefono sin
+ * necesidad de `@media`. `min(100%, 14rem)` es lo que impide que un correo
+ * largo estire su columna mas alla de la pantalla.
+ */
 .datos {
   display: grid;
-  grid-template-columns: 12rem 1fr;
-  gap: var(--e3) var(--e4);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+  gap: var(--e4) var(--e5);
   margin: 0;
 }
 
 .datos dt {
+  margin-bottom: var(--e1);
   color: var(--texto-sutil);
-  font-size: var(--t-base);
+  font-size: var(--t-xs);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .datos dd {
   margin: 0;
   font-size: var(--t-base);
+  /* Un correo no tiene espacios donde partir. */
+  overflow-wrap: anywhere;
 }
 
 .vacio {

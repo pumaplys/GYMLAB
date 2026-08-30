@@ -109,14 +109,18 @@
  * En escritorio, los cuatro en UNA fila.
  *
  * Series, repeticiones y descanso no necesitan mas de cinco o seis caracteres,
- * asi que se les da su ancho justo y la nota se queda con todo lo demas —unos
- * 400 px, mas que suficiente para "calentar bien antes de la primera serie"—.
- * Cada ejercicio pasa de dos filas de campos a una, y una rutina de cinco
- * ejercicios se acorta en unos 400 px.
+ * asi que se les da su ancho justo y la nota se queda con todo lo demas. Cada
+ * ejercicio pasa de dos filas de campos a una.
+ *
+ * OJO CON LA MEDIDA: manda el ROTULO, no el campo. La primera version daba 96,
+ * 96 y 112 px pensando en lo que se teclea —un 3, un 10, un 60— y "Descanso
+ * (opcional)" no cabia en 112: se salia de su columna y chocaba con "Notas
+ * (opcional)". Las mediciones no lo vieron porque no habia desbordamiento de
+ * pagina; lo vio mirar la pantalla.
  */
 @media (min-width: 64rem) {
   .camposItem {
-    grid-template-columns: 6rem 6rem 7rem minmax(0, 1fr);
+    grid-template-columns: 6rem 10rem 10rem minmax(0, 1fr);
   }
 
   .camposItem > :nth-child(4) {
