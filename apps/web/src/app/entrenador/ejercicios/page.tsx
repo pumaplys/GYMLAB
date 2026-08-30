@@ -123,7 +123,19 @@ function Biblioteca() {
     <>
       <EncabezadoDePagina
         acciones={
-          !editando && <Boton onClick={() => setEditando('nuevo')}>Nuevo ejercicio</Boton>
+          /*
+            Primario, como "Nueva rutina" en su pantalla hermana.
+            Sin variante salia secundario —blanco con borde— y en movil el
+            encabezado lo estira al ancho: medido, quedaba en 343 x 44 px con
+            fondo blanco y borde #cfd3da, EXACTAMENTE lo mismo que el buscador
+            que tiene justo debajo. La accion principal de la pantalla parecia
+            un campo de texto vacio.
+          */
+          !editando && (
+            <Boton variante="primario" onClick={() => setEditando('nuevo')}>
+              Nuevo ejercicio
+            </Boton>
+          )
         }
         titulo="Ejercicios"
         entradilla="La biblioteca de este gimnasio. Es suya: nace del catalogo de GYMLAB y el gimnasio la ajusta."

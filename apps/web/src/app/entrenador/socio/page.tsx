@@ -129,28 +129,45 @@ function Ficha() {
       />
 
       <Tarjeta className={estilos.tarjeta}>
+        {/*
+          Cada par va en su `div`, y no es decorativo: es lo que permite que la
+          rejilla los reparta en columnas. Con `dt` y `dd` sueltos, la unica
+          disposicion posible es una fila por dato — y con la tarjeta ya al
+          ancho de la pantalla eso dejaba un telefono de nueve cifras en una
+          columna de 830 px, cinco veces seguidas.
+        */}
         <dl className={estilos.datos}>
-          <dt>Telefono</dt>
-          <dd>{socio.phone ?? <span className={estilos.vacio}>Sin telefono</span>}</dd>
+          <div>
+            <dt>Telefono</dt>
+            <dd>{socio.phone ?? <span className={estilos.vacio}>Sin telefono</span>}</dd>
+          </div>
 
-          <dt>Correo</dt>
-          <dd>{socio.email ?? <span className={estilos.vacio}>Sin correo</span>}</dd>
+          <div>
+            <dt>Correo</dt>
+            <dd>{socio.email ?? <span className={estilos.vacio}>Sin correo</span>}</dd>
+          </div>
 
           {/* Sirve para programar: no es lo mismo entrenar a alguien de 20 que de 70. */}
-          <dt>Fecha de nacimiento</dt>
-          <dd>
-            {socio.birthDate ? (
-              comoFecha(`${socio.birthDate}T00:00:00Z`)
-            ) : (
-              <span className={estilos.vacio}>Sin fecha</span>
-            )}
-          </dd>
+          <div>
+            <dt>Fecha de nacimiento</dt>
+            <dd>
+              {socio.birthDate ? (
+                comoFecha(`${socio.birthDate}T00:00:00Z`)
+              ) : (
+                <span className={estilos.vacio}>Sin fecha</span>
+              )}
+            </dd>
+          </div>
 
-          <dt>Socio desde</dt>
-          <dd>{comoFecha(socio.joinedAt)}</dd>
+          <div>
+            <dt>Socio desde</dt>
+            <dd>{comoFecha(socio.joinedAt)}</dd>
+          </div>
 
-          <dt>Asignado a ti desde</dt>
-          <dd>{comoFecha(socio.assignedAt)}</dd>
+          <div>
+            <dt>Asignado a ti desde</dt>
+            <dd>{comoFecha(socio.assignedAt)}</dd>
+          </div>
         </dl>
       </Tarjeta>
 

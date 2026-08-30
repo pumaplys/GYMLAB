@@ -1,5 +1,5 @@
 {
-  "generado": "2026-08-29T17:31:23.828Z",
+  "generado": "2026-08-30T12:36:32.686Z",
   "resumen": {
     "porRegla": {
       "rutaCarga": {
@@ -1179,7 +1179,7 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1212,
+        "scrollAlto": 1197,
         "interactivos": 9,
         "pequenos": 0,
         "pequenosEnFrase": 0,
@@ -1187,9 +1187,9 @@
         "tablaVisible": null,
         "filaAlto": null,
         "tamanos": [
-          "14px x18",
+          "14px x13",
           "13px x11",
-          "12px x2",
+          "12px x7",
           "15px x2",
           "17px x2",
           "22px x1"
@@ -2827,7 +2827,7 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1157,
+        "scrollAlto": 1142,
         "interactivos": 11,
         "pequenos": 0,
         "pequenosEnFrase": 0,
@@ -2835,10 +2835,10 @@
         "tablaVisible": null,
         "filaAlto": null,
         "tamanos": [
-          "14px x21",
+          "14px x16",
           "13px x11",
+          "12px x7",
           "17px x3",
-          "12px x2",
           "15px x1",
           "22px x1"
         ]
@@ -4325,7 +4325,7 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 2011,
+        "scrollAlto": 1913,
         "interactivos": 46,
         "pequenos": 46,
         "pequenosEnFrase": 0,
@@ -4475,7 +4475,7 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 969,
+        "scrollAlto": 977,
         "interactivos": 11,
         "pequenos": 9,
         "pequenosEnFrase": 0,
@@ -4483,9 +4483,9 @@
         "tablaVisible": null,
         "filaAlto": null,
         "tamanos": [
-          "14px x21",
+          "14px x16",
           "13px x11",
-          "12px x2",
+          "12px x7",
           "15px x2",
           "17px x2",
           "22px x1"
@@ -5969,7 +5969,7 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 2011,
+        "scrollAlto": 1913,
         "interactivos": 46,
         "pequenos": 46,
         "pequenosEnFrase": 0,
@@ -6119,7 +6119,7 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 969,
+        "scrollAlto": 918,
         "interactivos": 11,
         "pequenos": 9,
         "pequenosEnFrase": 0,
@@ -6127,9 +6127,9 @@
         "tablaVisible": null,
         "filaAlto": null,
         "tamanos": [
-          "14px x21",
+          "14px x16",
           "13px x11",
-          "12px x2",
+          "12px x7",
           "15px x2",
           "17px x2",
           "22px x1"
