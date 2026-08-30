@@ -92,14 +92,39 @@
   background: var(--acento-hover);
 }
 
+/*
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ UN BOTON SECUNDARIO Y UN CAMPO DE TEXTO ERAN EL MISMO RECTANGULO.        │
+ * │                                                                          │
+ * │ MEDIDO en /socios, con los dos en la misma pantalla —el buscador arriba  │
+ * │ y "Anterior/Siguiente" abajo—: fondo rgb(255,255,255), borde             │
+ * │ rgb(207,211,218), grosor 0.8px, radio 6px, texto rgb(20,22,26) y 36 px   │
+ * │ de alto. Identicos en las seis propiedades. Lo mismo aparecio en D4b     │
+ * │ ("Nuevo ejercicio" contra el buscador) y en D5 (la paginacion del        │
+ * │ socio), y las dos veces se arreglo en la pantalla; el problema estaba    │
+ * │ aqui.                                                                    │
+ * │                                                                          │
+ * │ La sombra los separa por RELIEVE en vez de por color: el boton es un     │
+ * │ control levantado, el campo es un hueco. Es la convencion del sistema    │
+ * │ del que sale este diseño, no un adorno — y sobrevive en escala de        │
+ * │ grises, que es mas de lo que hacia el borde.                             │
+ * │                                                                          │
+ * │ Deshabilitado no lleva relieve: un boton apagado no invita a pulsar.     │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ */
 .secundario {
   background: var(--fondo);
   border-color: var(--borde-fuerte);
+  box-shadow: var(--sombra);
   color: var(--texto);
 }
 
 .secundario:hover:not(:disabled) {
   background: var(--fondo-hover);
+}
+
+.secundario:disabled {
+  box-shadow: none;
 }
 
 /*

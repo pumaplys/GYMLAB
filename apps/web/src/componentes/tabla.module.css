@@ -16,7 +16,7 @@
  * `display: none` la saca tambien del arbol de accesibilidad, que es lo que
  * evita que un lector de pantalla encuentre los mismos datos dos veces.
  */
-@media (max-width: 48rem) {
+@media (max-width: 47.9375rem) {
   .soloAncho {
     display: none;
   }
@@ -117,10 +117,55 @@
   color: var(--texto-tenue);
 }
 
-@media (max-width: 48rem) {
+@media (max-width: 47.9375rem) {
   .tabla th,
   .tabla td {
     padding-left: var(--e4);
     padding-right: var(--e4);
+  }
+}
+
+/*
+ * TABLETA (48-64rem): las mismas columnas, mas juntas.
+ *
+ * Con el relleno de escritorio —`--e5` a cada lado— tres de las ocho tablas
+ * del producto pedian mas ancho del que hay a 768 y el contenedor sacaba
+ * barra lateral. Medido: socios 798 px contra 654 disponibles, ejercicios
+ * 736 y planes 680.
+ *
+ * A `--e3` cada tabla se estrecha 24 px por columna, que es justo lo que
+ * faltaba, y no se pierde ni una columna ni una accion.
+ */
+@media (min-width: 48rem) and (max-width: 63.9375rem) {
+  .tabla th,
+  .tabla td {
+    padding-left: var(--e3);
+    padding-right: var(--e3);
+  }
+}
+
+/*
+ * CON EL DEDO, EL NOMBRE DE LA FILA TAMBIEN SE TOCA.
+ *
+ * Al devolver la tabla a 768 —que es tactil en esta escala— el enlace del
+ * nombre paso a ser el objetivo principal para abrir una fila, y medido daba
+ * 20 px de alto en socios y 17 en las rutinas del entrenador. Con la lista
+ * apilada eso no pasaba, asi que era una regresion introducida por el propio
+ * cambio: 8 objetivos pequenos en /socios y 4 en /entrenador.
+ *
+ * El enlace se estira al alto de control tactil —`--control-alto` vale 44 px
+ * bajo `pointer: coarse` desde D1— y la celda cede su relleno vertical para
+ * que la fila no crezca el doble. Con raton no cambia nada.
+ */
+@media (pointer: coarse) {
+  .tabla td {
+    padding-top: var(--e1);
+    padding-bottom: var(--e1);
+  }
+
+  .tabla td a {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--control-alto);
   }
 }

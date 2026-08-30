@@ -46,7 +46,7 @@
   max-width: var(--ancho-lectura);
 }
 
-@media (max-width: 48rem) {
+@media (max-width: 47.9375rem) {
   .pareja {
     grid-template-columns: 1fr;
   }

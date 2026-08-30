@@ -14,9 +14,18 @@
   max-width: var(--ancho-lectura);
 }
 
-/* Ancho y separacion de la tarjeta de alta: es la pantalla quien los decide. */
+/*
+ * Ancho y separacion de la tarjeta de alta: es la pantalla quien los decide.
+ *
+ * Y el ancho es el de TRABAJO. Estaba en `--ancho-lectura` igual que el panel
+ * de abajo: los dos cuadraban entre si —eso ya se arreglo en su dia— pero los
+ * dos a 704 px con 1.152 disponibles, o sea la tabla de planes encerrada en
+ * seis decimas de la pantalla. El ancho de lectura es para prosa.
+ *
+ * El formulario no se estira por dentro: `Campo` limita cada campo a
+ * `--ancho-campo` y la rejilla `.pareja` sigue repartiendo en dos columnas.
+ */
 .tarjeta {
-  max-width: var(--ancho-lectura);
   margin-bottom: var(--e5);
 }
 
@@ -33,9 +42,42 @@
   align-items: start;
 }
 
-/* El desplegable de periodicidad no necesita todo el ancho del formulario. */
-.selector {
-  max-width: 16rem;
+/*
+ * El precio y la periodicidad no necesitan el ancho de un campo de texto.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ ESTA REGLA ESTABA ESCRITA Y NO HACIA NADA.                               │
+ * │                                                                          │
+ * │ `.selector { max-width: 16rem }` perdia contra                           │
+ * │ `.control:not(textarea) { max-width: var(--ancho-campo) }` de            │
+ * │ `campo.module.css`: 0,1,1 contra 0,1,0, gana el componente. Medido: el   │
+ * │ desplegable de periodicidad salia a 416 px, no a los 256 que pedia esta  │
+ * │ regla, y llevaba asi desde que se escribio.                              │
+ * │                                                                          │
+ * │ Bajo `.formulario` la regla vale 0,2,0 y si gana. No se toca la          │
+ * │ especificidad del componente: su tope sigue siendo el tope, y una        │
+ * │ pantalla que pide MENOS ancho ahora lo consigue.                         │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ */
+.formulario .selector {
+  max-width: var(--ancho-campo-corto);
+}
+
+/*
+ * El precio: la segunda celda de la pareja.
+ *
+ * Va por posicion y no por clase porque `Campo` no admite `className` — y
+ * anadirselo seria tocar la API de un componente compartido para colocar un
+ * `max-width`. La pareja se declara justo aqui arriba (`2fr 1fr`: nombre y
+ * precio), asi que la regla y su referencia viven en el mismo fichero.
+ *
+ * Y termina en `input`, no en `.control`: los modulos CSS renombran cada clase
+ * por fichero, asi que un `.control` escrito AQUI compila a una clase de este
+ * modulo que no existe en el DOM —la del campo es la de `campo.module.css`— y
+ * la regla no seleccionaba nada. El selector de elemento no se renombra.
+ */
+.pareja > :nth-child(2) input {
+  max-width: var(--ancho-campo-corto);
 }
 
 /*
@@ -56,9 +98,13 @@
  * El mismo ancho que la tarjeta de alta, y ese es el arreglo: estaba en 52rem
  * mientras la tarjeta de encima media 44, asi que los dos bloques no cuadraban
  * por la derecha. Ahora la pantalla es una sola columna alineada.
+ *
+ * D6: esa columna pasa a ser la de trabajo. Cuadraban, si, pero las dos a
+ * 704 px — y aqui debajo hay una TABLA. Sin `max-width` heredan el ancho del
+ * contenido del shell y siguen cuadrando, ahora con la pantalla entera.
  */
 .panel {
-  max-width: var(--ancho-lectura);
+  max-width: none;
 }
 
 .avisoTabla {
@@ -128,7 +174,7 @@
   gap: var(--e3);
 }
 
-@media (max-width: 48rem) {
+@media (max-width: 47.9375rem) {
   .pareja,
   .edicion {
     grid-template-columns: 1fr;

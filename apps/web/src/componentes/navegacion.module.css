@@ -158,3 +158,47 @@
     animation: none;
   }
 }
+
+/* --- Cabecera de la hoja "Mas" ------------------------------------------- */
+
+/*
+ * Las mismas medidas que la cabecera del cajon del personal: es el mismo
+ * gesto en la otra punta de la pantalla, y no hay motivo para que se vea
+ * distinto.
+ */
+.cabeceraHoja {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e3);
+  padding: var(--e3) var(--e3) var(--e3) var(--e4);
+  border-bottom: 1px solid var(--borde);
+}
+
+.tituloHoja {
+  color: var(--texto-sutil);
+  font-size: var(--t-sm);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.cerrarHoja {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  /* Cuadrado y del alto de un control: se pulsa con el pulgar. */
+  width: var(--control-alto);
+  height: var(--control-alto);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radio-s);
+  color: var(--texto-sutil);
+  cursor: pointer;
+}
+
+.cerrarHoja:hover {
+  background: var(--fondo-hover);
+  color: var(--texto);
+}

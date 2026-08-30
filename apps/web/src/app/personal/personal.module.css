@@ -14,7 +14,19 @@
 }
 
 .tarjeta {
-  max-width: var(--ancho-lectura);
+  /*
+   * AL ANCHO DE LAS TABLAS DE ABAJO, no al de lectura.
+   *
+   * Medido a 1.440: esta tarjeta media 704 px y los dos paneles de personal e
+   * invitaciones, 1.088. Trescientos ochenta y cuatro pixeles de diferencia en
+   * la misma pantalla, que es el mismo defecto que ya aparecio en la ficha del
+   * entrenador (D4b) y en el inicio del socio (D5): el ancho de lectura puesto
+   * a una superficie que no es prosa.
+   *
+   * El formulario no se ensancha por dentro: `Campo` limita cada campo a
+   * `--ancho-campo`, asi que lo unico que cambia es que los bordes cuadran.
+   */
+  max-width: none;
   margin-bottom: var(--e5);
 }
 
@@ -75,8 +87,24 @@
   word-break: break-all;
 }
 
-@media (max-width: 48rem) {
+@media (max-width: 47.9375rem) {
   .pareja {
     grid-template-columns: 1fr;
   }
+}
+
+/*
+ * El rol: un desplegable de tres opciones, no un campo de texto.
+ *
+ * `campo.module.css` limita cualquier control a `--ancho-campo` —26rem, que
+ * es el tope de un texto de 45 caracteres— y con la tarjeta ya al ancho de
+ * trabajo su celda de la pareja daba 341 px para elegir entre Propietario,
+ * Recepcion y Entrenador.
+ *
+ * Va por posicion, como en /planes y por el mismo motivo: `Selector` si acepta
+ * `className`, pero la pareja se declara aqui al lado y una sola forma de
+ * escribirlo en las dos pantallas es mas facil de mantener que dos.
+ */
+.pareja > :nth-child(2) select {
+  max-width: var(--ancho-campo-corto);
 }

@@ -235,19 +235,35 @@ function Biblioteca() {
                             dos botones. Con el dedo sigue en 44 px, que el
                             token lo sube solo.
                           */}
+                          {/*
+                            El NOMBRE del ejercicio va dentro del boton, oculto
+                            a la vista.
+
+                            La lista apilada lo hace desde D4; la tabla no, y
+                            nadie lo habia comprobado porque la sonda de D4 solo
+                            miraba 375 y 768 —y a 768 se pintaba la lista—. Al
+                            devolver la tabla a 768, la sonda lo delato: aqui
+                            habia 74 botones llamados "Editar" y otros 74
+                            llamados "Borrar", sin `aria-label` ni nada que los
+                            distinguiera. Quien navega con lector de pantalla
+                            oia setenta y cuatro veces lo mismo.
+
+                            No es una regresion de D6: pasaba igual en 1.024 y en
+                            1.440 desde que existe esta tabla.
+                          */}
                           <Boton
                             variante="sutil"
                             tamano="sm"
                             onClick={() => setEditando(ejercicio)}
                           >
-                            Editar
+                            Editar<span className="solo-lectores"> {ejercicio.name}</span>
                           </Boton>
                           <Boton
                             variante="sutil"
                             tamano="sm"
                             onClick={() => setBorrando(ejercicio.id)}
                           >
-                            Borrar
+                            Borrar<span className="solo-lectores"> {ejercicio.name}</span>
                           </Boton>
                         </>
                       )}

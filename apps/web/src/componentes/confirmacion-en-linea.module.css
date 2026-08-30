@@ -5,3 +5,23 @@
   color: var(--peligro);
   font-size: var(--t-sm);
 }
+
+/*
+ * La pregunta SE PARTE, aunque su celda diga que no.
+ *
+ * En una tabla, `.acciones` lleva `white-space: nowrap` para que "Editar" y
+ * "Borrar" no se rompan por la mitad, y eso se hereda: la pregunta entera
+ * —"¿Borrarlo? Las rutinas que lo usen lo marcaran como no disponible."— tenia
+ * que caber en una linea, asi que la celda estiraba la tabla.
+ *
+ * MEDIDO a 768 en la biblioteca de ejercicios: al pulsar Borrar la tabla
+ * pasaba de 654 px a mas de 1.100, el contenedor sacaba barra lateral y los
+ * botones de las demas filas quedaban en x=949..1076, fuera de una pantalla de
+ * 768. Pasaba igual en 1.024; nadie lo habia mirado porque la sonda que abre
+ * la confirmacion solo existia para 375 y 768, y a 768 se pintaba la lista.
+ *
+ * `normal` solo en la confirmacion: los botones de al lado siguen sin partirse.
+ */
+.confirmar {
+  white-space: normal;
+}
