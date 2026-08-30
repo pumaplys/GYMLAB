@@ -36,17 +36,46 @@
 }
 
 /*
- * Las medidas en rejilla, dos por fila a 320 px.
- *
- * Son pares cortos —"Peso 78,6 kg"— y en una sola columna la tarjeta se hace
- * larguisima cuando se midieron cinco cosas. Con `auto-fit` no hace falta
- * declarar un punto de ruptura: caben las que quepan.
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ COLUMNAS FIJAS, PARA QUE UNA MEDICION INCOMPLETA SIGA CUADRANDO CON LAS  │
+ * │ DEMAS.                                                                   │
+ * │                                                                          │
+ * │ Estaba en `repeat(auto-fit, minmax(7rem, 1fr))`. `auto-fit` COLAPSA las  │
+ * │ pistas que no se usan y reparte el ancho entre las que quedan, asi que   │
+ * │ el numero de columnas dependia de cuantas medidas se tomaron ESE dia.    │
+ * │                                                                          │
+ * │ MEDIDO a 1.440 con tres mediciones reales en pantalla: las dos completas │
+ * │ —siete medidas— daban pistas de 131 px; la incompleta —solo peso y       │
+ * │ cintura— las estiraba a 489. "84 cm" quedaba a 501 px de "74,8 kg", bajo │
+ * │ ninguna de las columnas de las tarjetas de arriba. Leyendo la pagina de  │
+ * │ arriba abajo, una cifra parecia pertenecer a otra fecha. A 768 pasaba lo │
+ * │ mismo: 131 px contra 274.                                                │
+ * │                                                                          │
+ * │ El conjunto de medidas es FIJO y son siete —`MEDIDAS` en `lib/medidas`,  │
+ * │ y el contrato no admite una octava—, asi que el numero de columnas puede │
+ * │ declararse en vez de deducirse. Las tarjetas completas miden exactamente │
+ * │ lo mismo que antes; la incompleta deja de estirarse.                     │
+ * └──────────────────────────────────────────────────────────────────────────┘
  */
 .datos {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--e3);
   margin: 0;
+}
+
+/* Tableta: cuatro, que es lo que cabia ya con `auto-fit`. */
+@media (min-width: 48rem) {
+  .datos {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* Escritorio: las siete en una fila. */
+@media (min-width: 64rem) {
+  .datos {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
 }
 
 /*
