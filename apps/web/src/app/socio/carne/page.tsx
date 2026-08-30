@@ -160,7 +160,16 @@ function Carne() {
   const lectura = cuota ? lecturaDe(cuota) : null;
 
   return (
-    <>
+    /*
+     * TODA la pantalla en la misma columna estrecha, titulo incluido.
+     *
+     * El carne es lo unico del area que NO quiere el ancho de trabajo: es una
+     * credencial que se enseña, y estirarla no la hace mas legible. Pero la
+     * tarjeta se centraba sola mientras el titulo "Tu carne" se quedaba pegado
+     * al borde izquierdo del lienzo — a 1.440 eran 285 px de desalineacion
+     * entre el encabezado y lo que encabeza.
+     */
+    <div className={estilos.columna}>
       <EncabezadoDePagina titulo="Tu carne" />
 
       <Tarjeta className={estilos.carne}>
@@ -170,8 +179,14 @@ function Carne() {
             {ficha.firstName} {ficha.lastName}
           </p>
           {gimnasio && <p className={estilos.gimnasio}>{gimnasio}</p>}
+          {/*
+            El numero, en grande y debajo de su rotulo.
+            Es lo que se dice en voz alta en el mostrador —"¿tu numero?"— y
+            estaba en cuerpo de parrafo, en la misma linea que su etiqueta.
+          */}
           <p className={estilos.numero}>
-            <span className={estilos.etiquetaNumero}>N.º de socio</span> {ficha.memberNumber}
+            <span className={estilos.etiquetaNumero}>N.º de socio</span>
+            <span className={estilos.valorNumero}>{ficha.memberNumber}</span>
           </p>
         </div>
 
@@ -245,6 +260,6 @@ function Carne() {
       <p className={estilos.pie}>
         ¿Dudas con tu cuota? Mirala en <Link href="/socio">Inicio</Link>.
       </p>
-    </>
+    </div>
   );
 }

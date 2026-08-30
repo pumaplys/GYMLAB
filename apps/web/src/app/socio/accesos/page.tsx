@@ -111,12 +111,13 @@ function MisAccesos() {
         <Cargando>Cargando tus entradas…</Cargando>
       ) : datos && datos.items.length > 0 ? (
         <>
-          <ul className={estilos.lista}>
-            {datos.items.map((evento, indice) => {
-              const paso = evento.decision === 'ALLOW';
-              return (
-                <li key={`${evento.occurredAt}-${indice}`}>
-                  <Tarjeta className={estilos.evento}>
+          {/* Una superficie con filas, igual que el historial de pagos. */}
+          <Tarjeta className={estilos.bloque}>
+            <ul className={estilos.lista}>
+              {datos.items.map((evento, indice) => {
+                const paso = evento.decision === 'ALLOW';
+                return (
+                  <li key={`${evento.occurredAt}-${indice}`} className={estilos.evento}>
                     <div className={estilos.cabecera}>
                       <span className={estilos.fecha}>{comoFechaYHora(evento.occurredAt)}</span>
                       {/* Etiqueta con texto, no solo color. */}
@@ -145,11 +146,11 @@ function MisAccesos() {
                         gimnasio.
                       </p>
                     )}
-                  </Tarjeta>
-                </li>
-              );
-            })}
-          </ul>
+                  </li>
+                );
+              })}
+            </ul>
+          </Tarjeta>
 
           <Paginacion
             pagina={datos.page}
@@ -160,7 +161,7 @@ function MisAccesos() {
           />
         </>
       ) : (
-        <Tarjeta>
+        <Tarjeta className={estilos.tarjetaVacia}>
           <EstadoVacio
             titulo="Todavia no hay entradas"
             texto="Cuando pases tu codigo por la puerta, quedara registrado aqui."

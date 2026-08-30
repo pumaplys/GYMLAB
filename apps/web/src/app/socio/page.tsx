@@ -126,42 +126,71 @@ function Inicio() {
 
       {cuota && <Cuota cuota={cuota} />}
 
-      <Tarjeta className={estilos.tarjeta}>
-        <h2 className={estilos.titulo}>Tus datos</h2>
-        <dl className={estilos.datos}>
-          <dt>Nombre</dt>
-          <dd>
-            {ficha.firstName} {ficha.lastName}
-          </dd>
+      {/*
+        Debajo de la cuota, dos cosas que NO se consultan a diario: quien soy
+        segun el gimnasio, y la decision sobre mis datos de salud. Van una al
+        lado de otra en cuanto hay sitio en vez de una detras de otra, que es
+        lo que empujaba la de salud fuera de la pantalla en el telefono.
+      */}
+      <div className={estilos.secundario}>
+        <Tarjeta className={estilos.tarjeta}>
+          <h2 className={estilos.titulo}>Tus datos</h2>
+          {/*
+            Cada par en su `div`: es lo que permite que la rejilla los reparta.
+            Con `dt` y `dd` sueltos la unica disposicion posible es una fila por
+            dato, y eran cinco filas seguidas ocupando media pantalla de movil
+            para un correo y un telefono que casi nadie viene a mirar.
+          */}
+          <dl className={estilos.datos}>
+            <div>
+              <dt>Nombre</dt>
+              <dd>
+                {ficha.firstName} {ficha.lastName}
+              </dd>
+            </div>
 
-          <dt>N.º de socio</dt>
-          <dd className={estilos.numero}>{ficha.memberNumber}</dd>
+            <div>
+              <dt>N.º de socio</dt>
+              <dd className={estilos.numero}>{ficha.memberNumber}</dd>
+            </div>
 
-          <dt>Correo</dt>
-          <dd>{ficha.email ?? <span className={estilos.vacio}>Sin correo</span>}</dd>
+            {/*
+              El correo a fila entera: es el unico valor largo de los cinco, y
+              obligando a que su columna quepa entera se llevaba por delante la
+              posibilidad de poner los otros cuatro de dos en dos.
+            */}
+            <div className={estilos.anchoCompleto}>
+              <dt>Correo</dt>
+              <dd>{ficha.email ?? <span className={estilos.vacio}>Sin correo</span>}</dd>
+            </div>
 
-          <dt>Telefono</dt>
-          <dd>{ficha.phone ?? <span className={estilos.vacio}>Sin telefono</span>}</dd>
+            <div>
+              <dt>Telefono</dt>
+              <dd>{ficha.phone ?? <span className={estilos.vacio}>Sin telefono</span>}</dd>
+            </div>
 
-          <dt>Socio desde</dt>
-          <dd>{comoFecha(ficha.joinedAt)}</dd>
-        </dl>
-        {/*
-          Sin boton de editar: no existe autoservicio de perfil en la API para el
-          socio, y ofrecerlo seria prometer algo que no se puede cumplir.
-        */}
-        <p className={estilos.pista}>
-          Para cambiar tus datos de contacto, dilo en tu gimnasio.
-        </p>
-      </Tarjeta>
+            <div>
+              <dt>Socio desde</dt>
+              <dd>{comoFecha(ficha.joinedAt)}</dd>
+            </div>
+          </dl>
+          {/*
+            Sin boton de editar: no existe autoservicio de perfil en la API para
+            el socio, y ofrecerlo seria prometer algo que no se puede cumplir.
+          */}
+          <p className={estilos.pista}>Para cambiar tus datos de contacto, dilo en tu gimnasio.</p>
+        </Tarjeta>
 
-      <Tarjeta className={estilos.tarjeta}>
-        <h2 className={estilos.titulo}>Tus datos de salud</h2>
-        <p className={estilos.pista}>
-          Decide si tu gimnasio puede registrar tu peso y tus medidas.
-        </p>
-        <BotonEnlace href="/socio/privacidad">Ver y decidir</BotonEnlace>
-      </Tarjeta>
+        <Tarjeta className={estilos.tarjeta}>
+          <h2 className={estilos.titulo}>Tus datos de salud</h2>
+          <p className={estilos.pista}>
+            Decide si tu gimnasio puede registrar tu peso y tus medidas.
+          </p>
+          <div className={estilos.enlace}>
+            <BotonEnlace href="/socio/privacidad">Ver y decidir</BotonEnlace>
+          </div>
+        </Tarjeta>
+      </div>
     </>
   );
 }
@@ -177,9 +206,20 @@ function Cuota({ cuota }: { cuota: DuesStatus }) {
   const dias = diasEnPalabras(cuota);
 
   return (
-    <Tarjeta className={estilos.tarjeta}>
+    /*
+     * La cuota es a lo que se abre esta pantalla, y ahora se ve que lo es.
+     *
+     * Antes era la primera de tres tarjetas iguales: mismo tamano de titulo,
+     * mismo peso, misma superficie que "Tus datos". Quien la abre viene a
+     * saber si puede entrenar hoy, y eso estaba dicho en letra de parrafo.
+     *
+     * El tono de color sigue SIN ser el unico portador del estado: la pastilla
+     * lo dice con palabras y la explicacion lo repite en una frase. Se lee
+     * igual en blanco y negro.
+     */
+    <Tarjeta className={`${estilos.tarjeta} ${estilos.cuota}`}>
       <div className={estilos.cabeceraCuota}>
-        <h2 className={estilos.titulo}>Tu cuota</h2>
+        <h2 className={estilos.tituloCuota}>Tu cuota</h2>
         <Etiqueta
           tono={
             lectura.tono === 'exito' ? 'exito' : lectura.tono === 'peligro' ? 'peligro' : 'neutro'
@@ -193,21 +233,21 @@ function Cuota({ cuota }: { cuota: DuesStatus }) {
 
       {/* Solo lo que el contrato trae de verdad. No hay importe en `DuesStatus`. */}
       {(cuota.planName || cuota.hasta) && (
-        <dl className={estilos.datos}>
+        <dl className={estilos.datosCuota}>
           {cuota.planName && (
-            <>
+            <div>
               <dt>Plan</dt>
               <dd>{cuota.planName}</dd>
-            </>
+            </div>
           )}
           {cuota.hasta && (
-            <>
+            <div>
               <dt>Hasta</dt>
               <dd>
                 {comoFecha(`${cuota.hasta}T00:00:00Z`)}
                 {dias && <span className={estilos.dias}> · {dias}</span>}
               </dd>
-            </>
+            </div>
           )}
         </dl>
       )}

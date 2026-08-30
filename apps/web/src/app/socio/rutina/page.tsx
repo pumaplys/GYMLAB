@@ -93,7 +93,7 @@ function MiRutina() {
     return (
       <>
         <EncabezadoDePagina titulo="Tu rutina" />
-        <Tarjeta>
+        <Tarjeta className={estilos.tarjetaVacia}>
           <EstadoVacio
             titulo="Todavia no tienes rutina"
             /*
@@ -133,7 +133,27 @@ function MiRutina() {
 
 function Rutina({ rutina }: { rutina: OwnRoutine }) {
   return (
-    <section className={estilos.rutina} aria-labelledby={`rutina-${rutina.assignmentId}`}>
+    /*
+     * ┌──────────────────────────────────────────────────────────────────────┐
+     * │ LA RUTINA ES LA SUPERFICIE; EL EJERCICIO ES UNA FILA DENTRO.         │
+     * │                                                                      │
+     * │ Antes la cabecera de la rutina flotaba suelta sobre una pila de      │
+     * │ tarjetas, una por ejercicio. Con DOS rutinas —que es lo normal— no   │
+     * │ habia forma de ver donde acababa una y empezaba la siguiente: solo   │
+     * │ un hueco algo mayor entre tarjetas identicas.                        │
+     * │                                                                      │
+     * │ Ahora cada rutina es UNA tarjeta con su cabecera dentro y sus        │
+     * │ ejercicios como filas separadas por una linea. La jerarquia que se   │
+     * │ ve es la que existe de verdad en el modelo:                          │
+     * │                                                                      │
+     * │     rutina  ->  ejercicio  ->  parametros                            │
+     * │                                                                      │
+     * │ NO HAY NIVEL DE DIA NI DE BLOQUE. No se inventa uno: `routines` no   │
+     * │ tiene esa columna ni en contratos ni en la base de datos, y agrupar  │
+     * │ por algo que no existe seria enseñar una estructura falsa.           │
+     * └──────────────────────────────────────────────────────────────────────┘
+     */
+    <Tarjeta className={estilos.rutina} aria-labelledby={`rutina-${rutina.assignmentId}`}>
       <div className={estilos.cabecera}>
         <h2 className={estilos.titulo} id={`rutina-${rutina.assignmentId}`}>
           {rutina.name}
@@ -152,49 +172,47 @@ function Rutina({ rutina }: { rutina: OwnRoutine }) {
       */}
       <ol className={estilos.ejercicios}>
         {rutina.items.map((item, indice) => (
-          <li key={item.id}>
-            <Tarjeta className={estilos.ejercicio}>
-              <div className={estilos.nombreFila}>
-                <span className={estilos.posicion} aria-hidden="true">
-                  {indice + 1}
-                </span>
-                {/*
-                  Si el gimnasio borro el ejercicio de su biblioteca,
-                  `exerciseId` es nulo pero el NOMBRE sobrevive dentro de la
-                  rutina. Aqui eso no se nota ni se explica: al socio no le
-                  importa el catalogo del gimnasio, le importa que sigue
-                  teniendo que hacer press de banca 4x8.
-                */}
-                <h3 className={estilos.nombre}>{item.exerciseName}</h3>
+          <li key={item.id} className={estilos.ejercicio}>
+            <div className={estilos.nombreFila}>
+              <span className={estilos.posicion} aria-hidden="true">
+                {indice + 1}
+              </span>
+              {/*
+                Si el gimnasio borro el ejercicio de su biblioteca,
+                `exerciseId` es nulo pero el NOMBRE sobrevive dentro de la
+                rutina. Aqui eso no se nota ni se explica: al socio no le
+                importa el catalogo del gimnasio, le importa que sigue
+                teniendo que hacer press de banca 4x8.
+              */}
+              <h3 className={estilos.nombre}>{item.exerciseName}</h3>
+            </div>
+
+            <dl className={estilos.datos}>
+              <div className={estilos.dato}>
+                <dt>Series</dt>
+                <dd className={estilos.numero}>{item.sets}</dd>
               </div>
-
-              <dl className={estilos.datos}>
+              <div className={estilos.dato}>
+                <dt>Repeticiones</dt>
+                {/* Texto: "8-10", "al fallo" y "30 s" son prescripciones validas. */}
+                <dd>{item.reps}</dd>
+              </div>
+              {item.restSeconds !== null && (
                 <div className={estilos.dato}>
-                  <dt>Series</dt>
-                  <dd className={estilos.numero}>{item.sets}</dd>
+                  <dt>Descanso</dt>
+                  <dd className={estilos.numero}>{item.restSeconds} s</dd>
                 </div>
-                <div className={estilos.dato}>
-                  <dt>Repeticiones</dt>
-                  {/* Texto: "8-10", "al fallo" y "30 s" son prescripciones validas. */}
-                  <dd>{item.reps}</dd>
-                </div>
-                {item.restSeconds !== null && (
-                  <div className={estilos.dato}>
-                    <dt>Descanso</dt>
-                    <dd className={estilos.numero}>{item.restSeconds} s</dd>
-                  </div>
-                )}
-              </dl>
-
-              {item.notes && (
-                <p className={estilos.notas}>
-                  <span className={estilos.etiquetaNotas}>Nota:</span> {item.notes}
-                </p>
               )}
-            </Tarjeta>
+            </dl>
+
+            {item.notes && (
+              <p className={estilos.notas}>
+                <span className={estilos.etiquetaNotas}>Nota:</span> {item.notes}
+              </p>
+            )}
           </li>
         ))}
       </ol>
-    </section>
+    </Tarjeta>
   );
 }

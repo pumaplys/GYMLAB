@@ -100,7 +100,7 @@ function MiProgreso() {
       />
 
       {!mediciones || mediciones.length === 0 ? (
-        <Tarjeta>
+        <Tarjeta className={estilos.tarjetaVacia}>
           <EstadoVacio
             titulo="Todavia no hay mediciones"
             /*

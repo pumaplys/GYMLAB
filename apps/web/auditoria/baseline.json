@@ -1,5 +1,5 @@
 {
-  "generado": "2026-08-30T12:36:32.686Z",
+  "generado": "2026-08-30T19:11:37.366Z",
   "resumen": {
     "porRegla": {
       "rutaCarga": {
@@ -1254,7 +1254,7 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 980,
+        "scrollAlto": 1026,
         "interactivos": 8,
         "pequenos": 0,
         "pequenosEnFrase": 0,
@@ -1262,10 +1262,12 @@
         "tablaVisible": null,
         "filaAlto": null,
         "tamanos": [
-          "14px x19",
-          "12px x7",
+          "12px x14",
+          "14px x8",
           "13px x5",
           "15px x4",
+          "16px x3",
+          "17px x1",
           "22px x1"
         ]
       }
@@ -1328,7 +1330,7 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1737,
+        "scrollAlto": 1544,
         "interactivos": 7,
         "pequenos": 0,
         "pequenosEnFrase": 0,
@@ -1336,10 +1338,12 @@
         "tablaVisible": null,
         "filaAlto": null,
         "tamanos": [
-          "15px x43",
-          "13px x29",
-          "14px x8",
-          "12px x6",
+          "12px x30",
+          "16px x24",
+          "14px x16",
+          "15px x9",
+          "13px x5",
+          "17px x2",
           "22px x1"
         ]
       }
@@ -1410,12 +1414,12 @@
         "tablaVisible": null,
         "filaAlto": null,
         "tamanos": [
-          "14px x7",
-          "12px x6",
+          "12px x7",
           "13px x5",
+          "14px x5",
+          "22px x2",
           "15px x1",
-          "17px x1",
-          "22px x1"
+          "17px x1"
         ]
       }
     },
@@ -2910,11 +2914,12 @@
         "tablaVisible": null,
         "filaAlto": null,
         "tamanos": [
-          "14px x26",
+          "14px x15",
+          "12px x9",
           "13px x5",
           "15px x3",
-          "12px x2",
-          "17px x1",
+          "16px x3",
+          "17px x2",
           "22px x1"
         ]
       }
@@ -2977,7 +2982,7 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1671,
+        "scrollAlto": 1278,
         "interactivos": 9,
         "pequenos": 0,
         "pequenosEnFrase": 0,
@@ -2985,11 +2990,12 @@
         "tablaVisible": null,
         "filaAlto": null,
         "tamanos": [
-          "15px x42",
-          "13px x29",
-          "14px x15",
-          "12px x1",
-          "17px x1",
+          "12px x25",
+          "16px x24",
+          "14px x23",
+          "15px x8",
+          "13px x5",
+          "17px x3",
           "22px x1"
         ]
       }
@@ -3060,11 +3066,11 @@
         "tablaVisible": null,
         "filaAlto": null,
         "tamanos": [
-          "14px x14",
+          "14px x12",
           "13px x5",
+          "12px x2",
           "17px x2",
-          "12px x1",
-          "22px x1"
+          "22px x2"
         ]
       }
     },
@@ -4550,7 +4556,7 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 830,
+        "scrollAlto": 768,
         "interactivos": 10,
         "pequenos": 10,
         "pequenosEnFrase": 0,
@@ -4558,10 +4564,12 @@
         "tablaVisible": null,
         "filaAlto": null,
         "tamanos": [
-          "14px x26",
+          "14px x15",
+          "12px x9",
           "13px x5",
           "15px x4",
-          "12px x2",
+          "16px x3",
+          "17px x1",
           "22px x1"
         ]
       }
@@ -4624,7 +4632,7 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1808,
+        "scrollAlto": 1319,
         "interactivos": 9,
         "pequenos": 9,
         "pequenosEnFrase": 0,
@@ -4632,10 +4640,12 @@
         "tablaVisible": null,
         "filaAlto": null,
         "tamanos": [
-          "15px x43",
-          "13px x29",
-          "14px x15",
-          "12px x1",
+          "12px x25",
+          "16px x24",
+          "14px x23",
+          "15px x9",
+          "13px x5",
+          "17px x2",
           "22px x1"
         ]
       }
@@ -4706,12 +4716,12 @@
         "tablaVisible": null,
         "filaAlto": null,
         "tamanos": [
-          "14px x14",
+          "14px x12",
           "13px x5",
-          "12px x1",
+          "12px x2",
+          "22px x2",
           "15px x1",
-          "17px x1",
-          "22px x1"
+          "17px x1"
         ]
       }
     },
@@ -6202,10 +6212,12 @@
         "tablaVisible": null,
         "filaAlto": null,
         "tamanos": [
-          "14px x26",
+          "14px x15",
+          "12px x9",
           "13px x5",
           "15px x4",
-          "12px x2",
+          "16px x3",
+          "17px x1",
           "22px x1"
         ]
       }
@@ -6268,7 +6280,7 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1808,
+        "scrollAlto": 1319,
         "interactivos": 9,
         "pequenos": 9,
         "pequenosEnFrase": 0,
@@ -6276,10 +6288,12 @@
         "tablaVisible": null,
         "filaAlto": null,
         "tamanos": [
-          "15px x43",
-          "13px x29",
-          "14px x15",
-          "12px x1",
+          "12px x25",
+          "16px x24",
+          "14px x23",
+          "15px x9",
+          "13px x5",
+          "17px x2",
           "22px x1"
         ]
       }
@@ -6350,12 +6364,12 @@
         "tablaVisible": null,
         "filaAlto": null,
         "tamanos": [
-          "14px x14",
+          "14px x12",
           "13px x5",
-          "12px x1",
+          "12px x2",
+          "22px x2",
           "15px x1",
-          "17px x1",
-          "22px x1"
+          "17px x1"
         ]
       }
     },

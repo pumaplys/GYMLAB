@@ -1,21 +1,38 @@
+/*
+ * Aqui SI se conserva una tarjeta por medicion, al reves que en pagos y
+ * accesos.
+ *
+ * Un pago o una entrada son UNA linea: concepto e importe, fecha y resultado.
+ * Una medicion es una fecha con hasta siete cifras colgando, y fundirlas en
+ * filas de un mismo bloque haria que el peso de julio y el de agosto se leyeran
+ * como una sola tanda de numeros. La unidad de lectura es el dia.
+ */
 .lista {
   display: flex;
   flex-direction: column;
-  gap: var(--e3);
+  gap: var(--e4);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .medicion {
-  padding: var(--e3) var(--e4);
+  padding: var(--e4);
 }
 
 .fecha {
-  margin-bottom: var(--e3);
-  font-size: var(--t-base);
+  margin-bottom: var(--e4);
+  padding-bottom: var(--e3);
+  border-bottom: 1px solid var(--borde);
+  font-size: var(--t-md);
   font-weight: 600;
   font-variant-numeric: var(--numeros);
+}
+
+@media (min-width: 48rem) {
+  .medicion {
+    padding: var(--e5);
+  }
 }
 
 /*
@@ -32,16 +49,28 @@
   margin: 0;
 }
 
+/*
+ * El rotulo por debajo del valor, no a su altura.
+ *
+ * "Peso" estaba a `--t-sm` y "78,6" a `--t-md`: casi el mismo peso visual para
+ * la palabra y para la cifra, que es lo unico que se viene a comparar entre
+ * una medicion y la de hace dos meses.
+ */
 .dato dt {
+  margin-bottom: var(--e1);
   color: var(--texto-sutil);
-  font-size: var(--t-sm);
+  font-size: var(--t-xs);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .dato dd {
   margin: 0;
-  font-size: var(--t-md);
-  font-weight: 500;
+  font-size: var(--t-dato);
+  font-weight: 600;
   font-variant-numeric: var(--numeros);
+  line-height: var(--lh-compacta);
 }
 
 /* La unidad, mas discreta que el numero: lo que se lee es el 78,6. */
@@ -70,4 +99,16 @@
 
 .pie a {
   color: inherit;
+}
+
+/*
+ * La tarjeta de estado vacio, a medida de lectura.
+ *
+ * Desde D5 el area dispone del ancho de trabajo, y un "Todavia no hay
+ * mediciones" centrado dentro de una superficie de 1.088 px se convertia en
+ * una banda plana con dos lineas perdidas en medio. El mensaje es prosa; el
+ * ancho de trabajo era para los datos.
+ */
+.tarjetaVacia {
+  max-width: var(--ancho-lectura);
 }

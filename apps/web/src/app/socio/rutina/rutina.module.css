@@ -1,19 +1,31 @@
+/*
+ * Cada rutina es UNA tarjeta; dentro, los ejercicios son filas.
+ *
+ * El relleno lo pone cada parte —cabecera y filas— y no la tarjeta, para que
+ * las lineas separadoras lleguen de borde a borde en lugar de quedarse
+ * flotando con margen a los lados.
+ */
 .rutina {
   margin-bottom: var(--e5);
+  padding: 0;
+  overflow: hidden;
 }
 
 .cabecera {
-  margin-bottom: var(--e3);
+  padding: var(--e4) var(--e4) var(--e4);
+  border-bottom: 1px solid var(--borde);
+  background: var(--fondo-sutil);
 }
 
 .titulo {
-  font-size: var(--t-md);
+  font-size: var(--t-lg);
   font-weight: 600;
+  line-height: var(--lh-compacta);
   overflow-wrap: anywhere;
 }
 
 .meta {
-  margin-top: 0.125rem;
+  margin-top: var(--e1);
   color: var(--texto-sutil);
   font-size: var(--t-sm);
   font-variant-numeric: var(--numeros);
@@ -22,20 +34,28 @@
 .descripcion {
   margin-top: var(--e2);
   font-size: var(--t-base);
-  line-height: 1.5;
+  line-height: var(--lh-normal);
 }
 
 .ejercicios {
-  display: flex;
-  flex-direction: column;
-  gap: var(--e3);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
+/*
+ * La fila del ejercicio.
+ *
+ * Estaba como tarjeta propia dentro de otra pila de tarjetas: tres niveles de
+ * superficie para un dato que son cuatro numeros. Como fila, la separacion la
+ * hace una linea y el recorrido baja sin quitar ni una sola informacion.
+ */
 .ejercicio {
-  padding: var(--e3) var(--e4);
+  padding: var(--e4);
+}
+
+.ejercicio + .ejercicio {
+  border-top: 1px solid var(--borde);
 }
 
 .nombreFila {
@@ -50,7 +70,7 @@
   flex: none;
   min-width: 1.25rem;
   color: var(--texto-tenue);
-  font-size: var(--t-md);
+  font-size: var(--t-base);
   font-variant-numeric: var(--numeros);
   font-weight: 600;
 }
@@ -58,34 +78,53 @@
 .nombre {
   font-size: var(--t-md);
   font-weight: 600;
-  line-height: 1.3;
+  line-height: var(--lh-compacta);
   /* Un nombre largo se parte en lugar de desbordar a 320 px. */
   overflow-wrap: anywhere;
 }
 
 /*
- * Los datos en fila, envolviendo.
+ * Los parametros: sangrados bajo el nombre, y los tres en UNA fila.
  *
- * Series y descanso son cortos; las repeticiones pueden ser "al fallo". En fila
- * caben tres a 375 px y bajan solas cuando no caben, sin tener que declarar un
- * punto de ruptura para cada combinacion.
+ * La sangria los alinea con el nombre del ejercicio al que pertenecen; a la
+ * altura del numero de orden parecian un tercer nivel suelto.
+ *
+ * MEDIDO: "Series" 44 px, "Repeticiones" 92, "Descanso" 71 — 207 en total— y
+ * la fila dispone de 246. Con el hueco de `--e6` (32 px) sumaban 271 y el
+ * descanso caia a una segunda linea, asi que cada ejercicio gastaba dos filas
+ * de parametros en la pantalla mas estrecha. Con `--e4` suman 239 y caben.
+ *
+ * Los tres rotulos son cadenas fijas —no hay un cuarto parametro en el
+ * contrato— asi que la holgura no depende de los datos.
  */
 .datos {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--e2) var(--e5);
-  margin: 0;
+  gap: var(--e3) var(--e4);
+  margin: 0 0 0 calc(1.25rem + var(--e3));
 }
 
+/*
+ * El rotulo, mas pequeno que el valor y no al reves.
+ *
+ * "Series", "Repeticiones" y "Descanso" estaban a `--t-sm` con el valor a
+ * `--t-md`: casi el mismo peso visual para la palabra y para el numero, que es
+ * lo unico que se viene a mirar entre serie y serie.
+ */
 .dato dt {
+  margin-bottom: var(--e1);
   color: var(--texto-sutil);
-  font-size: var(--t-sm);
+  font-size: var(--t-xs);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .dato dd {
   margin: 0;
-  font-size: var(--t-md);
-  font-weight: 500;
+  font-size: var(--t-dato);
+  font-weight: 600;
+  line-height: var(--lh-compacta);
   overflow-wrap: anywhere;
 }
 
@@ -94,15 +133,78 @@
 }
 
 .notas {
-  margin-top: var(--e3);
-  padding-top: var(--e3);
-  border-top: 1px solid var(--borde);
+  margin: var(--e3) 0 0 calc(1.25rem + var(--e3));
   font-size: var(--t-base);
-  line-height: 1.5;
+  line-height: var(--lh-normal);
   overflow-wrap: anywhere;
 }
 
 .etiquetaNotas {
   color: var(--texto-sutil);
   font-weight: 500;
+}
+
+/*
+ * TABLETA Y ESCRITORIO: nombre a la izquierda, parametros a la derecha.
+ *
+ * A partir de 48rem la fila deja de apilarse. El nombre se queda con el ancho
+ * que sobre y los tres parametros se van al final, en columna fija, de modo
+ * que "Series" de un ejercicio cae exactamente encima del "Series" del
+ * siguiente y la rutina entera se lee como una tabla — que es lo que es.
+ *
+ * El corte va en 48rem EXACTOS, igual que el del shell. Escrito en 48.0625
+ * —como estaba el de `socio.module.css`— una tableta de 768 px se quedaba con
+ * la disposicion del telefono.
+ */
+@media (min-width: 48rem) {
+  .cabecera {
+    padding: var(--e5);
+  }
+
+  .ejercicio {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: baseline;
+    gap: var(--e3) var(--e5);
+    padding: var(--e4) var(--e5);
+  }
+
+  .nombreFila {
+    margin-bottom: 0;
+  }
+
+  .datos {
+    margin: 0;
+    gap: var(--e3) var(--e6);
+  }
+
+  .dato {
+    /* Una columna por parametro, para que la lectura vertical cuadre. */
+    min-width: 4.5rem;
+  }
+
+  /*
+   * La nota, debajo del nombre y SIN linea encima.
+   *
+   * Con `border-top` se separaba de su propio ejercicio con exactamente la
+   * misma linea que separa un ejercicio del siguiente: leida de arriba abajo,
+   * "Calentar bien antes de la primera serie" parecia la entradilla del
+   * ejercicio 2. La pertenencia la marca ahora la sangria, que la alinea con
+   * el nombre al que acompana.
+   */
+  .notas {
+    grid-column: 1 / -1;
+    margin: var(--e1) 0 0 calc(1.25rem + var(--e3));
+  }
+}
+
+/*
+ * La tarjeta de estado vacio, a medida de lectura.
+ *
+ * Desde D5 el area dispone del ancho de trabajo, y un mensaje de "todavia no hay nada" centrado dentro de una superficie de 1.088 px se convertia en
+ * una banda plana con dos lineas perdidas en medio. El mensaje es prosa; el
+ * ancho de trabajo era para los datos.
+ */
+.tarjetaVacia {
+  max-width: var(--ancho-lectura);
 }

@@ -5,10 +5,20 @@
  * mostrador es el nombre y el codigo, no el diseno. El resto del portal usa
  * estas mismas piezas.
  */
-.carne {
+/*
+ * La columna del carne: el ancho de la credencial, no el del area.
+ *
+ * Desde D5 el marco del socio da el ancho de trabajo y cada pantalla decide.
+ * Esta lo devuelve entero: encabezado, tarjeta y pie comparten eje.
+ */
+.columna {
   max-width: 26rem;
-  margin: 0 auto var(--e4);
-  padding: var(--e4);
+  margin: 0 auto;
+}
+
+.carne {
+  margin-bottom: var(--e4);
+  padding: var(--e5) var(--e4);
 }
 
 .identidad {
@@ -33,20 +43,42 @@
 }
 
 .numero {
-  margin-top: var(--e2);
-  font-size: var(--t-base);
-  font-variant-numeric: var(--numeros);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--e1);
+  margin-top: var(--e3);
 }
 
 .etiquetaNumero {
   color: var(--texto-sutil);
+  font-size: var(--t-xs);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
+.valorNumero {
+  font-size: var(--t-xl);
+  font-variant-numeric: var(--numeros);
+  font-weight: 600;
+  line-height: var(--lh-compacta);
+}
+
+/*
+ * La zona del codigo, al alto de lo que contiene.
+ *
+ * Se probo a RESERVAR el alto del QR para que generar no moviera la pantalla
+ * —el socio pulsa esto de pie, en la puerta— y el remedio salio peor: 328 px
+ * reservados para un boton de 44 dejaban un agujero blanco en medio de la
+ * credencial, visible en las tres anchuras. El salto al generar es una vez y
+ * hacia abajo; el agujero estaba siempre.
+ */
 .zonaQr {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--e3);
+  gap: var(--e4);
 }
 
 .hueco {
