@@ -13,7 +13,7 @@
   font-size: var(--t-base);
 }
 
-@media (max-width: 48rem) {
+@media (max-width: 47.9375rem) {
   .vacio {
     padding-left: var(--e4);
     padding-right: var(--e4);

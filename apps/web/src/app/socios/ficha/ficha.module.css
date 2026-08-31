@@ -55,10 +55,27 @@
 }
 
 /*
- * A partir de 1024. En tableta NO se parte: a 768 dos columnas dejarian la
- * tabla de pagos en 340 px, que es peor que una sola columna comoda.
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ DOS COLUMNAS A PARTIR DE 1.280, NO DE 1.024.                            │
+ * │                                                                          │
+ * │ El comentario anterior decia, con razon, que a 768 dos columnas dejarian │
+ * │ la tabla de pagos en 340 px y eso es peor que una columna comoda. El     │
+ * │ mismo argumento vale en 1.024 y nadie lo habia mirado: D3 construyo esta │
+ * │ pantalla en 1.440.                                                       │
+ * │                                                                          │
+ * │ MEDIDO a 1.024 con el reparto 1.6fr/1fr: la tarjeta lateral se quedaba   │
+ * │ en 266 px de ancho y su lista de datos en 218. Con la columna de rotulos │
+ * │ fija en 10rem, al VALOR le quedaban 42 px: el correo pedia 316 y la      │
+ * │ tarjeta no tiene desplazamiento, asi que se veia "socia-5bc217@d" y ahi  │
+ * │ se acababa. La tabla de pagos, en la otra columna, cortaba la cabecera   │
+ * │ "IMPORTE" y los importes a "15,00 (".                                    │
+ * │                                                                          │
+ * │ D0 no lo vio y no es culpa suya: no hay desplazamiento lateral de PAGINA │
+ * │ —el texto se recorta dentro de su caja— y ninguna regla mide eso. Lo vio │
+ * │ el barrido de D6 y lo confirmo mirar la pantalla.                        │
+ * └──────────────────────────────────────────────────────────────────────────┘
  */
-@media (min-width: 64rem) {
+@media (min-width: 80rem) {
   .cuerpo {
     grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
     align-items: start;
@@ -66,14 +83,14 @@
 }
 
 /*
- * Mientras la ficha va en UNA columna —todo por debajo de 1024— los huecos
+ * Mientras la ficha va en UNA columna —todo por debajo de 1.280— los huecos
  * se aprietan.
  *
  * Hay cinco separaciones en lugar de dos, asi que el mismo valor que da aire
  * repartido en dos columnas son 40 px de recorrido extra apilado. El filete de
  * cada tarjeta ya separa; el hueco solo tiene que evitar que se toquen.
  */
-@media (max-width: 63.9375rem) {
+@media (max-width: 79.9375rem) {
   .cuerpo,
   .principal,
   .lateral {
@@ -84,7 +101,8 @@
 /* Lista de definiciones: cada dato con su nombre, sin tabla. */
 .datos {
   display: grid;
-  grid-template-columns: 10rem 1fr;
+  /* Los rotulos pueden encoger: fijos en 10rem se comian el valor. */
+  grid-template-columns: minmax(0, 10rem) minmax(0, 1fr);
   gap: var(--e3) var(--e4);
   margin: 0;
 }
@@ -97,6 +115,8 @@
 .datos dd {
   margin: 0;
   font-size: var(--t-base);
+  /* Un correo no tiene espacios donde partir. */
+  overflow-wrap: anywhere;
 }
 
 .vacio {
@@ -153,7 +173,7 @@
   color: var(--peligro);
 }
 
-@media (max-width: 48rem) {
+@media (max-width: 47.9375rem) {
   .datos {
     grid-template-columns: 1fr;
     gap: var(--e1) var(--e4);

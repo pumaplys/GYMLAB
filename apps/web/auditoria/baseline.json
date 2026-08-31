@@ -1,5 +1,5 @@
 {
-  "generado": "2026-08-30T19:11:37.366Z",
+  "generado": "2026-08-31T12:44:44.726Z",
   "resumen": {
     "porRegla": {
       "rutaCarga": {
@@ -1777,17 +1777,17 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1526,
+        "scrollAlto": 1024,
         "interactivos": 19,
         "pequenos": 0,
         "pequenosEnFrase": 0,
         "navRecorte": 0,
-        "tablaVisible": false,
-        "filaAlto": 0,
+        "tablaVisible": true,
+        "filaAlto": 53,
         "tamanos": [
-          "12px x33",
-          "14px x33",
-          "16px x24",
+          "14px x41",
+          "12px x15",
+          "16px x8",
           "13px x4",
           "15px x1",
           "17px x1",
@@ -1853,19 +1853,18 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1714,
-        "interactivos": 17,
+        "scrollAlto": 1454,
+        "interactivos": 19,
         "pequenos": 0,
         "pequenosEnFrase": 0,
         "navRecorte": 0,
-        "tablaVisible": false,
-        "filaAlto": 0,
+        "tablaVisible": true,
+        "filaAlto": 53,
         "tamanos": [
-          "14px x40",
+          "14px x46",
           "12px x7",
           "13px x6",
           "17px x6",
-          "16px x4",
           "22px x1"
         ]
       }
@@ -1928,17 +1927,16 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 2114,
+        "scrollAlto": 1209,
         "interactivos": 14,
         "pequenos": 0,
         "pequenosEnFrase": 0,
         "navRecorte": 0,
-        "tablaVisible": false,
-        "filaAlto": 0,
+        "tablaVisible": true,
+        "filaAlto": 53,
         "tamanos": [
-          "14px x33",
-          "12px x25",
-          "16px x8",
+          "14px x41",
+          "12px x16",
           "13px x6",
           "17px x3",
           "22px x1"
@@ -2003,18 +2001,17 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1527,
+        "scrollAlto": 1035,
         "interactivos": 18,
         "pequenos": 0,
         "pequenosEnFrase": 0,
         "navRecorte": 0,
-        "tablaVisible": false,
-        "filaAlto": 0,
+        "tablaVisible": true,
+        "filaAlto": 53,
         "tamanos": [
-          "14px x23",
+          "14px x26",
           "13px x13",
-          "12px x10",
-          "16px x3",
+          "12px x6",
           "17px x2",
           "22px x1"
         ]
@@ -2153,7 +2150,7 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1024,
+        "scrollAlto": 1081,
         "interactivos": 12,
         "pequenos": 0,
         "pequenosEnFrase": 0,
@@ -2228,17 +2225,17 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1526,
+        "scrollAlto": 1024,
         "interactivos": 17,
         "pequenos": 0,
         "pequenosEnFrase": 0,
         "navRecorte": 0,
-        "tablaVisible": false,
-        "filaAlto": 0,
+        "tablaVisible": true,
+        "filaAlto": 53,
         "tamanos": [
-          "12px x33",
-          "14px x31",
-          "16px x24",
+          "14px x39",
+          "12px x15",
+          "16px x8",
           "13px x4",
           "15px x1",
           "17px x1",
@@ -2384,12 +2381,11 @@
         "pequenos": 0,
         "pequenosEnFrase": 0,
         "navRecorte": 0,
-        "tablaVisible": false,
-        "filaAlto": 0,
+        "tablaVisible": true,
+        "filaAlto": 53,
         "tamanos": [
-          "12px x13",
-          "14px x13",
-          "16px x12",
+          "14px x21",
+          "12px x10",
           "13px x3",
           "15px x1",
           "17px x1",
@@ -2460,12 +2456,12 @@
         "pequenos": 0,
         "pequenosEnFrase": 0,
         "navRecorte": 0,
-        "tablaVisible": false,
-        "filaAlto": 0,
+        "tablaVisible": true,
+        "filaAlto": 75,
         "tamanos": [
           "14px x14",
-          "12px x10",
           "13px x6",
+          "12px x5",
           "16px x4",
           "17px x1",
           "22px x1"
@@ -2530,17 +2526,17 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1135,
+        "scrollAlto": 1024,
         "interactivos": 8,
         "pequenos": 0,
         "pequenosEnFrase": 0,
         "navRecorte": 0,
-        "tablaVisible": false,
-        "filaAlto": 0,
+        "tablaVisible": true,
+        "filaAlto": 51,
         "tamanos": [
-          "14px x25",
-          "12px x17",
-          "16px x10",
+          "14px x34",
+          "12px x7",
+          "16px x5",
           "13px x3",
           "17px x1",
           "22px x1"
@@ -2610,12 +2606,12 @@
         "pequenos": 0,
         "pequenosEnFrase": 0,
         "navRecorte": 0,
-        "tablaVisible": false,
-        "filaAlto": 0,
+        "tablaVisible": true,
+        "filaAlto": 51,
         "tamanos": [
-          "14px x22",
-          "12px x15",
-          "16px x8",
+          "14px x29",
+          "12px x8",
+          "16px x4",
           "13px x3",
           "17px x1",
           "22px x1"
@@ -2680,7 +2676,7 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 2406,
+        "scrollAlto": 2511,
         "interactivos": 46,
         "pequenos": 0,
         "pequenosEnFrase": 0,
@@ -2755,17 +2751,17 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 11808,
+        "scrollAlto": 4279,
         "interactivos": 155,
         "pequenos": 0,
         "pequenosEnFrase": 0,
         "navRecorte": 0,
-        "tablaVisible": false,
-        "filaAlto": 0,
+        "tablaVisible": true,
+        "filaAlto": 53,
         "tamanos": [
           "13px x299",
-          "12px x149",
-          "14px x80",
+          "14px x154",
+          "12px x79",
           "16px x74",
           "15px x1",
           "17px x1",
@@ -2831,7 +2827,7 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1142,
+        "scrollAlto": 1024,
         "interactivos": 11,
         "pequenos": 0,
         "pequenosEnFrase": 0,
@@ -2982,7 +2978,7 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1278,
+        "scrollAlto": 1319,
         "interactivos": 9,
         "pequenos": 0,
         "pequenosEnFrase": 0,
@@ -3506,7 +3502,7 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1100,
+        "scrollAlto": 1428,
         "interactivos": 19,
         "pequenos": 19,
         "pequenosEnFrase": 0,
@@ -3581,13 +3577,13 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1332,
+        "scrollAlto": 1226,
         "interactivos": 14,
         "pequenos": 14,
         "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": true,
-        "filaAlto": 67,
+        "filaAlto": 61,
         "tamanos": [
           "14px x41",
           "12px x16",
@@ -3656,7 +3652,7 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1061,
+        "scrollAlto": 1022,
         "interactivos": 18,
         "pequenos": 18,
         "pequenosEnFrase": 0,
@@ -4406,7 +4402,7 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 4902,
+        "scrollAlto": 4489,
         "interactivos": 155,
         "pequenos": 155,
         "pequenosEnFrase": 0,
@@ -4414,8 +4410,8 @@
         "tablaVisible": true,
         "filaAlto": 65,
         "tamanos": [
+          "13px x299",
           "14px x154",
-          "13px x151",
           "12px x79",
           "16px x74",
           "15px x2",
@@ -5304,7 +5300,7 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1061,
+        "scrollAlto": 984,
         "interactivos": 18,
         "pequenos": 18,
         "pequenosEnFrase": 0,
@@ -6062,8 +6058,8 @@
         "tablaVisible": true,
         "filaAlto": 53,
         "tamanos": [
+          "13px x299",
           "14px x154",
-          "13px x151",
           "12px x79",
           "16px x74",
           "15px x2",

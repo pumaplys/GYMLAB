@@ -153,6 +153,20 @@
   /* Ancho de UN campo suelto. Un input de texto de 1.054 px —medido en
      /configuracion— no se lee mejor por ser mas largo: se lee peor. */
   --ancho-campo: 26rem;
+  /*
+   * El campo CORTO: un importe, una periodicidad, un numero de dos cifras.
+   *
+   * `--ancho-campo` es el tope de un campo de texto normal —45 caracteres— y
+   * como tope esta bien, pero aplicado a un precio deja una caja de 416 px
+   * para escribir "35,50". D6 lo vio crecer en /planes al ensanchar la tarjeta
+   * al ancho de trabajo: el precio paso de 217 a 341 px sin que nadie lo
+   * pidiera, porque su celda de la rejilla crecio con ella.
+   *
+   * 12rem son unos 20 caracteres: suficiente para un importe, una fecha o un
+   * desplegable de enum, y bastante para que la caja diga por su tamaño que
+   * ahi no va un parrafo.
+   */
+  --ancho-campo-corto: 12rem;
 
   /*
    * ┌────────────────────────────────────────────────────────────────────────┐
@@ -214,13 +228,22 @@
  *   64–90rem 1024–1440  compacto    escritorio con poco ancho
  *   >= 90rem    1440    escritorio  ancho de trabajo completo
  *
- * MEDIDO: hoy solo existe 48rem (15 usos) y su espejo 48.0625rem (5). Los
- * 34rem y 40rem que denunciaba el comentario anterior ya se habian unificado;
- * lo que no existe todavia es el escalon de TABLETA, y por eso un iPad en
- * vertical recibe el diseño de un telefono con 768 px de ancho desperdiciados.
+ * DONDE VA EL CORTE, EXACTAMENTE. 768 ES TABLETA, NO MOVIL.
  *
- * D1 deja la escala escrita y los componentes base funcionando en los cuatro.
- * Construir el escalon de tableta en cada pantalla es trabajo de D6.
+ * Un ancho pertenece a UN escalon, y 768 pertenece al de tableta. En la
+ * practica eso significa que solo hay dos formas correctas de escribir el
+ * primer corte, y son estas:
+ *
+ *   @media (max-width: 47.9375rem)   lo que ve un telefono  (hasta 767)
+ *   @media (min-width: 48rem)        de tableta hacia arriba (desde 768)
+ *
+ * `max-width: 48rem` INCLUYE el 768 y `min-width: 48.0625rem` lo EXCLUYE:
+ * las dos dejan la tableta con el diseño del telefono. D6 encontro doce
+ * sitios escritos asi —nueve rejillas de dos columnas que se plegaban, el
+ * encabezado de pagina, la tarjeta y el estado vacio— y, sobre todo, la
+ * TABLA: con `max-width: 48rem` se escondia justo en 768 mientras el shell
+ * ya daba la disposicion de tableta. Los cuatro escalones existen desde D6
+ * y estan construidos.
  */
 
 *,

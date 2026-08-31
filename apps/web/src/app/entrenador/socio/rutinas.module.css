@@ -75,7 +75,7 @@
 }
 
 /* El mismo corte que el resto del proyecto: por encima de la tableta. */
-@media (min-width: 48.0625rem) {
+@media (min-width: 48rem) {
   .fila {
     flex-direction: row;
     align-items: center;

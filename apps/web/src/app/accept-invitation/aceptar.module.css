@@ -24,7 +24,11 @@
 
 .correo {
   font-weight: 500;
-  word-break: break-all;
+  /* Ver el comentario largo de `personal.module.css`: `break-all` parte por
+     donde caiga —"administracion-general@gimnasiovi / stalarga.example"— y
+     `anywhere` deja que el salto normal use el guion. Mismo defecto, misma
+     regla escrita tres veces en el producto. */
+  overflow-wrap: anywhere;
 }
 
 .esperando {

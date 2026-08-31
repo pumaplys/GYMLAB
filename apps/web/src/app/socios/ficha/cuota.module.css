@@ -109,7 +109,7 @@
   font-size: var(--t-base);
 }
 
-@media (max-width: 48rem) {
+@media (max-width: 47.9375rem) {
   .resumen {
     grid-template-columns: 1fr;
     gap: var(--e1) var(--e4);

@@ -37,7 +37,7 @@
   gap: var(--e3);
 }
 
-@media (min-width: 48.0625rem) {
+@media (min-width: 48rem) {
   .medidas {
     grid-template-columns: 1fr 1fr;
   }
