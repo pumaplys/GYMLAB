@@ -44,6 +44,52 @@ const INTERVALO: Record<PlanPeriod, string> = {
 };
 
 /**
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ EL VENCIMIENTO SE RECALCULA DESDE EL ALTA. NO SE ENCADENA.               │
+ * │                                                                          │
+ * │ Encadenar —`current_period_end + 1 month` sobre el valor anterior— hace  │
+ * │ que la fecha de cobro SE VAYA para siempre en cuanto toca un mes corto:  │
+ * │                                                                          │
+ * │     alta 31/08   pago 1 -> 30/09   pago 2 -> 30/10   pago 3 -> 30/11     │
+ * │                                                                          │
+ * │ Quien se dio de alta un 31 pasa a cobrar el 30 el resto de su vida, y a  │
+ * │ un 31 de enero le pasa lo mismo con el 28 de febrero: 28/02, 28/03,      │
+ * │ 28/04. Nadie lo decidio; sale de sumar sobre lo ya recortado.            │
+ * │                                                                          │
+ * │ Con el DIA DE REFERENCIA el recorte no se acumula, porque cada suma      │
+ * │ parte del alta:                                                          │
+ * │                                                                          │
+ * │     alta 31/08   pago 1 -> 30/09   pago 2 -> 31/10   pago 3 -> 30/11     │
+ * │     alta 31/01   pago 1 -> 28/02   pago 2 -> 31/03   (29/02 si bisiesto) │
+ * │                                                                          │
+ * │ Y esto NO es una regla nueva: es el invariante que este modulo ya tenia  │
+ * │ escrito en su cabecera —"current_period_end = started_on + (pagos x      │
+ * │ periodo) + dias congelados"— y que la implementacion no cumplia. Los     │
+ * │ tests comprobaban el invariante y tenian razon; el calculo estaba mal.   │
+ * │ Coincidian los 28 dias del mes en que la suma encadenada y la anclada    │
+ * │ dan lo mismo, y por eso tardo en verse: el fallo solo aparece cuando el  │
+ * │ alta cae en un 29, 30 o 31.                                             │
+ * │                                                                          │
+ * │ SIN COLUMNAS NUEVAS: `started_on`, `paused_days` y el recuento de pagos  │
+ * │ vigentes ya estaban todos en la base de datos.                           │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * Devuelve la expresion SQL del vencimiento reconstruido. Se usa despues de
+ * insertar o anular el pago, para que el recuento incluya ya el movimiento.
+ */
+function vencimientoDesdeElAlta(subscriptionId: string, periodo: PlanPeriod) {
+  return sql`
+    started_on
+    + ((SELECT count(*)
+          FROM payments p
+         WHERE p.subscription_id = ${subscriptionId}::uuid
+           AND p.concept = 'subscription'
+           AND p.voided_at IS NULL) * ${INTERVALO[periodo]}::interval)
+    + (paused_days * INTERVAL '1 day')
+  `;
+}
+
+/**
  * Planes, cuotas y pagos registrados.
  *
  * ┌──────────────────────────────────────────────────────────────────────────┐
@@ -486,6 +532,7 @@ export class BillingService {
     const hoy = await this.hoy(gymId);
 
     let subscriptionId: string | null = null;
+    let periodoDelPlan: PlanPeriod | null = null;
 
     if (input.concept === 'subscription') {
       const sub = await this.exigirVigente(gymId, memberId);
@@ -495,15 +542,7 @@ export class BillingService {
         );
       }
       subscriptionId = sub.id;
-
-      const plan = await this.buscarPlan(gymId, sub.planId);
-      await tx
-        .update(memberSubscriptions)
-        .set({
-          currentPeriodEnd: sql`current_period_end + ${INTERVALO[plan.period]}::interval`,
-          updatedAt: new Date(),
-        })
-        .where(eq(memberSubscriptions.id, sub.id));
+      periodoDelPlan = (await this.buscarPlan(gymId, sub.planId)).period;
     }
 
     const [fila] = await tx
@@ -520,6 +559,24 @@ export class BillingService {
         recordedByUserId: actorUserId,
       })
       .returning();
+
+    /*
+     * El vencimiento se recalcula DESPUES de insertar el pago.
+     *
+     * Antes se actualizaba la cuota primero y luego se insertaba el pago; con
+     * el vencimiento reconstruido desde el alta hay que contar los pagos ya
+     * existentes, asi que el orden importa. Todo va en la misma transaccion:
+     * o se guardan los dos o no se guarda ninguno.
+     */
+    if (subscriptionId && periodoDelPlan) {
+      await tx
+        .update(memberSubscriptions)
+        .set({
+          currentPeriodEnd: vencimientoDesdeElAlta(subscriptionId, periodoDelPlan),
+          updatedAt: new Date(),
+        })
+        .where(eq(memberSubscriptions.id, subscriptionId));
+    }
 
     await tx.insert(auditLog).values({
       gymId,
@@ -628,6 +685,25 @@ export class BillingService {
     if (!pago) throw new NotFoundException('Pago no encontrado.');
     if (pago.voidedAt) throw new BadRequestException('Ese pago ya esta anulado.');
 
+    const [fila] = await tx
+      .update(payments)
+      .set({ voidedAt: new Date(), voidReason: reason, voidedByUserId: actorUserId })
+      .where(and(eq(payments.gymId, gymId), eq(payments.id, paymentId), isNull(payments.voidedAt)))
+      .returning();
+
+    if (!fila) throw new BadRequestException('Ese pago ya estaba anulado.');
+
+    /*
+     * Anular tambien RECONSTRUYE en vez de restar.
+     *
+     * Restar un mes al vencimiento no devuelve el limite anterior cuando hubo
+     * recorte de mes corto: desde el 31/10 restar un mes da 30/09, no 31/08.
+     * Reconstruyendo desde el alta con un pago menos sale exactamente el valor
+     * que habia antes de cobrarlo, sea cual sea el dia.
+     *
+     * Va DESPUES de marcar el pago como anulado para que el recuento ya no lo
+     * incluya; misma transaccion.
+     */
     if (pago.concept === 'subscription' && pago.subscriptionId) {
       const [sub] = await tx
         .select()
@@ -640,20 +716,12 @@ export class BillingService {
         await tx
           .update(memberSubscriptions)
           .set({
-            currentPeriodEnd: sql`current_period_end - ${INTERVALO[plan.period]}::interval`,
+            currentPeriodEnd: vencimientoDesdeElAlta(sub.id, plan.period),
             updatedAt: new Date(),
           })
           .where(eq(memberSubscriptions.id, sub.id));
       }
     }
-
-    const [fila] = await tx
-      .update(payments)
-      .set({ voidedAt: new Date(), voidReason: reason, voidedByUserId: actorUserId })
-      .where(and(eq(payments.gymId, gymId), eq(payments.id, paymentId), isNull(payments.voidedAt)))
-      .returning();
-
-    if (!fila) throw new BadRequestException('Ese pago ya estaba anulado.');
 
     await tx.insert(auditLog).values({
       gymId,

@@ -385,7 +385,10 @@ describe('el invariante: cada pago cubre exactamente un periodo', () => {
   });
 
   it('un pago suma un periodo; dos pagos suman dos', async () => {
-    const hoy = await hoyDelGimnasio(gymA);
+    // Fecha FIJA y de fin de mes: con `hoy` este test solo comprobaba la regla
+    // de calendario los dias 29, 30 y 31, y en los otros 28 pasaba por
+    // casualidad — sumar encadenando y sumar desde el alta dan lo mismo.
+    const hoy = '2026-08-31';
     const { memberId } = await socioConCuota('DosPagos', hoy);
 
     await pagarCuota(memberId).expect(201);
@@ -620,7 +623,10 @@ describe('pagos: append-only', () => {
   it('anular retira el periodo que concedio', async () => {
     // Si no lo retirara, el socio conservaria un mes que nadie pago y el
     // invariante dejaria de cumplirse.
-    const hoy = await hoyDelGimnasio(gymA);
+    // Fecha FIJA de fin de mes, por lo mismo: restar un mes a 31/10 da 30/09,
+    // no 31/08. Solo se ve si el alta cae en un dia que no existe en todos
+    // los meses.
+    const hoy = '2026-08-31';
     const { memberId } = await socioConCuota('Anula', hoy);
     const pago = await pagarCuota(memberId).expect(201);
 
@@ -1100,5 +1106,128 @@ describe('exportacion RGPD (ADR-0011)', () => {
       sql`SELECT id FROM member_subscriptions WHERE member_id = ${memberId}::uuid`,
     );
     expect(cuotas.rows).toHaveLength(0);
+  });
+});
+
+/**
+ * El dia de referencia de la renovacion.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ FECHAS EXPLICITAS, NUNCA `hoy`.                                          │
+ * │                                                                          │
+ * │ El fallo que dio origen a estas pruebas estuvo escondido hasta un dia 31 │
+ * │ porque el resto del mes la suma encadenada y la anclada dan lo mismo. Un │
+ * │ test de calendario que arranca en "hoy" solo comprueba la regla tres     │
+ * │ dias de cada mes, y los otros veintiocho pasa por casualidad.            │
+ * │                                                                          │
+ * │ Aqui el alta se fija a mano, asi que estos casos valen igual el 1 de     │
+ * │ marzo que el 31 de diciembre.                                            │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ */
+describe('renovacion: el dia de alta es el ancla y el recorte no se acumula', () => {
+  /** Da de alta con una fecha fija y cobra `n` cuotas seguidas. */
+  async function conAltaYPagos(apellido: string, alta: string, n: number) {
+    const { memberId } = await socioConCuota(apellido, alta);
+    const limites: string[] = [];
+    for (let i = 0; i < n; i++) {
+      await pagarCuota(memberId).expect(201);
+      const sub = await http()
+        .get(`/v1/gyms/${gymA}/members/${memberId}/subscription`)
+        .set(conSesion(tokenOwnerA))
+        .expect(200);
+      limites.push(sub.body.currentPeriodEnd);
+    }
+    return { memberId, limites };
+  }
+
+  it('alta el 31 de agosto: 30/09 y luego 31/10, no 30/10', async () => {
+    const { limites } = await conAltaYPagos('Agosto31', '2026-08-31', 2);
+    expect(limites).toEqual(['2026-09-30', '2026-10-31']);
+  });
+
+  it('alta el 31 de enero, ano NO bisiesto: 28/02 y luego 31/03', async () => {
+    const { limites } = await conAltaYPagos('Enero31Normal', '2026-01-31', 2);
+    expect(limites).toEqual(['2026-02-28', '2026-03-31']);
+  });
+
+  it('alta el 31 de enero, ano BISIESTO: 29/02 y luego 31/03', async () => {
+    const { limites } = await conAltaYPagos('Enero31Bisiesto', '2028-01-31', 2);
+    expect(limites).toEqual(['2028-02-29', '2028-03-31']);
+  });
+
+  it('alta el 30 de enero: pasa por febrero y vuelve al 30', async () => {
+    const { limites } = await conAltaYPagos('Enero30', '2026-01-30', 2);
+    expect(limites).toEqual(['2026-02-28', '2026-03-30']);
+  });
+
+  it('un dia que existe en todos los meses no se mueve nunca', async () => {
+    const { limites } = await conAltaYPagos('Dia15', '2026-01-15', 3);
+    expect(limites).toEqual(['2026-02-15', '2026-03-15', '2026-04-15']);
+  });
+
+  it('el recorte no se arrastra: doce meses desde un 31 vuelven al 31', async () => {
+    // La prueba de que el ancla es el ALTA y no el ultimo vencimiento: si se
+    // encadenara, un ano de cuotas desde el 31 de enero acabaria en el 28.
+    const { limites } = await conAltaYPagos('Enero31Ano', '2026-01-31', 12);
+    expect(limites[0]).toBe('2026-02-28');
+    expect(limites[1]).toBe('2026-03-31');
+    expect(limites[11]).toBe('2027-01-31');
+  });
+
+  it('anular el ultimo pago devuelve EXACTAMENTE el limite anterior', async () => {
+    const { memberId } = await socioConCuota('AnulaFinDeMes', '2026-08-31');
+
+    await pagarCuota(memberId).expect(201);
+    const primero = await http()
+      .get(`/v1/gyms/${gymA}/members/${memberId}/subscription`)
+      .set(conSesion(tokenOwnerA))
+      .expect(200);
+    expect(primero.body.currentPeriodEnd).toBe('2026-09-30');
+
+    const segundo = await pagarCuota(memberId).expect(201);
+    const conDos = await http()
+      .get(`/v1/gyms/${gymA}/members/${memberId}/subscription`)
+      .set(conSesion(tokenOwnerA))
+      .expect(200);
+    expect(conDos.body.currentPeriodEnd).toBe('2026-10-31');
+
+    await http()
+      .post(`/v1/gyms/${gymA}/payments/${segundo.body.payment.id}/void`)
+      .set(conSesion(tokenOwnerA))
+      .send({ reason: 'Cobrado dos veces' })
+      .expect(201);
+
+    const tras = await http()
+      .get(`/v1/gyms/${gymA}/members/${memberId}/subscription`)
+      .set(conSesion(tokenOwnerA))
+      .expect(200);
+    // Restar un mes a 31/10 daria 30/09: coincide por casualidad. La prueba de
+    // verdad es la de abajo, donde restar NO da el valor correcto.
+    expect(tras.body.currentPeriodEnd).toBe('2026-09-30');
+  });
+
+  it('anular el primer pago devuelve al alta, no a un mes recortado', async () => {
+    // Aqui restar un mes al vencimiento SI se equivoca: desde 28/02 restar un
+    // mes da 28/01, y el alta era el 31.
+    const { memberId } = await socioConCuota('AnulaPrimero', '2026-01-31');
+    const pago = await pagarCuota(memberId).expect(201);
+
+    const conPago = await http()
+      .get(`/v1/gyms/${gymA}/members/${memberId}/subscription`)
+      .set(conSesion(tokenOwnerA))
+      .expect(200);
+    expect(conPago.body.currentPeriodEnd).toBe('2026-02-28');
+
+    await http()
+      .post(`/v1/gyms/${gymA}/payments/${pago.body.payment.id}/void`)
+      .set(conSesion(tokenOwnerA))
+      .send({ reason: 'Nunca se cobro' })
+      .expect(201);
+
+    const tras = await http()
+      .get(`/v1/gyms/${gymA}/members/${memberId}/subscription`)
+      .set(conSesion(tokenOwnerA))
+      .expect(200);
+    expect(tras.body.currentPeriodEnd).toBe('2026-01-31');
   });
 });
