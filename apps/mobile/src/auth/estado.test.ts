@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import type { Me } from '@gymlab/contracts';
-import { debeBorrarToken, decidirEstado, membresiaDeSocio } from './estado';
+import type { Membresia } from './estado';
+import { decidirEstado, membresiasDeSocio, resolverAcceso } from './estado';
 
-const GIMNASIO = '11111111-1111-4111-8111-111111111111';
-const OTRO = '22222222-2222-4222-8222-222222222222';
+const UNO = '11111111-1111-4111-8111-111111111111';
+const DOS = '22222222-2222-4222-8222-222222222222';
 
-function yoCon(
-  membresias: Array<{ gymId: string; role: 'owner' | 'receptionist' | 'trainer' | 'member' }>,
-  activo: string | null = GIMNASIO,
-): Me {
+type Rol = Membresia['role'];
+
+function yoCon(membresias: Array<[string, Rol]>, activo: string | null): Me {
   return {
     user: {
       id: '33333333-3333-4333-8333-333333333333',
@@ -18,75 +18,142 @@ function yoCon(
       isPlatformAdmin: false,
     },
     activeGymId: activo,
-    memberships: membresias.map((m) => ({ gymId: m.gymId, gymName: 'Gimnasio', role: m.role })),
+    memberships: membresias.map(([gymId, role]) => ({ gymId, gymName: 'Gimnasio', role })),
   } as Me;
 }
 
-describe('quien puede usar la app movil', () => {
-  it('un socio del gimnasio activo entra', () => {
-    const estado = decidirEstado({ clase: 'yo', yo: yoCon([{ gymId: GIMNASIO, role: 'member' }]) });
-    expect(estado).toEqual({
+describe('quien entra en la app movil', () => {
+  it('socio con gimnasio activo valido -> autenticado', () => {
+    expect(resolverAcceso(yoCon([[UNO, 'member']], UNO))).toEqual({
       tipo: 'autenticado',
       yo: expect.anything(),
-      gymId: GIMNASIO,
+      gymId: UNO,
     });
   });
 
-  it('un entrenador NO entra, y no se le dice que sus credenciales fallan', () => {
-    const estado = decidirEstado({ clase: 'yo', yo: yoCon([{ gymId: GIMNASIO, role: 'trainer' }]) });
-    expect(estado.tipo).toBe('rolNoAdmitido');
+  it('solo entrenador -> rolNoAdmitido, no "credenciales incorrectas"', () => {
+    expect(resolverAcceso(yoCon([[UNO, 'trainer']], UNO)).tipo).toBe('rolNoAdmitido');
   });
 
-  it('un propietario NO entra', () => {
-    const estado = decidirEstado({ clase: 'yo', yo: yoCon([{ gymId: GIMNASIO, role: 'owner' }]) });
-    expect(estado.tipo).toBe('rolNoAdmitido');
+  it('solo propietario -> rolNoAdmitido', () => {
+    expect(resolverAcceso(yoCon([[UNO, 'owner']], UNO)).tipo).toBe('rolNoAdmitido');
   });
 
-  it('manda el gimnasio ACTIVO, no cualquier membresia que tenga', () => {
-    // Socia en un gimnasio, entrenadora en el activo: no entra.
+  it('manda el gimnasio ACTIVO, no cualquier membresia', () => {
+    // Socia en UNO, entrenadora en DOS y con DOS activo: no entra.
     const yo = yoCon(
       [
-        { gymId: OTRO, role: 'member' },
-        { gymId: GIMNASIO, role: 'trainer' },
+        [UNO, 'member'],
+        [DOS, 'trainer'],
       ],
-      GIMNASIO,
+      DOS,
     );
-    expect(membresiaDeSocio(yo)).toBeNull();
-    expect(decidirEstado({ clase: 'yo', yo }).tipo).toBe('rolNoAdmitido');
+    expect(resolverAcceso(yo).tipo).toBe('rolNoAdmitido');
   });
 
-  it('sin gimnasio activo no se puede decidir, y no se deja entrar', () => {
-    const yo = yoCon([{ gymId: GIMNASIO, role: 'member' }], null);
-    expect(decidirEstado({ clase: 'yo', yo }).tipo).toBe('rolNoAdmitido');
+  it('un rol futuro o desconocido NO entra por descuido', () => {
+    // `member` se comprueba en positivo; cualquier otra cosa se queda fuera.
+    const yo = yoCon([[UNO, 'supervisor' as Rol]], UNO);
+    expect(resolverAcceso(yo).tipo).toBe('rolNoAdmitido');
   });
 });
 
-describe('sesion invalida contra servidor inaccesible', () => {
-  it('sin token guardado: sin sesion', () => {
+describe('sin gimnasio activo: se pregunta, no se adivina', () => {
+  it('UN gimnasio como socio y activeGymId null -> requiere seleccion', () => {
+    const estado = resolverAcceso(yoCon([[UNO, 'member']], null));
+    expect(estado.tipo).toBe('requiereSeleccionGimnasio');
+    if (estado.tipo !== 'requiereSeleccionGimnasio') throw new Error('tipo inesperado');
+    expect(estado.opciones.map((o) => o.gymId)).toEqual([UNO]);
+  });
+
+  it('VARIOS gimnasios como socio y activeGymId null -> requiere seleccion, con todos', () => {
+    const estado = resolverAcceso(
+      yoCon(
+        [
+          [UNO, 'member'],
+          [DOS, 'member'],
+        ],
+        null,
+      ),
+    );
+    expect(estado.tipo).toBe('requiereSeleccionGimnasio');
+    if (estado.tipo !== 'requiereSeleccionGimnasio') throw new Error('tipo inesperado');
+    expect(estado.opciones.map((o) => o.gymId)).toEqual([UNO, DOS]);
+  });
+
+  it('socio en uno y entrenador en otro, sin activo -> solo se ofrece donde es socio', () => {
+    const estado = resolverAcceso(
+      yoCon(
+        [
+          [UNO, 'member'],
+          [DOS, 'trainer'],
+        ],
+        null,
+      ),
+    );
+    expect(estado.tipo).toBe('requiereSeleccionGimnasio');
+    if (estado.tipo !== 'requiereSeleccionGimnasio') throw new Error('tipo inesperado');
+    // El de entrenador no se ofrece: elegirlo le dejaria fuera igualmente.
+    expect(estado.opciones.map((o) => o.gymId)).toEqual([UNO]);
+  });
+
+  it('sin activo y sin ninguna membresia de socio -> rolNoAdmitido', () => {
+    const estado = resolverAcceso(
+      yoCon(
+        [
+          [UNO, 'trainer'],
+          [DOS, 'owner'],
+        ],
+        null,
+      ),
+    );
+    expect(estado.tipo).toBe('rolNoAdmitido');
+  });
+
+  it('un activeGymId que no corresponde a ninguna membresia se trata como sin activo', () => {
+    const estado = resolverAcceso(yoCon([[UNO, 'member']], DOS));
+    expect(estado.tipo).toBe('requiereSeleccionGimnasio');
+  });
+
+  it('NINGUN caso sin gimnasio activo acaba en autenticado por adivinacion', () => {
+    // La regla de seleccion automatica es del servidor (auth.service.ts:200):
+    // con una sola membresia la fija al entrar. Si llega null, decidio no
+    // elegir, y aqui no se le enmienda.
+    for (const yo of [
+      yoCon([[UNO, 'member']], null),
+      yoCon(
+        [
+          [UNO, 'member'],
+          [DOS, 'member'],
+        ],
+        null,
+      ),
+    ]) {
+      expect(resolverAcceso(yo).tipo).not.toBe('autenticado');
+    }
+  });
+});
+
+describe('membresiasDeSocio', () => {
+  it('devuelve solo las de rol member', () => {
+    const yo = yoCon(
+      [
+        [UNO, 'member'],
+        [DOS, 'owner'],
+      ],
+      null,
+    );
+    expect(membresiasDeSocio(yo).map((m) => m.gymId)).toEqual([UNO]);
+  });
+});
+
+describe('el resultado se traduce a estado', () => {
+  it('sin token -> sin sesion', () => {
     expect(decidirEstado({ clase: 'sinToken' }).tipo).toBe('sinSesion');
   });
 
-  it('401: sin sesion', () => {
-    expect(decidirEstado({ clase: 'noAutorizado' }).tipo).toBe('sinSesion');
-  });
-
-  it('error de red: sinConexion, que NO es lo mismo que sin sesion', () => {
-    expect(decidirEstado({ clase: 'errorDeRed' }).tipo).toBe('sinConexion');
-  });
-
-  it('solo un 401 borra el token', () => {
-    expect(debeBorrarToken({ clase: 'noAutorizado' })).toBe(true);
-  });
-
-  it('un error de RED NO borra el token', () => {
-    // La regla que evita que pasar por un tunel te eche de la app.
-    expect(debeBorrarToken({ clase: 'errorDeRed' })).toBe(false);
-  });
-
-  it('tampoco lo borra un arranque sin token ni una sesion valida', () => {
-    expect(debeBorrarToken({ clase: 'sinToken' })).toBe(false);
-    expect(
-      debeBorrarToken({ clase: 'yo', yo: yoCon([{ gymId: GIMNASIO, role: 'member' }]) }),
-    ).toBe(false);
+  it('un "yo" pasa por resolverAcceso', () => {
+    const yo = yoCon([[UNO, 'member']], UNO);
+    expect(decidirEstado({ clase: 'yo', yo })).toEqual(resolverAcceso(yo));
   });
 });

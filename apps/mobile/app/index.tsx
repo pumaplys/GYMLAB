@@ -25,7 +25,7 @@ import { tema } from '../src/tema';
  * └──────────────────────────────────────────────────────────────────────────┘
  */
 export default function Indice() {
-  const { estado, salir, revisar } = useSesion();
+  const { estado, salir, revisar, elegirGimnasio } = useSesion();
 
   if (estado.tipo === 'cargando') {
     return (
@@ -38,16 +38,44 @@ export default function Indice() {
     );
   }
 
-  if (estado.tipo === 'sinConexion') {
+  if (estado.tipo === 'errorAlComprobar') {
+    // Los tres motivos conservan el token: la sesion puede seguir siendo buena.
+    const titulo = estado.motivo === 'red' ? 'Sin conexion' : 'No hemos podido comprobar tu sesion';
+    const detalle =
+      estado.motivo === 'red'
+        ? 'No hemos podido hablar con el servidor.'
+        : estado.motivo === 'servidor'
+          ? `El servidor respondio ${estado.status}.`
+          : 'La respuesta del servidor no era la esperada.';
+
     return (
       <Pantalla>
-        <Text style={estilos.h1}>Sin conexion</Text>
-        <Aviso tono="aviso">
-          No hemos podido hablar con el servidor. Tu sesion sigue guardada: no hace falta que
-          vuelvas a entrar.
-        </Aviso>
+        <Text style={estilos.h1}>{titulo}</Text>
+        <Aviso tono="aviso">{`${detalle} Tu sesion sigue guardada: no hace falta que vuelvas a entrar.`}</Aviso>
         <Boton variante="primario" onPress={() => void revisar()}>
           Reintentar
+        </Boton>
+      </Pantalla>
+    );
+  }
+
+  if (estado.tipo === 'requiereSeleccionGimnasio') {
+    // La pantalla de verdad es de M2. Aqui solo se demuestra que el estado
+    // existe, que llega la lista y que `switchGym` lo resuelve.
+    return (
+      <Pantalla>
+        <Text style={estilos.h1}>¿En que gimnasio?</Text>
+        <Aviso tono="informacion">
+          Eres socio en mas de un gimnasio y tu sesion todavia no tiene uno activo. Elige uno para
+          continuar.
+        </Aviso>
+        {estado.opciones.map((opcion) => (
+          <Boton key={opcion.gymId} onPress={() => void elegirGimnasio(opcion.gymId)}>
+            {opcion.gymName}
+          </Boton>
+        ))}
+        <Boton variante="peligro" onPress={() => void salir()}>
+          Cerrar sesion
         </Boton>
       </Pantalla>
     );

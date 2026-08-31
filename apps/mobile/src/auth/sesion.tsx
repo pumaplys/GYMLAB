@@ -9,31 +9,26 @@ import type { ReactNode } from 'react';
 import type { LoginInput } from '@gymlab/contracts';
 import { api } from '../api/cliente';
 import { borrarToken, guardarToken, leerToken } from './almacen';
+import { clasificarError } from './clasificar';
 import { debeBorrarToken, decidirEstado, type EstadoDeSesion, type Resultado } from './estado';
 
 interface Sesion {
   estado: EstadoDeSesion;
   entrar: (credenciales: LoginInput) => Promise<void>;
   salir: () => Promise<void>;
-  /** Para reintentar tras un fallo de red sin reiniciar la app. */
+  /**
+   * Fija el gimnasio activo de la sesion.
+   *
+   * Es `switchGym`, el mismo endpoint que ya usa el panel web. No hay
+   * backend nuevo ni contrato nuevo: la capacidad existia y aqui solo se
+   * llama desde otra pantalla.
+   */
+  elegirGimnasio: (gymId: string) => Promise<void>;
+  /** Para reintentar tras un fallo recuperable sin reiniciar la app. */
   revisar: () => Promise<void>;
 }
 
 const Contexto = createContext<Sesion | null>(null);
-
-/**
- * Un 401 llega como error del cliente; cualquier otro fallo, como caida de red.
- *
- * Se mira el `status` si existe: `@gymlab/api-client` tipa sus errores de API,
- * y lo que NO es un error de API —un `TypeError` de `fetch`— es que no se pudo
- * llegar al servidor.
- */
-function clasificar(problema: unknown): Resultado {
-  const status = (problema as { status?: number } | null)?.status;
-  if (status === 401) return { clase: 'noAutorizado' };
-  if (typeof status === 'number') return { clase: 'noAutorizado' };
-  return { clase: 'errorDeRed' };
-}
 
 export function ProveedorDeSesion({ children }: { children: ReactNode }) {
   const [estado, setEstado] = useState<EstadoDeSesion>({ tipo: 'cargando' });
@@ -51,7 +46,7 @@ export function ProveedorDeSesion({ children }: { children: ReactNode }) {
     try {
       resultado = { clase: 'yo', yo: await api.auth.me() };
     } catch (problema) {
-      resultado = clasificar(problema);
+      resultado = clasificarError(problema);
     }
 
     if (debeBorrarToken(resultado)) await borrarToken();
@@ -86,9 +81,21 @@ export function ProveedorDeSesion({ children }: { children: ReactNode }) {
     setEstado({ tipo: 'sinSesion' });
   }, []);
 
+  const elegirGimnasio = useCallback(
+    async (gymId: string) => {
+      await api.auth.switchGym({ gymId });
+      // No se parchea el estado con el gimnasio elegido: se vuelve a preguntar.
+      // El servidor recalcula el rol al cambiar de gimnasio —una misma persona
+      // puede ser socia en uno y entrenadora en otro— y suponerlo aqui es como
+      // acaban desincronizandose. Es lo mismo que hace el panel web.
+      await resolver();
+    },
+    [resolver],
+  );
+
   const valor = useMemo(
-    () => ({ estado, entrar, salir, revisar: resolver }),
-    [estado, entrar, salir, resolver],
+    () => ({ estado, entrar, salir, elegirGimnasio, revisar: resolver }),
+    [estado, entrar, salir, elegirGimnasio, resolver],
   );
 
   return <Contexto.Provider value={valor}>{children}</Contexto.Provider>;
