@@ -1,5 +1,5 @@
 {
-  "generado": "2026-08-30T20:51:57.258Z",
+  "generado": "2026-08-31T12:44:44.726Z",
   "resumen": {
     "porRegla": {
       "rutaCarga": {
@@ -3577,13 +3577,13 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1332,
+        "scrollAlto": 1226,
         "interactivos": 14,
         "pequenos": 14,
         "pequenosEnFrase": 0,
         "navRecorte": 0,
         "tablaVisible": true,
-        "filaAlto": 67,
+        "filaAlto": 61,
         "tamanos": [
           "14px x41",
           "12px x16",
@@ -3652,7 +3652,7 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 1061,
+        "scrollAlto": 1022,
         "interactivos": 18,
         "pequenos": 18,
         "pequenosEnFrase": 0,
@@ -4402,7 +4402,7 @@
         }
       ],
       "metricas": {
-        "scrollAlto": 4902,
+        "scrollAlto": 4489,
         "interactivos": 155,
         "pequenos": 155,
         "pequenosEnFrase": 0,

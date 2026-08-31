@@ -82,9 +82,36 @@
   font-weight: 500;
 }
 
+/*
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ EL CORREO SE PARTE POR EL GUION, NO POR DONDE CAIGA.                    │
+ * │                                                                          │
+ * │ Estaba en `word-break: break-all`, que rompe en CUALQUIER caracter aunque│
+ * │ el trozo cupiera entero en la linea siguiente. MEDIDO a 768: la columna  │
+ * │ da 186 px y el correo mas largo pide 222, asi que hay que partir — pero  │
+ * │ `break-all` partia por el pixel exacto y salia                           │
+ * │                                                                          │
+ * │     duena-5bc217@diseno.l            recepcion-5bc217@dise               │
+ * │     ocal                             no.local                            │
+ * │                                                                          │
+ * │ `overflow-wrap: anywhere` deja actuar primero a las reglas normales de   │
+ * │ salto —y despues de un guion SI se puede partir—, y solo rompe a lo      │
+ * │ bruto si no hay mas remedio:                                             │
+ * │                                                                          │
+ * │     duena-                           recepcion-                          │
+ * │     5bc217@diseno.local              5bc217@diseno.local                 │
+ * │                                                                          │
+ * │ La cola mide 143 px y le sobran 43 en la columna, asi que NO hace falta  │
+ * │ ni un pixel mas de ancho: tabla en 639, fila en 67, recorrido igual.     │
+ * │                                                                          │
+ * │ Y `anywhere` y no quitar la regla a secas: con un correo SIN guion       │
+ * │ —administraciongeneral@…— dejarlo en `normal` estira la columna a 373 px │
+ * │ y la tabla a 806, que es barra lateral a 768. Comprobado.                │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ */
 .correo {
   font-weight: 500;
-  word-break: break-all;
+  overflow-wrap: anywhere;
 }
 
 @media (max-width: 47.9375rem) {

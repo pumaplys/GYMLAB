@@ -136,7 +136,24 @@
  * A `--e3` cada tabla se estrecha 24 px por columna, que es justo lo que
  * faltaba, y no se pierde ni una columna ni una accion.
  */
-@media (min-width: 48rem) and (max-width: 63.9375rem) {
+/*
+ * Y llega hasta 1.280, no hasta 1.024.
+ *
+ * Acotarlo al escalon de tableta dejaba 1.024 PEOR que 768, que es absurdo en
+ * una pantalla mas ancha. La razon: a 768 la lateral es un rail de 64 px y a
+ * 1.024 es la barra entera de 176, asi que la caja pasa de 639 a 719 px pero
+ * el relleno vuelve a `--e5` y se come 240 en vez de 120. Contenido real:
+ *
+ *     768   639 - 120 = 519 px
+ *    1024   719 - 240 = 479 px   <- cuarenta menos que en la tableta
+ *
+ * Medido en /personal: el correo se partia en TRES lineas a 1.024
+ * —"duena- / 5bc217@diseno.lo / cal"— contra dos limpias a 768, y la fila
+ * pasaba de 67 a 88 px. Con el relleno denso hasta 1.280 la caja deja 599 px
+ * de contenido y el problema desaparece. En 1.440 vuelve `--e5`, que es donde
+ * sobra sitio.
+ */
+@media (min-width: 48rem) and (max-width: 79.9375rem) {
   .tabla th,
   .tabla td {
     padding-left: var(--e3);
