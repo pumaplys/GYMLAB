@@ -1,4 +1,4 @@
-import { ScrollView, StatusBar, StyleSheet, View } from 'react-native';
+import { ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
 import type { ReactNode } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { tema } from '../tema';
@@ -7,17 +7,54 @@ import { tema } from '../tema';
  * El marco de cualquier pantalla.
  *
  * Pone el fondo, respeta las zonas seguras —la muesca arriba, la barra de
- * gestos abajo— y decide si el contenido se desplaza. Nada mas: la navegacion
- * llegara cuando existan pantallas que navegar.
+ * gestos abajo— y decide si el contenido se desplaza.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ EL ENCABEZADO ES OPCIONAL Y SON DOS CADENAS, NO UN COMPONENTE APARTE.    │
+ * │                                                                          │
+ * │ Las cinco areas del socio comparten la misma cabecera: un titulo y una    │
+ * │ frase corta debajo, con el carril de acento entre medias. Escribirla      │
+ * │ suelta en cada pantalla es como cinco pantallas acaban con cinco tamanos  │
+ * │ de titulo distintos.                                                     │
+ * │                                                                          │
+ * │ Y se queda en DOS props. Una pantalla que necesite una cabecera especial  │
+ * │ —el Carne, con su codigo— no pasa `titulo` y se la dibuja: es mejor eso   │
+ * │ que un componente con veinte props para cubrir el caso raro.             │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * No lleva relleno para la barra de pestañas: la barra NO flota, ocupa su
+ * sitio, y el contenido se dispone encima. Ver `(tabs)/_layout.tsx`.
  */
 export function Pantalla({
   children,
+  titulo,
+  descriptor,
   desplazable = true,
 }: {
   children: ReactNode;
+  titulo?: string;
+  descriptor?: string;
   /** Una pantalla que cabe entera —el carne— no debe poder desplazarse. */
   desplazable?: boolean;
 }) {
+  const cuerpo = (
+    <>
+      {titulo ? (
+        <View style={estilos.encabezado}>
+          <Text style={estilos.titulo} accessibilityRole="header">
+            {titulo}
+          </Text>
+          <View style={estilos.carril}>
+            <View style={estilos.carrilAcento} />
+            <View style={estilos.carrilResto} />
+          </View>
+          {descriptor ? <Text style={estilos.descriptor}>{descriptor}</Text> : null}
+        </View>
+      ) : null}
+      {children}
+    </>
+  );
+
   return (
     <SafeAreaView style={estilos.raiz} edges={['top', 'left', 'right']}>
       <StatusBar barStyle="light-content" backgroundColor={tema.color.fondo} />
@@ -27,10 +64,10 @@ export function Pantalla({
           contentContainerStyle={estilos.contenido}
           keyboardShouldPersistTaps="handled"
         >
-          {children}
+          {cuerpo}
         </ScrollView>
       ) : (
-        <View style={[estilos.flujo, estilos.contenido]}>{children}</View>
+        <View style={[estilos.flujo, estilos.contenido]}>{cuerpo}</View>
       )}
     </SafeAreaView>
   );
@@ -50,4 +87,10 @@ const estilos = StyleSheet.create({
     // telefono con gestos se toca sin querer.
     paddingBottom: tema.espacio.xxxl,
   },
+  encabezado: { gap: tema.espacio.md },
+  titulo: { ...tema.texto.h1, color: tema.color.texto },
+  carril: { flexDirection: 'row', alignItems: 'center', height: 3 },
+  carrilAcento: { width: 44, height: 3, borderRadius: 2, backgroundColor: tema.color.acento },
+  carrilResto: { flex: 1, height: 1, backgroundColor: tema.color.borde },
+  descriptor: { ...tema.texto.cuerpo, color: tema.color.textoSecundario, lineHeight: 22 },
 });

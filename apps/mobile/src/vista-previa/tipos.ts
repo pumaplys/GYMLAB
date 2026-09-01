@@ -6,20 +6,20 @@
  */
 import type { EstadoDeSesion } from '../auth/estado';
 
-/** Que pantalla monta cada caso. */
-export type Pantalla =
-  | 'entrar'
-  | 'arranque'
-  | 'sesion-lista'
-  | 'no-admitido'
-  | 'problema'
-  | 'elegir-gimnasio';
-
-/** Como se comporta `entrar()` en este caso, para poder ver error y carga. */
+/**
+ * Como se comporta `entrar()` en este caso.
+ *
+ * El error y la espera del login viven DENTRO de la pantalla, no en el
+ * contexto, asi que la unica forma de verlos sin inventarse el pintado es
+ * provocarlos por el camino de verdad.
+ */
 export type Entrada = 'inerte' | 'falla401' | 'nunca-termina';
 
+/**
+ * Un caso es solo un ESTADO de sesion. La pantalla la elige la URL, que es la
+ * de verdad: `/inicio?vista=autenticado` monta las pestañas reales.
+ */
 export interface Caso {
-  pantalla: Pantalla;
   estado: EstadoDeSesion;
   entrada: Entrada;
 }

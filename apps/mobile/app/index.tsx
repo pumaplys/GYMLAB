@@ -1,6 +1,7 @@
 import { Redirect } from 'expo-router';
 import { useSesion } from '../src/auth/sesion';
 import { Arranque } from '../src/componentes/arranque';
+import { destinoDe } from '../src/navegacion/destinos';
 
 /**
  * El unico sitio que decide a donde va cada estado de sesion.
@@ -15,22 +16,12 @@ import { Arranque } from '../src/componentes/arranque';
  * │                                                                          │
  * │ `cargando` tiene pantalla propia: la de arranque.                        │
  * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * La decision en si vive en `navegacion/destinos.ts`, sin React, para poder
+ * probarla. Aqui solo queda pintarla.
  */
 export default function Puerta() {
   const { estado } = useSesion();
-
-  switch (estado.tipo) {
-    case 'cargando':
-      return <Arranque />;
-    case 'sinSesion':
-      return <Redirect href="/entrar" />;
-    case 'requiereSeleccionGimnasio':
-      return <Redirect href="/elegir-gimnasio" />;
-    case 'rolNoAdmitido':
-      return <Redirect href="/no-admitido" />;
-    case 'errorAlComprobar':
-      return <Redirect href="/problema" />;
-    case 'autenticado':
-      return <Redirect href="/sesion-lista" />;
-  }
+  const destino = destinoDe(estado);
+  return destino ? <Redirect href={destino} /> : <Arranque />;
 }

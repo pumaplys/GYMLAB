@@ -50,7 +50,7 @@ export default function Entrar() {
 
   // Si ya hay sesion —por ejemplo al volver del selector— esta pantalla no
   // pinta nada: manda la puerta.
-  if (estado.tipo === 'autenticado') return <Redirect href="/sesion-lista" />;
+  if (estado.tipo === 'autenticado') return <Redirect href="/inicio" />;
 
   const listo = correo.trim().length > 0 && clave.length > 0 && !enviando;
 

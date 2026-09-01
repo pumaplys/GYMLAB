@@ -26,4 +26,4 @@
 import type { Caso } from './tipos';
 
 export const CASOS: Record<string, Caso> = {};
-export type { Caso, Entrada, Pantalla } from './tipos';
+export type { Caso, Entrada } from './tipos';
