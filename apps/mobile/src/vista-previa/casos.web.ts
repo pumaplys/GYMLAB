@@ -58,31 +58,26 @@ const SOCIA_EN_VARIOS: Me = {
 } as Me;
 
 export const CASOS: Record<string, Caso> = {
-  login: { pantalla: 'entrar', estado: { tipo: 'sinSesion' }, entrada: 'inerte' },
-  'login-error': { pantalla: 'entrar', estado: { tipo: 'sinSesion' }, entrada: 'falla401' },
+  login: { estado: { tipo: 'sinSesion' }, entrada: 'inerte' },
+  'login-error': { estado: { tipo: 'sinSesion' }, entrada: 'falla401' },
   'login-cargando': {
-    pantalla: 'entrar',
     estado: { tipo: 'sinSesion' },
     entrada: 'nunca-termina',
   },
-  arranque: { pantalla: 'arranque', estado: { tipo: 'cargando' }, entrada: 'inerte' },
-  'sesion-lista': {
-    pantalla: 'sesion-lista',
+  arranque: { estado: { tipo: 'cargando' }, entrada: 'inerte' },
+  autenticado: {
     estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A },
     entrada: 'inerte',
   },
   'no-admitido': {
-    pantalla: 'no-admitido',
     estado: { tipo: 'rolNoAdmitido', yo: ENTRENADORA },
     entrada: 'inerte',
   },
   problema: {
-    pantalla: 'problema',
     estado: { tipo: 'errorAlComprobar', motivo: 'red' },
     entrada: 'inerte',
   },
   'selector-uno': {
-    pantalla: 'elegir-gimnasio',
     estado: {
       tipo: 'requiereSeleccionGimnasio',
       yo: SOCIA_EN_UNO,
@@ -91,7 +86,6 @@ export const CASOS: Record<string, Caso> = {
     entrada: 'inerte',
   },
   'selector-varios': {
-    pantalla: 'elegir-gimnasio',
     estado: {
       tipo: 'requiereSeleccionGimnasio',
       yo: SOCIA_EN_VARIOS,
@@ -101,4 +95,4 @@ export const CASOS: Record<string, Caso> = {
   },
 };
 
-export type { Caso, Entrada, Pantalla } from './tipos';
+export type { Caso, Entrada } from './tipos';
