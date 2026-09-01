@@ -5,14 +5,17 @@
     "version": "0.0.0",
     "orientation": "portrait",
     "scheme": "gymlab",
-    "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
+    "userInterfaceStyle": "dark",
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.gymlab.app"
     },
     "android": {
       "package": "com.gymlab.app"
-    }
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store"
+    ]
   }
 }
