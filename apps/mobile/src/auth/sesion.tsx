@@ -106,3 +106,21 @@ export function useSesion(): Sesion {
   if (!valor) throw new Error('useSesion se ha usado fuera de <ProveedorDeSesion>.');
   return valor;
 }
+
+/**
+ * El contexto, expuesto SOLO para la vista previa web.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ ESTO NO CAMBIA LA MAQUINA DE SESION.                                     │
+ * │                                                                          │
+ * │ Es una linea aditiva: el mismo objeto que ya existia, ahora con nombre    │
+ * │ publico. Sirve para que `app/vista-previa` pueda montar las pantallas     │
+ * │ REALES con un valor de sesion controlado, sin duplicar ni una pantalla ni │
+ * │ un token.                                                                │
+ * │                                                                          │
+ * │ La app de verdad no lo importa en ningun sitio: sigue usando             │
+ * │ `ProveedorDeSesion` y `useSesion` como siempre.                          │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ */
+export const ContextoDeSesion = Contexto;
+export type { Sesion };
