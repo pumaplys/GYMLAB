@@ -65,19 +65,42 @@ const DIBUJOS: Record<NombreDeIcono, ReactNode> = {
       <Path d="M9.5 20.5v-6h5v6" />
     </>
   ),
-  /* Una lista con marcas: la rutina del dia. */
+  /*
+   * Tres marcas y tres lineas: la rutina que se va tachando.
+   *
+   * ANTES era un rectangulo con lineas dentro, y a 24 px eso es exactamente
+   * la misma silueta que el Carne: un marco. Se quita el marco entero. Lo que
+   * queda son marcas sueltas sobre el fondo, con el peso a la IZQUIERDA — al
+   * lado del Carne, que lo tiene repartido en las esquinas, se distinguen sin
+   * leer la palabra.
+   */
   rutina: (
     <>
-      <Rect x={4.5} y={4} width={15} height={16} rx={2.5} />
-      <Path d="M8.5 9.5h7M8.5 13h7M8.5 16.5h4" />
+      <Path d="M4 7 5.5 8.5 8.2 5.8" />
+      <Path d="M11.8 7h8.2" />
+      <Path d="M4 12.5 5.5 14 8.2 11.3" />
+      <Path d="M11.8 12.5h8.2" />
+      <Path d="M4 18 5.5 19.5 8.2 16.8" />
+      <Path d="M11.8 18h8.2" />
     </>
   ),
-  /* Un carne con su codigo. */
+  /*
+   * Tres esquinas y unos modulos sueltos: la silueta de un codigo.
+   *
+   * ANTES era una tarjeta con una foto y unas lineas —un marco horizontal—
+   * que a 24 px se confundia con la lista. Ahora la silueta es CUADRADA y con
+   * mucho hueco: tres cuadrados en las esquinas, que es lo que el ojo
+   * reconoce como codigo antes de leer nada.
+   *
+   * No se intenta dibujar un codigo de verdad: a este tamaño seria una
+   * mancha, y ademas el codigo real lo pinta la pantalla del Carne.
+   */
   carne: (
     <>
-      <Rect x={3.5} y={5} width={17} height={14} rx={2.5} />
-      <Rect x={6.5} y={8.5} width={4.5} height={4.5} rx={1} />
-      <Path d="M6.5 16h4.5M14 9.5h4M14 12.5h4M14 15.5h2.5" />
+      <Rect x={3.5} y={3.5} width={6.5} height={6.5} rx={1.5} />
+      <Rect x={14} y={3.5} width={6.5} height={6.5} rx={1.5} />
+      <Rect x={3.5} y={14} width={6.5} height={6.5} rx={1.5} />
+      <Path d="M14 14.5h6.5M14 18h3M17.5 20.5h3" />
     </>
   ),
   /* Una linea que sube. */
