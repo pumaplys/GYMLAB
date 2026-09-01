@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { AppState, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import type { DuesStatus, Member } from '@gymlab/contracts';
 import { Aviso } from '../../src/componentes/aviso';
@@ -14,12 +14,13 @@ import { mensajeDeEntrada } from '../../src/auth/mensajes';
 import {
   CADA_CUANTO_MS,
   avisaDeQueLaPuertaPuedeNegar,
-  debeDescartarse,
+  debePedirTrasSegundoPlano,
   estadoDelCodigo,
+  haCaducado,
   lecturaDeCuota,
   segundosRestantes,
   textoDeCuentaAtras,
-  type CodigoDeAcceso as Codigo,
+  type EstadoDelPase,
 } from '../../src/carne/logica';
 import { tema } from '../../src/tema';
 
@@ -27,15 +28,18 @@ import { tema } from '../../src/tema';
  * El carne y su codigo de acceso.
  *
  * ┌──────────────────────────────────────────────────────────────────────────┐
- * │ EL CODIGO NO SE GENERA AL ENTRAR, Y NO ES UNA PREFERENCIA.              │
+ * │ SE ABRE CARNE Y YA HAY CODIGO. SIN PULSAR NADA.                         │
  * │                                                                          │
- * │ Dura SESENTA SEGUNDOS —medido contra el fixture— y se consume al         │
- * │ escanearlo. Generarlo al abrir la pestaña significaria que, para cuando  │
- * │ alguien llega al torno, ya esta caducado; y ademas gastaria un token     │
- * │ cada vez que se toca "Carne" sin intencion de entrar.                    │
+ * │ La primera version tenia un boton "Mostrar mi codigo" que se pulsaba     │
+ * │ delante de la puerta. Es una friccion de mas: quien toca "Carne" en la   │
+ * │ cola del torno quiere enseñar el telefono, no dar dos pasos.             │
  * │                                                                          │
- * │ Asi que hay un boton, y se pulsa delante de la puerta. Es lo mismo que   │
- * │ hace el panel web, por la misma razon.                                  │
+ * │ Ahora se pide al ENTRAR, y se pide otro CADA VEZ que se entra, aunque el │
+ * │ anterior no haya caducado: el codigo es de un solo uso y el cliente no   │
+ * │ puede saber si un escaner ya lo consumio. Ver `SE_PIDE_AL_ENTRAR`.       │
+ * │                                                                          │
+ * │ Lo que NO hay es sondeo: mientras el codigo vive no se pide nada mas. El │
+ * │ boton solo aparece cuando caduca o cuando falla.                        │
  * └──────────────────────────────────────────────────────────────────────────┘
  *
  * ┌──────────────────────────────────────────────────────────────────────────┐
@@ -59,11 +63,9 @@ export default function Carne() {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  /** El codigo vigente. Solo en memoria. */
-  const [codigo, setCodigo] = useState<Codigo | null>(null);
+  /** El pase. Solo en memoria. */
+  const [pase, setPase] = useState<EstadoDelPase>({ fase: 'pidiendo' });
   const [restan, setRestan] = useState(0);
-  const [generando, setGenerando] = useState(false);
-  const [errorAlGenerar, setErrorAlGenerar] = useState<string | null>(null);
 
   const gymId = sesion.tipo === 'autenticado' ? sesion.gymId : null;
   const gimnasio =
@@ -85,69 +87,92 @@ export default function Carne() {
     }
   }, []);
 
+  /**
+   * Pide un codigo y sustituye el que hubiera.
+   *
+   * Si falla, el anterior NO se conserva: un codigo del que ya no sabemos
+   * nada es peor que ninguno, porque invita a enseñarlo. Y un fallo de red no
+   * cierra la sesion — solo deja el pase en error.
+   */
+  const generar = useCallback(async () => {
+    setPase({ fase: 'pidiendo' });
+    try {
+      const codigo = await pedirCodigo();
+      setPase({ fase: 'listo', codigo });
+    } catch (problema) {
+      // El mensaje NUNCA lleva el token: `mensajeDeEntrada` produce frases
+      // fijas y no reenvia nada del servidor en los 5xx.
+      setPase({ fase: 'error', mensaje: mensajeDeEntrada(problema) });
+    }
+  }, []);
+
   useEffect(() => {
     if (!gymId) return;
-    // Al cambiar de gimnasio se tira el codigo ANTES de pedir nada: su firma se
-    // deriva del gimnasio, asi que alli no valdria — y lo que no puede pasar es
-    // que se quede a la vista como si sirviera.
-    setCodigo(null);
-    setErrorAlGenerar(null);
+    // Al cambiar de gimnasio se tira el pase ANTES de pedir nada: su firma se
+    // deriva del gimnasio, asi que alli no valdria.
+    setPase({ fase: 'pidiendo' });
     void cargar();
   }, [gymId, cargar]);
+
+  /*
+   * Entrar en la pestaña pide un codigo nuevo. Cada vez.
+   *
+   * `useFocusEffect` se dispara cuando la pantalla recupera el foco, que es
+   * exactamente el gesto que hay que atender.
+   */
+  useFocusEffect(
+    useCallback(() => {
+      void generar();
+    }, [generar]),
+  );
 
   /*
    * La cuenta atras. Una vez por segundo, no por fotograma.
    *
    * Se RECALCULA contra `expiresAt` en cada tic en lugar de restar uno: asi
    * volver del segundo plano —donde el sistema congela los temporizadores— no
-   * deja el numero adelantado. Y se limpia al desmontar y cada vez que cambia
-   * el codigo, que es lo que evita dejar un intervalo corriendo por cada
-   * codigo generado.
+   * deja el numero adelantado. Al llegar a cero el pase pasa a `caducado` y el
+   * codigo DESAPARECE: no se deja en gris, porque un QR a la vista invita a
+   * enseñarlo y uno caducado no abre.
    */
   useEffect(() => {
-    if (!codigo) return;
-    setRestan(segundosRestantes(codigo.expiresAt));
-    const reloj = setInterval(() => setRestan(segundosRestantes(codigo.expiresAt)), CADA_CUANTO_MS);
+    if (pase.fase !== 'listo') return;
+    const { expiresAt } = pase.codigo;
+
+    const tic = () => {
+      const quedan = segundosRestantes(expiresAt);
+      setRestan(quedan);
+      if (quedan === 0) setPase({ fase: 'caducado' });
+    };
+
+    tic();
+    const reloj = setInterval(tic, CADA_CUANTO_MS);
     return () => clearInterval(reloj);
-  }, [codigo]);
+  }, [pase]);
 
   /*
-   * Al volver a la pestaña, un codigo caducado se tira.
+   * Volver del segundo plano.
    *
-   * No se genera uno nuevo: eso gastaria un token por cada vez que alguien
-   * pasa por aqui. Solo se retira lo que ya no sirve para que no siga en
-   * pantalla aparentando que si.
+   * NO es lo mismo que volver a la pestaña: aqui el codigo que sigue valiendo
+   * SE CONSERVA. Ver `debePedirTrasSegundoPlano`. La suscripcion se cancela al
+   * desmontar.
    */
-  const codigoRef = useRef(codigo);
-  codigoRef.current = codigo;
-  useFocusEffect(
-    useCallback(() => {
-      if (debeDescartarse(codigoRef.current)) setCodigo(null);
-    }, []),
-  );
-
-  const generar = useCallback(async () => {
-    if (generando) return;
-    setGenerando(true);
-    setErrorAlGenerar(null);
-    try {
-      setCodigo(await pedirCodigo());
-    } catch (problema) {
-      // El mensaje NUNCA lleva el token: `mensajeDeEntrada` solo produce frases
-      // fijas y no reenvia nada del servidor en los 5xx.
-      setErrorAlGenerar(mensajeDeEntrada(problema));
-    } finally {
-      setGenerando(false);
-    }
-  }, [generando]);
+  const paseRef = useRef(pase);
+  paseRef.current = pase;
+  useEffect(() => {
+    const suscripcion = AppState.addEventListener('change', (siguiente) => {
+      if (siguiente !== 'active') return;
+      if (debePedirTrasSegundoPlano(paseRef.current)) void generar();
+    });
+    return () => suscripcion.remove();
+  }, [generar]);
 
   /*
    * El lado del codigo.
    *
    * El ancho util es el de la pantalla menos el relleno del marco (16 a cada
    * lado) y el de la tarjeta (16 a cada lado). Se limita a 320 para que en un
-   * telefono grande no crezca hasta empujar todo lo demas fuera: por encima de
-   * ese tamaño ya se lee de sobra y lo unico que se gana es scroll.
+   * telefono grande no crezca hasta empujar todo lo demas fuera.
    */
   const lado = Math.min(width - tema.espacio.lg * 4, 320);
 
@@ -176,8 +201,9 @@ export default function Carne() {
     );
   }
 
-  const situacion = estadoDelCodigo(codigo, Date.now());
-  const caducado = situacion === 'caducado';
+  const caducado = pase.fase === 'caducado' || haCaducado(pase);
+  const hayCodigo = pase.fase === 'listo' && !caducado;
+  const situacion = estadoDelCodigo(hayCodigo && pase.fase === 'listo' ? pase.codigo : null);
   const lectura = lecturaDeCuota(cuota);
 
   return (
@@ -186,22 +212,24 @@ export default function Carne() {
 
       <Tarjeta>
         {/* 1. El codigo, que es a lo que se viene. */}
-        {codigo && !caducado ? (
-          <CodigoDeAcceso token={codigo.token} lado={lado} />
+        {pase.fase === 'listo' && !caducado ? (
+          <CodigoDeAcceso token={pase.codigo.token} lado={lado} />
         ) : (
           <HuecoDelCodigo lado={lado}>
             <Text style={estilos.instruccion}>
-              {caducado
-                ? 'Tu codigo ha caducado.'
-                : 'Genera tu codigo cuando estes en la puerta: vale un minuto y se usa una vez.'}
+              {pase.fase === 'pidiendo'
+                ? 'Preparando tu codigo…'
+                : pase.fase === 'error'
+                  ? pase.mensaje
+                  : 'Tu codigo ha caducado.'}
             </Text>
           </HuecoDelCodigo>
         )}
 
         {/* 2. Cuanto le queda, en palabras. Se anuncia solo al cambiar. */}
-        {codigo ? (
+        {hayCodigo ? (
           <Text
-            style={[estilos.vigencia, (caducado || situacion === 'porCaducar') && estilos.urgente]}
+            style={[estilos.vigencia, situacion === 'porCaducar' && estilos.urgente]}
             accessibilityLiveRegion="polite"
             accessibilityRole="text"
           >
@@ -210,12 +238,12 @@ export default function Carne() {
         ) : null}
 
         {/*
-          2. En que situacion esta la membresia.
+          3. En que situacion esta la membresia.
 
-          Va AQUI, pegado al codigo, y no al final de la pantalla. Con la
-          cuota vencida el aviso quedaba debajo de la tarjeta y la barra
-          inferior lo tapaba: quien mas necesitaba leerlo era justo quien no
-          lo veia sin desplazar.
+          Va AQUI, pegado al codigo, y no al final de la pantalla. Con la cuota
+          vencida el aviso quedaba debajo de la tarjeta y la barra inferior lo
+          tapaba: quien mas necesitaba leerlo era justo quien no lo veia sin
+          desplazar.
         */}
         <View style={estilos.situacion}>
           <Etiqueta tono={lectura.tono}>{lectura.titulo}</Etiqueta>
@@ -226,16 +254,20 @@ export default function Carne() {
           ) : null}
         </View>
 
-        <Boton
-          variante={codigo && !caducado ? 'secundario' : 'primario'}
-          onPress={() => void generar()}
-          cargando={generando}
-          accessibilityHint="Pide un codigo de acceso nuevo"
-        >
-          {codigo ? 'Generar otro codigo' : 'Mostrar mi codigo'}
-        </Boton>
-
-        {errorAlGenerar ? <Aviso tono="peligro">{errorAlGenerar}</Aviso> : null}
+        {/*
+          El boton SOLO existe cuando hace falta: caducado o fallo. Mientras el
+          codigo vive no hay nada que pulsar, y esa ausencia es la mitad de la
+          mejora — se abre la pantalla y ya esta listo.
+        */}
+        {caducado || pase.fase === 'error' ? (
+          <Boton
+            variante="primario"
+            onPress={() => void generar()}
+            accessibilityHint="Pide un codigo de acceso nuevo"
+          >
+            {pase.fase === 'error' ? 'Reintentar' : 'Generar nuevo codigo'}
+          </Boton>
+        ) : null}
 
         {/* 4, 5 y 6. Quien soy, donde y con que numero. */}
         <View style={estilos.separador} />
@@ -252,9 +284,8 @@ export default function Carne() {
       </Tarjeta>
 
       {/*
-        La explicacion, fuera de la tarjeta: amplia lo que ya dice la pastilla
-        y no compite con el codigo. Si alguien no llega a leerla, no se pierde
-        nada que no estuviera arriba en una palabra.
+        La explicacion, fuera de la tarjeta: amplia lo que ya dice la pastilla y
+        no compite con el codigo.
       */}
       <Text style={estilos.explicacion}>{lectura.explicacion}</Text>
     </Pantalla>

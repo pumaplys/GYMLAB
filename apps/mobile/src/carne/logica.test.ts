@@ -3,11 +3,14 @@ import type { DuesStatus } from '@gymlab/contracts';
 import {
   SEGUNDOS_DE_AVISO,
   avisaDeQueLaPuertaPuedeNegar,
-  debeDescartarse,
+  SE_PIDE_AL_ENTRAR,
+  debePedirTrasSegundoPlano,
+  haCaducado,
   estadoDelCodigo,
   lecturaDeCuota,
   segundosRestantes,
   textoDeCuentaAtras,
+  type EstadoDelPase,
 } from './logica';
 
 /** Un instante fijo, para que las pruebas no dependan de cuando se ejecuten. */
@@ -75,17 +78,36 @@ describe('en que punto esta el codigo', () => {
   });
 });
 
-describe('un codigo muerto no se queda a la vista', () => {
-  it('el caducado se descarta al volver a la pantalla', () => {
-    expect(debeDescartarse(codigo(-1), AHORA)).toBe(true);
+describe('la politica de generacion', () => {
+  const listo = (s: number): EstadoDelPase => ({ fase: 'listo', codigo: codigo(s) });
+
+  it('entrar en Carne SIEMPRE pide uno nuevo', () => {
+    // Aunque el anterior no haya caducado: es de un solo uso y no sabemos si
+    // un escaner ya lo consumio.
+    expect(SE_PIDE_AL_ENTRAR).toBe(true);
   });
 
-  it('el que todavia vale se conserva: volver a la pestaña no gasta un token', () => {
-    expect(debeDescartarse(codigo(30), AHORA)).toBe(false);
+  it('volver del segundo plano con un codigo VIVO no pide otro', () => {
+    expect(debePedirTrasSegundoPlano(listo(30), AHORA)).toBe(false);
   });
 
-  it('sin codigo no hay nada que descartar', () => {
-    expect(debeDescartarse(null, AHORA)).toBe(false);
+  it('volver del segundo plano con el codigo caducado si pide otro', () => {
+    expect(debePedirTrasSegundoPlano(listo(-1), AHORA)).toBe(true);
+    expect(debePedirTrasSegundoPlano({ fase: 'caducado' } as EstadoDelPase, AHORA)).toBe(true);
+  });
+
+  it('tras un error, volver del segundo plano reintenta', () => {
+    expect(debePedirTrasSegundoPlano({ fase: 'error', mensaje: 'x' } as EstadoDelPase, AHORA)).toBe(true);
+  });
+
+  it('con una peticion en vuelo NO se lanza otra', () => {
+    expect(debePedirTrasSegundoPlano({ fase: 'pidiendo' } as EstadoDelPase, AHORA)).toBe(false);
+  });
+
+  it('el pase caducado se detecta para retirarlo de la pantalla', () => {
+    expect(haCaducado(listo(-1), AHORA)).toBe(true);
+    expect(haCaducado(listo(5), AHORA)).toBe(false);
+    expect(haCaducado({ fase: 'pidiendo' } as EstadoDelPase, AHORA)).toBe(false);
   });
 });
 

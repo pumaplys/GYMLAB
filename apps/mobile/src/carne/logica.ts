@@ -165,22 +165,70 @@ export function avisaDeQueLaPuertaPuedeNegar(cuota: DuesStatus): boolean {
   return !cuota.puedeAcceder;
 }
 
+// --- La politica de generacion -------------------------------------------
+
+/** En que punto esta el pase que se enseña. */
+export type EstadoDelPase =
+  | { fase: 'pidiendo' }
+  | { fase: 'listo'; codigo: CodigoDeAcceso }
+  | { fase: 'caducado' }
+  | { fase: 'error'; mensaje: string };
+
 /**
- * Si el codigo que hay en memoria debe tirarse al volver a la pantalla.
+ * Al ENTRAR en Carne se pide siempre uno nuevo. Siempre, sin excepcion.
  *
  * ┌──────────────────────────────────────────────────────────────────────────┐
- * │ NI SONDEO NI GENERAR AL ENTRAR.                                         │
+ * │ AUNQUE EL ANTERIOR TODAVIA NO HAYA CADUCADO.                            │
  * │                                                                          │
- * │ El codigo dura 60 segundos y se consume al escanearlo. Generarlo al      │
- * │ abrir la pestaña significaria que, para cuando alguien llega al torno,   │
- * │ ya esta caducado — y gastaria un token cada vez que se toca "Carne" sin  │
- * │ intencion de entrar. Se genera cuando la persona esta delante de la      │
- * │ puerta y pulsa.                                                          │
+ * │ El codigo es de UN SOLO USO y el cliente no tiene forma de saber si un   │
+ * │ escaner ya lo consumio: el servidor invalida el `jti` al validarlo y no  │
+ * │ avisa a nadie. Conservar el de hace treinta segundos es arriesgarse a    │
+ * │ que alguien enseñe en el torno un codigo ya gastado y no entienda por    │
+ * │ que no abre.                                                             │
  * │                                                                          │
- * │ Lo unico automatico es TIRAR el caducado: al volver a la pantalla, un    │
- * │ codigo muerto no puede seguir a la vista como si sirviera.               │
+ * │ Entrar en Carne ES el gesto de querer enseñar un pase ahora. Cuesta una  │
+ * │ peticion; el error contrario cuesta quedarse en la puerta.               │
  * └──────────────────────────────────────────────────────────────────────────┘
  */
-export function debeDescartarse(codigo: CodigoDeAcceso | null, ahora: number = Date.now()): boolean {
-  return codigo !== null && segundosRestantes(codigo.expiresAt, ahora) === 0;
+export const SE_PIDE_AL_ENTRAR = true;
+
+/**
+ * Si al volver del segundo plano hay que pedir otro.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ AQUI SI SE CONSERVA EL QUE VALE, Y NO ES UNA INCOHERENCIA.              │
+ * │                                                                          │
+ * │ Volver a la pantalla es un gesto: alguien ha decidido ir a Carne. Volver │
+ * │ del segundo plano no lo es — puede ser una notificacion, una llamada o   │
+ * │ el bloqueo de pantalla mientras se hace la cola. Si el codigo que ya     │
+ * │ estaba delante sigue vivo, pedir otro solo lo invalidaria justo cuando   │
+ * │ la persona levanta el telefono hacia el lector.                          │
+ * │                                                                          │
+ * │ Sin codigo, caducado o con error: se pide. Con uno en vuelo: no, que ya  │
+ * │ hay una peticion hecha.                                                  │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ */
+export function debePedirTrasSegundoPlano(
+  pase: EstadoDelPase,
+  ahora: number = Date.now(),
+): boolean {
+  switch (pase.fase) {
+    case 'pidiendo':
+      return false;
+    case 'listo':
+      return segundosRestantes(pase.codigo.expiresAt, ahora) === 0;
+    case 'caducado':
+    case 'error':
+      return true;
+  }
+}
+
+/**
+ * Si el pase que hay debe retirarse de la pantalla por haber caducado.
+ *
+ * Se retira ENTERO, no se deja en gris: un QR a la vista invita a enseñarlo,
+ * y uno caducado no abre. Lo que queda en su sitio es el hueco y el boton.
+ */
+export function haCaducado(pase: EstadoDelPase, ahora: number = Date.now()): boolean {
+  return pase.fase === 'listo' && segundosRestantes(pase.codigo.expiresAt, ahora) === 0;
 }

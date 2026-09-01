@@ -15,23 +15,24 @@
  * └──────────────────────────────────────────────────────────────────────────┘
  *
  * ┌──────────────────────────────────────────────────────────────────────────┐
- * │ SE IMPORTA EL NUCLEO, NO EL PAQUETE ENTERO.                             │
+ * │ LA API PUBLICA, NO UNA RUTA INTERNA. SE COMPROBO ANTES DE ELEGIR.       │
  * │                                                                          │
- * │ `qrcode` de raiz arrastra sus dibujantes: `fs`, `pngjs` y `yargs` —una    │
- * │ interfaz de linea de comandos— que en un telefono no pintan nada. El      │
- * │ nucleo es JavaScript puro: no usa el `Buffer` de Node en ninguna parte    │
- * │ (comprobado), asi que funciona igual en React Native que en el navegador. │
+ * │ El primer intento importaba `qrcode/lib/core/qrcode.js` por miedo a que  │
+ * │ el paquete de raiz arrastrase `fs`, `pngjs` y `yargs` al telefono. Se    │
+ * │ midio en vez de suponerlo: Expo configura Metro con                      │
+ * │ `resolverMainFields: [react-native, browser, main]`, asi que en Android e │
+ * │ iOS `qrcode` resuelve a `lib/browser.js` —no a `lib/index.js`— y nada de │
+ * │ Node entra. Un export de Android con la API publica compila.            │
  * │                                                                          │
- * │ Es la misma via que usa `react-native-qrcode-svg`, y por eso no hace      │
- * │ falta esa dependencia: lo unico que aporta es dibujar rectangulos, y eso  │
- * │ lo hace `CodigoDeAcceso` con react-native-svg en veinte lineas.          │
+ * │ `browser.js` reexporta `create` del nucleo y sus dibujantes solo tocan   │
+ * │ `document` DENTRO de funciones que aqui no se llaman nunca. Cuesta seis  │
+ * │ modulos mas de bundle y a cambio quita una ruta interna que una version  │
+ * │ podria mover sin avisar.                                                 │
  * │                                                                          │
- * │ Al ser una ruta interna del paquete, hay un test que comprueba que el     │
- * │ modulo sigue teniendo la forma esperada: si una version lo mueve, salta   │
- * │ ahi y no en el telefono de alguien delante de un torno.                   │
+ * │ Este es el UNICO sitio de la app que importa `qrcode`.                   │
  * └──────────────────────────────────────────────────────────────────────────┘
  */
-import crear from 'qrcode/lib/core/qrcode.js';
+import QRCode from 'qrcode';
 
 export interface MatrizQr {
   /** Modulos por lado, sin contar el margen. */
@@ -53,7 +54,7 @@ const CORRECCION = 'M';
 export function matrizDe(token: string): MatrizQr {
   if (!token) throw new Error('No hay token que codificar.');
 
-  const qr = crear.create(token, { errorCorrectionLevel: CORRECCION });
+  const qr = QRCode.create(token, { errorCorrectionLevel: CORRECCION });
   const lado = qr.modules.size;
   const datos = qr.modules.data;
 

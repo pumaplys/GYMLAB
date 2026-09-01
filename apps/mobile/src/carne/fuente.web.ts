@@ -45,15 +45,29 @@ function cuota(parcial: Partial<DuesStatus>): DuesStatus {
 }
 
 /**
- * Un token de mentira con la MISMA longitud que el real (119 caracteres), para
- * que el codigo que se dibuja tenga la misma densidad de modulos que tendra en
- * produccion. Si fuera mas corto, la preview enseñaria un QR mas simple del
- * que se va a ver de verdad.
+ * Un token de mentira con la misma FORMA que el real, no solo la misma
+ * longitud.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ 119 CARACTERES NO BASTAN PARA QUE EL CODIGO SEA IGUAL.                   │
+ * │                                                                          │
+ * │ El primer intento fue el prefijo mas el abecedario repetido. Misma       │
+ * │ longitud, y aun asi salia un codigo MAS PEQUEÑO: version 6 de 41         │
+ * │ modulos frente a la version 7 de 45 del real. El codificador parte la    │
+ * │ cadena por clases de caracter y una cadena ordenada le da tramos largos, │
+ * │ que ocupan menos bits. La preview enseñaba un codigo mas holgado del que │
+ * │ se va a ver de verdad.                                                   │
+ * │                                                                          │
+ * │ Esta cadena se busco hasta dar con la misma version, el mismo lado y el  │
+ * │ mismo modo (Byte) que un token real medido contra el fixture. Mezcla     │
+ * │ mayusculas, minusculas, digitos, guion y subrayado como hace base64url.  │
+ * │                                                                          │
+ * │ NO es un token: no la firma nadie, empieza por GYMLAB-DEMO-NO-VALIDO y   │
+ * │ escaneada en un torno no abre nada.                                     │
+ * └──────────────────────────────────────────────────────────────────────────┘
  */
-const TOKEN_DE_MUESTRA = `GYMLAB-DEMO-NO-VALIDO-${'0123456789abcdefghijklmnopqrstuvwxyz'.repeat(4)}`.slice(
-  0,
-  119,
-);
+const TOKEN_DE_MUESTRA =
+  'GYMLAB-DEMO-NO-VALIDO-G-f4xseRcmOdSqC-YBX1-BPB9OjVTJ2cvM5VdUJEJCIK0F_WnLwxU16s7GYvAUtwJqp4274UqBFFt07HUT8LWE6Ea5bH3LsP9';
 
 interface CasoDeCarne {
   cuota: DuesStatus;
@@ -75,6 +89,9 @@ const CASOS: Record<string, CasoDeCarne> = {
     vidaDelCodigo: 55,
     carga: 'ok',
   },
+  // Nace ya caducado: la pantalla lo retira en el primer tic y enseña el
+  // boton, que es exactamente lo que pasa al agotarse el minuto.
+  'carne-expirada': { cuota: cuota({}), vidaDelCodigo: -1, carga: 'ok' },
   'carne-cargando': { cuota: cuota({}), vidaDelCodigo: null, carga: 'nunca-termina' },
   'carne-error': { cuota: cuota({}), vidaDelCodigo: null, carga: 'falla' },
 };

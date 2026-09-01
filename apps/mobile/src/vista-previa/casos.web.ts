@@ -99,6 +99,7 @@ export const CASOS: Record<string, Caso> = {
   'carne-expira-pronto': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
   'carne-vencida': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
   'carne-congelada': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
+  'carne-expirada': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
   'carne-cargando': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
   'carne-error': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
 };

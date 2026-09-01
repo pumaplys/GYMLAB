@@ -2,7 +2,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiError, NetworkError } from '@gymlab/api-client';
 import type { AccessTokenResponse, DuesStatus, Member } from '@gymlab/contracts';
 import { caminoDe, matrizDe } from './matriz';
-import { debeDescartarse, segundosRestantes, type CodigoDeAcceso } from './logica';
+import {
+  SE_PIDE_AL_ENTRAR,
+  debePedirTrasSegundoPlano,
+  haCaducado,
+  segundosRestantes,
+  type CodigoDeAcceso,
+  type EstadoDelPase,
+} from './logica';
 import { mensajeDeEntrada } from '../auth/mensajes';
 
 /**
@@ -91,7 +98,9 @@ describe('abrir el carne', () => {
     expect(api.miCuota).toHaveBeenCalledTimes(1);
     expect(ficha.memberNumber).toBe(42);
     expect(cuota.estado).toBe('AL_CORRIENTE');
-    // ABRIR NO GASTA UN CODIGO. Es la regla que ordena toda la pantalla.
+    // Cargar la ficha y pedir el codigo son dos cosas distintas: esta
+    // secuencia es solo la primera. Quien pide el codigo es el efecto de
+    // foco, que se prueba mas abajo.
     expect(pedirToken).not.toHaveBeenCalled();
   });
 
@@ -167,15 +176,24 @@ describe('generar el codigo', () => {
   });
 });
 
-describe('caducar', () => {
-  it('un codigo caducado NO se reutiliza: se descarta al volver a la pantalla', () => {
-    const viejo: CodigoDeAcceso = { token: TOKEN, expiresAt: en(-1) };
-    expect(debeDescartarse(viejo, AHORA)).toBe(true);
+describe('caducar y volver', () => {
+  const listo = (s: number): EstadoDelPase => ({ fase: 'listo', codigo: { token: TOKEN, expiresAt: en(s) } });
+
+  it('entrar en Carne pide uno nuevo aunque el anterior siga vivo', () => {
+    // El codigo es de un solo uso y el cliente no sabe si ya lo escanearon.
+    expect(SE_PIDE_AL_ENTRAR).toBe(true);
   });
 
-  it('volver a la pestaña con un codigo vivo NO gasta otro token', () => {
-    const vivo: CodigoDeAcceso = { token: TOKEN, expiresAt: en(30) };
-    expect(debeDescartarse(vivo, AHORA)).toBe(false);
+  it('un codigo caducado se retira de la pantalla, no se deja en gris', () => {
+    expect(haCaducado(listo(-1), AHORA)).toBe(true);
+  });
+
+  it('volver del segundo plano con un codigo vivo NO gasta otro token', () => {
+    expect(debePedirTrasSegundoPlano(listo(30), AHORA)).toBe(false);
+  });
+
+  it('volver del segundo plano con el codigo muerto si pide otro', () => {
+    expect(debePedirTrasSegundoPlano(listo(-1), AHORA)).toBe(true);
   });
 
   it('la cuenta atras se recalcula contra el servidor, no se resta', () => {
@@ -263,5 +281,209 @@ describe('nada de esto se escribe en el registro', () => {
     } finally {
       for (const espia of Object.values(espias)) espia.mockRestore();
     }
+  });
+});
+
+/**
+ * La POLITICA de generacion, simulada.
+ *
+ * Se replica lo que hacen los efectos de la pantalla —foco, temporizador y
+ * AppState— sobre el mismo estado `EstadoDelPase` que usa el componente. No es
+ * React, pero es la misma maquina: si la politica cambiara, esto cambia.
+ */
+function pantallaSimulada(pedir: () => Promise<CodigoDeAcceso>) {
+  let pase: EstadoDelPase = { fase: 'pidiendo' };
+  let reloj: ReturnType<typeof setInterval> | null = null;
+  const oyentes = new Set<(estado: string) => void>();
+
+  const limpiarReloj = () => {
+    if (reloj !== null) clearInterval(reloj);
+    reloj = null;
+  };
+
+  const generar = async () => {
+    pase = { fase: 'pidiendo' };
+    try {
+      pase = { fase: 'listo', codigo: await pedir() };
+    } catch {
+      pase = { fase: 'error', mensaje: 'no se pudo' };
+    }
+  };
+
+  return {
+    get pase() {
+      return pase;
+    },
+    get relojesVivos() {
+      return reloj === null ? 0 : 1;
+    },
+    get oyentesVivos() {
+      return oyentes.size;
+    },
+    /** El efecto de foco: entrar en la pestaña. */
+    entrar: async () => {
+      const oyente = (estado: string) => {
+        if (estado === 'active' && debePedirTrasSegundoPlano(pase, AHORA)) void generar();
+      };
+      oyentes.add(oyente);
+      limpiarReloj();
+      reloj = setInterval(() => undefined, 1000);
+      await generar();
+      return () => {
+        oyentes.delete(oyente);
+        limpiarReloj();
+      };
+    },
+    /** El tic del temporizador, con el reloj puesto donde se quiera. */
+    tic: (ahora: number) => {
+      if (haCaducado(pase, ahora)) pase = { fase: 'caducado' };
+    },
+    /** El boton que aparece al caducar o al fallar. */
+    pulsarCta: () => generar(),
+    /** Volver del segundo plano. */
+    /** El reloj se pasa a mano: las pruebas no dependen de la hora real. */
+    volverDeSegundoPlano: async (ahora: number) => {
+      if (debePedirTrasSegundoPlano(pase, ahora)) await generar();
+    },
+  };
+}
+
+describe('la politica de generacion, de principio a fin', () => {
+  const codigoQueDura = (s: number) => ({ token: TOKEN, expiresAt: en(s) });
+
+  it('entrar en Carne pide un codigo SIN pulsar nada', async () => {
+    const pedir = vi.fn(async () => codigoQueDura(60));
+    const p = pantallaSimulada(pedir);
+
+    const salir = await p.entrar();
+
+    expect(pedir).toHaveBeenCalledTimes(1);
+    expect(p.pase.fase).toBe('listo');
+    salir();
+  });
+
+  it('volver a entrar pide otro AUNQUE el anterior siguiera vivo', async () => {
+    const pedir = vi
+      .fn<() => Promise<CodigoDeAcceso>>()
+      .mockResolvedValueOnce(codigoQueDura(60))
+      .mockResolvedValueOnce({ token: `${TOKEN.slice(0, 118)}X`, expiresAt: en(120) });
+    const p = pantallaSimulada(pedir);
+
+    const salir1 = await p.entrar();
+    const primero = p.pase.fase === 'listo' ? p.pase.codigo.token : null;
+    salir1();
+    const salir2 = await p.entrar();
+    const segundo = p.pase.fase === 'listo' ? p.pase.codigo.token : null;
+
+    expect(pedir).toHaveBeenCalledTimes(2);
+    expect(primero).not.toBe(segundo);
+    salir2();
+  });
+
+  it('mientras el codigo vive NO se pide nada mas: cero sondeo', async () => {
+    const pedir = vi.fn(async () => codigoQueDura(60));
+    const p = pantallaSimulada(pedir);
+    const salir = await p.entrar();
+
+    // Sesenta tics: un minuto entero de pantalla abierta.
+    for (let i = 1; i <= 59; i++) p.tic(AHORA + i * 1000);
+
+    expect(pedir).toHaveBeenCalledTimes(1);
+    expect(p.pase.fase).toBe('listo');
+    salir();
+  });
+
+  it('al caducar el codigo DESAPARECE y no se pide otro solo', async () => {
+    const pedir = vi.fn(async () => codigoQueDura(60));
+    const p = pantallaSimulada(pedir);
+    const salir = await p.entrar();
+
+    p.tic(AHORA + 61_000);
+
+    expect(p.pase.fase).toBe('caducado');
+    // Caducar no dispara una peticion: aparece el boton y decide la persona.
+    expect(pedir).toHaveBeenCalledTimes(1);
+    salir();
+  });
+
+  it('el boton posterior a la caducidad si pide otro', async () => {
+    const pedir = vi.fn(async () => codigoQueDura(60));
+    const p = pantallaSimulada(pedir);
+    const salir = await p.entrar();
+    p.tic(AHORA + 61_000);
+
+    await p.pulsarCta();
+
+    expect(pedir).toHaveBeenCalledTimes(2);
+    expect(p.pase.fase).toBe('listo');
+    salir();
+  });
+
+  it('si falla, NO se reutiliza el codigo anterior', async () => {
+    const pedir = vi
+      .fn<() => Promise<CodigoDeAcceso>>()
+      .mockResolvedValueOnce(codigoQueDura(60))
+      .mockRejectedValueOnce(new NetworkError('POST', '/x', new TypeError('failed')));
+    const p = pantallaSimulada(pedir);
+
+    const salir1 = await p.entrar();
+    salir1();
+    const salir2 = await p.entrar();
+
+    expect(p.pase.fase).toBe('error');
+    // Y el error no arrastra un codigo viejo escondido.
+    expect(JSON.stringify(p.pase)).not.toContain(TOKEN);
+    salir2();
+  });
+
+  it('volver del segundo plano con el codigo vivo NO pide otro', async () => {
+    const pedir = vi.fn(async () => codigoQueDura(60));
+    const p = pantallaSimulada(pedir);
+    const salir = await p.entrar();
+
+    await p.volverDeSegundoPlano(AHORA);
+
+    expect(pedir).toHaveBeenCalledTimes(1);
+    salir();
+  });
+
+  it('volver del segundo plano con el codigo caducado SI pide otro', async () => {
+    const pedir = vi.fn(async () => codigoQueDura(60));
+    const p = pantallaSimulada(pedir);
+    const salir = await p.entrar();
+    p.tic(AHORA + 61_000);
+
+    await p.volverDeSegundoPlano(AHORA + 61_000);
+
+    expect(pedir).toHaveBeenCalledTimes(2);
+    salir();
+  });
+
+  it('al salir se cancelan el reloj y el oyente de AppState', async () => {
+    const pedir = vi.fn(async () => codigoQueDura(60));
+    const p = pantallaSimulada(pedir);
+
+    const salir = await p.entrar();
+    expect(p.relojesVivos).toBe(1);
+    expect(p.oyentesVivos).toBe(1);
+
+    salir();
+    expect(p.relojesVivos).toBe(0);
+    expect(p.oyentesVivos).toBe(0);
+  });
+
+  it('en todo el recorrido, el token no llega al almacen', async () => {
+    const almacen = almacenFalso();
+    const pedir = vi.fn(async () => codigoQueDura(60));
+    const p = pantallaSimulada(pedir);
+
+    const salir = await p.entrar();
+    p.tic(AHORA + 61_000);
+    await p.pulsarCta();
+    await p.volverDeSegundoPlano(AHORA);
+    salir();
+
+    expect(almacen.guardar).not.toHaveBeenCalled();
+    expect(almacen.escrituras).toEqual([]);
   });
 });

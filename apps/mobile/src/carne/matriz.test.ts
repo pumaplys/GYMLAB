@@ -57,10 +57,10 @@ describe('la matriz del codigo', () => {
     expect(() => matrizDe('')).toThrow();
   });
 
-  it('el nucleo de `qrcode` sigue donde se le importa', () => {
-    // Se importa una ruta interna del paquete. Si una version la mueve, esto
-    // salta aqui y no en el telefono de alguien delante de un torno.
+  it('la API publica de qrcode sigue teniendo create()', () => {
+    // Es el unico punto de contacto con la libreria. Si una version cambiara
+    // la forma de , salta aqui y no en el telefono de alguien.
     const m = matrizDe(TOKEN);
     expect(m.lado).toBeGreaterThan(0);
-  });
-});
+    expect(typeof m.modulos[0]).toBe('boolean');
+  });});
