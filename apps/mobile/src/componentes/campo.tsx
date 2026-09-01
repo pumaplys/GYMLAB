@@ -99,7 +99,18 @@ export function Campo({
 
 const estilos = StyleSheet.create({
   bloque: { gap: tema.espacio.sm },
-  etiqueta: { ...tema.texto.secundario, fontWeight: '600', color: tema.color.textoSecundario },
+  // Micro-tipografia en versales con espaciado: es el mismo recurso que ya
+  // usan 'SOCIO' y 'GIMNASIO ACTIVO' en sesion-lista, y le da al formulario
+  // un aire de ficha tecnica en lugar de formulario de alta.
+  // El texto se escribe en minusculas y se sube por ESTILO: el nombre que
+  // recibe un lector de pantalla sigue siendo 'Correo', no 'CORREO'.
+  etiqueta: {
+    ...tema.texto.meta,
+    fontWeight: '700',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: tema.color.textoSecundario,
+  },
   caja: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -116,6 +127,10 @@ const estilos = StyleSheet.create({
   inactiva: { opacity: 0.5 },
   entrada: {
     flex: 1,
+    // Sin esto el input reclama el ancho de su contenido y empuja al boton de
+    // mostrar fuera de la caja: a 360 px desbordaba 3 px. Es la regla de
+    // min-width:auto de flexbox, que react-native-web si aplica.
+    minWidth: 0,
     // El alto lo pone la caja; el input solo necesita respirar dentro.
     paddingVertical: tema.espacio.md,
     ...tema.texto.cuerpo,
@@ -123,9 +138,11 @@ const estilos = StyleSheet.create({
   },
   ojo: {
     // Cuadrado y del alto minimo: se pulsa con el pulgar sin apuntar.
+    // 44 de ancho y de alto pase lo que pase: el objetivo tactil no se negocia
+    // para hacer sitio. Lo que se aprieta es el relleno, no el area.
     minWidth: tema.controlAltoMinimo,
     minHeight: tema.controlAltoMinimo,
-    paddingHorizontal: tema.espacio.md,
+    paddingHorizontal: tema.espacio.sm,
     alignItems: 'center',
     justifyContent: 'center',
   },

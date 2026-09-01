@@ -40,6 +40,10 @@ const estilos = StyleSheet.create({
   raiz: { flex: 1, backgroundColor: tema.color.fondo },
   flujo: { flex: 1 },
   contenido: {
+    // Que el contenedor llegue al menos al alto de la pantalla: es lo que
+    // permite que una pantalla separe un bloque final con un hueco flexible
+    // en lugar de dejarlo pegado al anterior.
+    flexGrow: 1,
     padding: tema.espacio.lg,
     gap: tema.espacio.lg,
     // Aire al final: sin esto, lo ultimo queda pegado al borde inferior y en un

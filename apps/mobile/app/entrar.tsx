@@ -100,7 +100,15 @@ export default function Entrar() {
           <View style={estilos.principal}>
             <View style={estilos.tituloBloque}>
               <Text style={estilos.titulo}>Bienvenido de nuevo</Text>
-              <View style={estilos.filete} />
+              {/*
+                El unico gesto grafico de la pantalla. Antes era un filete
+                suelto de 44 px; ahora el acento arranca y una linea fina lo
+                continua hasta el borde. Es un carril, y cuesta 4 px de alto.
+              */}
+              <View style={estilos.carril}>
+                <View style={estilos.carrilAcento} />
+                <View style={estilos.carrilResto} />
+              </View>
               <Text style={estilos.entradilla}>
                 Entra con la cuenta que te dio tu gimnasio.
               </Text>
@@ -165,6 +173,14 @@ export default function Entrar() {
             </View>
           </View>
 
+          {/*
+            El sobrante de una pantalla alta se acumula AQUI, entre el
+            formulario y el pie. Antes lo repartia `justifyContent: center`
+            alrededor del bloque, y por eso un telefono mas grande hacia el
+            login mas vacio por arriba: 116 px de hueco a 360 y 182 a 430.
+          */}
+          <View style={estilos.hueco} />
+
           <View style={estilos.pie}>
             <Text style={estilos.pieTexto}>Solo para socios. El personal usa el panel web.</Text>
           </View>
@@ -192,27 +208,26 @@ async function abrirRecuperacion() {
 const estilos = StyleSheet.create({
   raiz: { flex: 1, backgroundColor: tema.color.fondo },
   flexible: { flex: 1 },
-  contenido: {
-    flexGrow: 1,
-    padding: tema.espacio.xl,
-    gap: tema.espacio.xxl,
-  },
+  // Sin `gap`: el ritmo se escribe bloque a bloque para que sea deliberado y
+  // no dependa de cuantos hijos haya.
+  contenido: { flexGrow: 1, padding: tema.espacio.xl },
   cabecera: { gap: tema.espacio.sm },
   descriptor: { ...tema.texto.secundario, color: tema.color.textoSecundario },
 
-  // El bloque de trabajo se lleva el espacio sobrante: con teclado cerrado
-  // queda centrado-alto, y con teclado abierto sube sin dejar huecos raros.
-  principal: { flex: 1, justifyContent: 'center', gap: tema.espacio.xl },
+  // Distancia FIJA de la marca al trabajo. Es la cifra que antes crecia con
+  // el telefono; ahora vale 48 en los tres y el sobrante se va abajo.
+  principal: { marginTop: tema.espacio.xxxl, gap: tema.espacio.xl },
+
+  // Se encoge hasta cero cuando no sobra sitio: en una pantalla baja el
+  // contenido manda y aparece el scroll, en lugar de robarle espacio.
+  hueco: { flex: 1, minHeight: tema.espacio.xxl },
 
   tituloBloque: { gap: tema.espacio.md },
   titulo: { ...tema.texto.h1, color: tema.color.texto },
-  // El unico adorno de la pantalla.
-  filete: {
-    width: 44,
-    height: 3,
-    borderRadius: 2,
-    backgroundColor: tema.color.acento,
-  },
+  carril: { flexDirection: 'row', alignItems: 'center', height: 3 },
+  carrilAcento: { width: 44, height: 3, borderRadius: 2, backgroundColor: tema.color.acento },
+  // Fina y del color del borde: continua el gesto sin competir con el acento.
+  carrilResto: { flex: 1, height: 1, backgroundColor: tema.color.borde },
   entradilla: { ...tema.texto.cuerpo, color: tema.color.textoSecundario, lineHeight: 22 },
 
   formulario: {
@@ -231,6 +246,6 @@ const estilos = StyleSheet.create({
   },
   textoEnlace: { ...tema.texto.secundario, fontWeight: '600', color: tema.color.textoSecundario },
 
-  pie: { alignItems: 'center' },
+  pie: { alignItems: 'center', marginTop: tema.espacio.xl },
   pieTexto: { ...tema.texto.meta, color: tema.color.textoSecundario, textAlign: 'center' },
 });
