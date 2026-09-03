@@ -113,6 +113,12 @@ const CASOS: Record<string, CasoDeInicio> = {
   'inicio-sin-rutina': { esenciales: 'ok', cuota: cuota({}), rutinas: 'vacio', progreso: 'con-datos' },
   // Lo que de verdad devuelve el fixture hoy: cero mediciones.
   'inicio-sin-progreso': { esenciales: 'ok', cuota: cuota({}), rutinas: 'ok', progreso: 'vacio' },
+  /*
+   * EXACTAMENTE lo que devuelve el fixture hoy: dos rutinas y CERO
+   * mediciones. Es el caso que de verdad va a ver la socia, no el mas
+   * favorable, y por eso tiene su propia captura.
+   */
+  'inicio-fixture-real': { esenciales: 'ok', cuota: cuota({}), rutinas: 'ok', progreso: 'vacio' },
   'inicio-cuota-vencida': {
     esenciales: 'ok',
     cuota: cuota({ estado: 'VENCIDA', puedeAcceder: false, diasRestantes: -4, hasta: '2026-08-28' }),

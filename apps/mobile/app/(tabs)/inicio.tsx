@@ -1,19 +1,21 @@
 import { useCallback, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { Aviso } from '../../src/componentes/aviso';
 import { Boton } from '../../src/componentes/boton';
+import { CabeceraDeSeccion } from '../../src/componentes/cabecera-de-seccion';
 import { Etiqueta } from '../../src/componentes/etiqueta';
 import { FilaDeAccion } from '../../src/componentes/fila-de-accion';
+import { Icono } from '../../src/componentes/icono';
 import { Pantalla } from '../../src/componentes/pantalla';
-import { Tarjeta } from '../../src/componentes/tarjeta';
 import { useSesion } from '../../src/auth/sesion';
 import { mensajeDeEntrada } from '../../src/auth/mensajes';
 import { avisaDeQueLaPuertaPuedeNegar, lecturaDeCuota } from '../../src/cuota/lectura';
 import { RUTAS_DE_TABS } from '../../src/navegacion/destinos';
 import { cargarEsenciales, cargarProgreso, cargarRutinas } from '../../src/inicio/fuente';
 import {
-  fechaCorta,
+  fechaCivil,
+  fechaDeInstante,
   presentacionDeRutinas,
   resumenDeProgreso,
   saludo,
@@ -181,58 +183,69 @@ export default function Inicio() {
         accessibilityHint="Abre tu carne digital"
       />
 
-      {/* 4. La rutina. */}
+      {/*
+        4. Las rutinas.
+
+        Seccion con contenido DIRECTO, no una tarjeta: el hero ya es una
+        superficie y meter dos cajas iguales debajo convertia la mitad
+        inferior en un panel. Aqui mandan los nombres, separados por
+        hairlines, y el enlace vive arriba a la derecha en pequeño.
+      */}
       {datos.rutinas.estado === 'fallo' ? (
         <Aviso tono="aviso">No pudimos cargar tus rutinas. El resto de tu inicio sigue aqui.</Aviso>
-      ) : rutinas?.tipo === 'una' ? (
-        <Tarjeta>
-          <Text style={estilos.rotulo}>TU RUTINA</Text>
-          <Text style={estilos.tituloRutina}>{rutinas.rutina.nombre}</Text>
-          <Text style={estilos.meta}>{ejerciciosEnPalabras(rutinas.rutina.ejercicios)}</Text>
-          <View style={estilos.muestra}>
-            {rutinas.muestra.map((e) => (
-              <View key={e.nombre} style={estilos.ejercicio}>
-                <Text style={estilos.ejercicioNombre} numberOfLines={1}>
-                  {e.nombre}
-                </Text>
-                <Text style={estilos.ejercicioSeries}>{e.series}</Text>
+      ) : rutinas ? (
+        <View style={estilos.seccion}>
+          <CabeceraDeSeccion
+            titulo={rutinas.tipo === 'una' ? 'TU RUTINA' : 'RUTINAS'}
+            accion={rutinas.tipo === 'ninguna' ? undefined : 'Ver todas'}
+            alPulsar={
+              rutinas.tipo === 'ninguna' ? undefined : () => router.push(RUTAS_DE_TABS.rutina)
+            }
+            accessibilityHint="Abre tus rutinas"
+          />
+
+          {rutinas.tipo === 'ninguna' ? (
+            <Text style={estilos.vacio}>
+              Todavia no tienes ninguna asignada. Tu entrenador puede prepararte una.
+            </Text>
+          ) : rutinas.tipo === 'una' ? (
+            <FilaDeRutina
+              nombre={rutinas.rutina.nombre}
+              detalle={ejerciciosEnPalabras(rutinas.rutina.ejercicios)}
+              alPulsar={() => router.push(RUTAS_DE_TABS.rutina)}
+            >
+              {/* Con una sola rutina cabe asomar sus primeros ejercicios. */}
+              <View style={estilos.muestra}>
+                {rutinas.muestra.map((e) => (
+                  <View key={e.nombre} style={estilos.ejercicio}>
+                    <Text style={estilos.ejercicioNombre} numberOfLines={1}>
+                      {e.nombre}
+                    </Text>
+                    <Text style={estilos.ejercicioSeries}>{e.series}</Text>
+                  </View>
+                ))}
               </View>
-            ))}
-          </View>
-          <Boton onPress={() => router.push(RUTAS_DE_TABS.rutina)}>Ver rutina</Boton>
-        </Tarjeta>
-      ) : rutinas?.tipo === 'varias' ? (
-        <Tarjeta>
-          {/*
-            Con varias NO se elige una: el modelo no tiene rutina principal y
-            en el fixture las dos estaban asignadas el mismo dia, asi que ni
-            "la mas reciente" desempata. Se enseñan las dos y elige quien sabe
-            si hoy le toca hombro o pierna.
-          */}
-          <Text style={estilos.rotulo}>TUS RUTINAS</Text>
-          <View style={estilos.lista}>
-            {rutinas.rutinas.map((r) => (
-              <View key={r.id}>
-                <Text style={estilos.nombreRutina} numberOfLines={1}>
-                  {r.nombre}
-                </Text>
-                {/*
-                  El recuento con su palabra. Un "3" suelto al lado de un
-                  nombre no dice si son ejercicios, series o semanas.
-                */}
-                <Text style={estilos.meta}>{ejerciciosEnPalabras(r.ejercicios)}</Text>
-              </View>
-            ))}
-          </View>
-          <Boton onPress={() => router.push(RUTAS_DE_TABS.rutina)}>Ver mis rutinas</Boton>
-        </Tarjeta>
-      ) : rutinas?.tipo === 'ninguna' ? (
-        <Tarjeta>
-          <Text style={estilos.rotulo}>TU RUTINA</Text>
-          <Text style={estilos.vacio}>
-            Todavia no tienes ninguna asignada. Tu entrenador puede prepararte una.
-          </Text>
-        </Tarjeta>
+            </FilaDeRutina>
+          ) : (
+            /*
+              Con varias NO se elige una: el modelo no tiene rutina principal y
+              en el fixture las dos estaban asignadas el mismo dia, asi que ni
+              "la mas reciente" desempata. Se enseñan las dos y elige quien
+              sabe si hoy le toca hombro o pierna.
+
+              Cada fila lleva a /rutina, que es la lista: NO hay pantalla de
+              detalle de una rutina, y no se inventa.
+            */
+            rutinas.rutinas.map((r) => (
+              <FilaDeRutina
+                key={r.id}
+                nombre={r.nombre}
+                detalle={ejerciciosEnPalabras(r.ejercicios)}
+                alPulsar={() => router.push(RUTAS_DE_TABS.rutina)}
+              />
+            ))
+          )}
+        </View>
       ) : null}
 
       {/*
@@ -242,12 +255,18 @@ export default function Inicio() {
         venir de dos basculas distintas, y una flecha verde por 400 gramos es
         inventarse una tendencia.
 
-        Sin mediciones NO hay tarjeta grande: solo una fila, o nada.
+        Sin mediciones son DOS LINEAS. Ni tarjeta, ni fila con flecha, ni
+        boton: la barra de abajo ya lleva a Progreso.
       */}
       {datos.progreso.estado === 'fallo' ? null : progreso?.tipo === 'ultima' ? (
-        <Tarjeta>
-          <Text style={estilos.rotulo}>ULTIMA MEDICION</Text>
-          <Text style={estilos.meta}>{fechaCorta(progreso.fecha)}</Text>
+        <View style={estilos.seccion}>
+          <CabeceraDeSeccion
+            titulo="PROGRESO"
+            accion="Ver todo"
+            alPulsar={() => router.push(RUTAS_DE_TABS.progreso)}
+            accessibilityHint="Abre tu progreso"
+          />
+          <Text style={estilos.meta}>Ultima medicion · {fechaDeInstante(progreso.fecha)}</Text>
           <View style={estilos.medidas}>
             {progreso.medidas.map((m) => (
               <View key={m.etiqueta} style={estilos.medida}>
@@ -256,18 +275,56 @@ export default function Inicio() {
               </View>
             ))}
           </View>
-          <Boton onPress={() => router.push(RUTAS_DE_TABS.progreso)}>Ver progreso</Boton>
-        </Tarjeta>
+        </View>
       ) : progreso?.tipo === 'ninguno' ? (
-        <FilaDeAccion
-          icono="progreso"
-          titulo="Sin mediciones todavia"
-          detalle="Tu gimnasio las registra en tu ficha"
-          alPulsar={() => router.push(RUTAS_DE_TABS.progreso)}
-          accessibilityHint="Abre tu progreso"
-        />
+        <View style={estilos.seccion}>
+          <CabeceraDeSeccion titulo="PROGRESO" />
+          <Text style={estilos.vacio}>
+            Todavia no hay mediciones. Tu gimnasio las registra en tu ficha.
+          </Text>
+        </View>
       ) : null}
     </Pantalla>
+  );
+}
+
+/**
+ * Una rutina en Inicio: nombre, recuento y, si se le pasan, sus primeros
+ * ejercicios. Toda la fila se pulsa.
+ *
+ * Lleva a `/rutina`, la lista. NO hay pantalla de detalle de una rutina
+ * concreta y no se inventa una ruta que no existe.
+ */
+function FilaDeRutina({
+  nombre,
+  detalle,
+  alPulsar,
+  children,
+}: {
+  nombre: string;
+  detalle: string;
+  alPulsar: () => void;
+  children?: React.ReactNode;
+}) {
+  return (
+    <Pressable
+      onPress={alPulsar}
+      accessibilityRole="button"
+      accessibilityLabel={`${nombre}. ${detalle}`}
+      accessibilityHint="Abre tus rutinas"
+      style={({ pressed }) => [estilos.rutina, pressed && estilos.rutinaPulsada]}
+    >
+      <View style={estilos.rutinaCabecera}>
+        <View style={estilos.rutinaTexto}>
+          <Text style={estilos.nombreRutina} numberOfLines={1}>
+            {nombre}
+          </Text>
+          <Text style={estilos.meta}>{detalle}</Text>
+        </View>
+        <Icono nombre="avanzar" color={tema.color.textoSecundario} tamano={18} />
+      </View>
+      {children}
+    </Pressable>
   );
 }
 
@@ -279,7 +336,7 @@ function detalleDeCuota(cuota: {
 }): string {
   const partes: string[] = [];
   if (cuota.planName) partes.push(cuota.planName);
-  if (cuota.hasta) partes.push(`hasta ${fechaCorta(cuota.hasta)}`);
+  if (cuota.hasta) partes.push(`hasta ${fechaCivil(cuota.hasta)}`);
   if (cuota.diasRestantes !== null) partes.push(diasEnPalabras(cuota.diasRestantes));
   return partes.join(' · ');
 }
@@ -332,6 +389,18 @@ const estilos = StyleSheet.create({
   },
   franjaDetalle: { ...tema.texto.secundario, color: tema.color.textoSecundario },
   aviso: { ...tema.texto.secundario, color: tema.color.aviso, lineHeight: 20 },
+
+  seccion: { gap: tema.espacio.sm },
+  rutina: {
+    paddingVertical: tema.espacio.md,
+    gap: tema.espacio.md,
+    // Un hairline entre rutinas en lugar de una caja por cada una.
+    borderTopWidth: 1,
+    borderTopColor: tema.color.borde,
+  },
+  rutinaPulsada: { opacity: 0.6 },
+  rutinaCabecera: { flexDirection: 'row', alignItems: 'center', gap: tema.espacio.md },
+  rutinaTexto: { flex: 1, gap: 2 },
 
   rotulo: {
     ...tema.texto.meta,

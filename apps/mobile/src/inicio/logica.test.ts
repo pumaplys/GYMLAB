@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import type { BodyMetric, DuesStatus, Member, OwnRoutine } from '@gymlab/contracts';
 import {
   EJERCICIOS_DE_MUESTRA,
-  fechaCorta,
+  fechaCivil,
+  fechaDeInstante,
   inicioEsUtil,
   presentacionDeRutinas,
   resumenDeProgreso,
@@ -212,39 +213,121 @@ describe('el progreso', () => {
 
 /**
  * ┌──────────────────────────────────────────────────────────────────────────┐
- * │ ESTAS DOS PRUEBAS SOLO MUERDEN AL OESTE DE GREENWICH.                   │
+ * │ ESTAS PRUEBAS SE EJECUTAN EN TRES HUSOS, NO EN EL DE LA MAQUINA.        │
  * │                                                                          │
- * │ Se falsificaron cambiando `fechaCorta` por una version con `new Date()`: │
+ * │ La version anterior comprobaba lo mismo pero solo en el huso del que      │
+ * │ ejecutara: cambiando la implementacion por una basada en `new Date()`    │
+ * │ pasaban igual en Europe/Paris y fallaban en America/Los_Angeles. Es      │
+ * │ decir, en esta maquina y en un CI en UTC no protegian de nada.           │
  * │                                                                          │
- * │   Europe/Paris (+2)        159 pasan  -> la prueba NO detecta el fallo   │
- * │   America/Los_Angeles (-7)   2 fallan -> la prueba SI lo detecta         │
- * │                                                                          │
- * │ Asi que en esta maquina —y en un CI en UTC— no protegen de nada. Lo que  │
- * │ protege de verdad es la implementacion: parte la cadena y no construye   │
- * │ ninguna fecha, asi que no hay huso que la mueva. Estas pruebas fijan ese │
- * │ contrato para quien lea el codigo, y se disparan de verdad en cuanto     │
- * │ alguien las ejecute con TZ al oeste.                                    │
+ * │ Node permite mover `process.env.TZ` en caliente, asi que cada caso corre │
+ * │ en UTC, en Madrid (+1/+2) y en Los Angeles (-7/-8). Se restaura el huso  │
+ * │ original al terminar.                                                    │
  * └──────────────────────────────────────────────────────────────────────────┘
  */
-describe('las fechas se dicen como las dijo el servidor', () => {
-  it('formatea en corto', () => {
-    expect(fechaCorta('2026-09-20')).toBe('20 sep 2026');
-    expect(fechaCorta('2026-01-05')).toBe('5 ene 2026');
+const HUSOS = ['UTC', 'Europe/Madrid', 'America/Los_Angeles'] as const;
+
+/** Ejecuta algo en cada huso, y deja el original como estaba. */
+function enCadaHuso(prueba: (huso: string) => void) {
+  const original = process.env.TZ;
+  try {
+    for (const huso of HUSOS) {
+      process.env.TZ = huso;
+      prueba(huso);
+    }
+  } finally {
+    if (original === undefined) delete process.env.TZ;
+    else process.env.TZ = original;
+  }
+}
+
+describe('una fecha CIVIL es el mismo dia en todo el mundo', () => {
+  it('el huso de la maquina se puede mover: la propia prueba lo comprueba', () => {
+    // Si esto fallara, todo lo de abajo seria decorativo.
+    enCadaHuso(() => undefined);
+    const original = process.env.TZ;
+    process.env.TZ = 'UTC';
+    const enUtc = new Date('2026-01-01').getDate();
+    process.env.TZ = 'America/Los_Angeles';
+    const enLa = new Date('2026-01-01').getDate();
+    if (original === undefined) delete process.env.TZ;
+    else process.env.TZ = original;
+
+    expect(enUtc).toBe(1);
+    expect(enLa).toBe(31);
   });
 
-  it('no mueve el dia por el huso horario', () => {
-    // Pasar '2026-01-01' por `new Date()` y leer el dia local lo deja en 31 de
-    // diciembre en cualquier huso al oeste de Greenwich.
-    expect(fechaCorta('2026-01-01')).toBe('1 ene 2026');
-    expect(fechaCorta('2026-12-31')).toBe('31 dic 2026');
+  it('2026-09-03 es "3 sep 2026" en los tres husos', () => {
+    enCadaHuso((huso) => {
+      expect(fechaCivil('2026-09-03'), `en ${huso}`).toBe('3 sep 2026');
+    });
   });
 
-  it('acepta una fecha con hora, como `measuredAt`', () => {
-    expect(fechaCorta('2026-08-24T09:30:00.000Z')).toBe('24 ago 2026');
+  it('el primero de enero no se convierte en 31 de diciembre', () => {
+    enCadaHuso((huso) => {
+      expect(fechaCivil('2026-01-01'), `en ${huso}`).toBe('1 ene 2026');
+    });
+  });
+
+  it('el ultimo dia del año no se convierte en el primero del siguiente', () => {
+    enCadaHuso((huso) => {
+      expect(fechaCivil('2026-12-31'), `en ${huso}`).toBe('31 dic 2026');
+    });
+  });
+
+  it('`hasta` del contrato, que es lo que de verdad se formatea asi', () => {
+    enCadaHuso((huso) => {
+      expect(fechaCivil(CUOTA.hasta as string), `en ${huso}`).toBe('20 sep 2026');
+    });
   });
 
   it('ante algo que no es una fecha, devuelve lo que le dieron', () => {
-    expect(fechaCorta('vaya')).toBe('vaya');
+    expect(fechaCivil('vaya')).toBe('vaya');
+  });
+
+  it('NO construye ninguna fecha: se comprueba quitandole `Date`', () => {
+    // La prueba mas fuerte de las tres, y la unica que no depende del huso: si
+    // la implementacion tocara `Date`, esto revienta en cualquier maquina.
+    const original = globalThis.Date;
+    try {
+      // @ts-expect-error se sustituye a proposito para que falle si se usa
+      globalThis.Date = function () {
+        throw new Error('fechaCivil no debe construir fechas');
+      };
+      expect(fechaCivil('2026-09-03')).toBe('3 sep 2026');
+    } finally {
+      globalThis.Date = original;
+    }
+  });
+});
+
+describe('un INSTANTE si se dice en la hora de quien mira', () => {
+  it('el mismo instante cae en dias distintos segun el huso, y eso es correcto', () => {
+    // 2026-08-25T02:00:00Z: en Madrid son las 04:00 del 25; en Los Angeles,
+    // las 19:00 del 24. Una medicion registrada de madrugada tiene que
+    // aparecer con el dia que vivio quien se peso.
+    const original = process.env.TZ;
+    try {
+      process.env.TZ = 'UTC';
+      expect(fechaDeInstante('2026-08-25T02:00:00.000Z')).toBe('25 ago 2026');
+      process.env.TZ = 'Europe/Madrid';
+      expect(fechaDeInstante('2026-08-25T02:00:00.000Z')).toBe('25 ago 2026');
+      process.env.TZ = 'America/Los_Angeles';
+      expect(fechaDeInstante('2026-08-25T02:00:00.000Z')).toBe('24 ago 2026');
+    } finally {
+      if (original === undefined) delete process.env.TZ;
+      else process.env.TZ = original;
+    }
+  });
+
+  it('a mediodia UTC coincide en los tres husos', () => {
+    enCadaHuso((huso) => {
+      expect(fechaDeInstante('2026-08-24T12:00:00.000Z'), `en ${huso}`).toBe('24 ago 2026');
+    });
+  });
+
+  it('ante algo que no es una fecha, devuelve lo que le dieron', () => {
+    expect(fechaDeInstante('vaya')).toBe('vaya');
   });
 });
 
