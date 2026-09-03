@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { Me } from '@gymlab/contracts';
 import type { EstadoDeSesion } from '../auth/estado';
-import { DESTINOS_DE_TABS, RUTAS, destinoDe, puedeEntrarEnTabs } from './destinos';
+import { DESTINOS_DE_TABS, RUTAS, RUTAS_DE_TABS, destinoDe, puedeEntrarEnTabs } from './destinos';
 
 const GIMNASIO = '11111111-1111-4111-8111-111111111111';
 
@@ -114,6 +114,20 @@ describe('los cinco destinos', () => {
       expect(d.icono.length).toBeGreaterThan(0);
     }
     expect(new Set(DESTINOS_DE_TABS.map((d) => d.icono)).size).toBe(DESTINOS_DE_TABS.length);
+  });
+
+  it('la tabla de rutas cubre los cinco destinos y ni uno mas', () => {
+    // Es lo que sustituye a derivarla: si alguien añade una pestaña y olvida
+    // su ruta, o al contrario, salta aqui.
+    expect(Object.keys(RUTAS_DE_TABS).sort()).toEqual(
+      DESTINOS_DE_TABS.map((d) => d.nombre).sort(),
+    );
+  });
+
+  it('cada ruta es el nombre de su fichero, con la barra delante', () => {
+    for (const { nombre } of DESTINOS_DE_TABS) {
+      expect(RUTAS_DE_TABS[nombre as keyof typeof RUTAS_DE_TABS]).toBe(`/${nombre}`);
+    }
   });
 
   it('ninguna pestaña es de propietario o entrenador', () => {

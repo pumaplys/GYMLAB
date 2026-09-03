@@ -23,7 +23,17 @@ export const RUTAS = {
 /** `null` significa "quedate donde estas": la pantalla de arranque. */
 export type Destino = (typeof RUTAS)[keyof typeof RUTAS];
 
-export type NombreDeIcono = 'inicio' | 'rutina' | 'carne' | 'progreso' | 'perfil';
+/**
+ * Los iconos que existen. Los cinco de la barra mas los que piden las
+ * pantallas:  lo usa Inicio en sus filas.
+ */
+export type NombreDeIcono =
+  | 'inicio'
+  | 'rutina'
+  | 'carne'
+  | 'progreso'
+  | 'perfil'
+  | 'avanzar';
 
 export interface DestinoDeTab {
   /** El nombre del fichero dentro de `app/(tabs)`, sin extension. */
@@ -87,3 +97,20 @@ export function destinoDe(estado: EstadoDeSesion): Destino {
 export function puedeEntrarEnTabs(estado: EstadoDeSesion): boolean {
   return estado.tipo === 'autenticado';
 }
+
+/**
+ * La ruta de cada destino.
+ *
+ * Escritas y no derivadas para que TypeScript sepa que existen —una tabla
+ * derivada devuelve `string | undefined` en cada lectura—. Lo que impide que
+ * se desvien es un test: comprueba que las claves son EXACTAMENTE los cinco
+ * destinos y que cada ruta es su nombre de fichero. Si alguien renombra una
+ * pantalla, salta ahi.
+ */
+export const RUTAS_DE_TABS = {
+  inicio: '/inicio',
+  rutina: '/rutina',
+  carne: '/carne',
+  progreso: '/progreso',
+  perfil: '/perfil',
+} as const;
