@@ -93,6 +93,15 @@ export const CASOS: Record<string, Caso> = {
     },
     entrada: 'inerte',
   },
+  // Los estados del carne. La sesion es la misma —autenticada— y lo que
+  // cambia es lo que devuelve `carne/fuente.web.ts` para ese mismo `?vista=`.
+  'carne-activa': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
+  'carne-expira-pronto': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
+  'carne-vencida': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
+  'carne-congelada': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
+  'carne-expirada': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
+  'carne-cargando': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
+  'carne-error': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
 };
 
 export type { Caso, Entrada } from './tipos';
