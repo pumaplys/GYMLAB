@@ -113,6 +113,19 @@ export const CASOS: Record<string, Caso> = {
   'inicio-cargando': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
   'inicio-error-esencial': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
   'inicio-error-rutina': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
+  // Los estados de Rutina. Misma sesion autenticada; lo que cambia es lo que
+  // devuelve 'rutina/fuente.web.ts' para ese mismo ?vista=.
+  'rutina-una': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
+  'rutina-varias': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
+  'rutina-nombre-largo': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
+  'rutina-nota-larga': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
+  'rutina-sin-descanso': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
+  'rutina-reps-largas': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
+  'rutina-larga': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
+  'rutina-fixture-real': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
+  'rutina-vacia': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
+  'rutina-cargando': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
+  'rutina-error': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
 };
 
 export type { Caso, Entrada } from './tipos';
