@@ -121,4 +121,12 @@ const DIBUJOS: Record<NombreDeIcono, ReactNode> = {
       <Path d="M5.5 20c0-3.4 2.9-5.5 6.5-5.5s6.5 2.1 6.5 5.5" />
     </>
   ),
+  /*
+   * Una punta de flecha: "esto lleva a otro sitio".
+   *
+   * El unico que no es un destino de la barra. Lo pide Inicio, donde las
+   * secciones son filas que se pulsan, y comparte el mismo trazo: dibujado con
+   * otro grosor se veria que es de otra familia.
+   */
+  avanzar: <Path d="m9.5 5.5 7 6.5-7 6.5" />,
 };

@@ -1,4 +1,4 @@
-import { ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
+import { RefreshControl, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
 import type { ReactNode } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { tema } from '../tema';
@@ -30,12 +30,31 @@ export function Pantalla({
   titulo,
   descriptor,
   desplazable = true,
+  alRefrescar,
+  refrescando = false,
 }: {
   children: ReactNode;
   titulo?: string;
   descriptor?: string;
   /** Una pantalla que cabe entera —el carne— no debe poder desplazarse. */
   desplazable?: boolean;
+  /**
+   * Tirar hacia abajo para recargar.
+   *
+   * ┌────────────────────────────────────────────────────────────────────────┐
+   * │ ES `RefreshControl` DE REACT NATIVE. SIN LIBRERIA.                    │
+   * │                                                                        │
+   * │ Viene en el nucleo, lo entiende el gesto nativo de cada plataforma y   │
+   * │ ya es accesible: el lector de pantalla anuncia el estado de recarga    │
+   * │ sin que haya que etiquetarlo. Solo se le pasan los colores del tema,   │
+   * │ porque el suyo por defecto es un indicador claro sobre fondo oscuro.   │
+   * │                                                                        │
+   * │ Opcional: una pantalla que no lo pase no gana el gesto, y ninguna lo   │
+   * │ hereda por accidente.                                                 │
+   * └────────────────────────────────────────────────────────────────────────┘
+   */
+  alRefrescar?: () => void;
+  refrescando?: boolean;
 }) {
   const cuerpo = (
     <>
@@ -63,6 +82,17 @@ export function Pantalla({
           style={estilos.flujo}
           contentContainerStyle={estilos.contenido}
           keyboardShouldPersistTaps="handled"
+          refreshControl={
+            alRefrescar ? (
+              <RefreshControl
+                refreshing={refrescando}
+                onRefresh={alRefrescar}
+                tintColor={tema.color.acento}
+                colors={[tema.color.acento]}
+                progressBackgroundColor={tema.color.superficie}
+              />
+            ) : undefined
+          }
         >
           {cuerpo}
         </ScrollView>
