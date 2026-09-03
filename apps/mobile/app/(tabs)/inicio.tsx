@@ -9,6 +9,7 @@ import { FilaDeAccion } from '../../src/componentes/fila-de-accion';
 import { Icono } from '../../src/componentes/icono';
 import { Pantalla } from '../../src/componentes/pantalla';
 import { useSesion } from '../../src/auth/sesion';
+import { laSesionYaNoVale, motivosDeFallo } from '../../src/auth/politica';
 import { mensajeDeEntrada } from '../../src/auth/mensajes';
 import { avisaDeQueLaPuertaPuedeNegar, lecturaDeCuota } from '../../src/cuota/lectura';
 import { RUTAS_DE_TABS } from '../../src/navegacion/destinos';
@@ -50,7 +51,7 @@ import { tema } from '../../src/tema';
  * └──────────────────────────────────────────────────────────────────────────┘
  */
 export default function Inicio() {
-  const { estado: sesion } = useSesion();
+  const { estado: sesion, revisar } = useSesion();
   const [datos, setDatos] = useState<DatosDeInicio>({
     esenciales: { estado: 'cargando' },
     rutinas: { estado: 'cargando' },
@@ -73,11 +74,35 @@ export default function Inicio() {
    */
   const cargar = useCallback(async () => {
     setError(null);
-    const [esenciales, rutinas, progreso] = await Promise.allSettled([
+    const resultados = await Promise.allSettled([
       cargarEsenciales(),
       cargarRutinas(),
       cargarProgreso(),
     ]);
+    const [esenciales, rutinas, progreso] = resultados;
+
+    /*
+     * ┌────────────────────────────────────────────────────────────────────┐
+     * │ UN 401 NO ES UN FALLO DE SECCION, VENGA DE DONDE VENGA.            │
+     * │                                                                    │
+     * │ Degradar por seccion es correcto para un 500 o para un corte de    │
+     * │ red. Para un 401 no: la sesion se acabo, y da igual que lo diga la │
+     * │ ficha, la cuota, las rutinas o el progreso. Antes, un 401 en el    │
+     * │ progreso dejaba a alguien con la sesion caducada mirando un aviso  │
+     * │ de "no pudimos cargar tu progreso" para siempre; y uno en la ficha │
+     * │ pintaba "el correo o la contrasena no son correctos", que en       │
+     * │ mitad de la app no significa nada.                                 │
+     * │                                                                    │
+     * │ Se devuelve a la politica global de M1. `revisar()` vuelve a       │
+     * │ preguntar a `/auth/me`, y es el SERVIDOR quien confirma: si sigue  │
+     * │ valida no pasa nada, y si no, el proveedor borra el token y la app │
+     * │ entera sale al login. Aqui no se borra nada ni se navega a mano.   │
+     * └────────────────────────────────────────────────────────────────────┘
+     */
+    if (laSesionYaNoVale(motivosDeFallo(resultados))) {
+      void revisar();
+      return;
+    }
 
     if (esenciales.status === 'rejected') setError(mensajeDeEntrada(esenciales.reason));
 
@@ -93,7 +118,7 @@ export default function Inicio() {
           ? { estado: 'ok', datos: progreso.value }
           : { estado: 'fallo' },
     });
-  }, []);
+  }, [revisar]);
 
   /*
    * Al entrar en la pestaña se refresca UNA vez. Ni sondeo, ni AppState: nada
