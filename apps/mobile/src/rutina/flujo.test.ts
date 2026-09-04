@@ -5,6 +5,7 @@ import { ApiError, NetworkError } from '@gymlab/api-client';
 import type { OwnRoutine } from '@gymlab/contracts';
 import { clasificarError } from '../auth/clasificar';
 import { debeBorrarToken } from '../auth/estado';
+import { laSesionYaNoVale } from '../auth/politica';
 import { vistaDeRutina, type EstadoDeCarga } from './logica';
 
 /**
@@ -38,7 +39,7 @@ async function cargar(
   try {
     return { fase: 'ok', rutinas: await fuente() };
   } catch (problema) {
-    if (clasificarError(problema).clase === 'sesionInvalida') {
+    if (laSesionYaNoVale([problema])) {
       alPerderLaSesion();
       return 'sesion-invalida';
     }
@@ -198,6 +199,38 @@ const FUENTES = [
 ].map((relativo) => {
   const bruto = readFileSync(join(RAIZ, relativo), 'utf8');
   return { relativo, codigo: bruto, sinComentar: sinComentarios(bruto) };
+});
+
+/**
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ UNA SOLA FORMA DE PREGUNTAR "¿ESTE FALLO JUSTIFICA REVISAR LA SESION?". │
+ * │                                                                          │
+ * │ Rutina tenia su propia comprobacion escrita a mano e Inicio usaba        │
+ * │ `laSesionYaNoVale`. La misma decision escrita dos veces es como empiezan │
+ * │ a separarse: basta con que alguien afine una y se olvide de la otra.     │
+ * │                                                                          │
+ * │ Esto se lee del fichero de la pantalla porque lo que se protege es que   │
+ * │ NO vuelva a aparecer la version a mano — una prueba de comportamiento no │
+ * │ notaria la diferencia, porque las dos hacen lo mismo hoy.                │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ */
+describe('Rutina usa la misma politica de sesion que Inicio', () => {
+  const pantalla = FUENTES.find((f) => f.relativo === 'app/(tabs)/rutina.tsx')!;
+
+  it('pregunta con `laSesionYaNoVale`', () => {
+    expect(pantalla.sinComentar).toMatch(/laSesionYaNoVale\(\[problema\]\)/);
+  });
+
+  it('y no vuelve a escribir la comprobacion a mano', () => {
+    expect(pantalla.sinComentar).not.toMatch(/clasificarError/);
+    expect(pantalla.sinComentar).not.toMatch(/'sesionInvalida'/);
+  });
+
+  it('al detectarlo delega en `revisar`, sin borrar token ni navegar a mano', () => {
+    expect(pantalla.sinComentar).toMatch(/void revisar\(\);/);
+    expect(pantalla.codigo).not.toMatch(/borrarToken/);
+    expect(pantalla.codigo).not.toMatch(/router\.(replace|push)\(['"`]\/entrar/);
+  });
 });
 
 describe('la rutina mirada NO se persiste como decision de negocio', () => {

@@ -6,7 +6,7 @@ import { Boton } from '../../src/componentes/boton';
 import { EjercicioDeRutina } from '../../src/componentes/ejercicio-de-rutina';
 import { Pantalla } from '../../src/componentes/pantalla';
 import { SelectorDeRutina } from '../../src/componentes/selector-de-rutina';
-import { clasificarError } from '../../src/auth/clasificar';
+import { laSesionYaNoVale } from '../../src/auth/politica';
 import { useSesion } from '../../src/auth/sesion';
 import { cargarRutinas } from '../../src/rutina/fuente';
 import {
@@ -74,8 +74,13 @@ export default function Rutina() {
        *
        * Un 500 o un fallo de red, en cambio, NO tumban la sesion: son un error
        * de esta pantalla con su reintento.
+       *
+       * La pregunta se hace con `laSesionYaNoVale`, la MISMA que usa Inicio.
+       * Aqui solo hay un fallo posible —una peticion— y en Inicio hay cuatro,
+       * pero la pregunta es identica y tener dos formas de escribirla es como
+       * empiezan a separarse.
        */
-      if (clasificarError(problema).clase === 'sesionInvalida') {
+      if (laSesionYaNoVale([problema])) {
         void revisar();
         return;
       }
