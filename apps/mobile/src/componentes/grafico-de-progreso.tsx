@@ -84,26 +84,53 @@ export function GraficoDeProgreso({
   const maximo = Math.max(...valores);
 
   return (
-    <View style={estilos.marco}>
-      {/* Los extremos de la escala, para saber entre que numeros se mueve. */}
-      <View style={[estilos.escala, { height: alto }]}>
+    /*
+     * ┌────────────────────────────────────────────────────────────────────┐
+     * │ EL GRAFICO ENTERO ES UN SOLO ELEMENTO PARA EL LECTOR.              │
+     * │                                                                    │
+     * │ `accessible` sobre el marco lo convierte en uno, y                 │
+     * │ `importantForAccessibility="no-hide-descendants"` tapa el interior  │
+     * │ en Android, donde `accessible` por si solo no basta.                │
+     * │                                                                    │
+     * │ Asi VoiceOver no recorre diez circulos, ni un `Path`, ni los        │
+     * │ numeros sueltos de la escala —"75,6", "71,4"— que sin contexto no   │
+     * │ dicen nada. Todo eso ya esta en la descripcion, y el valor y el     │
+     * │ cambio viven arriba en texto de verdad.                             │
+     * └────────────────────────────────────────────────────────────────────┘
+     */
+    <View
+      style={estilos.marco}
+      accessible
+      accessibilityRole="image"
+      accessibilityLabel={descripcion(puntos, medida, minimo, maximo)}
+    >
+      {/*
+        Y lo de dentro se tapa: `accessibilityElementsHidden` en iOS,
+        `importantForAccessibility` en Android. Sin esto el lector recorreria
+        diez circulos, un camino, y los numeros sueltos de la escala —"75,6",
+        "71,4"— que sin contexto no dicen nada.
+      */}
+      <View style={[estilos.escala, { height: alto }]} accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+        aria-hidden>
         <Text style={estilos.rotuloEscala}>{comoNumero(maximo)}</Text>
         <Text style={estilos.rotuloEscala}>{comoNumero(minimo)}</Text>
       </View>
 
-      <View style={estilos.zona} onLayout={medirAncho}>
+      <View
+        style={estilos.zona}
+        onLayout={medirAncho}
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+        aria-hidden
+      >
         {/*
           Hasta que no se sabe el ancho no se dibuja: un SVG de ancho cero
           durante el primer fotograma es una linea aplastada que parpadea. Se
           reserva el alto para que la pagina no salte.
         */}
         {ancho > 0 ? (
-          <Svg
-            width={ancho}
-            height={alto}
-            accessibilityRole="image"
-            accessibilityLabel={descripcion(puntos, medida, minimo, maximo)}
-          >
+          <Svg width={ancho} height={alto}>
             <Path
               d={camino}
               /*

@@ -15,6 +15,7 @@ import {
   comoNumero,
   historial,
   lecturaDeCambio,
+  lecturaDeFila,
   medidaDe,
   medidaVisible,
   medidasConDatos,
@@ -157,15 +158,24 @@ export default function Progreso() {
         {resumen.tipo !== 'sinDatos' ? (
           <View style={estilos.hero}>
             <Text style={estilos.rotulo}>{medida.etiqueta.toUpperCase()}</Text>
-            <View style={estilos.cifra}>
-              <Text
-                style={estilos.valor}
-                accessibilityRole="text"
-                accessibilityLabel={`${medida.etiqueta}: ${comoNumero(resumen.ultimo.valor)} ${medida.unidad}`}
-              >
+            {/*
+              La cifra y su unidad son UN elemento para el lector.
+              Medido: por separado, VoiceOver leia "Peso: 71,4 kg" y despues
+              "kg" otra vez, porque la unidad es un `Text` hermano.
+            */}
+            <View
+              style={estilos.cifra}
+              accessible
+              accessibilityRole="text"
+              accessibilityLabel={`${medida.etiqueta}: ${comoNumero(resumen.ultimo.valor)} ${medida.unidad}`}
+            >
+              {/* Tapados: su contenido ya esta en la etiqueta del grupo. */}
+              <Text style={estilos.valor} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" aria-hidden>
                 {comoNumero(resumen.ultimo.valor)}
               </Text>
-              <Text style={estilos.unidad}>{medida.unidad}</Text>
+              <Text style={estilos.unidad} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" aria-hidden>
+                {medida.unidad}
+              </Text>
             </View>
 
             {/*
@@ -195,12 +205,22 @@ export default function Progreso() {
           <View style={estilos.seccion}>
             <Text style={estilos.tituloDeSeccion}>EN LA ULTIMA MEDICION</Text>
             {otras.map(({ medida: otra, valor }) => (
-              <View key={otra.campo} style={estilos.filaDeMedida}>
-                <Text style={estilos.nombreDeMedida}>{otra.etiqueta}</Text>
-                <Text
-                  style={estilos.valorDeMedida}
-                  accessibilityLabel={`${otra.etiqueta}: ${comoNumero(valor)} ${otra.unidad}`}
-                >
+              /*
+                La fila entera es UN elemento. Por separado se oia
+                "Cintura", "Cintura: 79 cm" y "cm": tres anuncios para un
+                dato.
+              */
+              <View
+                key={otra.campo}
+                style={estilos.filaDeMedida}
+                accessible
+                accessibilityRole="text"
+                accessibilityLabel={`${otra.etiqueta}: ${comoNumero(valor)} ${otra.unidad}`}
+              >
+                <Text style={estilos.nombreDeMedida} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" aria-hidden>
+                  {otra.etiqueta}
+                </Text>
+                <Text style={estilos.valorDeMedida} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" aria-hidden>
                   {comoNumero(valor)} <Text style={estilos.unidadPequena}>{otra.unidad}</Text>
                 </Text>
               </View>
@@ -222,9 +242,22 @@ export default function Progreso() {
           <View style={estilos.seccion}>
             <Text style={estilos.tituloDeSeccion}>HISTORIAL</Text>
             {filas.map((fila) => (
-              <View key={fila.id} style={estilos.filaDeHistorial}>
-                <Text style={estilos.fechaDeHistorial}>{fechaDeInstante(fila.iso)}</Text>
-                <Text style={estilos.medidasDeHistorial}>
+              /*
+                Fecha primero y medidas despues, en un solo anuncio: el orden
+                de lectura es el de la pantalla. El separador visual "·" se
+                cambia por comas para el lector, que lo deletrearia.
+              */
+              <View
+                key={fila.id}
+                style={estilos.filaDeHistorial}
+                accessible
+                accessibilityRole="text"
+                accessibilityLabel={lecturaDeFila(fila, fechaDeInstante(fila.iso))}
+              >
+                <Text style={estilos.fechaDeHistorial} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" aria-hidden>
+                  {fechaDeInstante(fila.iso)}
+                </Text>
+                <Text style={estilos.medidasDeHistorial} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" aria-hidden>
                   {fila.valores
                     .map((v) => `${v.medida.corta} ${comoNumero(v.valor)} ${v.medida.unidad}`)
                     .join(' · ')}

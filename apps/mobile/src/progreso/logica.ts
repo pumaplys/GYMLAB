@@ -418,6 +418,21 @@ export interface FilaDeHistorial {
   valores: readonly ValorReciente[];
 }
 
+/**
+ * Una fila del historial, dicha entera.
+ *
+ * Fecha primero, medidas despues, separadas por comas. En pantalla el
+ * separador es un punto medio, que un lector deletrearia; y una medicion sin
+ * ninguna medida se dice como tal en lugar de dejar la fecha suelta.
+ */
+export function lecturaDeFila(fila: FilaDeHistorial, fecha: string): string {
+  if (fila.valores.length === 0) return `${fecha}: sin medidas registradas`;
+  const partes = fila.valores.map(
+    (v) => `${v.medida.etiqueta} ${comoNumero(v.valor)} ${v.medida.unidad}`,
+  );
+  return `${fecha}: ${partes.join(', ')}`;
+}
+
 export function historial(mediciones: readonly BodyMetric[]): readonly FilaDeHistorial[] {
   return [...mediciones]
     .filter((m) => !Number.isNaN(Date.parse(m.measuredAt)))

@@ -9,6 +9,7 @@ import {
   dominioDe,
   historial,
   lecturaDeCambio,
+  lecturaDeFila,
   medicionMasReciente,
   medidaDe,
   medidaPorDefecto,
@@ -211,7 +212,7 @@ describe('los numeros, escritos', () => {
    */
   it('ni el texto ni la lectura valoran el cambio', () => {
     const prohibidas =
-      /mejor|peor|bien|mal|genial|enhorabuena|objetivo|ideal|progres|logr|exito|fracas|sub[ei]|baj[ae]/i;
+      /mejor|peor|bien|mal|genial|enhorabuena|objetivo|ideal|progres|logr|exito|fracas|sub[ei]|baj[ae]|positiv|negativ/i;
 
     for (const delta of [-2.4, -0.1, 0, 0.1, 3.5]) {
       for (const medida of MEDIDAS) {
@@ -381,6 +382,101 @@ describe('las coordenadas', () => {
   it('sin puntos, camino vacio y sin excepcion', () => {
     expect(coordenadasDe([], ANCHO, ALTO)).toEqual([]);
     expect(caminoDe([])).toBe('');
+  });
+});
+
+/**
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ DOS COMPROBACIONES DE CORRECCION QUE NO SE MIRAN SOLAS.                 │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ */
+describe('la mas antigua a la izquierda y la mas nueva a la derecha', () => {
+  it('aunque la API las mande al reves', () => {
+    // `/me/progress` ordena por `measured_at DESC`: la primera que llega es la
+    // mas NUEVA. Si el grafico la pusiera en x=0, la linea iria del reves.
+    const datos = [
+      medicion('2026-08-24T08:00:00.000Z', { weightKg: 71 }),
+      medicion('2026-07-24T08:00:00.000Z', { weightKg: 72 }),
+      medicion('2026-06-24T08:00:00.000Z', { weightKg: 73 }),
+    ];
+    const c = coordenadasDe(serieDe(datos, 'weightKg'), 300, 140);
+
+    expect(c[0]!.punto.iso).toBe('2026-06-24T08:00:00.000Z');
+    expect(c[c.length - 1]!.punto.iso).toBe('2026-08-24T08:00:00.000Z');
+    // Y las X van creciendo, sin excepcion.
+    for (let i = 1; i < c.length; i++) expect(c[i]!.x).toBeGreaterThan(c[i - 1]!.x);
+  });
+
+  it('el instante mas antiguo cae exactamente en x=0 y el mas nuevo en el ancho', () => {
+    const datos = [
+      medicion('2026-08-24T08:00:00.000Z', { weightKg: 71 }),
+      medicion('2026-06-24T08:00:00.000Z', { weightKg: 73 }),
+    ];
+    const c = coordenadasDe(serieDe(datos, 'weightKg'), 300, 140);
+    expect(c[0]!.x).toBe(0);
+    expect(c[1]!.x).toBe(300);
+  });
+});
+
+describe('cuando la medicion mas reciente NO tiene esa medida', () => {
+  /*
+   * El caso: el 24 de agosto solo se tomo la cintura, y el peso es del 27 de
+   * julio. El hero del peso tiene que decir 72,6 kg del 27 de julio, ni un
+   * cero ni la fecha del 24.
+   */
+  const datos = [
+    medicion('2026-08-24T08:00:00.000Z', { waistCm: 79 }),
+    medicion('2026-07-27T09:00:00.000Z', { weightKg: 72.6 }),
+    medicion('2026-06-22T08:45:00.000Z', { weightKg: 73.1 }),
+  ];
+
+  it('usa la mas reciente QUE SI la tenga, con SU fecha', () => {
+    const resumen = resumenDeMedida(serieDe(datos, 'weightKg'));
+    if (resumen.tipo !== 'serie') throw new Error('deberia haber serie');
+    expect(resumen.ultimo.valor).toBe(72.6);
+    expect(resumen.ultimo.iso).toBe('2026-07-27T09:00:00.000Z');
+  });
+
+  it('NO convierte el hueco en cero ni lo cuenta como punto', () => {
+    const serie = serieDe(datos, 'weightKg');
+    expect(serie).toHaveLength(2);
+    expect(serie.map((p) => p.valor)).not.toContain(0);
+  });
+
+  it('el cambio se calcula entre las dos que SI la tienen', () => {
+    const resumen = resumenDeMedida(serieDe(datos, 'weightKg'));
+    if (resumen.tipo !== 'serie') throw new Error('deberia haber serie');
+    expect(resumen.cambio.delta).toBeCloseTo(72.6 - 73.1, 5);
+    expect(resumen.cambio.isoAnterior).toBe('2026-06-22T08:45:00.000Z');
+  });
+
+  it('y "en la ultima medicion" SI usa la mas reciente global, que es otra cosa', () => {
+    // Son dos preguntas distintas: "tu peso" es el ultimo peso; "la ultima
+    // medicion" es el dia que te midieron. Mezclarlas seria fechar mal el dato.
+    expect(medicionMasReciente(datos)?.measuredAt).toBe('2026-08-24T08:00:00.000Z');
+    expect(otrasMedidas(datos, 'weightKg').map((o) => o.medida.campo)).toEqual(['waistCm']);
+  });
+});
+
+describe('lo que oye un lector en el historial', () => {
+  it('fecha primero, medidas despues, con comas y no con el punto medio', () => {
+    const datos = [medicion('2026-08-24T08:00:00.000Z', { weightKg: 71.4, waistCm: 79 })];
+    const fila = historial(datos)[0]!;
+    expect(lecturaDeFila(fila, '24 ago 2026')).toBe(
+      '24 ago 2026: Peso 71,4 kg, Cintura 79 cm',
+    );
+  });
+
+  it('una medicion sin medidas se dice como tal, no como una fecha suelta', () => {
+    const fila = historial([medicion('2026-08-24T08:00:00.000Z', {})])[0]!;
+    expect(lecturaDeFila(fila, '24 ago 2026')).toBe('24 ago 2026: sin medidas registradas');
+  });
+
+  it('nunca anuncia un cero por un hueco', () => {
+    const datos = [medicion('2026-08-24T08:00:00.000Z', { weightKg: 71.4 })];
+    const lectura = lecturaDeFila(historial(datos)[0]!, '24 ago 2026');
+    expect(lectura).not.toMatch(/\b0\b/);
+    expect(lectura).not.toMatch(/Cintura|Cadera|Pecho|Brazo|Muslo|Grasa/);
   });
 });
 
