@@ -54,7 +54,7 @@ export interface DestinoDeTab {
 export const DESTINOS_DE_TABS: readonly DestinoDeTab[] = [
   { nombre: 'inicio', etiqueta: 'Inicio', icono: 'inicio' },
   { nombre: 'rutina', etiqueta: 'Rutina', icono: 'rutina' },
-  { nombre: 'carne', etiqueta: 'Carne', icono: 'carne' },
+  { nombre: 'carne', etiqueta: 'Carné', icono: 'carne' },
   { nombre: 'progreso', etiqueta: 'Progreso', icono: 'progreso' },
   { nombre: 'perfil', etiqueta: 'Perfil', icono: 'perfil' },
 ];

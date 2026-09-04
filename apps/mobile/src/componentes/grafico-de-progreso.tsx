@@ -5,12 +5,14 @@ import {
   caminoDe,
   comoNumero,
   coordenadasDe,
+  cruzanAnios,
   dominioDe,
   referenciasDeTiempo,
+  serieConstante,
   type Medida,
   type Punto,
 } from '../progreso/logica';
-import { fechaCortaDeInstante } from '../formato/fecha';
+import { fechaCortaDeInstante, fechaDeInstante } from '../formato/fecha';
 import { tema } from '../tema';
 
 /**
@@ -79,6 +81,13 @@ export function GraficoDeProgreso({
   const camino = caminoDe(coordenadas);
   const referencias = referenciasDeTiempo(puntos);
 
+  /*
+   * Si el rango cruza de año, los rotulos lo dicen. Y si todos los valores
+   * son el mismo, la escala no se rotula: ver los dos comentarios de abajo.
+   */
+  const conAnio = cruzanAnios(puntos);
+  const plana = serieConstante(puntos);
+
   const valores = puntos.map((p) => p.valor);
   const minimo = Math.min(...valores);
   const maximo = Math.max(...valores);
@@ -110,12 +119,31 @@ export function GraficoDeProgreso({
         diez circulos, un camino, y los numeros sueltos de la escala —"75,6",
         "71,4"— que sin contexto no dicen nada.
       */}
-      <View style={[estilos.escala, { height: alto }]} accessibilityElementsHidden
-        importantForAccessibility="no-hide-descendants"
-        aria-hidden>
-        <Text style={estilos.rotuloEscala}>{comoNumero(maximo)}</Text>
-        <Text style={estilos.rotuloEscala}>{comoNumero(minimo)}</Text>
-      </View>
+      {/*
+        ┌──────────────────────────────────────────────────────────────────┐
+        │ CON TODOS LOS VALORES IGUALES NO SE ROTULA LA ESCALA.            │
+        │                                                                  │
+        │ Lo enseño una captura: la serie constante ponia "70" arriba y    │
+        │ "70" abajo, y parecia una averia. La linea plana ES correcta —no │
+        │ se le inventa pendiente— pero rotular dos veces el mismo numero  │
+        │ no informa de nada.                                              │
+        │                                                                  │
+        │ Y tampoco se rotulan los limites del DOMINIO calculado: 67,9 y   │
+        │ 72,1 son relleno matematico, no los midio nadie, y puestos en el │
+        │ eje se leerian como mediciones que no existen.                   │
+        │                                                                  │
+        │ Asi que ahi no va nada: el valor esta arriba en grande, el       │
+        │ cambio dice "Sin cambio" y la linea plana dice el resto.         │
+        └──────────────────────────────────────────────────────────────────┘
+      */}
+      {plana ? null : (
+        <View style={[estilos.escala, { height: alto }]} accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          aria-hidden>
+          <Text style={estilos.rotuloEscala}>{comoNumero(maximo)}</Text>
+          <Text style={estilos.rotuloEscala}>{comoNumero(minimo)}</Text>
+        </View>
+      )}
 
       <View
         style={estilos.zona}
@@ -183,7 +211,7 @@ export function GraficoDeProgreso({
                 i === referencias.length - 1 && estilos.fechaDerecha,
               ]}
             >
-              {fechaCortaDeInstante(punto.iso)}
+              {conAnio ? fechaDeInstante(punto.iso) : fechaCortaDeInstante(punto.iso)}
             </Text>
           ))}
         </View>
@@ -209,10 +237,13 @@ function descripcion(
   minimo: number,
   maximo: number,
 ): string {
-  const primera = fechaCortaDeInstante(puntos[0]!.iso);
-  const ultima = fechaCortaDeInstante(puntos[puntos.length - 1]!.iso);
+  // Con el año cuando el rango lo cruza: "entre el 11 jun y el 24 ago" para
+  // catorce meses seria la misma ambiguedad que tenian los rotulos del eje.
+  const escribir = cruzanAnios(puntos) ? fechaDeInstante : fechaCortaDeInstante;
+  const primera = escribir(puntos[0]!.iso);
+  const ultima = escribir(puntos[puntos.length - 1]!.iso);
   return (
-    `Grafico de ${medida.etiqueta.toLowerCase()}: ${puntos.length} mediciones ` +
+    `Gráfico de ${medida.etiqueta.toLowerCase()}: ${puntos.length} mediciones ` +
     `entre el ${primera} y el ${ultima}, ` +
     `de ${comoNumero(minimo)} a ${comoNumero(maximo)} ${medida.unidad}.`
   );

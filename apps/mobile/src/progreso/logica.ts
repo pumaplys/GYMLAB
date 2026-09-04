@@ -201,7 +201,7 @@ export function lecturaDeCambio(delta: number, medida: Medida): string {
   const redondeado = Number(delta.toFixed(2));
   if (redondeado === 0) return `Sin cambio de ${medida.etiqueta.toLowerCase()} desde la anterior`;
   const palabra = redondeado > 0 ? 'mas' : 'menos';
-  return `${comoNumero(Math.abs(redondeado))} ${medida.unidad} ${palabra} que en la medicion anterior`;
+  return `${comoNumero(Math.abs(redondeado))} ${medida.unidad} ${palabra} que en la medición anterior`;
 }
 
 // --- El grafico ----------------------------------------------------------
@@ -357,6 +357,40 @@ export function referenciasDeTiempo(puntos: readonly Punto[]): readonly Punto[] 
   if (fraccion < 0.35 || fraccion > 0.65) return [primera, ultima];
 
   return [primera, medio, ultima];
+}
+
+/**
+ * ¿Los rotulos del eje caen en años distintos?
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ SIN ESTO EL EJE ESCONDE UN AÑO ENTERO.                                  │
+ * │                                                                          │
+ * │ Lo enseño una captura: la serie del parón iba del 11 de junio de 2025 al │
+ * │ 24 de agosto de 2026, y el eje ponia "11 jun" y "24 ago". Cualquiera lo  │
+ * │ lee como dos meses y medio del mismo año, cuando son catorce meses.      │
+ * │                                                                          │
+ * │ El año se compara en hora LOCAL, igual que las fechas: un instante del   │
+ * │ 1 de enero a las 00:30 en Madrid es todavia 31 de diciembre en Los       │
+ * │ Angeles, y el rotulo debe decir el año que ve quien mira.                │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ */
+export function cruzanAnios(puntos: readonly Punto[]): boolean {
+  if (puntos.length < 2) return false;
+  const anios = new Set(puntos.map((p) => new Date(p.instante).getFullYear()));
+  return anios.size > 1;
+}
+
+/**
+ * ¿Todos los valores son exactamente el mismo?
+ *
+ * La linea plana es correcta y no se le inventa pendiente. Lo que no vale es
+ * rotular el eje con el maximo y el minimo, porque salen los dos iguales
+ * —"70" arriba y "70" abajo— y eso parece una averia. Ver `GraficoDeProgreso`.
+ */
+export function serieConstante(puntos: readonly Punto[]): boolean {
+  if (puntos.length === 0) return false;
+  const primero = puntos[0]!.valor;
+  return puntos.every((p) => p.valor === primero);
 }
 
 // --- Las otras medidas ---------------------------------------------------

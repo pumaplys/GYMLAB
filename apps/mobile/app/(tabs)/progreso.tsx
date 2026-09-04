@@ -123,9 +123,9 @@ export default function Progreso() {
           boton que prometa registrar algo — en V1 quien mide es el entrenador.
         */}
         <View style={estilos.vacio}>
-          <Text style={estilos.vacioTitulo}>Aun no hay mediciones.</Text>
+          <Text style={estilos.vacioTitulo}>Aún no hay mediciones.</Text>
           <Text style={estilos.vacioTexto}>
-            Cuando tu gimnasio registre tu peso o tus medidas, apareceran aqui.
+            Cuando tu gimnasio registre tu peso o tus medidas, aparecerán aquí.
           </Text>
         </View>
       </Pantalla>
@@ -203,7 +203,7 @@ export default function Progreso() {
 
         {otras.length > 0 ? (
           <View style={estilos.seccion}>
-            <Text style={estilos.tituloDeSeccion}>EN LA ULTIMA MEDICION</Text>
+            <Text style={estilos.tituloDeSeccion}>EN LA ÚLTIMA MEDICIÓN</Text>
             {otras.map(({ medida: otra, valor }) => (
               /*
                 La fila entera es UN elemento. Por separado se oia

@@ -6,6 +6,7 @@ import {
   comoCambio,
   comoNumero,
   coordenadasDe,
+  cruzanAnios,
   dominioDe,
   historial,
   lecturaDeCambio,
@@ -18,6 +19,7 @@ import {
   otrasMedidas,
   referenciasDeTiempo,
   resumenDeMedida,
+  serieConstante,
   serieDe,
   type Punto,
 } from './logica';
@@ -224,10 +226,10 @@ describe('los numeros, escritos', () => {
 
   it('un lector de pantalla oye la unidad y la direccion, sin valorarla', () => {
     expect(lecturaDeCambio(-1.2, medidaDe('weightKg'))).toBe(
-      '1,2 kg menos que en la medicion anterior',
+      '1,2 kg menos que en la medición anterior',
     );
     expect(lecturaDeCambio(0.8, medidaDe('waistCm'))).toBe(
-      '0,8 cm mas que en la medicion anterior',
+      '0,8 cm mas que en la medición anterior',
     );
   });
 });
@@ -538,6 +540,123 @@ describe('las fechas del eje', () => {
 
   it('sin puntos, ninguna', () => {
     expect(referenciasDeTiempo([])).toEqual([]);
+  });
+});
+
+/**
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ EL EJE NO PUEDE ESCONDER UN AÑO.                                        │
+ * │                                                                          │
+ * │ Lo enseño una captura: la serie del parón iba del 11 de junio de 2025 al │
+ * │ 24 de agosto de 2026 y el eje ponia "11 jun" y "24 ago". Se lee como dos │
+ * │ meses y medio, y son catorce.                                            │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ */
+describe('cuando el eje cruza de año', () => {
+  const enUnAnio: readonly Punto[] = [
+    { instante: Date.UTC(2026, 4, 25, 12), valor: 70, iso: '2026-05-25T12:00:00.000Z' },
+    { instante: Date.UTC(2026, 7, 24, 12), valor: 71, iso: '2026-08-24T12:00:00.000Z' },
+  ];
+  const entreAnios: readonly Punto[] = [
+    { instante: Date.UTC(2025, 5, 11, 12), valor: 84.5, iso: '2025-06-11T12:00:00.000Z' },
+    { instante: Date.UTC(2026, 7, 24, 12), valor: 71.4, iso: '2026-08-24T12:00:00.000Z' },
+  ];
+
+  it('mismo año: formato compacto, sin repetir el año tres veces', () => {
+    expect(cruzanAnios(enUnAnio)).toBe(false);
+  });
+
+  it('años distintos: el año tiene que aparecer', () => {
+    expect(cruzanAnios(entreAnios)).toBe(true);
+  });
+
+  it('un intervalo de mas de doce meses NUNCA puede parecer del mismo año', () => {
+    // Catorce meses: por definicion cruza un 1 de enero.
+    const catorceMeses: readonly Punto[] = [
+      { instante: Date.UTC(2025, 5, 11), valor: 84, iso: '2025-06-11T00:00:00.000Z' },
+      { instante: Date.UTC(2026, 7, 11), valor: 71, iso: '2026-08-11T00:00:00.000Z' },
+    ];
+    expect(cruzanAnios(catorceMeses)).toBe(true);
+  });
+
+  it('el 31 de diciembre y el 1 de enero cruzan, aunque sean dos dias', () => {
+    const finDeAnio: readonly Punto[] = [
+      { instante: Date.UTC(2025, 11, 31, 12), valor: 70, iso: '2025-12-31T12:00:00.000Z' },
+      { instante: Date.UTC(2026, 0, 1, 12), valor: 71, iso: '2026-01-01T12:00:00.000Z' },
+    ];
+    expect(cruzanAnios(finDeAnio)).toBe(true);
+  });
+
+  it('con un solo punto no hay rango que cruzar', () => {
+    expect(cruzanAnios([enUnAnio[0] as Punto])).toBe(false);
+    expect(cruzanAnios([])).toBe(false);
+  });
+
+  it('el año se decide en hora LOCAL, como las fechas', () => {
+    // Las 23:00 UTC del 31 de diciembre ya son el 1 de enero en Madrid.
+    const cruce: readonly Punto[] = [
+      { instante: Date.parse('2025-12-31T23:00:00.000Z'), valor: 70, iso: '2025-12-31T23:00:00.000Z' },
+      { instante: Date.parse('2026-01-01T10:00:00.000Z'), valor: 71, iso: '2026-01-01T10:00:00.000Z' },
+    ];
+    const original = process.env.TZ;
+    try {
+      process.env.TZ = 'Europe/Madrid';
+      // Los dos son 2026 en Madrid: no hay año que enseñar.
+      expect(cruzanAnios(cruce)).toBe(false);
+      process.env.TZ = 'UTC';
+      // En UTC son 2025 y 2026: si lo hay.
+      expect(cruzanAnios(cruce)).toBe(true);
+    } finally {
+      if (original === undefined) delete process.env.TZ;
+      else process.env.TZ = original;
+    }
+  });
+});
+
+/**
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ UNA SERIE CONSTANTE NO SE ROTULA DOS VECES CON EL MISMO NUMERO.         │
+ * │                                                                          │
+ * │ La captura ponia "70" arriba y "70" abajo, y parecia una averia. La      │
+ * │ linea plana es correcta; lo que sobra son los rotulos.                   │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ */
+describe('la serie constante', () => {
+  const constante = puntos(70, 70, 70, 70);
+
+  it('se reconoce como tal', () => {
+    expect(serieConstante(constante)).toBe(true);
+  });
+
+  it('una serie que se mueve, aunque sea poco, NO es constante', () => {
+    expect(serieConstante(puntos(70, 70.1, 70))).toBe(false);
+  });
+
+  it('los valores siguen intactos: no se inventa oscilacion', () => {
+    expect(constante.map((p) => p.valor)).toEqual([70, 70, 70, 70]);
+    const c = coordenadasDe(constante, 300, 140);
+    // Todos a la misma altura, y en el centro del lienzo.
+    const alturas = new Set(c.map((p) => p.y.toFixed(4)));
+    expect(alturas.size).toBe(1);
+    expect(c[0]!.y).toBeCloseTo(70, 0);
+  });
+
+  it('los dos extremos del eje serian identicos: por eso no se pintan', () => {
+    const valores = constante.map((p) => p.valor);
+    expect(comoNumero(Math.min(...valores))).toBe(comoNumero(Math.max(...valores)));
+  });
+
+  it('el dominio sigue siendo valido: ni NaN, ni division por cero', () => {
+    const dominio = dominioDe(constante);
+    expect(dominio.max - dominio.min).toBeGreaterThan(0);
+    for (const c of coordenadasDe(constante, 300, 140)) {
+      expect(Number.isFinite(c.x)).toBe(true);
+      expect(Number.isFinite(c.y)).toBe(true);
+    }
+  });
+
+  it('con un solo punto no se habla de serie constante', () => {
+    expect(serieConstante([])).toBe(false);
   });
 });
 
