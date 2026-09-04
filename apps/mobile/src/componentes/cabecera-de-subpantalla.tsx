@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { Icono } from './icono';
+import { destinoAlVolver } from '../navegacion/destinos';
 import { tema } from '../tema';
 
 /**
@@ -30,8 +31,10 @@ import { tema } from '../tema';
  * └──────────────────────────────────────────────────────────────────────────┘
  */
 export function CabeceraDeSubpantalla({ titulo, descriptor }: { titulo: string; descriptor?: string }) {
+  // La decision vive en `navegacion/destinos.ts`, sin React, para poder
+  // probarla. Aqui solo queda ejecutarla.
   const volver = () => {
-    if (router.canGoBack()) router.back();
+    if (destinoAlVolver(router.canGoBack()) === 'atras') router.back();
     else router.replace('/perfil');
   };
 

@@ -45,6 +45,26 @@ export type NombreDeIcono =
   | 'salir'
   | 'volver';
 
+/**
+ * A donde lleva el "Volver" de una seccion de Perfil.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ HAY DOS FORMAS DE LLEGAR, Y SOLO UNA TIENE HISTORIAL.                   │
+ * │                                                                          │
+ * │ Desde la app se llega pulsando una fila de Perfil: hay pila, y volver es │
+ * │ deshacer. Con `push` en vez de `back`, cada vuelta apilaria otra         │
+ * │ pantalla y el gesto de atras del sistema recorreria un historial que no  │
+ * │ se parece a lo que hizo la persona.                                      │
+ * │                                                                          │
+ * │ Por un enlace directo —una notificacion, un enlace compartido— no hay    │
+ * │ nada detras. Ahi `back` no haria nada o sacaria de la app, asi que se    │
+ * │ REEMPLAZA por Perfil, que es donde vive esa seccion.                     │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ */
+export function destinoAlVolver(hayHistorial: boolean): 'atras' | '/perfil' {
+  return hayHistorial ? 'atras' : '/perfil';
+}
+
 export interface DestinoDeTab {
   /** El nombre del fichero dentro de `app/(tabs)`, sin extension. */
   nombre: string;

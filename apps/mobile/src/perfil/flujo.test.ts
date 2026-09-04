@@ -7,10 +7,22 @@ import { clasificarError } from '../auth/clasificar';
 import { debeBorrarToken } from '../auth/estado';
 import { laSesionYaNoVale } from '../auth/politica';
 import { fechaCivil, fechaDeInstante, horaDeInstante } from '../formato/fecha';
-import { DESTINOS_DE_TABS } from '../navegacion/destinos';
+import {
+  DESTINOS_DE_TABS,
+  destinoAlVolver,
+  destinoDe,
+  puedeEntrarEnTabs,
+} from '../navegacion/destinos';
+import type { EstadoDeSesion } from '../auth/estado';
 import { acumular, type Acumulado, type EstadoDeCarga } from './logica';
 
 const RAIZ = join(__dirname, '..', '..');
+
+/** El codigo sin sus comentarios: ahi se explica lo que NO existe. */
+function sinComentarios(codigo: string): string {
+  return codigo.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/(^|[^:])\/\/[^\n]*/g, '$1');
+}
+
 
 function pago(id: string): OwnPayment {
   return {
@@ -251,13 +263,97 @@ describe('las rutas de Perfil', () => {
 
 /**
  * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ UN ENLACE DIRECTO A UNA SUBRUTA NO PUEDE SALTARSE EL GATE.              │
+ * │                                                                          │
+ * │ Faltaba, y se vio probandolo: sin `app/perfil/_layout.tsx`, abrir        │
+ * │ /perfil/pagos montaba la pantalla con CUALQUIER estado de sesion. Las    │
+ * │ dieciocho combinaciones —tres rutas por seis estados— entraban.          │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ */
+describe('el gate de las subrutas de Perfil', () => {
+  const noAutenticados: readonly EstadoDeSesion[] = [
+    { tipo: 'sinSesion' },
+    { tipo: 'cargando' },
+    { tipo: 'rolNoAdmitido', yo: {} as never },
+    { tipo: 'requiereSeleccionGimnasio', yo: {} as never, opciones: [] },
+    { tipo: 'errorAlComprobar', motivo: 'red' },
+  ];
+
+  it('solo `autenticado` puede entrar', () => {
+    expect(puedeEntrarEnTabs({ tipo: 'autenticado', yo: {} as never, gymId: 'g1' })).toBe(true);
+    for (const estado of noAutenticados) {
+      expect(puedeEntrarEnTabs(estado), estado.tipo).toBe(false);
+    }
+  });
+
+  it('cada estado no autenticado tiene su destino, y ninguno es una subruta', () => {
+    for (const estado of noAutenticados) {
+      const destino = destinoDe(estado);
+      expect(String(destino ?? ''), estado.tipo).not.toMatch(/^\/perfil\//);
+    }
+  });
+
+  it('existe el layout, y es el que aplica el gate', () => {
+    const ruta = join(RAIZ, 'app', 'perfil', '_layout.tsx');
+    expect(existsSync(ruta)).toBe(true);
+    const codigo = readFileSync(ruta, 'utf8');
+    expect(codigo).toMatch(/puedeEntrarEnTabs\(estado\)/);
+    expect(codigo).toMatch(/<Redirect href="\/" \/>/);
+  });
+
+  it('el gate es el MISMO que el de las pestañas, no una copia distinta', () => {
+    const deTabs = readFileSync(join(RAIZ, 'app', '(tabs)', '_layout.tsx'), 'utf8');
+    const dePerfil = readFileSync(join(RAIZ, 'app', 'perfil', '_layout.tsx'), 'utf8');
+    for (const codigo of [deTabs, dePerfil]) {
+      expect(codigo).toMatch(/if \(!puedeEntrarEnTabs\(estado\)\) return <Redirect href="\/" \/>;/);
+    }
+  });
+
+  it('el gate va UNA vez en el layout, no repetido en las tres pantallas', () => {
+    for (const seccion of ['pagos', 'accesos', 'privacidad']) {
+      const codigo = readFileSync(join(RAIZ, 'app', 'perfil', `${seccion}.tsx`), 'utf8');
+      expect(codigo, seccion).not.toMatch(/puedeEntrarEnTabs|<Redirect/);
+    }
+  });
+});
+
+describe('volver desde una subruta', () => {
+  it('con historial, se deshace', () => {
+    expect(destinoAlVolver(true)).toBe('atras');
+  });
+
+  it('sin historial —un enlace directo— se va a Perfil', () => {
+    expect(destinoAlVolver(false)).toBe('/perfil');
+  });
+
+  it('nunca lleva a otro sitio que no sea Perfil', () => {
+    for (const hay of [true, false]) {
+      const destino = destinoAlVolver(hay);
+      expect(['atras', '/perfil']).toContain(destino);
+    }
+  });
+
+  it('la cabecera usa la decision pura y `replace` para el caso sin historial', () => {
+    const codigo = readFileSync(
+      join(RAIZ, 'src', 'componentes', 'cabecera-de-subpantalla.tsx'),
+      'utf8',
+    );
+    expect(codigo).toMatch(/destinoAlVolver\(router\.canGoBack\(\)\)/);
+    expect(codigo).toMatch(/router\.replace\('\/perfil'\)/);
+    /*
+     * `push` apilaria otra pantalla en vez de deshacer. Se mira el codigo SIN
+     * comentarios: uno de ellos explica precisamente por que no se usa `push`,
+     * y esa explicacion es justo lo que se quiere conservar.
+     */
+    expect(sinComentarios(codigo)).not.toMatch(/router\.push\('\/perfil'\)/);
+  });
+});
+
+/**
+ * ┌──────────────────────────────────────────────────────────────────────────┐
  * │ LO QUE ESTAS PANTALLAS NO PUEDEN HACER, COMPROBADO EN EL CODIGO FUENTE. │
  * └──────────────────────────────────────────────────────────────────────────┘
  */
-function sinComentarios(codigo: string): string {
-  return codigo.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/(^|[^:])\/\/[^\n]*/g, '$1');
-}
-
 const FUENTES = [
   'app/(tabs)/perfil.tsx',
   'app/perfil/pagos.tsx',

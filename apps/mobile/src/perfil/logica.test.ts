@@ -263,6 +263,64 @@ describe('la privacidad', () => {
     expect(situacion.version).toBe('2026-09-01');
   });
 
+  /*
+   * ┌──────────────────────────────────────────────────────────────────────────┐
+   * │ SOLO HAY TRES ESTADOS ALCANZABLES, Y SE DEMUESTRA EN EL SERVICIO.       │
+   * │                                                                          │
+   * │ `estadoDeConsentimiento` empieza con `vigente(gymId)`: si no hay         │
+   * │ documento, devuelve `{ configurada: null, aceptada: false }` y no mira    │
+   * │ nada mas. Y `healthConsentStatus` saca `document` de ESA MISMA llamada,  │
+   * │ en la misma transaccion.                                                 │
+   * │                                                                          │
+   * │ Por tanto `accepted: true` con `document: null` —o con                   │
+   * │ `currentVersion: null`— no es que sea raro: es imposible de producir.    │
+   * │ Estas pruebas fijan que la pantalla trate esos tres, y solo esos tres.   │
+   * └──────────────────────────────────────────────────────────────────────────┘
+   */
+  it('los estados alcanzables son EXACTAMENTE tres', () => {
+    const alcanzables = [
+      estado({ document: null, currentVersion: null, accepted: false }),
+      estado({ accepted: false }),
+      estado({ accepted: true, acceptedAt: '2026-09-02T17:30:00.000Z' }),
+    ];
+    expect(alcanzables.map((e) => situacionDePrivacidad(e).tipo)).toEqual([
+      'sinTexto',
+      'pendiente',
+      'vigente',
+    ]);
+  });
+
+  it('nunca se ofrecen dos acciones contradictorias a la vez', () => {
+    for (const e of [
+      estado({ document: null, currentVersion: null }),
+      estado({ accepted: false }),
+      estado({ accepted: true, acceptedAt: '2026-09-02T17:30:00.000Z' }),
+    ]) {
+      const { puedeAceptar, puedeRetirar } = accionesDePrivacidad(situacionDePrivacidad(e));
+      expect(puedeAceptar && puedeRetirar).toBe(false);
+    }
+  });
+
+  /*
+   * Y si algun dia el servidor cambiara y llegara el imposible, la pantalla no
+   * revienta: manda el documento, que es lo unico que se puede leer.
+   */
+  it('el imposible `accepted: true` sin documento se trata como sin texto, no revienta', () => {
+    const situacion = situacionDePrivacidad(
+      estado({ accepted: true, acceptedAt: '2026-09-02T17:30:00.000Z', document: null }),
+    );
+    expect(situacion.tipo).toBe('sinTexto');
+    expect(accionesDePrivacidad(situacion)).toEqual({ puedeAceptar: false, puedeRetirar: false });
+  });
+
+  it('aceptado SIN fecha sigue siendo aceptado: la fecha es opcional', () => {
+    const situacion = situacionDePrivacidad(estado({ accepted: true, acceptedAt: null }));
+    expect(situacion.tipo).toBe('vigente');
+    if (situacion.tipo !== 'vigente') return;
+    expect(situacion.aceptadoEn).toBeNull();
+    expect(accionesDePrivacidad(situacion).puedeRetirar).toBe(true);
+  });
+
   it('no existe ninguna accion mas que aceptar y retirar', () => {
     const claves = Object.keys(accionesDePrivacidad(situacionDePrivacidad(estado({}))));
     expect(claves.sort()).toEqual(['puedeAceptar', 'puedeRetirar']);
