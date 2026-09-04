@@ -32,6 +32,7 @@ export function Pantalla({
   desplazable = true,
   alRefrescar,
   refrescando = false,
+  sinRellenoHorizontal = false,
 }: {
   children: ReactNode;
   titulo?: string;
@@ -55,11 +56,27 @@ export function Pantalla({
    */
   alRefrescar?: () => void;
   refrescando?: boolean;
+  /**
+   * Quita el margen lateral del contenido, no del encabezado.
+   *
+   * ┌────────────────────────────────────────────────────────────────────────┐
+   * │ ES PARA LAS TIRAS QUE SE ARRASTRAN DE BORDE A BORDE.                  │
+   * │                                                                        │
+   * │ El selector de medidas de Progreso es un `ScrollView` horizontal: si   │
+   * │ empieza y acaba a 16 px del borde, parece una fila que cabe entera y   │
+   * │ nadie la arrastra. Cortada por el borde se ve que sigue.               │
+   * │                                                                        │
+   * │ La pantalla que lo pida se encarga de dar su propio margen al resto    │
+   * │ del contenido. El encabezado lo conserva siempre, para que el titulo   │
+   * │ quede alineado con el de las otras cuatro pantallas.                   │
+   * └────────────────────────────────────────────────────────────────────────┘
+   */
+  sinRellenoHorizontal?: boolean;
 }) {
   const cuerpo = (
     <>
       {titulo ? (
-        <View style={estilos.encabezado}>
+        <View style={[estilos.encabezado, sinRellenoHorizontal && estilos.margenPropio]}>
           <Text style={estilos.titulo} accessibilityRole="header">
             {titulo}
           </Text>
@@ -80,7 +97,7 @@ export function Pantalla({
       {desplazable ? (
         <ScrollView
           style={estilos.flujo}
-          contentContainerStyle={estilos.contenido}
+          contentContainerStyle={[estilos.contenido, sinRellenoHorizontal && estilos.sinLados]}
           keyboardShouldPersistTaps="handled"
           refreshControl={
             alRefrescar ? (
@@ -97,7 +114,9 @@ export function Pantalla({
           {cuerpo}
         </ScrollView>
       ) : (
-        <View style={[estilos.flujo, estilos.contenido]}>{cuerpo}</View>
+        <View style={[estilos.flujo, estilos.contenido, sinRellenoHorizontal && estilos.sinLados]}>
+          {cuerpo}
+        </View>
       )}
     </SafeAreaView>
   );
@@ -118,6 +137,8 @@ const estilos = StyleSheet.create({
     paddingBottom: tema.espacio.xxxl,
   },
   encabezado: { gap: tema.espacio.md },
+  sinLados: { paddingHorizontal: 0 },
+  margenPropio: { paddingHorizontal: tema.espacio.lg },
   titulo: { ...tema.texto.h1, color: tema.color.texto },
   carril: { flexDirection: 'row', alignItems: 'center', height: 3 },
   carrilAcento: { width: 44, height: 3, borderRadius: 2, backgroundColor: tema.color.acento },
