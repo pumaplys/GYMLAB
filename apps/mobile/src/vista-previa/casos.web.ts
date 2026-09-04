@@ -126,6 +126,18 @@ export const CASOS: Record<string, Caso> = {
   'rutina-vacia': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
   'rutina-cargando': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
   'rutina-error': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
+  // Los estados de Progreso. Misma sesion autenticada; lo que cambia es lo que
+  // devuelve 'progreso/fuente.web.ts' para ese mismo ?vista=.
+  'progreso-vacio': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
+  'progreso-una': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
+  'progreso-dos': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
+  'progreso-varias': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
+  'progreso-constante': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
+  'progreso-intervalos-irregulares': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
+  'progreso-casi-igual': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
+  'progreso-campos-nulos': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
+  'progreso-cargando': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
+  'progreso-error': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
 };
 
 export type { Caso, Entrada } from './tipos';
