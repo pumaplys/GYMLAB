@@ -134,9 +134,9 @@ export default function Rutina() {
           prometer algo que no existe. Se le dice quien si puede.
         */}
         <View style={estilos.vacio}>
-          <Text style={estilos.vacioTitulo}>Aun no tienes una rutina asignada.</Text>
+          <Text style={estilos.vacioTitulo}>Aún no tienes una rutina asignada.</Text>
           <Text style={estilos.vacioTexto}>
-            Cuando tu entrenador te asigne una, aparecera aqui.
+            Cuando tu entrenador te asigne una, aparecerá aquí.
           </Text>
         </View>
       </Pantalla>
