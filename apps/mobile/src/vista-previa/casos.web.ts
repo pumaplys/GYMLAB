@@ -138,6 +138,26 @@ export const CASOS: Record<string, Caso> = {
   'progreso-campos-nulos': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
   'progreso-cargando': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
   'progreso-error': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
+  // Perfil y sus tres secciones. Misma sesion autenticada; lo que cambia es lo
+  // que devuelve 'perfil/fuente.web.ts' para ese mismo ?vista=.
+  'perfil-completo': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
+  'perfil-cuota-problema': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
+  'perfil-cargando': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
+  'perfil-error': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
+  'pagos-varios': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
+  'pagos-fixture-real': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
+  'pagos-vacio': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
+  'pagos-cargando': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
+  'pagos-error': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
+  'accesos-varios': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
+  'accesos-vacio': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
+  'accesos-cargando': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
+  'accesos-error': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
+  'privacidad-activa': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
+  'privacidad-pendiente': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
+  'privacidad-sin-texto': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
+  'privacidad-cargando': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
+  'privacidad-error': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
 };
 
 export type { Caso, Entrada } from './tipos';

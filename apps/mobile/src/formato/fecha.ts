@@ -83,6 +83,21 @@ export function fechaDeInstante(iso: string): string {
  * Para los rotulos del grafico, donde el año se repite en los tres y no cabe.
  * Misma conversion a hora local que `fechaDeInstante`, por el mismo motivo.
  */
+/**
+ * La hora local de un instante: "18:42".
+ *
+ * Para el historial de accesos, donde saber el dia no basta: quien mira quiere
+ * reconocer "el martes por la tarde". Misma conversion a hora local que
+ * `fechaDeInstante`, y por el mismo motivo.
+ */
+export function horaDeInstante(iso: string): string {
+  const momento = new Date(iso);
+  if (Number.isNaN(momento.getTime())) return '';
+  const hh = String(momento.getHours()).padStart(2, '0');
+  const mm = String(momento.getMinutes()).padStart(2, '0');
+  return `${hh}:${mm}`;
+}
+
 export function fechaCortaDeInstante(iso: string): string {
   const momento = new Date(iso);
   if (Number.isNaN(momento.getTime())) return iso;

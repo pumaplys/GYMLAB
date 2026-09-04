@@ -33,7 +33,17 @@ export type NombreDeIcono =
   | 'carne'
   | 'progreso'
   | 'perfil'
-  | 'avanzar';
+  | 'avanzar'
+  /*
+   * Los cuatro de M8. Mismo lenguaje que los de M3: viewBox 24, trazo 1,5 y
+   * remates redondos. Se dibujan aqui por lo mismo que entonces — cuatro SVG
+   * pequeños no justifican una libreria de iconos.
+   */
+  | 'pagos'
+  | 'accesos'
+  | 'privacidad'
+  | 'salir'
+  | 'volver';
 
 export interface DestinoDeTab {
   /** El nombre del fichero dentro de `app/(tabs)`, sin extension. */
