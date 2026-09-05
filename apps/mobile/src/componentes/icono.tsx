@@ -129,4 +129,63 @@ const DIBUJOS: Record<NombreDeIcono, ReactNode> = {
    * otro grosor se veria que es de otra familia.
    */
   avanzar: <Path d="m9.5 5.5 7 6.5-7 6.5" />,
+
+  /*
+   * La punta de flecha de `avanzar`, girada. Volver y avanzar son la misma
+   * accion en dos sentidos, y dibujarlas distintas seria decir que no lo son.
+   */
+  volver: <Path d="m14.5 5.5-7 6.5 7 6.5" />,
+
+  /*
+   * Un billete con su cifra: lo que se ha cobrado.
+   *
+   * No una tarjeta de credito —no hay tarjeta guardada en el producto— ni un
+   * simbolo de euro, que cambiaria con la moneda.
+   */
+  pagos: (
+    <>
+      <Path d="M3 7.5h18v9H3z" />
+      <Path d="M8.5 12h1M14.5 12h1" />
+      <Path d="M12 10v4" />
+    </>
+  ),
+
+  /*
+   * Una puerta abierta: las entradas al gimnasio.
+   *
+   * Sin torno ni lector, que darian a entender un dispositivo concreto — y el
+   * contrato de accesos no dice por donde se entro.
+   */
+  accesos: (
+    <>
+      <Path d="M14.5 3.5H6a1.5 1.5 0 0 0-1.5 1.5v14A1.5 1.5 0 0 0 6 20.5h8.5" />
+      <Path d="M14.5 3.5 19.5 6v12l-5 2.5z" />
+      <Path d="M16.5 12v.01" />
+    </>
+  ),
+
+  /*
+   * Un escudo: quien puede tratar tus datos.
+   *
+   * Sin candado: un candado dice "cerrado", y el consentimiento no va de
+   * cerrar nada, va de decidir.
+   */
+  privacidad: (
+    <>
+      <Path d="M12 3.5 5 6.2v5.3c0 4 2.9 7.6 7 9 4.1-1.4 7-5 7-9V6.2z" />
+      <Path d="m9 12 2.2 2.2L15.2 10" />
+    </>
+  ),
+
+  /*
+   * Salir por una puerta con la flecha hacia fuera. Es la lectura universal
+   * de "cerrar sesion", y no se parece a ninguno de los cinco de la barra.
+   */
+  salir: (
+    <>
+      <Path d="M15 4.5h3.5A1.5 1.5 0 0 1 20 6v12a1.5 1.5 0 0 1-1.5 1.5H15" />
+      <Path d="M10.5 8 6.5 12l4 4" />
+      <Path d="M6.5 12H15" />
+    </>
+  ),
 };
