@@ -4,6 +4,11 @@ node_modules/
 
 # Builds
 dist/
+# Lo genera `expo prebuild` a partir de app.json y app.config.js. El proyecto
+# es de flujo gestionado: estos directorios son un resultado, no una fuente, y
+# tenerlos versionados hace que la configuracion deje de mandar.
+apps/mobile/ios/
+apps/mobile/android/
 # `expo export --output-dir` acepta cualquier nombre, y `dist/` a secas no lo
 # tapa: un `dist-ios` de 3 MB entro en un commit por esto.
 dist-*/

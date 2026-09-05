@@ -2,20 +2,20 @@ import { StyleSheet, Text, View } from 'react-native';
 import { tema } from '../tema';
 
 /**
- * El wordmark, TEMPORAL.
+ * El wordmark de RINDA.
  *
- * Tipografico y nada mas: ni isotipo, ni simbolo, ni marca dibujada. El
- * naming del producto sigue sin decidirse, asi que cualquier cosa que se
- * dibuje ahora habria que rehacerla. Una palabra con espaciado y un punto de
- * acento se cambia entera cambiando esta linea.
+ * Tipografico: la palabra con espaciado y un punto de acento. Ni isotipo ni
+ * marca dibujada, porque el logotipo definitivo llega como imagen —para el
+ * icono y el arranque nativo— y aqui, dentro de la app, una palabra se lee
+ * mejor y no depende de un fichero.
  *
  * El punto lima es lo unico que lo separa de un texto suelto, y es el mismo
  * recurso que se usa en el resto de la app: el acento marca lo que importa.
  */
 export function Marca({ tamano = 'grande' }: { tamano?: 'grande' | 'pequeno' }) {
   return (
-    <View style={estilos.fila} accessibilityRole="header" accessibilityLabel="GYMLAB">
-      <Text style={[estilos.palabra, tamano === 'pequeno' && estilos.pequena]}>GYMLAB</Text>
+    <View style={estilos.fila} accessibilityRole="header" accessibilityLabel="RINDA">
+      <Text style={[estilos.palabra, tamano === 'pequeno' && estilos.pequena]}>RINDA</Text>
       <View style={[estilos.punto, tamano === 'pequeno' && estilos.puntoPequeno]} />
     </View>
   );

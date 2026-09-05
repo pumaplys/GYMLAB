@@ -11,7 +11,7 @@ import { tema } from '../tema';
 export function Arranque() {
   return (
     <View style={estilos.raiz}>
-      <Text style={estilos.marca}>GYMLAB</Text>
+      <Text style={estilos.marca}>RINDA</Text>
       <ActivityIndicator color={tema.color.acento} />
       <Text style={estilos.pie} accessibilityLiveRegion="polite">
         Comprobando tu sesión…

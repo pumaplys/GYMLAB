@@ -1,21 +1,42 @@
 {
   "expo": {
-    "name": "GYMLAB",
-    "slug": "gymlab",
-    "version": "0.0.0",
+    "name": "RINDA",
+    "slug": "rinda",
+    "version": "0.1.0",
     "orientation": "portrait",
-    "scheme": "gymlab",
+    "scheme": "rinda",
     "userInterfaceStyle": "dark",
+    "icon": "./assets/icon.png",
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.gymlab.app"
+      "bundleIdentifier": "tech.gymlabfit.rinda",
+      "buildNumber": "1"
     },
     "android": {
-      "package": "com.gymlab.app"
+      "package": "tech.gymlabfit.rinda",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0D0F12"
+      }
     },
     "plugins": [
       "expo-router",
-      "expo-secure-store"
+      [
+        "expo-secure-store",
+        {
+          "faceIDPermission": false
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash.png",
+          "imageWidth": 280,
+          "resizeMode": "contain",
+          "backgroundColor": "#0D0F12"
+        }
+      ]
     ],
     "web": {
       "bundler": "metro",
