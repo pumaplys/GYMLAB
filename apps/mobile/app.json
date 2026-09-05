@@ -1,18 +1,18 @@
 {
   "expo": {
-    "name": "GYMLAB",
-    "slug": "gymlab",
+    "name": "RINDA",
+    "slug": "rinda",
     "version": "0.1.0",
     "orientation": "portrait",
-    "scheme": "gymlab",
+    "scheme": "rinda",
     "userInterfaceStyle": "dark",
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.gymlab.app",
+      "bundleIdentifier": "tech.gymlabfit.rinda",
       "buildNumber": "1"
     },
     "android": {
-      "package": "com.gymlab.app",
+      "package": "tech.gymlabfit.rinda",
       "versionCode": 1
     },
     "plugins": [

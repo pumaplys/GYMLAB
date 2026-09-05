@@ -116,11 +116,47 @@ describe('la app no pide permisos que no usa', () => {
   });
 });
 
-describe('los identificadores nativos no se mueven por accidente', () => {
-  it('bundle id, package y scheme son los que se decidieron', () => {
-    expect(base.ios.bundleIdentifier).toBe('com.gymlab.app');
-    expect(base.android.package).toBe('com.gymlab.app');
-    expect(base.scheme).toBe('gymlab');
+describe('la identidad nativa es RINDA', () => {
+  /*
+   * ┌──────────────────────────────────────────────────────────────────────┐
+   * │ LA MARCA ES RINDA. EL DOMINIO DE LA API SIGUE SIENDO gymlabfit.tech. │
+   * │                                                                      │
+   * │ No es una incoherencia: lo que ve una persona es el producto, y lo   │
+   * │ que resuelve un DNS es la infraestructura. El bundle identifier usa  │
+   * │ el DNS inverso del dominio que SI es nuestro —`tech.gymlabfit`— y    │
+   * │ termina en el nombre del producto.                                   │
+   * │                                                                      │
+   * │ Por eso este fichero prohibe `com.gymlab.app` y NO prohibe           │
+   * │ `gymlabfit.tech`.                                                    │
+   * └──────────────────────────────────────────────────────────────────────┘
+   */
+  it('el nombre visible de la app es RINDA', () => {
+    expect(base.name).toBe('RINDA');
+  });
+
+  it('bundle id, package y scheme son los definitivos', () => {
+    expect(base.ios.bundleIdentifier).toBe('tech.gymlabfit.rinda');
+    expect(base.android.package).toBe('tech.gymlabfit.rinda');
+    expect(base.scheme).toBe('rinda');
+    expect(base.slug).toBe('rinda');
+  });
+
+  it('el identificador anterior no vuelve por ningun sitio', () => {
+    const texto = JSON.stringify(base);
+    expect(texto).not.toContain('com.gymlab.app');
+    // Ni la marca vieja como nombre visible o esquema.
+    expect(base.name).not.toMatch(/gymlab/i);
+    expect(base.scheme).not.toMatch(/gymlab/i);
+  });
+
+  it('el wordmark y la pantalla de arranque dicen RINDA', () => {
+    for (const fichero of ['src/componentes/marca.tsx', 'src/componentes/arranque.tsx']) {
+      const codigo = readFileSync(join(RAIZ, fichero), 'utf8')
+        .replace(/\/\*[\s\S]*?\*\//g, ' ')
+        .replace(/^\s*\/\/.*$/gm, ' ');
+      expect(codigo, fichero).toContain('RINDA');
+      expect(codigo, fichero).not.toMatch(/GYMLAB/);
+    }
   });
 
   /*
