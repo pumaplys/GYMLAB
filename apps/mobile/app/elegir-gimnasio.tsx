@@ -107,7 +107,7 @@ export default function ElegirGimnasio() {
       <View style={estilos.hueco} />
 
       <Boton onPress={() => void salir()} deshabilitado={eligiendo !== null}>
-        Cerrar sesion
+        Cerrar sesión
       </Boton>
     </Pantalla>
   );

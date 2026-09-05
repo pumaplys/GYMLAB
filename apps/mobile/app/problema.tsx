@@ -35,13 +35,13 @@ export default function Problema() {
       </View>
       <Aviso tono="aviso">{mensajeDeRestauracion(estado.motivo)}</Aviso>
       <Text style={estilos.nota}>
-        Tu sesion sigue guardada: no hace falta que vuelvas a entrar.
+        Tu sesión sigue guardada: no hace falta que vuelvas a entrar.
       </Text>
       <Boton variante="primario" onPress={() => void reintentar()} cargando={reintentando}>
         Reintentar
       </Boton>
       <Boton onPress={() => void salir()} deshabilitado={reintentando}>
-        Cerrar sesion
+        Cerrar sesión
       </Boton>
     </Pantalla>
   );

@@ -47,13 +47,13 @@ describe('la cuenta atras del codigo', () => {
   });
 
   it('el texto habla de segundos, y en singular cuando toca', () => {
-    expect(textoDeCuentaAtras(45)).toBe('El codigo caduca en 45 segundos.');
-    expect(textoDeCuentaAtras(1)).toBe('El codigo caduca en 1 segundo.');
-    expect(textoDeCuentaAtras(0)).toBe('El codigo ha caducado. Genera otro.');
+    expect(textoDeCuentaAtras(45)).toBe('El código caduca en 45 segundos.');
+    expect(textoDeCuentaAtras(1)).toBe('El código caduca en 1 segundo.');
+    expect(textoDeCuentaAtras(0)).toBe('El código ha caducado. Genera otro.');
   });
 
   it('el texto nunca dice un numero negativo', () => {
-    expect(textoDeCuentaAtras(-5)).toBe('El codigo ha caducado. Genera otro.');
+    expect(textoDeCuentaAtras(-5)).toBe('El código ha caducado. Genera otro.');
   });
 });
 

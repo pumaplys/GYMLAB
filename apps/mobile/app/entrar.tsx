@@ -99,7 +99,7 @@ export default function Entrar() {
 
           <View style={estilos.principal}>
             <View style={estilos.tituloBloque}>
-              <Text style={estilos.titulo}>Bienvenido de nuevo</Text>
+              <Text style={estilos.titulo}>Hola de nuevo</Text>
               {/*
                 El unico gesto grafico de la pantalla. Antes era un filete
                 suelto de 44 px; ahora el acento arranca y una linea fina lo
@@ -130,7 +130,7 @@ export default function Entrar() {
               />
 
               <Campo
-                etiqueta="Contrasena"
+                etiqueta="Contraseña"
                 valor={clave}
                 alCambiar={setClave}
                 deshabilitado={enviando}
@@ -165,10 +165,10 @@ export default function Entrar() {
                 onPress={() => void abrirRecuperacion()}
                 style={estilos.enlace}
                 accessibilityRole="link"
-                accessibilityLabel="He olvidado mi contrasena"
-                accessibilityHint="Abre la recuperacion de contrasena en el navegador"
+                accessibilityLabel="He olvidado mi contraseña"
+                accessibilityHint="Abre la recuperación de contraseña en el navegador"
               >
-                <Text style={estilos.textoEnlace}>He olvidado mi contrasena</Text>
+                <Text style={estilos.textoEnlace}>He olvidado mi contraseña</Text>
               </Pressable>
             </View>
           </View>

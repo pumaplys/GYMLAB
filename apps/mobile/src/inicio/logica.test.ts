@@ -77,13 +77,13 @@ function medicion(parcial: Partial<BodyMetric>): BodyMetric {
 
 describe('el saludo', () => {
   it('cambia con la hora del telefono', () => {
-    expect(saludo('Lucia', 8)).toBe('Buenos dias, Lucia');
+    expect(saludo('Lucia', 8)).toBe('Buenos días, Lucia');
     expect(saludo('Lucia', 15)).toBe('Buenas tardes, Lucia');
     expect(saludo('Lucia', 22)).toBe('Buenas noches, Lucia');
   });
 
   it('los limites caen donde se espera', () => {
-    expect(saludo('L', 11)).toMatch(/dias/);
+    expect(saludo('L', 11)).toMatch(/días/);
     expect(saludo('L', 12)).toMatch(/tardes/);
     expect(saludo('L', 19)).toMatch(/tardes/);
     expect(saludo('L', 20)).toMatch(/noches/);
@@ -91,7 +91,7 @@ describe('el saludo', () => {
 
   it('a las cuatro de la mañana no dice nada raro', () => {
     // Quien entrena a esa hora no necesita que la app se lo comente.
-    expect(saludo('L', 4)).toBe('Buenos dias, L');
+    expect(saludo('L', 4)).toBe('Buenos días, L');
   });
 
   it('sin nombre no deja una coma colgando', () => {

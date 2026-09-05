@@ -202,10 +202,10 @@ export default function Inicio() {
       <FilaDeAccion
         principal
         icono="carne"
-        titulo="Abrir carne"
+        titulo="Abrir carné"
         detalle="Tu codigo para entrar"
         alPulsar={() => router.push(RUTAS_DE_TABS.carne)}
-        accessibilityHint="Abre tu carne digital"
+        accessibilityHint="Abre tu carné digital"
       />
 
       {/*
@@ -217,7 +217,7 @@ export default function Inicio() {
         hairlines, y el enlace vive arriba a la derecha en pequeño.
       */}
       {datos.rutinas.estado === 'fallo' ? (
-        <Aviso tono="aviso">No pudimos cargar tus rutinas. El resto de tu inicio sigue aqui.</Aviso>
+        <Aviso tono="aviso">No pudimos cargar tus rutinas. El resto de tu inicio sigue aquí.</Aviso>
       ) : rutinas ? (
         <View style={estilos.seccion}>
           <CabeceraDeSeccion
@@ -231,7 +231,7 @@ export default function Inicio() {
 
           {rutinas.tipo === 'ninguna' ? (
             <Text style={estilos.vacio}>
-              Todavia no tienes ninguna asignada. Tu entrenador puede prepararte una.
+              Todavía no tienes ninguna asignada. Tu entrenador puede prepararte una.
             </Text>
           ) : rutinas.tipo === 'una' ? (
             <FilaDeRutina
@@ -305,7 +305,7 @@ export default function Inicio() {
         <View style={estilos.seccion}>
           <CabeceraDeSeccion titulo="PROGRESO" />
           <Text style={estilos.vacio}>
-            Todavia no hay mediciones. Tu gimnasio las registra en tu ficha.
+            Todavía no hay mediciones. Tu gimnasio las registra en tu ficha.
           </Text>
         </View>
       ) : null}

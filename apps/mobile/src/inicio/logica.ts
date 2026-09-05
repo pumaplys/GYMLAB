@@ -31,7 +31,7 @@ import type { BodyMetric, DuesStatus, Member, OwnRoutine } from '@gymlab/contrac
  * se lo comente.
  */
 export function saludo(nombre: string, hora: number = new Date().getHours()): string {
-  const momento = hora < 12 ? 'Buenos dias' : hora < 20 ? 'Buenas tardes' : 'Buenas noches';
+  const momento = hora < 12 ? 'Buenos días' : hora < 20 ? 'Buenas tardes' : 'Buenas noches';
   const limpio = nombre.trim();
   return limpio ? `${momento}, ${limpio}` : momento;
 }

@@ -40,7 +40,7 @@ export function CodigoDeAcceso({ token, lado }: { token: string; lado: number })
       accessibilityRole="image"
       // Se dice QUE es, no que lleva dentro: leerle el token a nadie sirve de
       // nada, y ademas es una llave.
-      accessibilityLabel="Codigo QR de acceso al gimnasio"
+      accessibilityLabel="Código QR de acceso al gimnasio"
     >
       <Svg width={lado} height={lado} viewBox={`0 0 ${dibujo.lienzo} ${dibujo.lienzo}`}>
         <Rect x={0} y={0} width={dibujo.lienzo} height={dibujo.lienzo} fill="#FFFFFF" />

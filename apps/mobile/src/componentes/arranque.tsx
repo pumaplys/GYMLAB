@@ -14,7 +14,7 @@ export function Arranque() {
       <Text style={estilos.marca}>GYMLAB</Text>
       <ActivityIndicator color={tema.color.acento} />
       <Text style={estilos.pie} accessibilityLiveRegion="polite">
-        Comprobando tu sesion…
+        Comprobando tu sesión…
       </Text>
     </View>
   );

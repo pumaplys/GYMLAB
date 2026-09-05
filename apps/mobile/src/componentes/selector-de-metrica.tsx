@@ -45,7 +45,7 @@ export function SelectorDeMetrica({
       style={estilos.marco}
       contentContainerStyle={estilos.tira}
       accessibilityRole="tablist"
-      accessibilityLabel="Elige que medida quieres ver"
+      accessibilityLabel="Elige qué medida quieres ver"
     >
       {medidas.map((medida) => {
         const activa = medida.campo === elegida;

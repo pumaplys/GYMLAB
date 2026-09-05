@@ -62,9 +62,9 @@ export function estadoDelCodigo(
  * lo dice.
  */
 export function textoDeCuentaAtras(segundos: number): string {
-  if (segundos <= 0) return 'El codigo ha caducado. Genera otro.';
-  if (segundos === 1) return 'El codigo caduca en 1 segundo.';
-  return `El codigo caduca en ${segundos} segundos.`;
+  if (segundos <= 0) return 'El código ha caducado. Genera otro.';
+  if (segundos === 1) return 'El código caduca en 1 segundo.';
+  return `El código caduca en ${segundos} segundos.`;
 }
 
 /** Cada cuanto se repinta la cuenta atras. Una vez por segundo, no por fotograma. */

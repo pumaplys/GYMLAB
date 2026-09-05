@@ -182,7 +182,7 @@ export default function Carne() {
         <Cabecera />
         <Tarjeta>
           <HuecoDelCodigo lado={lado}>
-            <Text style={estilos.instruccion}>Cargando tu carne…</Text>
+            <Text style={estilos.instruccion}>Cargando tu carné…</Text>
           </HuecoDelCodigo>
         </Tarjeta>
       </Pantalla>
@@ -263,7 +263,7 @@ export default function Carne() {
           <Boton
             variante="primario"
             onPress={() => void generar()}
-            accessibilityHint="Pide un codigo de acceso nuevo"
+            accessibilityHint="Pide un código de acceso nuevo"
           >
             {pase.fase === 'error' ? 'Reintentar' : 'Generar nuevo codigo'}
           </Boton>
@@ -302,7 +302,7 @@ function Cabecera() {
   return (
     <View style={estilos.cabecera}>
       <Text style={estilos.rotulo} accessibilityRole="header">
-        CARNE
+        CARNÉ
       </Text>
       <Text style={estilos.descriptor}>Tu acceso al gimnasio</Text>
     </View>

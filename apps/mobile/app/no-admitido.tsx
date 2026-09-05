@@ -25,7 +25,7 @@ export default function NoAdmitido() {
         Has entrado correctamente, pero tu cuenta no figura como socio. Si trabajas en el gimnasio,
         tu sitio es el panel web.
       </Aviso>
-      <Boton onPress={() => void salir()}>Cerrar sesion</Boton>
+      <Boton onPress={() => void salir()}>Cerrar sesión</Boton>
     </Pantalla>
   );
 }
