@@ -209,23 +209,33 @@ describe('los assets de marca estan puestos y son los correctos', () => {
    * │ es un circulo. Sobre 1024 px, ese circulo tiene 341 px de radio.     │
    * │                                                                      │
    * │ El fichero que entrego diseño llegaba a 384 px: las puntas de la R   │
-   * │ se cortaban. Se comprobo mirandolo con las tres mascaras. Reducido   │
-   * │ al 85 % llega a 326 y cabe entero.                                   │
+   * │ se cortaban. Se comprobo mirandolo con las tres mascaras.            │
+   * │                                                                      │
+   * │ Hay DOS limites, y aqui se exige el estrecho:                        │
+   * │                                                                      │
+   * │   72/108 -> radio 341 px   lo que tapa una mascara circular normal   │
+   * │   66/108 -> radio 313 px   lo que Google recomienda dar por seguro,  │
+   * │                            porque algunos fabricantes recortan mas   │
+   * │                                                                      │
+   * │ Reducido al 80 % del original el dibujo llega a 308 px y cumple los  │
+   * │ dos. Se exige el de 313 a proposito: fue una decision, y si alguien  │
+   * │ vuelve a un tamaño que solo cumpla el ancho, este test lo dice.      │
    * │                                                                      │
    * │ Esto no se ve hasta tener el telefono en la mano, y para entonces el │
    * │ icono ya esta instalado. Por eso se comprueba aqui.                  │
    * └──────────────────────────────────────────────────────────────────────┘
    */
-  it('el dibujo del icono adaptativo cabe en la zona que Android enseña', () => {
+  it('el dibujo del icono adaptativo cabe en la zona segura conservadora', () => {
     const png = readFileSync(rutaDe(base.android.adaptiveIcon.foregroundImage));
     const { ancho } = cabeceraPng(png);
-    // Los 72 dp visibles de los 108 del lienzo, como radio.
-    const radioSeguro = (ancho * 72) / 108 / 2;
+    const radioConservador = (ancho * 66) / 108 / 2;
+    const radioPractico = (ancho * 72) / 108 / 2;
     const radio = radioDelDibujo(png);
     expect(
       radio,
-      `el dibujo llega a ${Math.round(radio)} px y la mascara corta en ${Math.round(radioSeguro)}`,
-    ).toBeLessThanOrEqual(radioSeguro);
+      `el dibujo llega a ${Math.round(radio)} px; el limite conservador esta en ` +
+        `${Math.round(radioConservador)} y el practico en ${Math.round(radioPractico)}`,
+    ).toBeLessThanOrEqual(radioConservador);
   });
 
   it('los dos fondos de marca son el grafito del tema', () => {
