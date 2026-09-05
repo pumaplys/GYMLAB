@@ -41,6 +41,13 @@
     "web": {
       "bundler": "metro",
       "output": "single"
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "94dd2583-945c-4c4c-a37e-73bafbd60716"
+      }
+    },
+    "owner": "pumaplysz"
   }
 }
