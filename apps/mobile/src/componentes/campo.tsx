@@ -79,7 +79,7 @@ export function Campo({
             style={estilos.ojo}
             accessibilityRole="button"
             // El nombre dice lo que VA A PASAR al pulsar, no el estado actual.
-            accessibilityLabel={visible ? 'Ocultar la contrasena' : 'Mostrar la contrasena'}
+            accessibilityLabel={visible ? 'Ocultar la contraseña' : 'Mostrar la contraseña'}
           >
             <Text style={estilos.textoOjo}>{visible ? 'Ocultar' : 'Mostrar'}</Text>
           </Pressable>

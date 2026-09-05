@@ -9,6 +9,22 @@ export type TonoDeEtiqueta = 'neutro' | 'exito' | 'aviso' | 'peligro' | 'acento'
  * El color acompana al texto pero NO lo sustituye: "Al corriente" se lee igual
  * en escala de grises. Es la misma regla que sigue el panel web, y la razon es
  * la misma — hay quien no distingue el verde del rojo.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ "neutro" NO ES LO MISMO QUE EL "informacion" DE `Aviso`. NO SE UNIFICAN. │
+ * │                                                                          │
+ * │ Los otros tres tonos —exito, aviso, peligro— si coinciden, y por eso     │
+ * │ parece que falta unificar el cuarto. No falta:                           │
+ * │                                                                          │
+ * │   Etiqueta "neutro"      gris de texto secundario. Es la ausencia de     │
+ * │                          significado: un dato que no es bueno ni malo.   │
+ * │   Aviso "informacion"    filete en `secundario`, el turquesa. SI         │
+ * │                          significa: "esto es una nota, leela".           │
+ * │                                                                          │
+ * │ Renombrar cualquiera de los dos al nombre del otro haria que una         │
+ * │ pastilla sin significado se pintara como una nota, o al reves. La deuda  │
+ * │ es de nombre y se queda: los dos nombres son correctos EN SU COMPONENTE. │
+ * └──────────────────────────────────────────────────────────────────────────┘
  */
 export function Etiqueta({ children, tono = 'neutro' }: { children: string; tono?: TonoDeEtiqueta }) {
   return (
@@ -35,10 +51,10 @@ const estilos = StyleSheet.create({
 // suficiente sin inventar doce colores nuevos en la paleta.
 const fondos = StyleSheet.create({
   neutro: { backgroundColor: tema.color.superficieAlta, borderColor: tema.color.borde },
-  exito: { backgroundColor: 'rgba(50,213,131,0.12)', borderColor: 'rgba(50,213,131,0.35)' },
-  aviso: { backgroundColor: 'rgba(253,176,34,0.12)', borderColor: 'rgba(253,176,34,0.35)' },
-  peligro: { backgroundColor: 'rgba(249,112,102,0.12)', borderColor: 'rgba(249,112,102,0.35)' },
-  acento: { backgroundColor: 'rgba(163,255,18,0.12)', borderColor: 'rgba(163,255,18,0.35)' },
+  exito: { backgroundColor: tema.tinte.fondo('exito'), borderColor: tema.tinte.borde('exito') },
+  aviso: { backgroundColor: tema.tinte.fondo('aviso'), borderColor: tema.tinte.borde('aviso') },
+  peligro: { backgroundColor: tema.tinte.fondo('peligro'), borderColor: tema.tinte.borde('peligro') },
+  acento: { backgroundColor: tema.tinte.fondo('acento'), borderColor: tema.tinte.borde('acento') },
 });
 
 const textos = StyleSheet.create({

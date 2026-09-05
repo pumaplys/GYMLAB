@@ -49,20 +49,20 @@ export function lecturaDeCuota(cuota: DuesStatus): LecturaDeCuota {
     case 'AL_CORRIENTE':
       return {
         titulo: 'Al corriente',
-        explicacion: 'Tu cuota esta pagada y puedes entrenar.',
+        explicacion: 'Tu cuota está pagada y puedes entrenar.',
         tono: 'exito',
       };
     case 'POR_VENCER':
       return {
         titulo: 'Vence pronto',
-        explicacion: 'Todavia puedes entrenar. Renuevala en tu gimnasio antes de que caduque.',
+        explicacion: 'Todavía puedes entrenar. Renuévala en tu gimnasio antes de que caduque.',
         tono: 'aviso',
       };
     case 'EN_GRACIA':
       return {
         titulo: 'Vencida, dentro del margen',
         explicacion:
-          'Tu gimnasio te deja unos dias de margen y todavia puedes entrar, pero la cuota ya ha vencido.',
+          'Tu gimnasio te deja unos días de margen y todavía puedes entrar, pero la cuota ya ha vencido.',
         tono: 'aviso',
       };
     case 'VENCIDA':
@@ -74,7 +74,7 @@ export function lecturaDeCuota(cuota: DuesStatus): LecturaDeCuota {
     case 'PAUSADA':
       return {
         titulo: 'Congelada',
-        explicacion: 'Tu cuota esta congelada, asi que de momento no puedes entrar.',
+        explicacion: 'Tu cuota está congelada, así que de momento no puedes entrar.',
         tono: 'neutro',
       };
     case 'SIN_SUSCRIPCION':

@@ -202,10 +202,10 @@ export default function Inicio() {
       <FilaDeAccion
         principal
         icono="carne"
-        titulo="Abrir carne"
-        detalle="Tu codigo para entrar"
+        titulo="Abrir carné"
+        detalle="Tu código para entrar"
         alPulsar={() => router.push(RUTAS_DE_TABS.carne)}
-        accessibilityHint="Abre tu carne digital"
+        accessibilityHint="Abre tu carné digital"
       />
 
       {/*
@@ -217,7 +217,7 @@ export default function Inicio() {
         hairlines, y el enlace vive arriba a la derecha en pequeño.
       */}
       {datos.rutinas.estado === 'fallo' ? (
-        <Aviso tono="aviso">No pudimos cargar tus rutinas. El resto de tu inicio sigue aqui.</Aviso>
+        <Aviso tono="aviso">No pudimos cargar tus rutinas. El resto de tu inicio sigue aquí.</Aviso>
       ) : rutinas ? (
         <View style={estilos.seccion}>
           <CabeceraDeSeccion
@@ -231,7 +231,7 @@ export default function Inicio() {
 
           {rutinas.tipo === 'ninguna' ? (
             <Text style={estilos.vacio}>
-              Todavia no tienes ninguna asignada. Tu entrenador puede prepararte una.
+              Todavía no tienes ninguna asignada. Tu entrenador puede prepararte una.
             </Text>
           ) : rutinas.tipo === 'una' ? (
             <FilaDeRutina
@@ -291,7 +291,7 @@ export default function Inicio() {
             alPulsar={() => router.push(RUTAS_DE_TABS.progreso)}
             accessibilityHint="Abre tu progreso"
           />
-          <Text style={estilos.meta}>Ultima medicion · {fechaDeInstante(progreso.fecha)}</Text>
+          <Text style={estilos.meta}>Última medición · {fechaDeInstante(progreso.fecha)}</Text>
           <View style={estilos.medidas}>
             {progreso.medidas.map((m) => (
               <View key={m.etiqueta} style={estilos.medida}>
@@ -305,7 +305,7 @@ export default function Inicio() {
         <View style={estilos.seccion}>
           <CabeceraDeSeccion titulo="PROGRESO" />
           <Text style={estilos.vacio}>
-            Todavia no hay mediciones. Tu gimnasio las registra en tu ficha.
+            Todavía no hay mediciones. Tu gimnasio las registra en tu ficha.
           </Text>
         </View>
       ) : null}
@@ -373,11 +373,11 @@ function detalleDeCuota(cuota: {
  * nadie.
  */
 function diasEnPalabras(dias: number): string {
-  if (dias > 1) return `quedan ${dias} dias`;
-  if (dias === 1) return 'queda 1 dia';
+  if (dias > 1) return `quedan ${dias} días`;
+  if (dias === 1) return 'queda 1 día';
   if (dias === 0) return 'vence hoy';
-  if (dias === -1) return 'vencio ayer';
-  return `vencio hace ${Math.abs(dias)} dias`;
+  if (dias === -1) return 'venció ayer';
+  return `venció hace ${Math.abs(dias)} días`;
 }
 
 function ejerciciosEnPalabras(cuantos: number): string {

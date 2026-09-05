@@ -83,7 +83,7 @@ export default function Accesos() {
 
   return (
     <Pantalla alRefrescar={carga.fase === 'ok' ? refrescar : undefined} refrescando={refrescando}>
-      <CabeceraDeSubpantalla titulo="Accesos" descriptor="Tus entradas a este gimnasio" />
+      <CabeceraDeSubpantalla titulo="Accesos" descriptor="Tus accesos en este gimnasio" />
 
       {carga.fase === 'cargando' ? <Espera /> : null}
 

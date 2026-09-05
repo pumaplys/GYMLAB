@@ -53,7 +53,7 @@ export function SelectorDeRutina({
     <View
       style={estilos.grupo}
       accessibilityRole="radiogroup"
-      accessibilityLabel="Elige que rutina quieres consultar"
+      accessibilityLabel="Elige qué rutina quieres consultar"
     >
       {rutinas.map((rutina) => {
         const elegida = rutina.id === seleccionadaId;

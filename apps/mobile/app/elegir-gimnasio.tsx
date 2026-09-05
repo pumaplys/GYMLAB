@@ -5,8 +5,10 @@ import { Aviso } from '../src/componentes/aviso';
 import { Boton } from '../src/componentes/boton';
 import { Pantalla } from '../src/componentes/pantalla';
 import { Tarjeta } from '../src/componentes/tarjeta';
+import { laSesionYaNoVale } from '../src/auth/politica';
 import { useSesion } from '../src/auth/sesion';
 import { mensajeDeEntrada } from '../src/auth/mensajes';
+import { CarrilDeAcento } from '../src/componentes/carril';
 import { tema } from '../src/tema';
 
 /**
@@ -33,7 +35,7 @@ import { tema } from '../src/tema';
  * └──────────────────────────────────────────────────────────────────────────┘
  */
 export default function ElegirGimnasio() {
-  const { estado, elegirGimnasio, salir } = useSesion();
+  const { estado, elegirGimnasio, revisar, salir } = useSesion();
   const [eligiendo, setEligiendo] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -52,6 +54,16 @@ export default function ElegirGimnasio() {
       // switchGym real, y despues `revisar()`: el flujo de siempre.
       await elegirGimnasio(gymId);
     } catch (problema) {
+      /*
+       * Un 401 aqui es el token, no el gimnasio. Sin esto se pintaba "El
+       * correo o la contraseña no son correctos" —el mensaje del LOGIN— en
+       * una pantalla donde no hay ni correo ni contraseña que corregir. Es la
+       * misma politica compartida que usan las pantallas de datos.
+       */
+      if (laSesionYaNoVale([problema])) {
+        void revisar();
+        return;
+      }
       setError(mensajeDeEntrada(problema));
       setEligiendo(null);
     }
@@ -60,14 +72,11 @@ export default function ElegirGimnasio() {
   return (
     <Pantalla>
       <View style={estilos.cabecera}>
-        <Text style={estilos.titulo}>{unica ? 'Confirma tu gimnasio' : 'Elige tu gimnasio'}</Text>
-        <View style={estilos.carril}>
-          <View style={estilos.carrilAcento} />
-          <View style={estilos.carrilResto} />
-        </View>
+        <Text style={estilos.titulo} accessibilityRole="header">{unica ? 'Confirma tu gimnasio' : 'Elige tu gimnasio'}</Text>
+        <CarrilDeAcento />
         <Text style={estilos.entradilla}>
           {unica
-            ? 'Tu sesion todavia no tiene gimnasio activo. Confirma para continuar.'
+            ? 'Tu sesión todavía no tiene gimnasio activo. Confirma para continuar.'
             : 'Eres socio en varios. Elige con cual quieres entrar.'}
         </Text>
       </View>
@@ -107,7 +116,7 @@ export default function ElegirGimnasio() {
       <View style={estilos.hueco} />
 
       <Boton onPress={() => void salir()} deshabilitado={eligiendo !== null}>
-        Cerrar sesion
+        Cerrar sesión
       </Boton>
     </Pantalla>
   );
@@ -159,9 +168,6 @@ function Opcion({
 const estilos = StyleSheet.create({
   cabecera: { gap: tema.espacio.md },
   titulo: { ...tema.texto.h1, color: tema.color.texto },
-  carril: { flexDirection: 'row', alignItems: 'center', height: 3 },
-  carrilAcento: { width: 44, height: 3, borderRadius: 2, backgroundColor: tema.color.acento },
-  carrilResto: { flex: 1, height: 1, backgroundColor: tema.color.borde },
   entradilla: { ...tema.texto.cuerpo, color: tema.color.textoSecundario, lineHeight: 22 },
 
   meta: {

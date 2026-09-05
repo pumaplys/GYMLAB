@@ -1,6 +1,7 @@
 import { RefreshControl, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
 import type { ReactNode } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { CarrilDeAcento } from './carril';
 import { tema } from '../tema';
 
 /**
@@ -80,10 +81,7 @@ export function Pantalla({
           <Text style={estilos.titulo} accessibilityRole="header">
             {titulo}
           </Text>
-          <View style={estilos.carril}>
-            <View style={estilos.carrilAcento} />
-            <View style={estilos.carrilResto} />
-          </View>
+          <CarrilDeAcento />
           {descriptor ? <Text style={estilos.descriptor}>{descriptor}</Text> : null}
         </View>
       ) : null}
@@ -140,8 +138,5 @@ const estilos = StyleSheet.create({
   sinLados: { paddingHorizontal: 0 },
   margenPropio: { paddingHorizontal: tema.espacio.lg },
   titulo: { ...tema.texto.h1, color: tema.color.texto },
-  carril: { flexDirection: 'row', alignItems: 'center', height: 3 },
-  carrilAcento: { width: 44, height: 3, borderRadius: 2, backgroundColor: tema.color.acento },
-  carrilResto: { flex: 1, height: 1, backgroundColor: tema.color.borde },
   descriptor: { ...tema.texto.cuerpo, color: tema.color.textoSecundario, lineHeight: 22 },
 });

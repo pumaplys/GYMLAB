@@ -118,10 +118,17 @@ export default function Perfil() {
               </Text>
             </>
           ) : (
-            <>
+            /*
+              El hueco tiene que DECIR que esta cargando. Sin esto, las otras
+              seis pantallas anunciaban "Cargando tus pagos", "Cargando tu
+              rutina"… y esta se quedaba muda: dos rectangulos vacios que un
+              lector de pantalla no menciona, y silencio hasta que llegara el
+              nombre.
+            */
+            <View style={estilos.huecos} accessible accessibilityLabel="Cargando tu perfil">
               <View style={estilos.huecoNombre} />
               <View style={estilos.huecoMeta} />
-            </>
+            </View>
           )}
         </View>
       </View>
@@ -217,6 +224,9 @@ const estilos = StyleSheet.create({
   datos: { flex: 1, gap: tema.espacio.xs },
   nombre: { ...tema.texto.h2, color: tema.color.texto },
   meta: { ...tema.texto.secundario, color: tema.color.textoSecundario },
+  // El mismo hueco que separaba las dos lineas cuando eran hijas de `datos`:
+  // agruparlas para poder nombrarlas no puede juntarlas.
+  huecos: { gap: tema.espacio.xs },
   huecoNombre: { width: '65%', height: 22, borderRadius: 4, backgroundColor: tema.color.superficie },
   huecoMeta: { width: '85%', height: 16, borderRadius: 4, backgroundColor: tema.color.superficie },
 

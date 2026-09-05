@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { BodyMetric, DuesStatus, Member, OwnRoutine } from '@gymlab/contracts';
+import { comoNumero } from '../progreso/logica';
 import {
   EJERCICIOS_DE_MUESTRA,
   fechaCivil,
@@ -77,13 +78,13 @@ function medicion(parcial: Partial<BodyMetric>): BodyMetric {
 
 describe('el saludo', () => {
   it('cambia con la hora del telefono', () => {
-    expect(saludo('Lucia', 8)).toBe('Buenos dias, Lucia');
+    expect(saludo('Lucia', 8)).toBe('Buenos días, Lucia');
     expect(saludo('Lucia', 15)).toBe('Buenas tardes, Lucia');
     expect(saludo('Lucia', 22)).toBe('Buenas noches, Lucia');
   });
 
   it('los limites caen donde se espera', () => {
-    expect(saludo('L', 11)).toMatch(/dias/);
+    expect(saludo('L', 11)).toMatch(/días/);
     expect(saludo('L', 12)).toMatch(/tardes/);
     expect(saludo('L', 19)).toMatch(/tardes/);
     expect(saludo('L', 20)).toMatch(/noches/);
@@ -91,7 +92,7 @@ describe('el saludo', () => {
 
   it('a las cuatro de la mañana no dice nada raro', () => {
     // Quien entrena a esa hora no necesita que la app se lo comente.
-    expect(saludo('L', 4)).toBe('Buenos dias, L');
+    expect(saludo('L', 4)).toBe('Buenos días, L');
   });
 
   it('sin nombre no deja una coma colgando', () => {
@@ -176,7 +177,20 @@ describe('el progreso', () => {
     ]);
     if (r.tipo !== 'ultima') throw new Error('tipo inesperado');
     expect(r.fecha).toBe('2026-08-24');
-    expect(r.medidas[0]?.valor).toBe('71.4 kg');
+    expect(r.medidas[0]?.valor).toBe('71,4 kg');
+  });
+
+  /*
+   * Este test fijaba "71.4 kg" con PUNTO, y por eso el fallo sobrevivio hasta
+   * el barrido final: Inicio escribia el numero como lo escribe JavaScript y
+   * Progreso, para la misma medicion, "71,4 kg". La misma persona veia dos
+   * numeros distintos en dos pantallas de la misma app.
+   */
+  it('Inicio y Progreso escriben la MISMA medicion igual', () => {
+    const r = resumenDeProgreso([medicion({ measuredAt: '2026-08-24', weightKg: 71.4 })]);
+    if (r.tipo !== 'ultima') throw new Error('tipo inesperado');
+    expect(r.medidas[0]?.valor).toBe(`${comoNumero(71.4)} kg`);
+    expect(r.medidas[0]?.valor).not.toMatch(/\./);
   });
 
   it('solo enseña las medidas que tienen valor', () => {

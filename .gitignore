@@ -4,6 +4,9 @@ node_modules/
 
 # Builds
 dist/
+# `expo export --output-dir` acepta cualquier nombre, y `dist/` a secas no lo
+# tapa: un `dist-ios` de 3 MB entro en un commit por esto.
+dist-*/
 build/
 .next/
 out/

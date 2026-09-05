@@ -2,6 +2,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { Icono } from './icono';
 import { destinoAlVolver } from '../navegacion/destinos';
+import { CarrilDeAcento } from './carril';
 import { tema } from '../tema';
 
 /**
@@ -53,10 +54,7 @@ export function CabeceraDeSubpantalla({ titulo, descriptor }: { titulo: string; 
       <Text style={estilos.titulo} accessibilityRole="header">
         {titulo}
       </Text>
-      <View style={estilos.carril}>
-        <View style={estilos.carrilAcento} />
-        <View style={estilos.carrilResto} />
-      </View>
+      <CarrilDeAcento />
       {descriptor ? <Text style={estilos.descriptor}>{descriptor}</Text> : null}
     </View>
   );
@@ -76,8 +74,5 @@ const estilos = StyleSheet.create({
   pulsado: { opacity: 0.6 },
   textoVolver: { ...tema.texto.cuerpo, color: tema.color.textoSecundario },
   titulo: { ...tema.texto.h1, color: tema.color.texto },
-  carril: { flexDirection: 'row', alignItems: 'center', height: 3 },
-  carrilAcento: { width: 44, height: 3, borderRadius: 2, backgroundColor: tema.color.acento },
-  carrilResto: { flex: 1, height: 1, backgroundColor: tema.color.borde },
   descriptor: { ...tema.texto.cuerpo, color: tema.color.textoSecundario, lineHeight: 22 },
 });

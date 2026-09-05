@@ -19,6 +19,7 @@ import { Marca } from '../src/componentes/marca';
 import { useSesion } from '../src/auth/sesion';
 import { mensajeDeEntrada } from '../src/auth/mensajes';
 import { API_URL } from '../src/api/config';
+import { CarrilDeAcento } from '../src/componentes/carril';
 import { tema } from '../src/tema';
 
 /**
@@ -99,16 +100,13 @@ export default function Entrar() {
 
           <View style={estilos.principal}>
             <View style={estilos.tituloBloque}>
-              <Text style={estilos.titulo}>Bienvenido de nuevo</Text>
+              <Text style={estilos.titulo}>Hola de nuevo</Text>
               {/*
                 El unico gesto grafico de la pantalla. Antes era un filete
                 suelto de 44 px; ahora el acento arranca y una linea fina lo
                 continua hasta el borde. Es un carril, y cuesta 4 px de alto.
               */}
-              <View style={estilos.carril}>
-                <View style={estilos.carrilAcento} />
-                <View style={estilos.carrilResto} />
-              </View>
+              <CarrilDeAcento />
               <Text style={estilos.entradilla}>
                 Entra con la cuenta que te dio tu gimnasio.
               </Text>
@@ -130,7 +128,7 @@ export default function Entrar() {
               />
 
               <Campo
-                etiqueta="Contrasena"
+                etiqueta="Contraseña"
                 valor={clave}
                 alCambiar={setClave}
                 deshabilitado={enviando}
@@ -165,10 +163,10 @@ export default function Entrar() {
                 onPress={() => void abrirRecuperacion()}
                 style={estilos.enlace}
                 accessibilityRole="link"
-                accessibilityLabel="He olvidado mi contrasena"
-                accessibilityHint="Abre la recuperacion de contrasena en el navegador"
+                accessibilityLabel="He olvidado mi contraseña"
+                accessibilityHint="Abre la recuperación de contraseña en el navegador"
               >
-                <Text style={estilos.textoEnlace}>He olvidado mi contrasena</Text>
+                <Text style={estilos.textoEnlace}>He olvidado mi contraseña</Text>
               </Pressable>
             </View>
           </View>
@@ -224,10 +222,6 @@ const estilos = StyleSheet.create({
 
   tituloBloque: { gap: tema.espacio.md },
   titulo: { ...tema.texto.h1, color: tema.color.texto },
-  carril: { flexDirection: 'row', alignItems: 'center', height: 3 },
-  carrilAcento: { width: 44, height: 3, borderRadius: 2, backgroundColor: tema.color.acento },
-  // Fina y del color del borde: continua el gesto sin competir con el acento.
-  carrilResto: { flex: 1, height: 1, backgroundColor: tema.color.borde },
   entradilla: { ...tema.texto.cuerpo, color: tema.color.textoSecundario, lineHeight: 22 },
 
   formulario: {

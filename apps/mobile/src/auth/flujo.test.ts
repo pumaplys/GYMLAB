@@ -167,7 +167,7 @@ describe('restaurar sesion al arrancar', () => {
 describe('los mensajes son para personas', () => {
   it('401 al entrar habla de correo y contrasena, no de codigos', () => {
     const m = mensajeDeEntrada(new ApiError(401, 'Unauthorized'));
-    expect(m).toBe('El correo o la contrasena no son correctos.');
+    expect(m).toBe('El correo o la contraseña no son correctos.');
   });
 
   it('429 dice que espere', () => {
@@ -176,7 +176,7 @@ describe('los mensajes son para personas', () => {
 
   it('la red dice que compruebe la conexion', () => {
     const m = mensajeDeEntrada(new NetworkError('POST', '/x', new TypeError('failed')));
-    expect(m).toMatch(/Comprueba tu conexion/);
+    expect(m).toMatch(/Comprueba tu conexión/);
   });
 
   it('NINGUN mensaje filtra codigos, clases ni detalle interno', () => {
