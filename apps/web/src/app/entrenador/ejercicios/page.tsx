@@ -138,7 +138,7 @@ function Biblioteca() {
           )
         }
         titulo="Ejercicios"
-        entradilla="La biblioteca de este gimnasio. Es suya: nace del catalogo de GYMLAB y el gimnasio la ajusta."
+        entradilla="La biblioteca de este gimnasio. Es suya: nace del catalogo de RINDA y el gimnasio la ajusta."
       />
 
       {error && <Aviso>{error}</Aviso>}

@@ -76,7 +76,7 @@ export function explicarDocumento(estado: PrivacyDocumentState): Explicacion {
       return {
         titulo: 'Documento pendiente',
         detalle:
-          'GYMLAB todavía no ha activado ninguna versión del texto de privacidad. ' +
+          'RINDA todavía no ha activado ninguna versión del texto de privacidad. ' +
           'No es algo que puedas resolver desde aquí.',
         tono: 'informacion',
         arreglaOtro: true,
@@ -87,7 +87,7 @@ export function explicarDocumento(estado: PrivacyDocumentState): Explicacion {
         titulo: 'Documento no disponible',
         detalle:
           'La versión configurada no tiene texto asociado. Es un problema de configuración ' +
-          'de la plataforma; ponte en contacto con GYMLAB.',
+          'de la plataforma; ponte en contacto con RINDA.',
         tono: 'error',
         arreglaOtro: true,
       };
@@ -97,7 +97,7 @@ export function explicarDocumento(estado: PrivacyDocumentState): Explicacion {
         titulo: 'Documento no disponible',
         detalle:
           'El texto activo es un borrador pendiente de revisión jurídica, y no puede usarse ' +
-          'para recoger consentimientos. GYMLAB lo sustituirá por la versión definitiva.',
+          'para recoger consentimientos. RINDA lo sustituirá por la versión definitiva.',
         tono: 'error',
         arreglaOtro: true,
       };

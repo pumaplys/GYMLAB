@@ -332,7 +332,7 @@ function Datos({ socio }: { socio: Member }) {
       <dt>Cuenta</dt>
       <dd>
         {socio.hasAccount ? (
-          'Tiene cuenta para entrar en GYMLAB'
+          'Tiene cuenta para entrar en RINDA'
         ) : (
           <span className={estilos.vacio}>Todavia no tiene cuenta</span>
         )}

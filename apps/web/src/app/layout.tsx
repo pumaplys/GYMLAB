@@ -5,8 +5,8 @@ import { inter } from '@/lib/tipografia';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'GYMLAB',
-  description: 'Gestion de gimnasios',
+  title: 'RINDA',
+  description: 'RINDA — gestion de gimnasios',
 };
 
 export const viewport: Viewport = {

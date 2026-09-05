@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import type { Me, Role } from '@gymlab/contracts';
 import { Aviso } from '@/componentes/aviso';
 import { Boton } from '@/componentes/boton';
+import { Marca } from '@/componentes/marca';
 import { PantallaCentrada } from '@/componentes/pantalla-centrada';
 import { destinoSegunArea } from '@/lib/areas';
 import { mensajeDeError } from '@/lib/errores';
@@ -105,12 +106,31 @@ export function RutaPrivada({ roles, children }: Props) {
   return <>{children}</>;
 }
 
+/**
+ * La espera del arranque: la unica pantalla completa de carga que hay.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ AQUI SI VA LA MARCA, Y SOLO AQUI.                                       │
+ * │                                                                          │
+ * │ Es el momento en que el panel esta preguntando quien eres: no hay        │
+ * │ contenido que enseñar y ocupa la ventana entera. Los demas "Cargando…"   │
+ * │ son locales —los planes, el historial, una ficha— y ahi el logotipo      │
+ * │ sobra: lo que hace falta es saber QUE se esta cargando.                  │
+ * │                                                                          │
+ * │ La animacion es la misma idea que en el movil: fundido, un pelo de zoom  │
+ * │ y una respiracion muy lenta. Y NO alarga nada: esto se pinta mientras la │
+ * │ sesion esta en `cargando` y se quita en cuanto deja de estarlo.          │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ */
 function Esperando({ texto }: { texto: string }) {
   // `aria-live` porque este texto aparece sin que nadie lo haya pedido: quien
   // no ve la pantalla no tiene forma de saber que hay algo en marcha.
   return (
     <div className={estilos.esperando} role="status" aria-live="polite">
-      {texto}
+      <span className={estilos.marcaEsperando}>
+        <Marca tamano="grande" />
+      </span>
+      <span>{texto}</span>
     </div>
   );
 }
