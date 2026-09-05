@@ -76,9 +76,9 @@ const cajas = StyleSheet.create({
   // Un escalon por encima de la tarjeta, no un color nuevo: asi se separa de
   // `Tarjeta` sin inventar una superficie mas.
   informacion: { backgroundColor: tema.color.superficieAlta, borderColor: tema.color.borde },
-  exito: { backgroundColor: 'rgba(50,213,131,0.10)', borderColor: 'rgba(50,213,131,0.35)' },
-  aviso: { backgroundColor: 'rgba(253,176,34,0.10)', borderColor: 'rgba(253,176,34,0.35)' },
-  peligro: { backgroundColor: 'rgba(249,112,102,0.10)', borderColor: 'rgba(249,112,102,0.35)' },
+  exito: { backgroundColor: tema.tinte.fondo('exito'), borderColor: tema.tinte.borde('exito') },
+  aviso: { backgroundColor: tema.tinte.fondo('aviso'), borderColor: tema.tinte.borde('aviso') },
+  peligro: { backgroundColor: tema.tinte.fondo('peligro'), borderColor: tema.tinte.borde('peligro') },
 });
 
 const barras = StyleSheet.create({

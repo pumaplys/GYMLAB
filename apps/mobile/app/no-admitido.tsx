@@ -19,7 +19,7 @@ export default function NoAdmitido() {
   return (
     <Pantalla>
       <View style={estilos.cabecera}>
-        <Text style={estilos.titulo}>Esta app es para socios</Text>
+        <Text style={estilos.titulo} accessibilityRole="header">Esta app es para socios</Text>
       </View>
       <Aviso tono="informacion">
         Has entrado correctamente, pero tu cuenta no figura como socio. Si trabajas en el gimnasio,

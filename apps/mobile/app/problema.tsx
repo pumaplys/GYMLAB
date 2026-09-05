@@ -31,7 +31,7 @@ export default function Problema() {
   return (
     <Pantalla>
       <View style={estilos.cabecera}>
-        <Text style={estilos.titulo}>No hemos podido continuar</Text>
+        <Text style={estilos.titulo} accessibilityRole="header">No hemos podido continuar</Text>
       </View>
       <Aviso tono="aviso">{mensajeDeRestauracion(estado.motivo)}</Aviso>
       <Text style={estilos.nota}>

@@ -242,7 +242,12 @@ export default function Carne() {
           <CodigoDeAcceso token={pase.codigo.token} lado={lado} />
         ) : (
           <HuecoDelCodigo lado={lado}>
-            <Text style={estilos.instruccion}>
+            {/*
+              AQUI si vale una region viva: este texto cambia UNA vez, cuando
+              el codigo caduca o cuando falla. Es el momento en que hay que
+              enterarse aunque no se este mirando la pantalla.
+            */}
+            <Text style={estilos.instruccion} accessibilityLiveRegion="polite">
               {pase.fase === 'pidiendo'
                 ? 'Preparando tu código…'
                 : pase.fase === 'error'
@@ -252,11 +257,26 @@ export default function Carne() {
           </HuecoDelCodigo>
         )}
 
-        {/* 2. Cuanto le queda, en palabras. Se anuncia solo al cambiar. */}
+        {/*
+          2. Cuanto le queda, en palabras.
+
+          ┌────────────────────────────────────────────────────────────────┐
+          │ SIN REGION VIVA, A PROPOSITO.                                 │
+          │                                                                │
+          │ Este texto cambia CADA SEGUNDO. Con `accessibilityLiveRegion`  │
+          │ —que es como estaba— un lector de pantalla anunciaba "El       │
+          │ codigo caduca en 54 segundos", "…53 segundos", "…52 segundos"  │
+          │ una vez por segundo, tapando todo lo demas y haciendo la       │
+          │ pantalla inservible justo para quien mas la necesita.          │
+          │                                                                │
+          │ Sigue siendo texto de verdad y se puede leer cuando se quiera: │
+          │ lo que se quita es que se lea SOLO. Lo que si se anuncia es el │
+          │ cambio de estado, arriba, que ocurre una vez.                  │
+          └────────────────────────────────────────────────────────────────┘
+        */}
         {hayCodigo ? (
           <Text
             style={[estilos.vigencia, situacion === 'porCaducar' && estilos.urgente]}
-            accessibilityLiveRegion="polite"
             accessibilityRole="text"
           >
             {textoDeCuentaAtras(restan)}

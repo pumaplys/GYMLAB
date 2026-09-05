@@ -8,6 +8,7 @@ import { Tarjeta } from '../src/componentes/tarjeta';
 import { laSesionYaNoVale } from '../src/auth/politica';
 import { useSesion } from '../src/auth/sesion';
 import { mensajeDeEntrada } from '../src/auth/mensajes';
+import { CarrilDeAcento } from '../src/componentes/carril';
 import { tema } from '../src/tema';
 
 /**
@@ -71,11 +72,8 @@ export default function ElegirGimnasio() {
   return (
     <Pantalla>
       <View style={estilos.cabecera}>
-        <Text style={estilos.titulo}>{unica ? 'Confirma tu gimnasio' : 'Elige tu gimnasio'}</Text>
-        <View style={estilos.carril}>
-          <View style={estilos.carrilAcento} />
-          <View style={estilos.carrilResto} />
-        </View>
+        <Text style={estilos.titulo} accessibilityRole="header">{unica ? 'Confirma tu gimnasio' : 'Elige tu gimnasio'}</Text>
+        <CarrilDeAcento />
         <Text style={estilos.entradilla}>
           {unica
             ? 'Tu sesión todavía no tiene gimnasio activo. Confirma para continuar.'
@@ -170,9 +168,6 @@ function Opcion({
 const estilos = StyleSheet.create({
   cabecera: { gap: tema.espacio.md },
   titulo: { ...tema.texto.h1, color: tema.color.texto },
-  carril: { flexDirection: 'row', alignItems: 'center', height: 3 },
-  carrilAcento: { width: 44, height: 3, borderRadius: 2, backgroundColor: tema.color.acento },
-  carrilResto: { flex: 1, height: 1, backgroundColor: tema.color.borde },
   entradilla: { ...tema.texto.cuerpo, color: tema.color.textoSecundario, lineHeight: 22 },
 
   meta: {

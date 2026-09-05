@@ -49,6 +49,36 @@ const color = {
   peligro: '#F97066',
 } as const;
 
+/**
+ * El mismo color, translucido.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ ESTO EXISTE PARA QUE NINGUN COMPONENTE ESCRIBA UN `rgba(...)`.          │
+ * │                                                                          │
+ * │ `Aviso` y `Etiqueta` tenian los mismos tres colores escritos a mano en   │
+ * │ rgba —"rgba(50,213,131,0.12)"— y ademas con DOS opacidades distintas,    │
+ * │ 0.10 en uno y 0.12 en el otro, que no habia decidido nadie. Si mañana    │
+ * │ cambia `exito`, esas copias se quedan con el color viejo y el sistema    │
+ * │ pasa a tener dos verdes.                                                 │
+ * │                                                                          │
+ * │ Se DERIVA del hex de la paleta, asi que no puede desviarse.              │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ */
+function componentes(hex: string): string {
+  const n = parseInt(hex.slice(1), 16);
+  return `${(n >> 16) & 255},${(n >> 8) & 255},${n & 255}`;
+}
+
+/** Los colores que pueden teñir un fondo: los que significan algo. */
+export type RolConTinte = 'acento' | 'secundario' | 'exito' | 'aviso' | 'peligro';
+
+const tinte = {
+  /** Un tinte de fondo. Suficiente para separar, insuficiente para gritar. */
+  fondo: (rol: RolConTinte) => `rgba(${componentes(color[rol])},0.12)`,
+  /** El borde del mismo bloque, algo mas presente que su fondo. */
+  borde: (rol: RolConTinte) => `rgba(${componentes(color[rol])},0.35)`,
+} as const;
+
 /** Multiplos de 4. Si algo no encaja en esta escala, encaja mal. */
 const espacio = {
   xs: 4,
@@ -96,6 +126,6 @@ const texto = {
  */
 const controlAltoMinimo = 44;
 
-export const tema = { color, espacio, radio, texto, controlAltoMinimo } as const;
+export const tema = { color, tinte, espacio, radio, texto, controlAltoMinimo } as const;
 
 export type Tema = typeof tema;
