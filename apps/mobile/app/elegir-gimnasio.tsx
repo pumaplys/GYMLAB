@@ -5,6 +5,7 @@ import { Aviso } from '../src/componentes/aviso';
 import { Boton } from '../src/componentes/boton';
 import { Pantalla } from '../src/componentes/pantalla';
 import { Tarjeta } from '../src/componentes/tarjeta';
+import { laSesionYaNoVale } from '../src/auth/politica';
 import { useSesion } from '../src/auth/sesion';
 import { mensajeDeEntrada } from '../src/auth/mensajes';
 import { tema } from '../src/tema';
@@ -33,7 +34,7 @@ import { tema } from '../src/tema';
  * └──────────────────────────────────────────────────────────────────────────┘
  */
 export default function ElegirGimnasio() {
-  const { estado, elegirGimnasio, salir } = useSesion();
+  const { estado, elegirGimnasio, revisar, salir } = useSesion();
   const [eligiendo, setEligiendo] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -52,6 +53,16 @@ export default function ElegirGimnasio() {
       // switchGym real, y despues `revisar()`: el flujo de siempre.
       await elegirGimnasio(gymId);
     } catch (problema) {
+      /*
+       * Un 401 aqui es el token, no el gimnasio. Sin esto se pintaba "El
+       * correo o la contraseña no son correctos" —el mensaje del LOGIN— en
+       * una pantalla donde no hay ni correo ni contraseña que corregir. Es la
+       * misma politica compartida que usan las pantallas de datos.
+       */
+      if (laSesionYaNoVale([problema])) {
+        void revisar();
+        return;
+      }
       setError(mensajeDeEntrada(problema));
       setEligiendo(null);
     }
@@ -67,7 +78,7 @@ export default function ElegirGimnasio() {
         </View>
         <Text style={estilos.entradilla}>
           {unica
-            ? 'Tu sesion todavia no tiene gimnasio activo. Confirma para continuar.'
+            ? 'Tu sesión todavía no tiene gimnasio activo. Confirma para continuar.'
             : 'Eres socio en varios. Elige con cual quieres entrar.'}
         </Text>
       </View>

@@ -203,7 +203,7 @@ export default function Inicio() {
         principal
         icono="carne"
         titulo="Abrir carné"
-        detalle="Tu codigo para entrar"
+        detalle="Tu código para entrar"
         alPulsar={() => router.push(RUTAS_DE_TABS.carne)}
         accessibilityHint="Abre tu carné digital"
       />
@@ -373,11 +373,11 @@ function detalleDeCuota(cuota: {
  * nadie.
  */
 function diasEnPalabras(dias: number): string {
-  if (dias > 1) return `quedan ${dias} dias`;
-  if (dias === 1) return 'queda 1 dia';
+  if (dias > 1) return `quedan ${dias} días`;
+  if (dias === 1) return 'queda 1 día';
   if (dias === 0) return 'vence hoy';
-  if (dias === -1) return 'vencio ayer';
-  return `vencio hace ${Math.abs(dias)} dias`;
+  if (dias === -1) return 'venció ayer';
+  return `venció hace ${Math.abs(dias)} días`;
 }
 
 function ejerciciosEnPalabras(cuantos: number): string {

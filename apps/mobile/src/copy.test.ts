@@ -52,6 +52,14 @@ interface Visible {
 const VISIBLES: Visible[] = [];
 for (const f of [...ficheros(join(RAIZ, 'app')), ...ficheros(join(RAIZ, 'src'))]) {
   const rel = f.slice(RAIZ.length + 1).split('\\').join('/');
+  /*
+   * Los `*.web.ts` son los datos de MUESTRA de la vista previa: nombres de
+   * ejercicios, notas del entrenador, conceptos de pago. No son la copy de la
+   * app —no viajan al paquete nativo, y eso lo comprueba el gate de
+   * aislamiento— y sus cadenas exactas estan fijadas ALLI. Cambiarlas aqui
+   * romperia esa comprobacion sin mejorar nada que vea un socio.
+   */
+  if (rel.endsWith('.web.ts') || rel.endsWith('.web.tsx')) continue;
   const codigo = sinComentarios(readFileSync(f, 'utf8'));
   const linea = (i: number) => codigo.slice(0, i).split('\n').length;
   /*
@@ -59,18 +67,41 @@ for (const f of [...ficheros(join(RAIZ, 'app')), ...ficheros(join(RAIZ, 'src'))]
    * frase para una persona no lleva punto y coma, ni llaves, ni parentesis,
    * ni flechas. Lo que las lleve es JavaScript y no se mira.
    */
-  const esCodigo = (t: string) => /[;{}()[\]=]|=>|\.\.\.|\|\||&&|\w\.\w/.test(t);
+  const esCodigo = (t: string) =>
+    /[;{}()[\]=<>]|=>|\.\.\.|\|\||&&|\w\.\w/.test(t) ||
+    // Rutas de import, modulos y claves: `../../src/componentes/boton`.
+    /\//.test(t) ||
+    /^[a-z@][a-z0-9@-]*$/.test(t);
   const anotar = (i: number, t: string) => {
     const texto = t.replace(/\s+/g, ' ').trim();
-    if (texto && !esCodigo(texto)) VISIBLES.push({ fichero: rel, linea: linea(i), texto });
+    if (!texto || esCodigo(texto)) return;
+    // Una cadena suelta de una sola palabra no es una frase: "primario",
+    // "portrait", "email-address". Se miran las que tienen al menos dos.
+    if (!/\s/.test(texto) && !/[áéíóúñÁÉÍÓÚÑ¿¡]/.test(texto)) return;
+    VISIBLES.push({ fichero: rel, linea: linea(i), texto });
   };
 
-  for (const m of codigo.matchAll(/>([^<>{}]*[a-zA-Z][^<>{}]*)</g)) anotar(m.index, m[1]);
+  for (const m of codigo.matchAll(/>([^<>{}]*[a-zA-Z][^<>{}]*)</g)) anotar(m.index, m[1] ?? '');
   for (const m of codigo.matchAll(PROPS_DE_TEXTO)) anotar(m.index, m[2] ?? m[3] ?? '');
-  // Las frases que devuelven los modulos de lectura no pasan por JSX.
-  if (/\/(mensajes|lectura|logica)\.ts$/.test(rel)) {
-    for (const m of codigo.matchAll(/return\s+'([^']{6,})'/g)) anotar(m.index, m[1]);
-    for (const m of codigo.matchAll(/\?\s*'([^']{6,})'\s*:/g)) anotar(m.index, m[1]);
+
+  /*
+   * Y TODA cadena que parezca una frase, venga de donde venga.
+   *
+   * La primera version de este test solo miraba el texto entre etiquetas y
+   * las props, y se dejo fuera lo que vive dentro de {llaves}: los ternarios
+   * —`visible ? 'Ocultar la contrasena' : ...`—, las plantillas —`quedan
+   * ${dias} dias`— y las frases que devuelven los modulos de lectura. Ahi
+   * quedaban once cadenas sin tilde que nadie habia visto.
+   */
+  for (const m of codigo.matchAll(/'((?:[^'\\\n]|\\.)*)'/g)) anotar(m.index, m[1] ?? '');
+  /*
+   * En una plantilla, las interpolaciones se sustituyen por una palabra
+   * neutra en lugar de trocear la cadena. Partiendola, `quedan ${dias} dias`
+   * daba "quedan" y "dias" sueltas, y una palabra suelta no se mira: la falta
+   * se colaba entera. Sustituyendo queda "quedan N dias", que si es una frase.
+   */
+  for (const m of codigo.matchAll(/`([^`]*)`/g)) {
+    anotar(m.index, (m[1] ?? '').replace(/\$\{[^}]*\}/g, 'N'));
   }
 }
 

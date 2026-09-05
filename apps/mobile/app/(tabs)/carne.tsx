@@ -8,6 +8,7 @@ import { CodigoDeAcceso, HuecoDelCodigo } from '../../src/componentes/codigo-de-
 import { Etiqueta } from '../../src/componentes/etiqueta';
 import { Pantalla } from '../../src/componentes/pantalla';
 import { Tarjeta } from '../../src/componentes/tarjeta';
+import { laSesionYaNoVale } from '../../src/auth/politica';
 import { useSesion } from '../../src/auth/sesion';
 import { cargarCarne, pedirCodigo } from '../../src/carne/fuente';
 import { mensajeDeEntrada } from '../../src/auth/mensajes';
@@ -55,7 +56,7 @@ import { tema } from '../../src/tema';
  * └──────────────────────────────────────────────────────────────────────────┘
  */
 export default function Carne() {
-  const { estado: sesion } = useSesion();
+  const { estado: sesion, revisar } = useSesion();
   const { width } = useWindowDimensions();
 
   const [ficha, setFicha] = useState<Member | null>(null);
@@ -73,6 +74,21 @@ export default function Carne() {
       ? sesion.yo.memberships.find((m) => m.gymId === sesion.gymId)?.gymName
       : undefined;
 
+  /*
+   * ┌──────────────────────────────────────────────────────────────────────┐
+   * │ UN 401 AQUI ES LA SESION, NO EL CARNE.                              │
+   * │                                                                      │
+   * │ Es el mismo fallo que se corrigio en Inicio: `mensajeDeEntrada` para │
+   * │ un 401 devuelve "El correo o la contraseña no son correctos" —el     │
+   * │ mensaje del LOGIN— y aparecia en mitad de la app, con un boton de    │
+   * │ reintentar que no podia funcionar y el token muerto en el telefono.  │
+   * │                                                                      │
+   * │ La politica no se duplica: `laSesionYaNoVale` pregunta a             │
+   * │ `clasificarError`, y quien decide a donde va la persona es           │
+   * │ `revisar()`. Cualquier otro fallo —un 500, un corte de red— sigue    │
+   * │ siendo un error de esta pantalla y NO cierra la sesion.              │
+   * └──────────────────────────────────────────────────────────────────────┘
+   */
   const cargar = useCallback(async () => {
     setCargando(true);
     setError(null);
@@ -81,11 +97,15 @@ export default function Carne() {
       setFicha(mia);
       setCuota(suCuota);
     } catch (problema) {
+      if (laSesionYaNoVale([problema])) {
+        void revisar();
+        return;
+      }
       setError(mensajeDeEntrada(problema));
     } finally {
       setCargando(false);
     }
-  }, []);
+  }, [revisar]);
 
   /**
    * Pide un codigo y sustituye el que hubiera.
@@ -100,11 +120,17 @@ export default function Carne() {
       const codigo = await pedirCodigo();
       setPase({ fase: 'listo', codigo });
     } catch (problema) {
+      // Si el 401 es de la sesion, esto no es un problema del pase: manda la
+      // politica compartida, igual que en `cargar`.
+      if (laSesionYaNoVale([problema])) {
+        void revisar();
+        return;
+      }
       // El mensaje NUNCA lleva el token: `mensajeDeEntrada` produce frases
       // fijas y no reenvia nada del servidor en los 5xx.
       setPase({ fase: 'error', mensaje: mensajeDeEntrada(problema) });
     }
-  }, []);
+  }, [revisar]);
 
   useEffect(() => {
     if (!gymId) return;
@@ -193,7 +219,7 @@ export default function Carne() {
     return (
       <Pantalla>
         <Cabecera />
-        <Aviso tono="peligro">{error ?? 'No pudimos cargar tu carne.'}</Aviso>
+        <Aviso tono="peligro">{error ?? 'No pudimos cargar tu carné.'}</Aviso>
         <Boton variante="primario" onPress={() => void cargar()}>
           Reintentar
         </Boton>
@@ -218,10 +244,10 @@ export default function Carne() {
           <HuecoDelCodigo lado={lado}>
             <Text style={estilos.instruccion}>
               {pase.fase === 'pidiendo'
-                ? 'Preparando tu codigo…'
+                ? 'Preparando tu código…'
                 : pase.fase === 'error'
                   ? pase.mensaje
-                  : 'Tu codigo ha caducado.'}
+                  : 'Tu código ha caducado.'}
             </Text>
           </HuecoDelCodigo>
         )}
@@ -265,7 +291,7 @@ export default function Carne() {
             onPress={() => void generar()}
             accessibilityHint="Pide un código de acceso nuevo"
           >
-            {pase.fase === 'error' ? 'Reintentar' : 'Generar nuevo codigo'}
+            {pase.fase === 'error' ? 'Reintentar' : 'Generar nuevo código'}
           </Boton>
         ) : null}
 
