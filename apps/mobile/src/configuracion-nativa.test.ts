@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
+import { inflateSync } from 'node:zlib';
 import { join } from 'node:path';
 import { createRequire } from 'node:module';
 
@@ -17,6 +18,74 @@ function cabeceraPng(buf: Buffer) {
     profundidad: buf[24],
     tipoColor: buf[25],
   };
+}
+
+/**
+ * El pixel dibujado mas lejano del centro, en pixeles.
+ *
+ * Hay que descomprimir el PNG y deshacer el filtro de cada linea: no hay otra
+ * forma de saber donde acaba el dibujo de verdad. Son ~50 lineas y evitan
+ * meter una libreria de imagen en las dependencias por un solo test.
+ */
+function radioDelDibujo(buf: Buffer): number {
+  const { ancho, alto, profundidad, tipoColor } = cabeceraPng(buf);
+  if (profundidad !== 8 || (tipoColor !== 6 && tipoColor !== 4)) {
+    throw new Error('se esperaba un PNG de 8 bits con canal alfa');
+  }
+  const bpp = tipoColor === 6 ? 4 : 2;
+
+  const idat: Buffer[] = [];
+  for (let i = 8; i < buf.length; ) {
+    const largo = buf.readUInt32BE(i);
+    if (buf.toString('ascii', i + 4, i + 8) === 'IDAT') {
+      idat.push(buf.subarray(i + 8, i + 8 + largo));
+    }
+    i += 12 + largo;
+  }
+  const crudo = inflateSync(Buffer.concat(idat));
+
+  const porLinea = ancho * bpp;
+  const plano = Buffer.alloc(alto * porLinea);
+  let origen = 0;
+  for (let y = 0; y < alto; y++) {
+    const filtro = crudo[origen++];
+    const linea = crudo.subarray(origen, origen + porLinea);
+    origen += porLinea;
+    const destino = plano.subarray(y * porLinea, (y + 1) * porLinea);
+    const arriba =
+      y > 0 ? plano.subarray((y - 1) * porLinea, y * porLinea) : Buffer.alloc(porLinea);
+    for (let x = 0; x < porLinea; x++) {
+      const a = x >= bpp ? destino[x - bpp]! : 0;
+      const b = arriba[x]!;
+      const c = x >= bpp ? arriba[x - bpp]! : 0;
+      const v = linea[x]!;
+      let valor: number;
+      if (filtro === 0) valor = v;
+      else if (filtro === 1) valor = v + a;
+      else if (filtro === 2) valor = v + b;
+      else if (filtro === 3) valor = v + ((a + b) >> 1);
+      else {
+        const p = a + b - c;
+        const pa = Math.abs(p - a);
+        const pb = Math.abs(p - b);
+        const pc = Math.abs(p - c);
+        valor = v + (pa <= pb && pa <= pc ? a : pb <= pc ? b : c);
+      }
+      destino[x] = valor & 0xff;
+    }
+  }
+
+  let mayor = 0;
+  for (let y = 0; y < alto; y++) {
+    for (let x = 0; x < ancho; x++) {
+      // Alfa por encima de un umbral bajo: el antialiasing del borde no cuenta.
+      if (plano[(y * ancho + x) * bpp + bpp - 1]! > 8) {
+        const d = Math.hypot(x - ancho / 2, y - alto / 2);
+        if (d > mayor) mayor = d;
+      }
+    }
+  }
+  return mayor;
 }
 
 /**
@@ -129,6 +198,34 @@ describe('los assets de marca estan puestos y son los correctos', () => {
     const { ancho, alto } = cabeceraPng(png);
     expect(ancho).toBe(1024);
     expect(alto).toBe(1024);
+  });
+
+  /*
+   * ┌──────────────────────────────────────────────────────────────────────┐
+   * │ EL ICONO ADAPTATIVO SE ENMASCARA, Y LO QUE SE SALE SE PIERDE.       │
+   * │                                                                      │
+   * │ Android dibuja el primer plano sobre un lienzo de 108 dp y solo      │
+   * │ enseña los 72 dp centrales, con una mascara que en muchos telefonos  │
+   * │ es un circulo. Sobre 1024 px, ese circulo tiene 341 px de radio.     │
+   * │                                                                      │
+   * │ El fichero que entrego diseño llegaba a 384 px: las puntas de la R   │
+   * │ se cortaban. Se comprobo mirandolo con las tres mascaras. Reducido   │
+   * │ al 85 % llega a 326 y cabe entero.                                   │
+   * │                                                                      │
+   * │ Esto no se ve hasta tener el telefono en la mano, y para entonces el │
+   * │ icono ya esta instalado. Por eso se comprueba aqui.                  │
+   * └──────────────────────────────────────────────────────────────────────┘
+   */
+  it('el dibujo del icono adaptativo cabe en la zona que Android enseña', () => {
+    const png = readFileSync(rutaDe(base.android.adaptiveIcon.foregroundImage));
+    const { ancho } = cabeceraPng(png);
+    // Los 72 dp visibles de los 108 del lienzo, como radio.
+    const radioSeguro = (ancho * 72) / 108 / 2;
+    const radio = radioDelDibujo(png);
+    expect(
+      radio,
+      `el dibujo llega a ${Math.round(radio)} px y la mascara corta en ${Math.round(radioSeguro)}`,
+    ).toBeLessThanOrEqual(radioSeguro);
   });
 
   it('los dos fondos de marca son el grafito del tema', () => {
