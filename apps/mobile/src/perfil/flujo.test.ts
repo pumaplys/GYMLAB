@@ -381,12 +381,39 @@ describe('el perfil no se edita, porque la API no lo permite', () => {
     }
   });
 
-  it('en accesos no se nombra una puerta, un torno ni un lector concreto', () => {
+  /**
+   * El texto que se ve en la pantalla de accesos, sin comentarios: lo que hay
+   * entre dos etiquetas. Los titulos de cada fila NO estan aqui, salen de
+   * `lecturaDeAcceso` y tienen sus propias guardas en `logica.test.ts`.
+   */
+  const textosDeAccesos = () => {
     const pantalla = FUENTES.find((f) => f.relativo === 'app/perfil/accesos.tsx')!;
-    const cadenas = pantalla.sinComentar.match(/>[^<>{}]*[a-zA-Z][^<>{}]*</g) ?? [];
-    for (const cadena of cadenas) {
+    return pantalla.sinComentar.match(/>[^<>{}]*[a-zA-Z][^<>{}]*</g) ?? [];
+  };
+
+  it('en accesos no se nombra una puerta, un torno ni un lector concreto', () => {
+    for (const cadena of textosDeAccesos()) {
       expect(cadena, cadena).not.toMatch(/puerta principal|torno|molinete|sede/i);
     }
+  });
+
+  /*
+   * `/me/accesses` devuelve ALLOW, WARN y DENY. En los dos ultimos el intento
+   * quedo registrado y la persona NO llego a pasar, asi que la pantalla no
+   * puede prometer que lo que aparecera aqui son entradas conseguidas.
+   */
+  it('el estado vacio de accesos no promete que se haya entrado', () => {
+    const prometeEntrar = /cuando entres|al entrar|si entras|has entrado|entraste|quedará registrado/i;
+    for (const cadena of textosDeAccesos()) {
+      expect(cadena, cadena).not.toMatch(prometeEntrar);
+    }
+  });
+
+  it('el estado vacio de accesos habla de USAR el carne', () => {
+    const vacio = textosDeAccesos().find((c) => /carné/.test(c));
+    expect(vacio, 'no se encontro el texto del estado vacio').toBeDefined();
+    expect(vacio!).toMatch(/uses tu carné/);
+    expect(vacio!).toMatch(/accesos/);
   });
 });
 

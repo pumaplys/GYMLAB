@@ -101,11 +101,16 @@ export default function Accesos() {
           El estado que de verdad se va a ver: la base de datos de desarrollo
           no tiene ni un acceso registrado. Sin CTA: el socio no se registra
           una entrada a si mismo, la registra el escaner de la puerta.
+
+          El texto habla de USAR el carne, no de entrar: este listado tambien
+          recoge WARN y DENY, donde el intento quedo registrado y la persona
+          NO llego a pasar. Prometer "quedara registrado cuando entres" seria
+          decir que aqui solo hay entradas conseguidas, y no es cierto.
         */
         <View style={estilos.vacio}>
           <Text style={estilos.vacioTitulo}>Todavía no hay accesos.</Text>
           <Text style={estilos.vacioTexto}>
-            Cuando entres al gimnasio con tu carné, quedará registrado aquí.
+            Cuando uses tu carné en el gimnasio, tus accesos aparecerán aquí.
           </Text>
         </View>
       ) : null}
