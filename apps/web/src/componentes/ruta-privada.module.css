@@ -1,10 +1,67 @@
 .esperando {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: var(--e5);
   min-height: 100dvh;
   color: var(--texto-tenue);
   font-size: var(--t-base);
+}
+
+/*
+ * La marca entra y respira. Dos animaciones encadenadas con la propiedad
+ * `animation` y nada mas: sin librerias y sin JavaScript.
+ *
+ * El recorrido es el mismo que en la app movil —420 ms de entrada desde el
+ * 96 %, y despues un 2 % arriba y abajo cada 5,2 s— para que las dos esperas
+ * se sientan del mismo producto.
+ */
+.marcaEsperando {
+  display: inline-flex;
+  animation:
+    entrada 420ms ease-out both,
+    respiracion 5200ms ease-in-out 420ms infinite;
+}
+
+@keyframes entrada {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes respiracion {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+}
+
+/*
+ * Quien pide reducir el movimiento se queda con el fundido y sin escalado: lo
+ * que marea es algo que crece y encoge sin parar, no que una imagen aparezca.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .marcaEsperando {
+    animation: aparecer 420ms ease-out both;
+  }
+
+  @keyframes aparecer {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
 }
 
 .gimnasios {

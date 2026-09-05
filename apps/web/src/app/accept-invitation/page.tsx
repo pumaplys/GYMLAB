@@ -185,7 +185,7 @@ function CrearCuenta({
   return (
     <PantallaCentrada
       titulo="Crea tu cuenta"
-      entradilla="Te han invitado a un gimnasio en GYMLAB. Elige una contrasena y entras."
+      entradilla="Te han invitado a un gimnasio en RINDA. Elige una contrasena y entras."
     >
       <form className={estilos.formulario} onSubmit={formulario.alEnviar} noValidate>
         {formulario.errorGeneral && <Aviso>{formulario.errorGeneral}</Aviso>}
@@ -272,7 +272,7 @@ function IniciarSesion({
   return (
     <PantallaCentrada
       titulo="Ya tienes cuenta"
-      entradilla="Ese correo ya esta registrado en GYMLAB. Inicia sesion y anadimos el gimnasio a tu cuenta."
+      entradilla="Ese correo ya esta registrado en RINDA. Inicia sesion y anadimos el gimnasio a tu cuenta."
       // A esta pantalla se llega SUSTITUYENDO la anterior tras un envio, asi
       // que el foco tiene que venir aqui: sin esto se queda en un boton que ya
       // no existe y nadie anuncia que la pantalla ha cambiado. Por eso el

@@ -104,7 +104,7 @@ function Confirmacion({ correo }: { correo: string }) {
     >
       <div className={estilos.acciones}>
         <p className={estilos.explicacion}>
-          Si <span className={estilos.correo}>{correo}</span> tiene cuenta en GYMLAB, ahi esta el
+          Si <span className={estilos.correo}>{correo}</span> tiene cuenta en RINDA, ahi esta el
           enlace para poner una contrasena nueva. Caduca, asi que mejor abrirlo ahora.
         </p>
 

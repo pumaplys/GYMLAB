@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, type ReactNode } from 'react';
+import { Marca } from './marca';
 import estilos from './pantalla-centrada.module.css';
 
 interface Props {
@@ -45,7 +46,9 @@ export function PantallaCentrada({
   return (
     <main className={estilos.pantalla}>
       <div className={estilos.tarjeta} style={ancha ? { maxWidth: '32rem' } : undefined}>
-        <p className={estilos.marca}>GYMLAB</p>
+        <p className={estilos.marca}>
+          <Marca tamano="grande" />
+        </p>
         <h1
           className={estilos.titulo}
           ref={tituloRef}

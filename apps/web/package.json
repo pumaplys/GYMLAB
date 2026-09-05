@@ -2,7 +2,7 @@
   "name": "@gymlab/web",
   "version": "0.0.0",
   "private": true,
-  "description": "Panel web de gestion GYMLAB (Next.js)",
+  "description": "Panel web de gestión RINDA (Next.js)",
   "scripts": {
     "dev": "next dev --port 3000",
     "build": "next build",

@@ -1,40 +1,59 @@
-import { StyleSheet, Text, View } from 'react-native';
-import { tema } from '../tema';
+import { Image, StyleSheet, View } from 'react-native';
+import LOGO from '../../assets/logo.png';
 
 /**
- * El wordmark de RINDA.
+ * El logotipo de RINDA: el simbolo y la palabra, tal cual los entrego diseño.
  *
- * Tipografico: la palabra con espaciado y un punto de acento. Ni isotipo ni
- * marca dibujada, porque el logotipo definitivo llega como imagen —para el
- * icono y el arranque nativo— y aqui, dentro de la app, una palabra se lee
- * mejor y no depende de un fichero.
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ ES UNA IMAGEN, NO UNA PALABRA CON ESPACIADO.                            │
+ * │                                                                          │
+ * │ Antes era `<Text>RINDA</Text>` con un punto de acento, porque no habia   │
+ * │ logotipo. Ahora lo hay, y una marca escrita con la fuente del sistema no │
+ * │ es la marca: cambia de forma entre iOS y Android, y no lleva el simbolo. │
+ * └──────────────────────────────────────────────────────────────────────────┘
  *
- * El punto lima es lo unico que lo separa de un texto suelto, y es el mismo
- * recurso que se usa en el resto de la app: el acento marca lo que importa.
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ EL FICHERO ES EL DE `splash.png`, RECORTADO. NO ES OTRO DIBUJO.         │
+ * │                                                                          │
+ * │ `splash.png` es el lockup dentro de un lienzo cuadrado con mucho margen  │
+ * │ transparente: usarlo aqui obligaria a adivinar cuanto hueco tiene para   │
+ * │ darle un tamaño en pantalla. `logo.png` es exactamente ese dibujo con el │
+ * │ margen quitado —600x445, sin fondo— asi que el ancho que se le pone es   │
+ * │ el ancho que se ve.                                                      │
+ * │                                                                          │
+ * │ NO se usa `icon.png`: ese lleva el fondo grafito incrustado y aqui       │
+ * │ apareceria como un cuadrado dentro de la pantalla.                       │
+ * └──────────────────────────────────────────────────────────────────────────┘
  */
-export function Marca({ tamano = 'grande' }: { tamano?: 'grande' | 'pequeno' }) {
+
+/** Proporcion del fichero: 600 x 445. El alto se deriva, no se escribe. */
+const PROPORCION = 600 / 445;
+
+const ANCHOS = { grande: 168, pequeno: 104 } as const;
+
+export function Marca({ tamano = 'grande' }: { tamano?: keyof typeof ANCHOS }) {
+  const ancho = ANCHOS[tamano];
+
   return (
-    <View style={estilos.fila} accessibilityRole="header" accessibilityLabel="RINDA">
-      <Text style={[estilos.palabra, tamano === 'pequeno' && estilos.pequena]}>RINDA</Text>
-      <View style={[estilos.punto, tamano === 'pequeno' && estilos.puntoPequeno]} />
+    <View
+      style={estilos.marco}
+      accessibilityRole="header"
+      // El nombre lo pone el contenedor UNA vez. La imagen de dentro se
+      // esconde: si no, un lector de pantalla diria "RINDA" dos veces.
+      accessibilityLabel="RINDA"
+    >
+      <Image
+        source={LOGO}
+        style={{ width: ancho, height: ancho / PROPORCION }}
+        resizeMode="contain"
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+        aria-hidden
+      />
     </View>
   );
 }
 
 const estilos = StyleSheet.create({
-  fila: { flexDirection: 'row', alignItems: 'flex-end', gap: tema.espacio.xs },
-  palabra: {
-    ...tema.texto.display,
-    color: tema.color.texto,
-    letterSpacing: 3,
-  },
-  pequena: { ...tema.texto.h3, letterSpacing: 2 },
-  punto: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: tema.color.acento,
-    marginBottom: 6,
-  },
-  puntoPequeno: { width: 5, height: 5, borderRadius: 3, marginBottom: 4 },
+  marco: { alignSelf: 'flex-start' },
 });

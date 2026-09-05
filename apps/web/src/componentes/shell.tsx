@@ -9,6 +9,7 @@ import { BarraInferior, ListaDeDestinos } from '@/componentes/navegacion';
 import { NOMBRE_DEL_ROL } from '@/lib/roles';
 import { useSesion } from '@/lib/sesion';
 import type { Destino } from '@/lib/navegacion';
+import { Marca, Simbolo } from './marca';
 import estilos from './shell.module.css';
 
 /**
@@ -117,9 +118,11 @@ export function Shell({
           {/* En el rail no cabe la palabra: queda la inicial. Dos elementos y
               no un truco de CSS, para que el nombre accesible sea siempre el
               mismo. */}
-          <span className={estilos.logotipo}>GYMLAB</span>
-          <span className={estilos.logotipoCorto} aria-hidden="true">
-            G
+          <span className={estilos.logotipo}>
+            <Marca />
+          </span>
+          <span className={estilos.logotipoCorto}>
+            <Simbolo />
           </span>
         </div>
         <nav className={estilos.navLateral} aria-label="Secciones">
@@ -160,7 +163,9 @@ export function Shell({
             </button>
           )}
 
-          <span className={estilos.marcaMovil}>GYMLAB</span>
+          <span className={estilos.marcaMovil}>
+            <Marca />
+          </span>
 
           <div className={estilos.contexto}>{contextoDeGimnasio}</div>
           <div className={estilos.cuentaCabecera}>{cuenta}</div>

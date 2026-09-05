@@ -1,0 +1,35 @@
+.marca {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--e2);
+}
+
+/*
+ * La pastilla. El radio es de CSS y no viene dibujado en el PNG: asi el
+ * fichero sigue siendo el mismo icono cuadrado y opaco que exige la App Store,
+ * y aqui se redondea sin tocarlo.
+ */
+.simbolo {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 0.5rem;
+  /* El icono ya trae su fondo grafito; el borde solo lo asienta sobre blanco. */
+  border: 1px solid var(--borde);
+}
+
+.palabra {
+  font-size: var(--t-md);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--tinta);
+}
+
+.grande .simbolo {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.625rem;
+}
+
+.grande .palabra {
+  font-size: var(--t-lg);
+}
