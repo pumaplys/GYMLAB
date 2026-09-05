@@ -71,7 +71,14 @@ for (const f of [...ficheros(join(RAIZ, 'app')), ...ficheros(join(RAIZ, 'src'))]
     /[;{}()[\]=<>]|=>|\.\.\.|\|\||&&|\w\.\w/.test(t) ||
     // Rutas de import, modulos y claves: `../../src/componentes/boton`.
     /\//.test(t) ||
-    /^[a-z@][a-z0-9@-]*$/.test(t);
+    /^[a-z@][a-z0-9@-]*$/.test(t) ||
+    // Trozos de objeto: ", numero:", "unidad:". Empiezan por coma o terminan
+    // en dos puntos, cosa que no hace ninguna frase de esta app.
+    /^,/.test(t) ||
+    /:$/.test(t) ||
+    // Palabras clave de TypeScript sueltas entre dos genericos: `Seccion<...>`
+    // llega aqui como "export type Seccion".
+    /\b(export|import|type|interface|const|return|function|readonly)\b/.test(t);
   const anotar = (i: number, t: string) => {
     const texto = t.replace(/\s+/g, ' ').trim();
     if (!texto || esCodigo(texto)) return;
@@ -81,7 +88,15 @@ for (const f of [...ficheros(join(RAIZ, 'app')), ...ficheros(join(RAIZ, 'src'))]
     VISIBLES.push({ fichero: rel, linea: linea(i), texto });
   };
 
-  for (const m of codigo.matchAll(/>([^<>{}]*[a-zA-Z][^<>{}]*)</g)) anotar(m.index, m[1] ?? '');
+  /*
+   * Texto JSX que termina en `<` O en `{`, y que empieza en `>` O en `}`.
+   *
+   * Solo con `>…<` se colaba "Ultima medicion · {fechaDeInstante(...)}", que
+   * es texto visible seguido de una interpolacion: el `<` nunca llegaba y la
+   * falta no se veia. Se encontro MIRANDO una captura, no midiendo, y por eso
+   * la comprobacion se amplia aqui.
+   */
+  for (const m of codigo.matchAll(/[>}]([^<>{}]*[a-zA-Z][^<>{}]*)[<{]/g)) anotar(m.index, m[1] ?? '');
   for (const m of codigo.matchAll(PROPS_DE_TEXTO)) anotar(m.index, m[2] ?? m[3] ?? '');
 
   /*

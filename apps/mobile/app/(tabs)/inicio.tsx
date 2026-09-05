@@ -291,7 +291,7 @@ export default function Inicio() {
             alPulsar={() => router.push(RUTAS_DE_TABS.progreso)}
             accessibilityHint="Abre tu progreso"
           />
-          <Text style={estilos.meta}>Ultima medicion · {fechaDeInstante(progreso.fecha)}</Text>
+          <Text style={estilos.meta}>Última medición · {fechaDeInstante(progreso.fecha)}</Text>
           <View style={estilos.medidas}>
             {progreso.medidas.map((m) => (
               <View key={m.etiqueta} style={estilos.medida}>

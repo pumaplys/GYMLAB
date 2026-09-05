@@ -16,6 +16,8 @@
  * └──────────────────────────────────────────────────────────────────────────┘
  */
 import type { BodyMetric, DuesStatus, Member, OwnRoutine } from '@gymlab/contracts';
+// La coma decimal se escribe en UN solo sitio. Ver `comoNumero`.
+import { comoNumero } from '../progreso/logica';
 
 // --- El saludo -----------------------------------------------------------
 
@@ -156,7 +158,14 @@ export function resumenDeProgreso(mediciones: readonly BodyMetric[]): ResumenDeP
   for (const { campo, etiqueta, unidad } of MEDIDAS) {
     const valor = ultima[campo];
     if (valor === null || valor === undefined) continue;
-    medidas.push({ etiqueta, valor: `${valor} ${unidad}` });
+    /*
+     * `${valor}` a secas escribia el numero como lo escribe JavaScript: "71.4
+     * kg" con PUNTO. Progreso, para la misma medicion, decia "71,4 kg". La
+     * misma persona veia dos numeros distintos en dos pantallas de la misma
+     * app, y uno de los dos no esta en español. Se usa la de Progreso, que ya
+     * existia y esta probada.
+     */
+    medidas.push({ etiqueta, valor: `${comoNumero(valor)} ${unidad}` });
   }
 
   // Una medicion sin ninguna de las tres —solo perimetros, por ejemplo— no

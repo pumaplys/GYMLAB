@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { BodyMetric, DuesStatus, Member, OwnRoutine } from '@gymlab/contracts';
+import { comoNumero } from '../progreso/logica';
 import {
   EJERCICIOS_DE_MUESTRA,
   fechaCivil,
@@ -176,7 +177,20 @@ describe('el progreso', () => {
     ]);
     if (r.tipo !== 'ultima') throw new Error('tipo inesperado');
     expect(r.fecha).toBe('2026-08-24');
-    expect(r.medidas[0]?.valor).toBe('71.4 kg');
+    expect(r.medidas[0]?.valor).toBe('71,4 kg');
+  });
+
+  /*
+   * Este test fijaba "71.4 kg" con PUNTO, y por eso el fallo sobrevivio hasta
+   * el barrido final: Inicio escribia el numero como lo escribe JavaScript y
+   * Progreso, para la misma medicion, "71,4 kg". La misma persona veia dos
+   * numeros distintos en dos pantallas de la misma app.
+   */
+  it('Inicio y Progreso escriben la MISMA medicion igual', () => {
+    const r = resumenDeProgreso([medicion({ measuredAt: '2026-08-24', weightKg: 71.4 })]);
+    if (r.tipo !== 'ultima') throw new Error('tipo inesperado');
+    expect(r.medidas[0]?.valor).toBe(`${comoNumero(71.4)} kg`);
+    expect(r.medidas[0]?.valor).not.toMatch(/\./);
   });
 
   it('solo enseña las medidas que tienen valor', () => {
