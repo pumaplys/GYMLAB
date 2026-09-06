@@ -32,6 +32,14 @@
         }
       ],
       [
+        "expo-camera",
+        {
+          "cameraPermission": "RINDA necesita la cámara para escanear carnés de acceso.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "image": "./assets/splash.png",
