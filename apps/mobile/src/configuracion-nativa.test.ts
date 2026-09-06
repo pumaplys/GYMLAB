@@ -388,10 +388,27 @@ describe('la identidad nativa es RINDA', () => {
     expect(base.scheme).toMatch(/^[a-z][a-z0-9.+-]*$/);
   });
 
-  it('la version y los numeros de build son los de una primera interna', () => {
+  /*
+   * ┌──────────────────────────────────────────────────────────────────────┐
+   * │ EL BUILD SUBE; LA VERSION COMERCIAL, NO.                             │
+   * │                                                                      │
+   * │ Son dos numeros con dos trabajos distintos. `version` es lo que ve    │
+   * │ una persona y solo cambia cuando cambia el producto. `buildNumber` es │
+   * │ lo que distingue DOS BINARIOS de esa misma version, y Apple no        │
+   * │ acepta dos subidas con el mismo.                                      │
+   * │                                                                      │
+   * │   (1)  la primera build interna: sin camara                          │
+   * │   (2)  NATIVE-3: incorpora expo-camera, que es codigo nativo y por    │
+   * │        tanto NO llega recargando Metro — hace falta otro binario      │
+   * │                                                                      │
+   * │ Android se queda en 1 a proposito: este build es de iOS y su          │
+   * │ `versionCode` no se ha consumido todavia.                            │
+   * └──────────────────────────────────────────────────────────────────────┘
+   */
+  it('la version comercial no se mueve y el build number si', () => {
     expect(base.version).toBe('0.1.0');
     // iOS quiere una CADENA; Android, un entero.
-    expect(base.ios.buildNumber).toBe('1');
+    expect(base.ios.buildNumber).toBe('2');
     expect(base.android.versionCode).toBe(1);
   });
 });
