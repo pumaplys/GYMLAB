@@ -42,6 +42,27 @@ const ENTRENADORA: Me = {
   memberships: [{ gymId: GIMNASIO_A, gymName: 'Gimnasio de Muestra', role: 'trainer' }],
 } as Me;
 
+/*
+ * Las dos areas que STAFF-1 abre. Se llaman igual que el rol que las abre
+ * —recepcion y entrenadora— porque lo que se revisa aqui es a donde va cada
+ * rol, no un nombre de pantalla.
+ */
+const RECEPCION: Me = {
+  user: persona('Recepcion de Muestra', 'personal.muestra@ejemplo.local'),
+  activeGymId: GIMNASIO_A,
+  memberships: [{ gymId: GIMNASIO_A, gymName: 'Gimnasio de Muestra', role: 'receptionist' }],
+} as Me;
+
+/** Socia en uno y entrenadora en otro: cambia de AREA al cambiar de gimnasio. */
+const SOCIA_Y_ENTRENADORA: Me = {
+  user: persona('Socia de Muestra', 'vista.previa@ejemplo.local'),
+  activeGymId: null,
+  memberships: [
+    { gymId: GIMNASIO_A, gymName: 'Gimnasio de Muestra', role: 'member' },
+    { gymId: GIMNASIO_B, gymName: 'Gimnasio del Puerto', role: 'trainer' },
+  ],
+} as Me;
+
 const SOCIA_EN_UNO: Me = {
   user: persona('Socia de Muestra', 'vista.previa@ejemplo.local'),
   activeGymId: null,
@@ -66,7 +87,29 @@ export const CASOS: Record<string, Caso> = {
   },
   arranque: { estado: { tipo: 'cargando' }, entrada: 'inerte' },
   autenticado: {
-    estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A },
+    estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' },
+    entrada: 'inerte',
+  },
+  // --- Las dos areas nuevas de STAFF-1 -----------------------------------
+  panel: {
+    estado: { tipo: 'autenticado', yo: RECEPCION, gymId: GIMNASIO_A, area: 'panel' },
+    entrada: 'inerte',
+  },
+  entrenador: {
+    estado: { tipo: 'autenticado', yo: ENTRENADORA, gymId: GIMNASIO_A, area: 'entrenador' },
+    entrada: 'inerte',
+  },
+  /*
+   * El selector con DOS AREAS distintas. Es el caso que justifica que la
+   * eleccion de gimnasio sea previa al rol: aqui se elige entre ser socia y
+   * ser entrenadora, y de esa eleccion sale a que area se va.
+   */
+  'elegir-gimnasio-dos-areas': {
+    estado: {
+      tipo: 'requiereSeleccionGimnasio',
+      yo: SOCIA_Y_ENTRENADORA,
+      opciones: SOCIA_Y_ENTRENADORA.memberships,
+    },
     entrada: 'inerte',
   },
   'no-admitido': {
@@ -95,69 +138,69 @@ export const CASOS: Record<string, Caso> = {
   },
   // Los estados del carne. La sesion es la misma —autenticada— y lo que
   // cambia es lo que devuelve `carne/fuente.web.ts` para ese mismo `?vista=`.
-  'carne-activa': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
-  'carne-expira-pronto': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
-  'carne-vencida': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
-  'carne-congelada': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
-  'carne-expirada': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
-  'carne-cargando': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
-  'carne-error': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
+  'carne-activa': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' }, entrada: 'inerte' },
+  'carne-expira-pronto': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' }, entrada: 'inerte' },
+  'carne-vencida': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' }, entrada: 'inerte' },
+  'carne-congelada': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' }, entrada: 'inerte' },
+  'carne-expirada': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' }, entrada: 'inerte' },
+  'carne-cargando': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' }, entrada: 'inerte' },
+  'carne-error': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' }, entrada: 'inerte' },
   // Los estados de Inicio. La sesion es la misma —autenticada— y lo que
   // cambia es lo que devuelve 'inicio/fuente.web.ts' para ese mismo ?vista=.
-  'inicio-completo': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
-  'inicio-una-rutina': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
-  'inicio-sin-rutina': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
-  'inicio-sin-progreso': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
-  'inicio-fixture-real': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
-  'inicio-cuota-vencida': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
-  'inicio-cargando': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
-  'inicio-error-esencial': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
-  'inicio-error-rutina': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
+  'inicio-completo': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' }, entrada: 'inerte' },
+  'inicio-una-rutina': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' }, entrada: 'inerte' },
+  'inicio-sin-rutina': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' }, entrada: 'inerte' },
+  'inicio-sin-progreso': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' }, entrada: 'inerte' },
+  'inicio-fixture-real': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' }, entrada: 'inerte' },
+  'inicio-cuota-vencida': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' }, entrada: 'inerte' },
+  'inicio-cargando': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' }, entrada: 'inerte' },
+  'inicio-error-esencial': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' }, entrada: 'inerte' },
+  'inicio-error-rutina': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' }, entrada: 'inerte' },
   // Los estados de Rutina. Misma sesion autenticada; lo que cambia es lo que
   // devuelve 'rutina/fuente.web.ts' para ese mismo ?vista=.
-  'rutina-una': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
-  'rutina-varias': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
-  'rutina-nombre-largo': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
-  'rutina-nota-larga': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
-  'rutina-sin-descanso': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
-  'rutina-reps-largas': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
-  'rutina-larga': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
-  'rutina-fixture-real': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
-  'rutina-vacia': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
-  'rutina-cargando': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
-  'rutina-error': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
+  'rutina-una': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' }, entrada: 'inerte' },
+  'rutina-varias': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' }, entrada: 'inerte' },
+  'rutina-nombre-largo': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' }, entrada: 'inerte' },
+  'rutina-nota-larga': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' }, entrada: 'inerte' },
+  'rutina-sin-descanso': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' }, entrada: 'inerte' },
+  'rutina-reps-largas': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' }, entrada: 'inerte' },
+  'rutina-larga': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' }, entrada: 'inerte' },
+  'rutina-fixture-real': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' }, entrada: 'inerte' },
+  'rutina-vacia': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' }, entrada: 'inerte' },
+  'rutina-cargando': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' }, entrada: 'inerte' },
+  'rutina-error': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' }, entrada: 'inerte' },
   // Los estados de Progreso. Misma sesion autenticada; lo que cambia es lo que
   // devuelve 'progreso/fuente.web.ts' para ese mismo ?vista=.
-  'progreso-vacio': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
-  'progreso-una': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
-  'progreso-dos': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
-  'progreso-varias': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
-  'progreso-constante': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
-  'progreso-intervalos-irregulares': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
-  'progreso-casi-igual': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
-  'progreso-campos-nulos': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
-  'progreso-cargando': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
-  'progreso-error': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
+  'progreso-vacio': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' }, entrada: 'inerte' },
+  'progreso-una': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' }, entrada: 'inerte' },
+  'progreso-dos': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' }, entrada: 'inerte' },
+  'progreso-varias': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' }, entrada: 'inerte' },
+  'progreso-constante': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' }, entrada: 'inerte' },
+  'progreso-intervalos-irregulares': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' }, entrada: 'inerte' },
+  'progreso-casi-igual': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' }, entrada: 'inerte' },
+  'progreso-campos-nulos': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' }, entrada: 'inerte' },
+  'progreso-cargando': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' }, entrada: 'inerte' },
+  'progreso-error': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' }, entrada: 'inerte' },
   // Perfil y sus tres secciones. Misma sesion autenticada; lo que cambia es lo
   // que devuelve 'perfil/fuente.web.ts' para ese mismo ?vista=.
-  'perfil-completo': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
-  'perfil-cuota-problema': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
-  'perfil-cargando': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
-  'perfil-error': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
-  'pagos-varios': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
-  'pagos-fixture-real': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
-  'pagos-vacio': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
-  'pagos-cargando': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
-  'pagos-error': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
-  'accesos-varios': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
-  'accesos-vacio': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
-  'accesos-cargando': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
-  'accesos-error': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
-  'privacidad-activa': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
-  'privacidad-pendiente': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
-  'privacidad-sin-texto': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
-  'privacidad-cargando': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
-  'privacidad-error': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A }, entrada: 'inerte' },
+  'perfil-completo': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' }, entrada: 'inerte' },
+  'perfil-cuota-problema': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' }, entrada: 'inerte' },
+  'perfil-cargando': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' }, entrada: 'inerte' },
+  'perfil-error': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' }, entrada: 'inerte' },
+  'pagos-varios': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' }, entrada: 'inerte' },
+  'pagos-fixture-real': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' }, entrada: 'inerte' },
+  'pagos-vacio': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' }, entrada: 'inerte' },
+  'pagos-cargando': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' }, entrada: 'inerte' },
+  'pagos-error': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' }, entrada: 'inerte' },
+  'accesos-varios': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' }, entrada: 'inerte' },
+  'accesos-vacio': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' }, entrada: 'inerte' },
+  'accesos-cargando': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' }, entrada: 'inerte' },
+  'accesos-error': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' }, entrada: 'inerte' },
+  'privacidad-activa': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' }, entrada: 'inerte' },
+  'privacidad-pendiente': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' }, entrada: 'inerte' },
+  'privacidad-sin-texto': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' }, entrada: 'inerte' },
+  'privacidad-cargando': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' }, entrada: 'inerte' },
+  'privacidad-error': { estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' }, entrada: 'inerte' },
 };
 
 export type { Caso, Entrada } from './tipos';

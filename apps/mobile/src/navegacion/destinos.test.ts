@@ -3,9 +3,20 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { Me } from '@gymlab/contracts';
 import type { EstadoDeSesion } from '../auth/estado';
-import { DESTINOS_DE_TABS, RUTAS, RUTAS_DE_TABS, destinoDe, puedeEntrarEnTabs } from './destinos';
+import type { Area } from '../auth/estado';
+import {
+  DESTINOS_DE_TABS,
+  INICIO_DE_AREA,
+  RUTAS,
+  RUTAS_DE_TABS,
+  destinoDe,
+  puedeEntrarEnArea,
+} from './destinos';
 
 const GIMNASIO = '11111111-1111-4111-8111-111111111111';
+
+/** Las tres. Si aparece una cuarta, `INICIO_DE_AREA` no compila sin ella. */
+const AREAS = Object.keys(INICIO_DE_AREA) as Area[];
 
 const YO: Me = {
   user: {
@@ -23,7 +34,7 @@ const YO: Me = {
 const TODOS: Record<EstadoDeSesion['tipo'], EstadoDeSesion> = {
   cargando: { tipo: 'cargando' },
   sinSesion: { tipo: 'sinSesion' },
-  autenticado: { tipo: 'autenticado', yo: YO, gymId: GIMNASIO },
+  autenticado: { tipo: 'autenticado', yo: YO, gymId: GIMNASIO, area: 'socio' },
   rolNoAdmitido: { tipo: 'rolNoAdmitido', yo: YO },
   requiereSeleccionGimnasio: {
     tipo: 'requiereSeleccionGimnasio',
@@ -33,49 +44,51 @@ const TODOS: Record<EstadoDeSesion['tipo'], EstadoDeSesion> = {
   errorAlComprobar: { tipo: 'errorAlComprobar', motivo: 'red' },
 };
 
-describe('quien entra en las pestañas', () => {
-  it('autenticado entra', () => {
-    expect(puedeEntrarEnTabs(TODOS.autenticado)).toBe(true);
+describe('quien entra en el area del socio', () => {
+  it('autenticado como socio entra, y su puerta es Inicio', () => {
+    expect(puedeEntrarEnArea(TODOS.autenticado, 'socio')).toBe(true);
     expect(destinoDe(TODOS.autenticado)).toBe(RUTAS.inicio);
   });
 
   it('sin sesion NO entra: va a entrar', () => {
-    expect(puedeEntrarEnTabs(TODOS.sinSesion)).toBe(false);
+    expect(puedeEntrarEnArea(TODOS.sinSesion, 'socio')).toBe(false);
     expect(destinoDe(TODOS.sinSesion)).toBe(RUTAS.entrar);
   });
 
   it('rol no admitido NO entra: no se le dice que las credenciales fallan', () => {
-    expect(puedeEntrarEnTabs(TODOS.rolNoAdmitido)).toBe(false);
+    expect(puedeEntrarEnArea(TODOS.rolNoAdmitido, 'socio')).toBe(false);
     expect(destinoDe(TODOS.rolNoAdmitido)).toBe(RUTAS.noAdmitido);
   });
 
   it('la seleccion de gimnasio sigue interceptando', () => {
-    expect(puedeEntrarEnTabs(TODOS.requiereSeleccionGimnasio)).toBe(false);
+    expect(puedeEntrarEnArea(TODOS.requiereSeleccionGimnasio, 'socio')).toBe(false);
     expect(destinoDe(TODOS.requiereSeleccionGimnasio)).toBe(RUTAS.elegirGimnasio);
   });
 
   it('un error recuperable NO entra y NO manda a entrar', () => {
     // Si mandara a entrar, un 500 pediria la contrasena otra vez.
-    expect(puedeEntrarEnTabs(TODOS.errorAlComprobar)).toBe(false);
+    expect(puedeEntrarEnArea(TODOS.errorAlComprobar, 'socio')).toBe(false);
     expect(destinoDe(TODOS.errorAlComprobar)).toBe(RUTAS.problema);
   });
 
   it('mientras carga no se redirige a ningun sitio', () => {
     expect(destinoDe(TODOS.cargando)).toBeNull();
-    expect(puedeEntrarEnTabs(TODOS.cargando)).toBe(false);
+    expect(puedeEntrarEnArea(TODOS.cargando, 'socio')).toBe(false);
   });
 
-  it('SOLO autenticado llega a las pestañas; ninguno de los otros cinco', () => {
+  it('ninguno de los otros cinco estados llega a NINGUNA area', () => {
     for (const [tipo, estado] of Object.entries(TODOS)) {
       if (tipo === 'autenticado') continue;
-      expect(puedeEntrarEnTabs(estado)).toBe(false);
+      for (const area of AREAS) {
+        expect(puedeEntrarEnArea(estado, area), `${tipo} en ${area}`).toBe(false);
+      }
       expect(destinoDe(estado)).not.toBe(RUTAS.inicio);
     }
   });
 });
 
 describe('los cinco destinos', () => {
-  const DIRECTORIO = join(__dirname, '..', '..', 'app', '(tabs)');
+  const DIRECTORIO = join(__dirname, '..', '..', 'app', '(socio)');
 
   it('son exactamente cinco y en su orden', () => {
     expect(DESTINOS_DE_TABS.map((d) => d.nombre)).toEqual([
@@ -99,7 +112,7 @@ describe('los cinco destinos', () => {
   });
 
   it('no hay rutas de pestaña de mas: el arbol y la barra dicen lo mismo', () => {
-    // Sin esto, un fichero suelto en (tabs) se convierte en una sexta pestaña
+    // Sin esto, un fichero suelto en (socio) se convierte en una sexta pestaña
     // sin que nadie lo haya decidido.
     const rutas = readdirSync(DIRECTORIO)
       .filter((f) => f.endsWith('.tsx') && !f.startsWith('_'))

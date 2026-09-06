@@ -190,7 +190,7 @@ function sinComentarios(codigo: string): string {
 }
 
 const FUENTES = [
-  'app/(tabs)/rutina.tsx',
+  'app/(socio)/rutina.tsx',
   'src/rutina/logica.ts',
   'src/rutina/fuente.ts',
   'src/rutina/fuente-real.ts',
@@ -215,7 +215,7 @@ const FUENTES = [
  * └──────────────────────────────────────────────────────────────────────────┘
  */
 describe('Rutina usa la misma politica de sesion que Inicio', () => {
-  const pantalla = FUENTES.find((f) => f.relativo === 'app/(tabs)/rutina.tsx')!;
+  const pantalla = FUENTES.find((f) => f.relativo === 'app/(socio)/rutina.tsx')!;
 
   it('pregunta con `laSesionYaNoVale`', () => {
     expect(pantalla.sinComentar).toMatch(/laSesionYaNoVale\(\[problema\]\)/);
