@@ -11,7 +11,7 @@ import {
   DESTINOS_DE_TABS,
   destinoAlVolver,
   destinoDe,
-  puedeEntrarEnTabs,
+  puedeEntrarEnArea,
 } from '../navegacion/destinos';
 import type { EstadoDeSesion } from '../auth/estado';
 import { acumular, type Acumulado, type EstadoDeCarga } from './logica';
@@ -251,13 +251,13 @@ describe('las rutas de Perfil', () => {
   it('los ficheros estan FUERA del grupo (tabs)', () => {
     for (const seccion of ['pagos', 'accesos', 'privacidad']) {
       expect(existsSync(join(RAIZ, 'app', 'perfil', `${seccion}.tsx`)), seccion).toBe(true);
-      expect(existsSync(join(RAIZ, 'app', '(tabs)', `${seccion}.tsx`)), seccion).toBe(false);
+      expect(existsSync(join(RAIZ, 'app', '(socio)', `${seccion}.tsx`)), seccion).toBe(false);
     }
   });
 
   it('`app/perfil/` no tiene index: /perfil sigue siendo la pestaña', () => {
     expect(existsSync(join(RAIZ, 'app', 'perfil', 'index.tsx'))).toBe(false);
-    expect(existsSync(join(RAIZ, 'app', '(tabs)', 'perfil.tsx'))).toBe(true);
+    expect(existsSync(join(RAIZ, 'app', '(socio)', 'perfil.tsx'))).toBe(true);
   });
 });
 
@@ -279,10 +279,28 @@ describe('el gate de las subrutas de Perfil', () => {
     { tipo: 'errorAlComprobar', motivo: 'red' },
   ];
 
-  it('solo `autenticado` puede entrar', () => {
-    expect(puedeEntrarEnTabs({ tipo: 'autenticado', yo: {} as never, gymId: 'g1' })).toBe(true);
+  it('solo `autenticado` Y del area de socio puede entrar', () => {
+    expect(
+      puedeEntrarEnArea({ tipo: 'autenticado', yo: {} as never, gymId: 'g1', area: 'socio' }, 'socio'),
+    ).toBe(true);
     for (const estado of noAutenticados) {
-      expect(puedeEntrarEnTabs(estado), estado.tipo).toBe(false);
+      expect(puedeEntrarEnArea(estado, 'socio'), estado.tipo).toBe(false);
+    }
+  });
+
+  /*
+   * STAFF-1: estar autenticado ya no basta. Pagos, Accesos y Privacidad son
+   * del socio, y ahora hay personal con sesion perfectamente valida.
+   */
+  it('personal autenticado NO entra en las secciones del socio', () => {
+    for (const area of ['panel', 'entrenador'] as const) {
+      const estado: EstadoDeSesion = {
+        tipo: 'autenticado',
+        yo: {} as never,
+        gymId: 'g1',
+        area,
+      };
+      expect(puedeEntrarEnArea(estado, 'socio'), area).toBe(false);
     }
   });
 
@@ -297,22 +315,24 @@ describe('el gate de las subrutas de Perfil', () => {
     const ruta = join(RAIZ, 'app', 'perfil', '_layout.tsx');
     expect(existsSync(ruta)).toBe(true);
     const codigo = readFileSync(ruta, 'utf8');
-    expect(codigo).toMatch(/puedeEntrarEnTabs\(estado\)/);
+    expect(codigo).toMatch(/puedeEntrarEnArea\(estado, 'socio'\)/);
     expect(codigo).toMatch(/<Redirect href="\/" \/>/);
   });
 
-  it('el gate es el MISMO que el de las pestañas, no una copia distinta', () => {
-    const deTabs = readFileSync(join(RAIZ, 'app', '(tabs)', '_layout.tsx'), 'utf8');
+  it('el gate es el MISMO que el del area de socio, no una copia distinta', () => {
+    const deSocio = readFileSync(join(RAIZ, 'app', '(socio)', '_layout.tsx'), 'utf8');
     const dePerfil = readFileSync(join(RAIZ, 'app', 'perfil', '_layout.tsx'), 'utf8');
-    for (const codigo of [deTabs, dePerfil]) {
-      expect(codigo).toMatch(/if \(!puedeEntrarEnTabs\(estado\)\) return <Redirect href="\/" \/>;/);
+    for (const codigo of [deSocio, dePerfil]) {
+      expect(codigo).toMatch(
+        /if \(!puedeEntrarEnArea\(estado, 'socio'\)\) return <Redirect href="\/" \/>;/,
+      );
     }
   });
 
   it('el gate va UNA vez en el layout, no repetido en las tres pantallas', () => {
     for (const seccion of ['pagos', 'accesos', 'privacidad']) {
       const codigo = readFileSync(join(RAIZ, 'app', 'perfil', `${seccion}.tsx`), 'utf8');
-      expect(codigo, seccion).not.toMatch(/puedeEntrarEnTabs|<Redirect/);
+      expect(codigo, seccion).not.toMatch(/puedeEntrarEnArea|<Redirect/);
     }
   });
 });
@@ -355,7 +375,7 @@ describe('volver desde una subruta', () => {
  * └──────────────────────────────────────────────────────────────────────────┘
  */
 const FUENTES = [
-  'app/(tabs)/perfil.tsx',
+  'app/(socio)/perfil.tsx',
   'app/perfil/pagos.tsx',
   'app/perfil/accesos.tsx',
   'app/perfil/privacidad.tsx',
@@ -437,7 +457,7 @@ describe('todas usan la politica de sesion compartida', () => {
   });
 
   it('cerrar sesion usa `salir()` del proveedor, no una version propia', () => {
-    const perfil = FUENTES.find((f) => f.relativo === 'app/(tabs)/perfil.tsx')!;
+    const perfil = FUENTES.find((f) => f.relativo === 'app/(socio)/perfil.tsx')!;
     expect(perfil.sinComentar).toMatch(/void salir\(\)/);
     expect(perfil.sinComentar).not.toMatch(/api\.auth\.logout/);
   });

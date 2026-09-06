@@ -5,7 +5,31 @@
  * probar —y las que es facil equivocar— y no necesitan un componente montado
  * para comprobarse.
  */
-import type { Me } from '@gymlab/contracts';
+import type { Me, Role } from '@gymlab/contracts';
+
+/**
+ * Las tres experiencias que caben en la misma app.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ ES LA MISMA TABLA QUE EL PANEL WEB, Y ESO NO ES CASUALIDAD.             │
+ * │                                                                          │
+ * │ `apps/web/src/lib/areas.ts` reparte los mismos cuatro roles en las       │
+ * │ mismas tres areas. Si aqui se decidiera otra cosa, la misma persona      │
+ * │ acabaria en un sitio distinto segun abriera el movil o el navegador.     │
+ * │                                                                          │
+ * │ `Record<Role, Area>` obliga a que un rol NUEVO del contrato pase por     │
+ * │ aqui: si se añadiera uno, esto deja de compilar en lugar de dejar a esa  │
+ * │ gente sin sitio — o, peor, de colarla en el area de otro.                │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ */
+export type Area = 'socio' | 'panel' | 'entrenador';
+
+export const AREA_DE_ROL: Record<Role, Area> = {
+  member: 'socio',
+  owner: 'panel',
+  receptionist: 'panel',
+  trainer: 'entrenador',
+};
 
 /**
  * Una membresia, derivada de `Me`.
@@ -19,20 +43,31 @@ export type Membresia = Me['memberships'][number];
 export type EstadoDeSesion =
   /** Todavia no sabemos: se esta leyendo el almacen o preguntando al servidor. */
   | { tipo: 'cargando' }
-  /** Hay sesion, hay gimnasio activo y en el se es socio. */
-  | { tipo: 'autenticado'; yo: Me; gymId: string }
+  /**
+   * Hay sesion y hay gimnasio activo. `area` dice a cual de las tres
+   * experiencias pertenece el rol que se tiene EN ESE gimnasio.
+   */
+  | { tipo: 'autenticado'; yo: Me; gymId: string; area: Area }
   /** No hay sesion, o la que habia ya no vale. */
   | { tipo: 'sinSesion' }
   /**
-   * Hay sesion valida, pero en ningun gimnasio se es socio.
+   * Hay sesion valida, pero esta cuenta no pertenece a ningun gimnasio.
    *
-   * Es un estado propio y no un `sinSesion` con otro mensaje: la persona ha
-   * entrado bien, y decirle "credenciales incorrectas" seria mentirle. La app
-   * movil es del socio; el personal usa el panel web.
+   * ┌────────────────────────────────────────────────────────────────────────┐
+   * │ YA NO SIGNIFICA "NO ERES SOCIO". SIGNIFICA "NO ERES DE NINGUN GIMNASIO".│
+   * │                                                                        │
+   * │ Cuando la app era solo del socio, aqui caia todo el personal. Ahora     │
+   * │ owner, recepcion y entrenador tienen su area, y este estado queda para  │
+   * │ lo que de verdad no tiene sitio: una cuenta de plataforma sin           │
+   * │ pertenencias, o una a la que se le retiraron todas.                     │
+   * │                                                                        │
+   * │ Se conserva —en vez de borrarlo— porque ese caso EXISTE y porque un rol │
+   * │ futuro tiene que caer en algun sitio conocido mientras no se le da uno. │
+   * └────────────────────────────────────────────────────────────────────────┘
    */
   | { tipo: 'rolNoAdmitido'; yo: Me }
   /**
-   * Es socio, pero la sesion no tiene gimnasio activo y hay que elegir.
+   * La sesion no tiene gimnasio activo y hay que elegir.
    *
    * NO se elige aqui. Ver el comentario de `resolverAcceso`.
    */
@@ -64,9 +99,24 @@ export type Resultado =
   | { clase: 'errorDelServidor'; status: number }
   | { clase: 'respuestaInvalida' };
 
-/** Las membresias en las que esta persona es socia. */
-export function membresiasDeSocio(yo: Me): readonly Membresia[] {
-  return yo.memberships.filter((m) => m.role === 'member');
+/**
+ * Los gimnasios entre los que puede elegir esta persona.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ TODOS, NO SOLO AQUELLOS EN LOS QUE ES SOCIA.                            │
+ * │                                                                          │
+ * │ Antes esto filtraba `role === 'member'`, y era coherente con una app     │
+ * │ que solo servia al socio. Ahora las tres areas viven aqui, asi que       │
+ * │ filtrar dejaria fuera precisamente los gimnasios donde esa persona       │
+ * │ trabaja.                                                                 │
+ * │                                                                          │
+ * │ Y el rol NO se mira en esta lista: se mira en el gimnasio que se elija.  │
+ * │ Quien es socia en uno y entrenadora en otro cambia de area al cambiar de │
+ * │ gimnasio, y eso solo funciona si la eleccion es previa al rol.           │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ */
+export function gimnasiosDondePuedeEntrar(yo: Me): readonly Membresia[] {
+  return yo.memberships;
 }
 
 /**
@@ -93,9 +143,16 @@ export function membresiasDeSocio(yo: Me): readonly Membresia[] {
  * │ membresia que haya": una misma persona puede ser socia de un gimnasio y  │
  * │ entrenadora de otro, y el modelo lo permite.                             │
  * │                                                                          │
- * │ Y `member` se comprueba en POSITIVO. Escrito como "todo menos owner",    │
- * │ cualquier rol que se anadiera en el futuro entraria sin que nadie lo     │
- * │ decidiera.                                                               │
+ * │ Y el rol NO decide si se entra: decide A DONDE se entra. Es el cambio de │
+ * │ STAFF-1. Antes, cualquier rol que no fuera `member` acababa en           │
+ * │ `rolNoAdmitido`, y eso dejaba fuera de la app a todo el personal del     │
+ * │ gimnasio — que tambien la necesita.                                      │
+ * │                                                                          │
+ * │ La traduccion de rol a area la hace `AREA_DE_ROL`, que es un             │
+ * │ `Record<Role, Area>`: un rol NUEVO del contrato no compila hasta que     │
+ * │ alguien decida su area. Eso conserva lo que protegia el `=== 'member'`   │
+ * │ de antes —que nadie entre sin que se haya decidido— sin cerrarle la      │
+ * │ puerta a quien ya tiene un sitio.                                        │
  * └──────────────────────────────────────────────────────────────────────────┘
  */
 export function resolverAcceso(yo: Me): EstadoDeSesion {
@@ -105,17 +162,16 @@ export function resolverAcceso(yo: Me): EstadoDeSesion {
 
   // Hay gimnasio activo: manda su rol, y solo el suyo.
   if (activa) {
-    return activa.role === 'member'
-      ? { tipo: 'autenticado', yo, gymId: activa.gymId }
-      : { tipo: 'rolNoAdmitido', yo };
+    return { tipo: 'autenticado', yo, gymId: activa.gymId, area: AREA_DE_ROL[activa.role] };
   }
 
-  // Sin gimnasio activo. Si no es socia en ninguno, esta app no es para ella.
-  const comoSocio = membresiasDeSocio(yo);
-  if (comoSocio.length === 0) return { tipo: 'rolNoAdmitido', yo };
+  // Sin gimnasio activo y sin ninguna pertenencia: esta cuenta no es de
+  // ningun gimnasio. Es el unico caso que se queda sin sitio.
+  const donde = gimnasiosDondePuedeEntrar(yo);
+  if (donde.length === 0) return { tipo: 'rolNoAdmitido', yo };
 
-  // Es socia en uno o en varios: que elija.
-  return { tipo: 'requiereSeleccionGimnasio', yo, opciones: comoSocio };
+  // Pertenece a uno o a varios: que elija, y el area saldra del que elija.
+  return { tipo: 'requiereSeleccionGimnasio', yo, opciones: donde };
 }
 
 /** De un resultado, un estado. Toda la politica de sesion en una funcion. */

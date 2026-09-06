@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { Me } from '@gymlab/contracts';
 import type { Membresia } from './estado';
-import { decidirEstado, membresiasDeSocio, resolverAcceso } from './estado';
+import { ROLES } from '@gymlab/contracts';
+import { decidirEstado, gimnasiosDondePuedeEntrar, resolverAcceso } from './estado';
 
 const UNO = '11111111-1111-4111-8111-111111111111';
 const DOS = '22222222-2222-4222-8222-222222222222';
@@ -22,39 +23,63 @@ function yoCon(membresias: Array<[string, Rol]>, activo: string | null): Me {
   } as Me;
 }
 
-describe('quien entra en la app movil', () => {
-  it('socio con gimnasio activo valido -> autenticado', () => {
+/**
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ EL ROL YA NO DECIDE SI SE ENTRA: DECIDE A DONDE.                        │
+ * │                                                                          │
+ * │ Estas pruebas se reescribieron enteras en STAFF-1. Antes fijaban que     │
+ * │ owner, recepcion y entrenador NO entraban —era el error de alcance— y    │
+ * │ ahora fijan a que area va cada uno. Se conservan los mismos casos        │
+ * │ frontera, con el resultado nuevo.                                        │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ */
+describe('a que area entra cada rol', () => {
+  it('socio -> area socio', () => {
     expect(resolverAcceso(yoCon([[UNO, 'member']], UNO))).toEqual({
       tipo: 'autenticado',
       yo: expect.anything(),
       gymId: UNO,
+      area: 'socio',
     });
   });
 
-  it('solo entrenador -> rolNoAdmitido, no "credenciales incorrectas"', () => {
-    expect(resolverAcceso(yoCon([[UNO, 'trainer']], UNO)).tipo).toBe('rolNoAdmitido');
+  it('propietario y recepcion -> area panel', () => {
+    for (const rol of ['owner', 'receptionist'] as const) {
+      const estado = resolverAcceso(yoCon([[UNO, rol]], UNO));
+      expect(estado.tipo, rol).toBe('autenticado');
+      if (estado.tipo !== 'autenticado') throw new Error('tipo inesperado');
+      expect(estado.area, rol).toBe('panel');
+    }
   });
 
-  it('solo propietario -> rolNoAdmitido', () => {
-    expect(resolverAcceso(yoCon([[UNO, 'owner']], UNO)).tipo).toBe('rolNoAdmitido');
+  it('entrenador -> area entrenador, que NO es el panel', () => {
+    const estado = resolverAcceso(yoCon([[UNO, 'trainer']], UNO));
+    if (estado.tipo !== 'autenticado') throw new Error('tipo inesperado');
+    expect(estado.area).toBe('entrenador');
   });
 
-  it('manda el gimnasio ACTIVO, no cualquier membresia', () => {
-    // Socia en UNO, entrenadora en DOS y con DOS activo: no entra.
-    const yo = yoCon(
-      [
-        [UNO, 'member'],
-        [DOS, 'trainer'],
-      ],
-      DOS,
-    );
-    expect(resolverAcceso(yo).tipo).toBe('rolNoAdmitido');
+  it('los cuatro roles del contrato tienen area, y ninguno se queda fuera', () => {
+    for (const rol of ROLES) {
+      expect(resolverAcceso(yoCon([[UNO, rol]], UNO)).tipo, rol).toBe('autenticado');
+    }
   });
 
-  it('un rol futuro o desconocido NO entra por descuido', () => {
-    // `member` se comprueba en positivo; cualquier otra cosa se queda fuera.
-    const yo = yoCon([[UNO, 'supervisor' as Rol]], UNO);
-    expect(resolverAcceso(yo).tipo).toBe('rolNoAdmitido');
+  /*
+   * El caso que justifica que el area salga del gimnasio ACTIVO y no de la
+   * cuenta: la misma persona cambia de experiencia al cambiar de gimnasio.
+   */
+  it('manda el gimnasio ACTIVO: socia en uno, entrenadora en otro', () => {
+    const membresias: Array<[string, Rol]> = [
+      [UNO, 'member'],
+      [DOS, 'trainer'],
+    ];
+    const enUno = resolverAcceso(yoCon(membresias, UNO));
+    const enDos = resolverAcceso(yoCon(membresias, DOS));
+    if (enUno.tipo !== 'autenticado' || enDos.tipo !== 'autenticado') {
+      throw new Error('tipo inesperado');
+    }
+    expect(enUno.area).toBe('socio');
+    expect(enDos.area).toBe('entrenador');
   });
 });
 
@@ -81,7 +106,12 @@ describe('sin gimnasio activo: se pregunta, no se adivina', () => {
     expect(estado.opciones.map((o) => o.gymId)).toEqual([UNO, DOS]);
   });
 
-  it('socio en uno y entrenador en otro, sin activo -> solo se ofrece donde es socio', () => {
+  /*
+   * Antes de STAFF-1 este caso ofrecia SOLO el gimnasio donde era socia, y el
+   * comentario decia "elegirlo le dejaria fuera igualmente". Ya no: ahora
+   * elegir el de entrenadora la lleva a su area.
+   */
+  it('socio en uno y entrenador en otro -> se ofrecen LOS DOS', () => {
     const estado = resolverAcceso(
       yoCon(
         [
@@ -93,11 +123,10 @@ describe('sin gimnasio activo: se pregunta, no se adivina', () => {
     );
     expect(estado.tipo).toBe('requiereSeleccionGimnasio');
     if (estado.tipo !== 'requiereSeleccionGimnasio') throw new Error('tipo inesperado');
-    // El de entrenador no se ofrece: elegirlo le dejaria fuera igualmente.
-    expect(estado.opciones.map((o) => o.gymId)).toEqual([UNO]);
+    expect(estado.opciones.map((o) => o.gymId)).toEqual([UNO, DOS]);
   });
 
-  it('sin activo y sin ninguna membresia de socio -> rolNoAdmitido', () => {
+  it('sin activo y siendo SOLO personal -> tambien se le ofrece elegir', () => {
     const estado = resolverAcceso(
       yoCon(
         [
@@ -107,7 +136,18 @@ describe('sin gimnasio activo: se pregunta, no se adivina', () => {
         null,
       ),
     );
-    expect(estado.tipo).toBe('rolNoAdmitido');
+    expect(estado.tipo).toBe('requiereSeleccionGimnasio');
+    if (estado.tipo !== 'requiereSeleccionGimnasio') throw new Error('tipo inesperado');
+    expect(estado.opciones.map((o) => o.gymId)).toEqual([UNO, DOS]);
+  });
+
+  /*
+   * El unico caso que sigue sin sitio: una cuenta que no pertenece a ningun
+   * gimnasio. Pasa con una cuenta de plataforma, o con una a la que se le
+   * retiraron todas las pertenencias.
+   */
+  it('sin ninguna pertenencia -> rolNoAdmitido', () => {
+    expect(resolverAcceso(yoCon([], null)).tipo).toBe('rolNoAdmitido');
   });
 
   it('un activeGymId que no corresponde a ninguna membresia se trata como sin activo', () => {
@@ -134,8 +174,8 @@ describe('sin gimnasio activo: se pregunta, no se adivina', () => {
   });
 });
 
-describe('membresiasDeSocio', () => {
-  it('devuelve solo las de rol member', () => {
+describe('gimnasiosDondePuedeEntrar', () => {
+  it('devuelve TODAS las pertenencias, no solo las de socio', () => {
     const yo = yoCon(
       [
         [UNO, 'member'],
@@ -143,7 +183,18 @@ describe('membresiasDeSocio', () => {
       ],
       null,
     );
-    expect(membresiasDeSocio(yo).map((m) => m.gymId)).toEqual([UNO]);
+    expect(gimnasiosDondePuedeEntrar(yo).map((m) => m.gymId)).toEqual([UNO, DOS]);
+  });
+
+  it('conserva el orden en el que llegan del servidor', () => {
+    const yo = yoCon(
+      [
+        [DOS, 'trainer'],
+        [UNO, 'member'],
+      ],
+      null,
+    );
+    expect(gimnasiosDondePuedeEntrar(yo).map((m) => m.gymId)).toEqual([DOS, UNO]);
   });
 });
 

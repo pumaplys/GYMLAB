@@ -9,7 +9,7 @@
  * │ `app/(tabs)/_layout.tsx` solo la consultan.                             │
  * └──────────────────────────────────────────────────────────────────────────┘
  */
-import type { EstadoDeSesion } from '../auth/estado';
+import type { Area, EstadoDeSesion } from '../auth/estado';
 
 export const RUTAS = {
   arranque: null,
@@ -18,7 +18,21 @@ export const RUTAS = {
   noAdmitido: '/no-admitido',
   problema: '/problema',
   inicio: '/inicio',
+  panel: '/panel',
+  entrenador: '/entrenador',
 } as const;
+
+/**
+ * La primera pantalla de cada area. Es a donde se llega tras entrar.
+ *
+ * `Record<Area, …>` por lo mismo que `AREA_DE_ROL`: un area nueva no compila
+ * hasta que se decide su puerta de entrada.
+ */
+export const INICIO_DE_AREA: Record<Area, string> = {
+  socio: RUTAS.inicio,
+  panel: RUTAS.panel,
+  entrenador: RUTAS.entrenador,
+};
 
 /** `null` significa "quedate donde estas": la pantalla de arranque. */
 export type Destino = (typeof RUTAS)[keyof typeof RUTAS];
@@ -109,23 +123,33 @@ export function destinoDe(estado: EstadoDeSesion): Destino {
     case 'errorAlComprobar':
       return RUTAS.problema;
     case 'autenticado':
-      return RUTAS.inicio;
+      // El area ya la decidio `resolverAcceso` a partir del rol en el gimnasio
+      // activo. Aqui solo se traduce a una ruta.
+      return INICIO_DE_AREA[estado.area] as Destino;
   }
 }
 
 /**
- * Si este estado puede estar dentro de las pestañas.
+ * Si este estado puede estar DENTRO de un area concreta.
  *
- * Se comprueba en POSITIVO y contra un solo tipo. Escrito como "todo menos
- * sinSesion", cualquier estado nuevo entraria sin que nadie lo decidiera.
- *
- * NO mira el rol ni las membresias: para llegar a `autenticado` hay que haber
- * pasado por `resolverAcceso`, que ya exige ser socio en el gimnasio activo.
- * Volver a comprobarlo aqui seria una segunda politica que puede desviarse de
- * la primera.
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ DOS CONDICIONES, Y LAS DOS EN POSITIVO.                                 │
+ * │                                                                          │
+ * │ Autenticado Y de esta area. Escrito como "todo menos sinSesion", o como  │
+ * │ "cualquier area menos la ajena", un estado o un area nuevos entrarian    │
+ * │ sin que nadie lo hubiera decidido.                                       │
+ * │                                                                          │
+ * │ El area NO se vuelve a deducir del rol aqui: se compara con la que ya    │
+ * │ calculo `resolverAcceso`. Deducirla dos veces son dos politicas, y dos   │
+ * │ politicas acaban separandose.                                            │
+ * │                                                                          │
+ * │ Y esto NO sustituye a la API: el servidor rechaza por rol cada endpoint  │
+ * │ igualmente. Lo que evita este gate es pintar pantallas que la API va a   │
+ * │ rechazar enteras — y que un enlace directo meta a alguien donde no va.   │
+ * └──────────────────────────────────────────────────────────────────────────┘
  */
-export function puedeEntrarEnTabs(estado: EstadoDeSesion): boolean {
-  return estado.tipo === 'autenticado';
+export function puedeEntrarEnArea(estado: EstadoDeSesion, area: Area): boolean {
+  return estado.tipo === 'autenticado' && estado.area === area;
 }
 
 /**

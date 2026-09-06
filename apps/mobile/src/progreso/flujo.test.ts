@@ -261,7 +261,7 @@ function sinComentarios(codigo: string): string {
 }
 
 const FUENTES = [
-  'app/(tabs)/progreso.tsx',
+  'app/(socio)/progreso.tsx',
   'src/progreso/logica.ts',
   'src/componentes/grafico-de-progreso.tsx',
   'src/componentes/selector-de-metrica.tsx',
@@ -299,7 +299,7 @@ describe('Progreso no interpreta salud', () => {
 });
 
 describe('Progreso usa la politica de sesion compartida', () => {
-  const pantalla = FUENTES.find((f) => f.relativo === 'app/(tabs)/progreso.tsx')!;
+  const pantalla = FUENTES.find((f) => f.relativo === 'app/(socio)/progreso.tsx')!;
 
   it('pregunta con `laSesionYaNoVale`, no con una comprobacion a mano', () => {
     expect(pantalla.sinComentar).toMatch(/laSesionYaNoVale\(\[problema\]\)/);

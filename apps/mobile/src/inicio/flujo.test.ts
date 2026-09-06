@@ -476,7 +476,7 @@ describe('la politica no se ejecuta de mas', () => {
  * └──────────────────────────────────────────────────────────────────────────┘
  */
 describe('la pantalla delega de verdad, no solo la replica', () => {
-  const codigo = readFileSync(join(__dirname, '..', '..', 'app', '(tabs)', 'inicio.tsx'), 'utf8');
+  const codigo = readFileSync(join(__dirname, '..', '..', 'app', '(socio)', 'inicio.tsx'), 'utf8');
 
   it('Inicio consulta la politica de sesion', () => {
     expect(codigo).toMatch(/laSesionYaNoVale\(motivosDeFallo\(resultados\)\)/);

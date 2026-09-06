@@ -1,6 +1,6 @@
 import { Redirect, Stack } from 'expo-router';
 import { useSesion } from '../../src/auth/sesion';
-import { puedeEntrarEnTabs } from '../../src/navegacion/destinos';
+import { puedeEntrarEnArea } from '../../src/navegacion/destinos';
 import { tema } from '../../src/tema';
 
 /**
@@ -23,11 +23,11 @@ import { tema } from '../../src/tema';
  * ┌──────────────────────────────────────────────────────────────────────────┐
  * │ ESTO NO ES UN SEGUNDO GATE, ES EL MISMO.                                 │
  * │                                                                          │
- * │ Palabra por palabra lo que hace `(tabs)/_layout.tsx`: se comprueba UNA    │
- * │ cosa —¿esta autenticado?— y si no, se devuelve a la puerta para que       │
- * │ decida ella. No se mira el rol, ni las membresias, ni si hay gimnasio     │
- * │ activo: eso ya lo resuelve `resolverAcceso`, y repetirlo aqui seria       │
- * │ tener dos politicas que se pueden desincronizar.                        │
+ * │ Palabra por palabra lo que hace `(socio)/_layout.tsx`: se comprueban DOS  │
+ * │ cosas —¿autenticado? ¿de esta area?— y si no, se devuelve a la puerta.   │
+ * │ El area es la que ya calculo `resolverAcceso`; no se vuelve a deducir    │
+ * │ del rol aqui, porque dos deducciones acaban separandose.                 │
+ * │                                                                          │
  * │                                                                          │
  * │ Y va en el LAYOUT, una vez, no en cada una de las tres pantallas.        │
  * └──────────────────────────────────────────────────────────────────────────┘
@@ -37,7 +37,7 @@ import { tema } from '../../src/tema';
  */
 export default function DisposicionDePerfil() {
   const { estado } = useSesion();
-  if (!puedeEntrarEnTabs(estado)) return <Redirect href="/" />;
+  if (!puedeEntrarEnArea(estado, 'socio')) return <Redirect href="/" />;
 
   return (
     <Stack
