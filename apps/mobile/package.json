@@ -10,6 +10,7 @@
     "ios": "expo start --ios",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
+    "vista-previa": "node herramientas/vista-previa.mjs",
     "clean": "rimraf .expo .turbo",
     "test": "vitest run"
   },
