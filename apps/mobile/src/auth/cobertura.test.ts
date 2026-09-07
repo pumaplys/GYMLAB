@@ -41,14 +41,28 @@ const FICHEROS = pantallas(join(RAIZ, 'app')).map((f) => ({
 }));
 
 /*
- * La UNICA excepcion, y por que.
+ * Las excepciones, y por que. Son TODAS las pantallas de antes de la sesion.
  *
- * En el login un 401 no es una sesion caducada: es que el correo o la
- * contraseña no valen, que es justo lo que hay que decir. Ahi `revisar()` no
- * tendria a donde llevar a nadie —ya se esta en la puerta— y borraria el
- * mensaje que la persona necesita leer.
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ SIN SESION, UN 401 NO ES UNA SESION CADUCADA.                           │
+ * │                                                                          │
+ * │ En el login es que el correo o la contraseña no valen. En recuperar y    │
+ * │ restablecer, que el enlace ya no sirve. En la invitacion, que el token   │
+ * │ se uso o caduco. En los cuatro casos `revisar()` no tendria a donde      │
+ * │ llevar a nadie —ya se esta en la puerta— y borraria el mensaje que la    │
+ * │ persona necesita leer.                                                   │
+ * │                                                                          │
+ * │ La lista se escribe A MANO justamente para que crezca despacio: cada     │
+ * │ pantalla que entra aqui es una decision, y una pantalla CON sesion no    │
+ * │ puede colarse sin que alguien lo note.                                   │
+ * └──────────────────────────────────────────────────────────────────────────┘
  */
-const FUERA = ['app/entrar.tsx'];
+const FUERA = [
+  'app/entrar.tsx',
+  'app/recuperar.tsx',
+  'app/restablecer.tsx',
+  'app/invitacion.tsx',
+];
 
 /** Las que capturan un fallo de una peticion. */
 const CON_PETICION = FICHEROS.filter(
@@ -83,11 +97,39 @@ describe('la politica de sesion la usan TODAS las pantallas que piden datos', ()
     }
   });
 
+  /*
+   * ┌──────────────────────────────────────────────────────────────────────┐
+   * │ IR AL LOGIN POR DECISION PROPIA vs. IR AL LOGIN PORQUE ES LA VUELTA. │
+   * │                                                                      │
+   * │ La regla existe para que ninguna pantalla CON sesion mande a nadie a  │
+   * │ la puerta por su cuenta: eso es una segunda politica de              │
+   * │ autenticacion, y dos politicas se desincronizan. Quien decide que una │
+   * │ sesion se acabo es `revisar()`.                                       │
+   * │                                                                      │
+   * │ En las pantallas de acceso, «Volver a entrar» es un enlace de         │
+   * │ navegacion — el mismo que el panel web pinta como `<Link             │
+   * │ href="/login">`— y no una decision sobre ninguna sesion, porque no    │
+   * │ hay ninguna. Se exceptuan las MISMAS cuatro de arriba, no una lista   │
+   * │ aparte: si una pantalla deja de ser publica, sale de las dos a la vez.│
+   * └──────────────────────────────────────────────────────────────────────┘
+   */
   it('ninguna decide por su cuenta ni navega a mano al login', () => {
     for (const { relativo, codigo } of FICHEROS) {
       expect(codigo, relativo).not.toMatch(/clasificarError/);
       expect(codigo, relativo).not.toMatch(/borrarToken/);
+      if (FUERA.includes(relativo)) continue;
       expect(codigo, relativo).not.toMatch(/router\.(replace|push)\(['"`]\/entrar/);
+    }
+  });
+
+  it('y las cuatro exceptuadas son exactamente las de antes de la sesion', () => {
+    // Si alguien mete aqui una pantalla con sesion, este test lo dice.
+    for (const relativo of FUERA) {
+      const fichero = FICHEROS.find((f) => f.relativo === relativo);
+      expect(fichero, `${relativo} no existe`).toBeDefined();
+      // Ninguna de ellas puede leer la sesion para decidir que enseña de la
+      // cuenta: como mucho, para saber si YA hay una.
+      expect(fichero!.codigo, relativo).not.toMatch(/laSesionYaNoVale|estado\.yo\.memberships\.map/);
     }
   });
 });

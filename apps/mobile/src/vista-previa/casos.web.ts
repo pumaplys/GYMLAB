@@ -107,6 +107,15 @@ export const CASOS: Record<string, Caso> = {
     estado: { tipo: 'sinSesion' },
     entrada: 'nunca-termina',
   },
+  // PARITY-0: las pantallas de antes de la sesion.
+  recuperar: { estado: { tipo: 'sinSesion' }, entrada: 'inerte' },
+  restablecer: { estado: { tipo: 'sinSesion' }, entrada: 'inerte' },
+  'restablecer-caducado': { estado: { tipo: 'sinSesion' }, entrada: 'inerte' },
+  'recuperar-error': { estado: { tipo: 'sinSesion' }, entrada: 'inerte' },
+  'invitacion-existente': { estado: { tipo: 'sinSesion' }, entrada: 'inerte' },
+  'invitacion-crear': { estado: { tipo: 'sinSesion' }, entrada: 'inerte' },
+  'invitacion-entrar': { estado: { tipo: 'sinSesion' }, entrada: 'falla401' },
+  'invitacion-vincular': { estado: PANEL, entrada: 'inerte' },
   arranque: { estado: { tipo: 'cargando' }, entrada: 'inerte' },
   autenticado: {
     estado: { tipo: 'autenticado', yo: SOCIA, gymId: GIMNASIO_A, area: 'socio' },
