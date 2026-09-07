@@ -87,6 +87,47 @@ export function lecturaDeCuota(cuota: DuesStatus): LecturaDeCuota {
 }
 
 /**
+ * La misma cuota, contada a QUIEN ATIENDE EL MOSTRADOR.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ EL TEXTO DE ARRIBA ESTA EN SEGUNDA PERSONA, Y NO ES UN DETALLE.         │
+ * │                                                                          │
+ * │ «Tu cuota está pagada» delante de la ficha de otra persona no es solo    │
+ * │ raro: es incorrecto. Quien lee esto en el Panel no es el socio, y lo que │
+ * │ necesita saber no es como le afecta, sino QUE HACER — cobrar, avisar, o  │
+ * │ nada.                                                                    │
+ * │                                                                          │
+ * │ El TITULO y el TONO se reutilizan tal cual: son los mismos seis estados  │
+ * │ y el mismo semaforo, y duplicarlos abriria la puerta a que un dia el     │
+ * │ socio vea «Vencida» donde recepcion ve «Al corriente». Lo unico que      │
+ * │ cambia es a quien se le habla.                                           │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * Sin `default`, igual que arriba: un estado nuevo en el contrato rompe la
+ * compilacion en vez de dejar la ficha del socio en blanco.
+ */
+export function lecturaDeCuotaParaPersonal(cuota: DuesStatus): LecturaDeCuota {
+  const { titulo, tono } = lecturaDeCuota(cuota);
+  const explicacion = ((): string => {
+    switch (cuota.estado) {
+      case 'AL_CORRIENTE':
+        return 'La cuota está pagada. Puede entrenar.';
+      case 'POR_VENCER':
+        return 'Puede entrenar, pero la cuota vence pronto. Buen momento para avisarle.';
+      case 'EN_GRACIA':
+        return 'La cuota ha vencido y está usando los días de margen del gimnasio.';
+      case 'VENCIDA':
+        return 'La cuota ha vencido y la puerta no le va a dejar pasar. Cóbrala.';
+      case 'PAUSADA':
+        return 'La cuota está congelada, así que la puerta no le dejará pasar.';
+      case 'SIN_SUSCRIPCION':
+        return 'No tiene ninguna cuota dada de alta en este gimnasio.';
+    }
+  })();
+  return { titulo, explicacion, tono };
+}
+
+/**
  * Si hay que avisar de que la puerta puede no dejar pasar.
  *
  * ┌──────────────────────────────────────────────────────────────────────────┐

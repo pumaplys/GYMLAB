@@ -11,21 +11,19 @@ import { tema } from '../../src/tema';
  * La casa del personal del gimnasio.
  *
  * ┌──────────────────────────────────────────────────────────────────────────┐
- * │ UNA SOLA ACCION, Y ES LA QUE SE HACE DE PIE EN LA PUERTA.               │
+ * │ DOS ACCIONES, Y LAS DOS SE HACEN DE PIE.                                │
  * │                                                                          │
- * │ No hay buscador de socios, ni cobros, ni historial, ni cuadro de mando.  │
- * │ Esas cosas se hacen sentado, y para eso ya esta el panel web — que las   │
- * │ tiene, funcionando, desde hace tiempo. Lo que el web NO puede hacer es   │
- * │ leer un QR con la camara del bolsillo, y eso es exactamente lo unico     │
- * │ que aporta esta pantalla.                                                │
+ * │ Escanear un carne en la puerta y responder «¿quién es esta persona y     │
+ * │ está al corriente?» con alguien delante. Nada mas.                       │
  * │                                                                          │
- * │ Un menu con seis destinos de los que cinco no existen no seria un        │
- * │ adelanto: seria una promesa. Cuando haya una segunda cosa que hacer de   │
- * │ pie, se añade aqui.                                                      │
+ * │ No hay altas, ni cobros, ni planes, ni ajustes, ni cuadro de mando. Todo │
+ * │ eso se hace sentado y ya tiene sitio: el panel web, que lo tiene         │
+ * │ funcionando desde hace tiempo. Un menu con ocho destinos de los que seis │
+ * │ llevan al mismo sitio que el navegador no seria un adelanto.             │
+ * │                                                                          │
+ * │ Lo que el web NO puede hacer es leer un QR con la camara del bolsillo ni │
+ * │ acompañar a alguien por la sala. Eso es lo que hay aqui.                 │
  * └──────────────────────────────────────────────────────────────────────────┘
- *
- * «Cerrar sesión» sigue estando por lo mismo que en el marcador que sustituye:
- * sin pestañas debajo, quien entre con la cuenta equivocada necesita una salida.
  */
 export default function Panel() {
   const { estado, salir } = useSesion();
@@ -44,6 +42,12 @@ export default function Panel() {
           principal
           alPulsar={() => router.push(RUTAS_INTERNAS.escaner)}
           accessibilityHint="Abre la cámara para leer el código del carné"
+        />
+        <FilaDeAccion
+          titulo="Buscar socio"
+          detalle="Por nombre, correo o número de socio."
+          icono="buscar"
+          alPulsar={() => router.push(RUTAS_INTERNAS.buscar)}
         />
       </View>
 

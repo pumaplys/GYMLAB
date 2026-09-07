@@ -353,19 +353,43 @@ describe('volver desde una subruta', () => {
     }
   });
 
+  /*
+   * ┌──────────────────────────────────────────────────────────────────────┐
+   * │ LA DECISION SE MUDO EN STAFF-FINAL, Y ESTE TEST LO DETECTO.          │
+   * │                                                                      │
+   * │ `CabeceraDeSubpantalla` era la unica pila secundaria de la app y      │
+   * │ tenia la decision dentro. Al aparecer las fichas del Panel y del      │
+   * │ entrenador, paso a ser `CabeceraDeVuelta` con `/perfil` fijo.         │
+   * │                                                                      │
+   * │ Lo que se comprueba NO cambia: que la vuelta salga de la decision     │
+   * │ pura y que sin historial se REEMPLACE en vez de apilar. Lo unico que  │
+   * │ cambia es en que fichero vive.                                        │
+   * └──────────────────────────────────────────────────────────────────────┘
+   */
   it('la cabecera usa la decision pura y `replace` para el caso sin historial', () => {
-    const codigo = readFileSync(
-      join(RAIZ, 'src', 'componentes', 'cabecera-de-subpantalla.tsx'),
+    const generica = readFileSync(
+      join(RAIZ, 'src', 'componentes', 'cabecera-de-vuelta.tsx'),
       'utf8',
     );
-    expect(codigo).toMatch(/destinoAlVolver\(router\.canGoBack\(\)\)/);
-    expect(codigo).toMatch(/router\.replace\('\/perfil'\)/);
+    expect(generica).toMatch(/destinoAlVolverA\(router\.canGoBack\(\), volverA\)/);
+    expect(generica).toMatch(/router\.replace\(/);
     /*
      * `push` apilaria otra pantalla en vez de deshacer. Se mira el codigo SIN
      * comentarios: uno de ellos explica precisamente por que no se usa `push`,
      * y esa explicacion es justo lo que se quiere conservar.
      */
-    expect(sinComentarios(codigo)).not.toMatch(/router\.push\('\/perfil'\)/);
+    expect(sinComentarios(generica)).not.toMatch(/router\.push\(/);
+  });
+
+  it('y la de Perfil sigue siendo la generica con Perfil, no una copia', () => {
+    const deperfil = readFileSync(
+      join(RAIZ, 'src', 'componentes', 'cabecera-de-subpantalla.tsx'),
+      'utf8',
+    );
+    expect(deperfil).toMatch(/CabeceraDeVuelta/);
+    expect(deperfil).toMatch(/volverA="\/perfil"/);
+    // Si alguien vuelve a copiar los estilos aqui, esto lo dice.
+    expect(sinComentarios(deperfil)).not.toMatch(/StyleSheet\.create/);
   });
 });
 
