@@ -179,6 +179,11 @@ describe('las tres areas estan gateadas en su layout', () => {
       'elegir-gimnasio.tsx',
       'no-admitido.tsx',
       'problema.tsx',
+      // PARITY-0: volver a entrar y aceptar una invitacion ocurren ANTES de
+      // tener sesion, asi que no pueden vivir dentro de un area.
+      'recuperar.tsx',
+      'restablecer.tsx',
+      'invitacion.tsx',
       '+not-found.tsx',
     ];
     /** Carpetas cuyo `_layout.tsx` ya se ha comprobado arriba. */

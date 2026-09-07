@@ -10,7 +10,7 @@ import {
   View,
 } from 'react-native';
 import type { TextInput } from 'react-native';
-import { Redirect } from 'expo-router';
+import { Redirect, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Aviso } from '../src/componentes/aviso';
 import { Boton } from '../src/componentes/boton';
@@ -18,7 +18,6 @@ import { Campo } from '../src/componentes/campo';
 import { Marca } from '../src/componentes/marca';
 import { useSesion } from '../src/auth/sesion';
 import { mensajeDeEntrada } from '../src/auth/mensajes';
-import { API_URL } from '../src/api/config';
 import { CarrilDeAcento } from '../src/componentes/carril';
 import { tema } from '../src/tema';
 
@@ -154,17 +153,24 @@ export default function Entrar() {
 
               {/*
                 Enlaza al flujo de recuperacion que YA existe en el panel web:
-                `/forgot-password`. No se reimplementa en la app porque no hay
-                pantalla movil para restablecer —el enlace del correo lleva a
-                la web— y montar media mitad del flujo aqui seria dejar a
-                alguien a medio camino.
+                `/forgot-password`, y por eso hasta PARITY-0 este enlace abria
+                el navegador: no habia pantalla movil que continuara el flujo.
+
+                Ahora si la hay. La recuperacion entera —pedir el enlace y
+                elegir contrasena nueva— vive en la app, asi que se navega
+                dentro en vez de echar a nadie fuera.
+
+                Lo que TODAVIA sale por el navegador es el enlace del correo:
+                el servidor lo construye contra `WEB_APP_URL` y abrirlo en la
+                app necesita enlaces universales, que son configuracion de
+                dominio y de Apple. Queda reportado.
               */}
               <Pressable
-                onPress={() => void abrirRecuperacion()}
+                onPress={() => router.push('/recuperar')}
                 style={estilos.enlace}
-                accessibilityRole="link"
+                accessibilityRole="button"
                 accessibilityLabel="He olvidado mi contraseña"
-                accessibilityHint="Abre la recuperación de contraseña en el navegador"
+                accessibilityHint="Abre la pantalla para recuperar el acceso"
               >
                 <Text style={estilos.textoEnlace}>He olvidado mi contraseña</Text>
               </Pressable>
@@ -186,21 +192,6 @@ export default function Entrar() {
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
-}
-
-/**
- * Abre la recuperacion de contrasena en el navegador del telefono.
- *
- * La URL se deriva de la de la API quitando el `/v1`: el panel y la API se
- * sirven bajo el mismo origen en produccion, que es el supuesto sobre el que
- * se apoya todo el modelo de sesion. En desarrollo apuntan al mismo host.
- */
-async function abrirRecuperacion() {
-  const { openBrowserAsync } = await import('expo-linking').then((m) => ({
-    openBrowserAsync: m.openURL,
-  }));
-  const base = API_URL.replace(/\/v1\/?$/, '');
-  await openBrowserAsync(`${base}/forgot-password`).catch(() => undefined);
 }
 
 const estilos = StyleSheet.create({

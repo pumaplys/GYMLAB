@@ -53,6 +53,16 @@ const PUBLICAS = [
   'no-admitido.tsx',
   'problema.tsx',
   '+not-found.tsx',
+  /*
+   * PARITY-0. Volver a entrar y aceptar una invitacion ocurren ANTES de tener
+   * sesion, asi que no pueden vivir dentro de un area: pedirles rol seria
+   * pedirselo a quien todavia no lo tiene. `invitacion.tsx` SI mira si hay
+   * sesion, pero para elegir camino —crear, entrar o vincular—, no para
+   * decidir quien pasa.
+   */
+  'recuperar.tsx',
+  'restablecer.tsx',
+  'invitacion.tsx',
 ];
 
 function sesionDe(rol: Role) {
