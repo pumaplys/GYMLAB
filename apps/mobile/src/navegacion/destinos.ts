@@ -32,6 +32,11 @@ export const RUTAS = {
  */
 export const RUTAS_INTERNAS = {
   escaner: '/escaner',
+  buscar: '/buscar',
+  /** La ficha de un socio, vista por el personal. Lleva su id. */
+  socioDelPanel: (id: string) => `/socio/${id}`,
+  /** La ficha de un socio, vista por su entrenador. Otra ruta y otra area. */
+  socioDelEntrenador: (id: string) => `/asignado/${id}`,
 } as const;
 
 /**
@@ -69,7 +74,10 @@ export type NombreDeIcono =
   | 'accesos'
   | 'privacidad'
   | 'salir'
-  | 'volver';
+  | 'volver'
+  /* Los dos de STAFF-FINAL: buscar un socio, y los socios de un entrenador. */
+  | 'buscar'
+  | 'socios';
 
 /**
  * A donde lleva el "Volver" de una seccion de Perfil.
@@ -89,6 +97,18 @@ export type NombreDeIcono =
  */
 export function destinoAlVolver(hayHistorial: boolean): 'atras' | '/perfil' {
   return hayHistorial ? 'atras' : '/perfil';
+}
+
+/**
+ * Lo mismo, para cualquier pantalla contenedora.
+ *
+ * La regla es la de arriba y no cambia —con historial se deshace, sin el se
+ * reemplaza— pero el sitio al que se cae ya no es siempre Perfil: el Panel y el
+ * area del entrenador tienen el suyo. Se generaliza en vez de escribir la misma
+ * decision una tercera vez.
+ */
+export function destinoAlVolverA(hayHistorial: boolean, contenedor: string): 'atras' | string {
+  return hayHistorial ? 'atras' : contenedor;
 }
 
 /**

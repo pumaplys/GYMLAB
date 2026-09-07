@@ -1,78 +1,40 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { router } from 'expo-router';
-import { Icono } from './icono';
-import { destinoAlVolver } from '../navegacion/destinos';
-import { CarrilDeAcento } from './carril';
-import { tema } from '../tema';
+import { CabeceraDeVuelta } from './cabecera-de-vuelta';
 
 /**
  * El encabezado de una pantalla apilada sobre Perfil.
  *
  * ┌──────────────────────────────────────────────────────────────────────────┐
- * │ CABECERA PROPIA, NO LA DE REACT NAVIGATION.                             │
+ * │ ES `CabeceraDeVuelta` CON PERFIL FIJO. NADA MAS.                        │
  * │                                                                          │
- * │ La de la libreria trae su fondo, su tipografia, su altura y su flecha,   │
- * │ y ninguna de las cuatro es la del tema: al lado de `Pantalla` se ve que  │
- * │ son de dos aplicaciones distintas. Es la misma decision que se tomo en   │
- * │ M3 con `headerShown: false` para las pestañas.                          │
+ * │ Nacio con sus propios estilos cuando Perfil era la unica pila            │
+ * │ secundaria de la app. En STAFF-FINAL aparecieron dos mas —la ficha del   │
+ * │ socio en el Panel y la del asignado en el area del entrenador— que       │
+ * │ necesitan exactamente lo mismo con otro destino.                         │
  * │                                                                          │
- * │ Asi que aqui va el titulo con el mismo carril de acento que el resto, y  │
- * │ el volver como una fila mas del tema.                                    │
+ * │ Se generaliza en vez de copiar los estilos una tercera vez: dos copias   │
+ * │ de la misma cabecera acaban separandose, y entonces la app tiene dos     │
+ * │ cabeceras que casi se parecen.                                           │
+ * │                                                                          │
+ * │ Lo que se pinta NO cambia: mismo boton, mismo carril, mismos tamaños.    │
  * └──────────────────────────────────────────────────────────────────────────┘
  *
- * ┌──────────────────────────────────────────────────────────────────────────┐
- * │ `router.back()` Y NO `router.push('/perfil')`.                          │
- * │                                                                          │
- * │ Volver es deshacer, no navegar: con `push` cada vuelta apilaria otra     │
- * │ pantalla y el gesto de atras del sistema —que sigue existiendo— acabaria │
- * │ recorriendo un historial que no se parece a lo que hizo la persona.      │
- * │                                                                          │
- * │ Si no hay a donde volver —alguien abre /perfil/pagos con un enlace       │
- * │ directo— se va a Perfil, que es su sitio.                                │
- * └──────────────────────────────────────────────────────────────────────────┘
+ * Se conserva el nombre porque es el que usan las tres secciones de Perfil y
+ * porque dice a que sirve: renombrarlas seria ruido en el historial sin
+ * ninguna ganancia.
  */
-export function CabeceraDeSubpantalla({ titulo, descriptor }: { titulo: string; descriptor?: string }) {
-  // La decision vive en `navegacion/destinos.ts`, sin React, para poder
-  // probarla. Aqui solo queda ejecutarla.
-  const volver = () => {
-    if (destinoAlVolver(router.canGoBack()) === 'atras') router.back();
-    else router.replace('/perfil');
-  };
-
+export function CabeceraDeSubpantalla({
+  titulo,
+  descriptor,
+}: {
+  titulo: string;
+  descriptor?: string;
+}) {
   return (
-    <View style={estilos.bloque}>
-      <Pressable
-        onPress={volver}
-        accessibilityRole="button"
-        accessibilityLabel="Volver a Perfil"
-        style={({ pressed }) => [estilos.volver, pressed && estilos.pulsado]}
-      >
-        <Icono nombre="volver" color={tema.color.textoSecundario} tamano={20} />
-        <Text style={estilos.textoVolver}>Perfil</Text>
-      </Pressable>
-
-      <Text style={estilos.titulo} accessibilityRole="header">
-        {titulo}
-      </Text>
-      <CarrilDeAcento />
-      {descriptor ? <Text style={estilos.descriptor}>{descriptor}</Text> : null}
-    </View>
+    <CabeceraDeVuelta
+      titulo={titulo}
+      descriptor={descriptor}
+      volverA="/perfil"
+      etiquetaDeVuelta="Perfil"
+    />
   );
 }
-
-const estilos = StyleSheet.create({
-  bloque: { gap: tema.espacio.md },
-  volver: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    gap: tema.espacio.xs,
-    // El area util llega a 44 aunque la flecha mida 20.
-    minHeight: tema.controlAltoMinimo,
-    paddingRight: tema.espacio.md,
-  },
-  pulsado: { opacity: 0.6 },
-  textoVolver: { ...tema.texto.cuerpo, color: tema.color.textoSecundario },
-  titulo: { ...tema.texto.h1, color: tema.color.texto },
-  descriptor: { ...tema.texto.cuerpo, color: tema.color.textoSecundario, lineHeight: 22 },
-});

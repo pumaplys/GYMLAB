@@ -92,6 +92,14 @@ const PANEL: Caso['estado'] = {
   area: 'panel',
 };
 
+/** Y la del area del entrenador. */
+const ENTRENADOR: Caso['estado'] = {
+  tipo: 'autenticado',
+  yo: ENTRENADORA,
+  gymId: GIMNASIO_A,
+  area: 'entrenador',
+};
+
 export const CASOS: Record<string, Caso> = {
   login: { estado: { tipo: 'sinSesion' }, entrada: 'inerte' },
   'login-error': { estado: { tipo: 'sinSesion' }, entrada: 'falla401' },
@@ -132,6 +140,28 @@ export const CASOS: Record<string, Caso> = {
   'escaner-deny-sin-socio': { estado: PANEL, entrada: 'inerte' },
   'escaner-reintento': { estado: PANEL, entrada: 'inerte' },
   'escaner-fallo': { estado: PANEL, entrada: 'inerte' },
+  /*
+   * STAFF-FINAL. El Panel busca y consulta; el entrenador mira a los suyos.
+   * La sesion la fija el AREA —panel o entrenador— y lo que cambia con cada
+   * `?vista=` es lo que devuelven `panel/fuente.web.ts` y
+   * `entrenador/fuente.web.ts`.
+   */
+  'panel-buscar': { estado: PANEL, entrada: 'inerte' },
+  'panel-buscar-vacio': { estado: PANEL, entrada: 'inerte' },
+  'panel-buscar-cargando': { estado: PANEL, entrada: 'inerte' },
+  'panel-buscar-error': { estado: PANEL, entrada: 'inerte' },
+  'panel-socio': { estado: PANEL, entrada: 'inerte' },
+  'panel-socio-por-vencer': { estado: PANEL, entrada: 'inerte' },
+  'panel-socio-vencida': { estado: PANEL, entrada: 'inerte' },
+  'panel-socio-sin-cuota': { estado: PANEL, entrada: 'inerte' },
+  'panel-socio-error': { estado: PANEL, entrada: 'inerte' },
+  'trainer-lista': { estado: ENTRENADOR, entrada: 'inerte' },
+  'trainer-vacio': { estado: ENTRENADOR, entrada: 'inerte' },
+  'trainer-cargando': { estado: ENTRENADOR, entrada: 'inerte' },
+  'trainer-error': { estado: ENTRENADOR, entrada: 'inerte' },
+  'trainer-socio': { estado: ENTRENADOR, entrada: 'inerte' },
+  'trainer-socio-sin-datos': { estado: ENTRENADOR, entrada: 'inerte' },
+  'trainer-socio-error': { estado: ENTRENADOR, entrada: 'inerte' },
   /*
    * El selector con DOS AREAS distintas. Es el caso que justifica que la
    * eleccion de gimnasio sea previa al rol: aqui se elige entre ser socia y

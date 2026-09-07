@@ -188,4 +188,32 @@ const DIBUJOS: Record<NombreDeIcono, ReactNode> = {
       <Path d="M6.5 12H15" />
     </>
   ),
+
+  /*
+   * Una lupa: buscar a un socio.
+   *
+   * No una silueta de persona con lupa. Dos simbolos apilados en 24 px se
+   * convierten en una mancha, y la lupa sola ya se entiende: al lado va la
+   * palabra «Buscar socio», que es la que informa.
+   */
+  buscar: (
+    <>
+      <Circle cx={10.5} cy={10.5} r={6} />
+      <Path d="m15 15 4.5 4.5" />
+    </>
+  ),
+
+  /*
+   * Dos personas: los socios que tiene asignados un entrenador.
+   *
+   * La de delante completa y la de detras insinuada, que es como se lee «un
+   * grupo» sin dibujar tres cabezas en una rejilla de 24.
+   */
+  socios: (
+    <>
+      <Circle cx={9.5} cy={8} r={3.5} />
+      <Path d="M3.5 19.5c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5" />
+      <Path d="M16 5.2a3.5 3.5 0 0 1 0 5.6M17.5 14.6c1.9.7 3 2.6 3 4.9" />
+    </>
+  ),
 };
