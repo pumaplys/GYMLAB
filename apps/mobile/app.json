@@ -11,6 +11,7 @@
       "supportsTablet": false,
       "bundleIdentifier": "tech.gymlabfit.rinda",
       "buildNumber": "2",
+      "associatedDomains": ["applinks:gymlabfit.tech"],
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -21,7 +22,18 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0D0F12"
-      }
+      },
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "category": ["BROWSABLE", "DEFAULT"],
+          "data": [
+            { "scheme": "https", "host": "gymlabfit.tech", "path": "/reset-password" },
+            { "scheme": "https", "host": "gymlabfit.tech", "path": "/accept-invitation" }
+          ]
+        }
+      ]
     },
     "plugins": [
       "expo-router",

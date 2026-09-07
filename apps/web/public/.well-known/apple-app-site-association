@@ -1,0 +1,19 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["956JGXGTKZ.tech.gymlabfit.rinda"],
+        "components": [
+          {
+            "/": "/reset-password",
+            "comment": "Poner una contrasena nueva. El enlace lo envia la API en un correo."
+          },
+          {
+            "/": "/accept-invitation",
+            "comment": "Aceptar una invitacion, o vincularla a una cuenta que ya existe."
+          }
+        ]
+      }
+    ]
+  }
+}
