@@ -23,6 +23,18 @@ export const RUTAS = {
 } as const;
 
 /**
+ * Las rutas que viven DENTRO de un area y no son su puerta de entrada.
+ *
+ * Se escriben aqui, junto a las demas, para que exista un solo sitio donde
+ * mirar que rutas hay. El escaner vive DENTRO del grupo `(panel)`, asi que su
+ * gate es el layout del grupo y no hace falta ninguno propio: si lo tuviera,
+ * serian dos politicas para la misma puerta.
+ */
+export const RUTAS_INTERNAS = {
+  escaner: '/escaner',
+} as const;
+
+/**
  * La primera pantalla de cada area. Es a donde se llega tras entrar.
  *
  * `Record<Area, …>` por lo mismo que `AREA_DE_ROL`: un area nueva no compila
@@ -77,6 +89,18 @@ export type NombreDeIcono =
  */
 export function destinoAlVolver(hayHistorial: boolean): 'atras' | '/perfil' {
   return hayHistorial ? 'atras' : '/perfil';
+}
+
+/**
+ * A donde lleva el "Volver" del escaner.
+ *
+ * El mismo razonamiento que el de arriba, con otra casa: desde el Panel hay
+ * pila y volver es deshacer; por un enlace directo a `rinda://escaner` no hay
+ * nada detras, y `back` sacaria de la app a alguien que solo queria cerrar la
+ * camara. Ahi se REEMPLAZA por el Panel, que es de donde cuelga el escaner.
+ */
+export function destinoAlSalirDelEscaner(hayHistorial: boolean): 'atras' | '/panel' {
+  return hayHistorial ? 'atras' : '/panel';
 }
 
 export interface DestinoDeTab {

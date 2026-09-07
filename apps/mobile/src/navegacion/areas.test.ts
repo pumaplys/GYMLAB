@@ -5,7 +5,7 @@ import type { Me, Role } from '@gymlab/contracts';
 import { ROLES } from '@gymlab/contracts';
 import type { Area, EstadoDeSesion } from '../auth/estado';
 import { AREA_DE_ROL, resolverAcceso } from '../auth/estado';
-import { INICIO_DE_AREA, destinoDe, puedeEntrarEnArea } from './destinos';
+import { INICIO_DE_AREA, RUTAS_INTERNAS, destinoDe, puedeEntrarEnArea } from './destinos';
 
 /**
  * El reparto por areas, y sobre todo: que nadie entre en la ajena.
@@ -152,5 +152,60 @@ describe('las tres areas estan gateadas en su layout', () => {
   it('las subrutas de Perfil siguen gateadas, y como area de socio', () => {
     const codigo = sinComentarios(readFileSync(join(APP, 'perfil', '_layout.tsx'), 'utf8'));
     expect(codigo).toContain("puedeEntrarEnArea(estado, 'socio')");
+  });
+
+  /*
+   * ┌──────────────────────────────────────────────────────────────────────┐
+   * │ NINGUNA PANTALLA NUEVA PUEDE QUEDARSE SIN GATE POR DESCUIDO.         │
+   * │                                                                      │
+   * │ La lista NO se escribe a mano: se recorre `app/`. Una pantalla que    │
+   * │ alguien añada mañana fuera de un grupo gateado —y `/escaner` fue      │
+   * │ justo esa tentacion— hace fallar este test hasta que se decida a      │
+   * │ que area pertenece.                                                   │
+   * │                                                                      │
+   * │ Lo contrario es lo que le paso a `app/perfil/`: existio sin layout y  │
+   * │ un enlace directo montaba la pantalla sin pasar por ningun control.   │
+   * └──────────────────────────────────────────────────────────────────────┘
+   */
+  it('toda pantalla vive dentro de una carpeta con gate, o es publica a proposito', () => {
+    /*
+     * Las que NO necesitan sesion: la puerta y lo que se enseña justo antes
+     * de tenerla. `index.tsx` es el repartidor y `_layout.tsx` la raiz.
+     */
+    const PUBLICAS = [
+      'index.tsx',
+      '_layout.tsx',
+      'entrar.tsx',
+      'elegir-gimnasio.tsx',
+      'no-admitido.tsx',
+      'problema.tsx',
+      '+not-found.tsx',
+    ];
+    /** Carpetas cuyo `_layout.tsx` ya se ha comprobado arriba. */
+    const GATEADAS = [...Object.values(GRUPOS), 'perfil'];
+
+    const sueltas = readdirSync(APP, { withFileTypes: true })
+      .filter((e) => e.isFile() && e.name.endsWith('.tsx') && !PUBLICAS.includes(e.name))
+      .map((e) => e.name);
+    expect(sueltas, 'pantallas en la raiz de app/ sin gate').toEqual([]);
+
+    const carpetas = readdirSync(APP, { withFileTypes: true })
+      .filter((e) => e.isDirectory())
+      .map((e) => e.name);
+    expect(carpetas.filter((c) => !GATEADAS.includes(c)), 'carpetas sin gate').toEqual([]);
+  });
+
+  /*
+   * El escaner es la primera pantalla del Panel que no es su puerta. Se
+   * comprueba que esta DENTRO del grupo: ahi hereda el gate y no necesita —ni
+   * debe tener— uno propio, que serian dos politicas para la misma puerta.
+   */
+  it('el escaner vive dentro de `(panel)` y no se gatea por su cuenta', () => {
+    // La ruta que usa el Panel apunta al fichero que existe. Si alguien
+    // renombra la pantalla, la constante deja de cuadrar y salta aqui.
+    expect(RUTAS_INTERNAS.escaner).toBe('/escaner');
+    expect(readdirSync(join(APP, GRUPOS.panel))).toContain('escaner.tsx');
+    const codigo = sinComentarios(readFileSync(join(APP, GRUPOS.panel, 'escaner.tsx'), 'utf8'));
+    expect(codigo).not.toMatch(/puedeEntrarEnArea|AREA_DE_ROL|\.role\b/);
   });
 });

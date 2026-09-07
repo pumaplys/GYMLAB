@@ -47,6 +47,12 @@ const ENTRENADORA: Me = {
  * —recepcion y entrenadora— porque lo que se revisa aqui es a donde va cada
  * rol, no un nombre de pantalla.
  */
+const DUENA: Me = {
+  user: persona('Dueña de Muestra', 'personal.muestra@ejemplo.local'),
+  activeGymId: GIMNASIO_A,
+  memberships: [{ gymId: GIMNASIO_A, gymName: 'Gimnasio de Muestra', role: 'owner' }],
+} as Me;
+
 const RECEPCION: Me = {
   user: persona('Recepcion de Muestra', 'personal.muestra@ejemplo.local'),
   activeGymId: GIMNASIO_A,
@@ -78,6 +84,14 @@ const SOCIA_EN_VARIOS: Me = {
   ],
 } as Me;
 
+/** La sesion con la que se miran las pantallas del Panel: dueña, area panel. */
+const PANEL: Caso['estado'] = {
+  tipo: 'autenticado',
+  yo: DUENA,
+  gymId: GIMNASIO_A,
+  area: 'panel',
+};
+
 export const CASOS: Record<string, Caso> = {
   login: { estado: { tipo: 'sinSesion' }, entrada: 'inerte' },
   'login-error': { estado: { tipo: 'sinSesion' }, entrada: 'falla401' },
@@ -99,6 +113,25 @@ export const CASOS: Record<string, Caso> = {
     estado: { tipo: 'autenticado', yo: ENTRENADORA, gymId: GIMNASIO_A, area: 'entrenador' },
     entrada: 'inerte',
   },
+  /*
+   * STAFF-2: el Panel y su escaner. La sesion es la misma —dueña, area panel—
+   * y lo que cambia es lo que devuelven `escaner/camara.web.tsx` y
+   * `escaner/fuente.web.ts` para ese mismo `?vista=`.
+   */
+  'panel-owner': {
+    estado: { tipo: 'autenticado', yo: DUENA, gymId: GIMNASIO_A, area: 'panel' },
+    entrada: 'inerte',
+  },
+  'escaner-activo': { estado: PANEL, entrada: 'inerte' },
+  'escaner-consultando': { estado: PANEL, entrada: 'inerte' },
+  'escaner-permiso': { estado: PANEL, entrada: 'inerte' },
+  'escaner-bloqueado': { estado: PANEL, entrada: 'inerte' },
+  'escaner-allow': { estado: PANEL, entrada: 'inerte' },
+  'escaner-warn': { estado: PANEL, entrada: 'inerte' },
+  'escaner-deny': { estado: PANEL, entrada: 'inerte' },
+  'escaner-deny-sin-socio': { estado: PANEL, entrada: 'inerte' },
+  'escaner-reintento': { estado: PANEL, entrada: 'inerte' },
+  'escaner-fallo': { estado: PANEL, entrada: 'inerte' },
   /*
    * El selector con DOS AREAS distintas. Es el caso que justifica que la
    * eleccion de gimnasio sea previa al rol: aqui se elige entre ser socia y

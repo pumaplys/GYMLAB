@@ -271,16 +271,17 @@ describe('la app no pide permisos que no usa', () => {
     expect(entrada[1].faceIDPermission).toBe(false);
   });
 
-  it('no hay camara, ni fotos, ni ubicacion, ni micro, ni contactos, ni seguimiento', () => {
+  it('no hay fotos, ni ubicacion, ni micro, ni contactos, ni seguimiento', () => {
     /*
-     * El QR se ENSEÑA, no se escanea: la app no abre la camara en ningun
-     * sitio. Si alguien añade una libreria que la pida, este test lo dice
-     * antes de que el permiso aparezca en la ficha de la App Store.
+     * La camara SI, desde STAFF-2: el personal del gimnasio lee el QR del
+     * socio en la puerta. Todo lo demas sigue prohibido, y si alguien añade
+     * una libreria que lo pida, este test lo dice antes de que el permiso
+     * aparezca en la ficha de la App Store.
      */
     const texto = JSON.stringify(base);
     for (const permiso of [
-      'NSCameraUsageDescription',
       'NSPhotoLibraryUsageDescription',
+      'NSPhotoLibraryAddUsageDescription',
       'NSLocationWhenInUseUsageDescription',
       'NSLocationAlwaysAndWhenInUseUsageDescription',
       'NSMicrophoneUsageDescription',
@@ -290,6 +291,43 @@ describe('la app no pide permisos que no usa', () => {
     ]) {
       expect(texto, permiso).not.toContain(permiso);
     }
+  });
+
+  /*
+   * ┌──────────────────────────────────────────────────────────────────────┐
+   * │ INSTALAR `expo-camera` YA PIDE EL MICROFONO. HAY QUE APAGARLO.       │
+   * │                                                                      │
+   * │ Expo autoenlaza el plugin del paquete en cuanto esta instalado,       │
+   * │ aunque no se escriba en `plugins`. Sus valores por defecto son        │
+   * │ `recordAudioAndroid: true` y una descripcion de microfono en ingles.  │
+   * │ MEDIDO con `expo config --type introspect` antes y despues:           │
+   * │                                                                      │
+   * │   autoenlazado : NSCameraUsageDescription "Allow $(PRODUCT_NAME)…"    │
+   * │                  NSMicrophoneUsageDescription "…your microphone"      │
+   * │                  android.permission.CAMERA + RECORD_AUDIO             │
+   * │   configurado  : NSCameraUsageDescription en castellano               │
+   * │                  sin microfono, sin RECORD_AUDIO                      │
+   * │                                                                      │
+   * │ La app no graba audio en ningun sitio. Un permiso de microfono en la  │
+   * │ ficha de una app de gimnasio es exactamente lo que hace que alguien   │
+   * │ no la instale — y ademas da trabajo extra en la revision de Apple.    │
+   * └──────────────────────────────────────────────────────────────────────┘
+   */
+  it('la camara se declara con su motivo, en castellano, y sin microfono', () => {
+    const entrada = base.plugins.find(
+      (p: unknown) => Array.isArray(p) && p[0] === 'expo-camera',
+    );
+    expect(entrada, 'expo-camera deberia llevar opciones explicitas').toBeDefined();
+    const opciones = entrada[1];
+
+    expect(opciones.cameraPermission).toMatch(/cámara/);
+    expect(opciones.cameraPermission).toMatch(/carn/i);
+    // Nada de la descripcion por defecto del paquete, que va en ingles.
+    expect(opciones.cameraPermission).not.toMatch(/PRODUCT_NAME|Allow/);
+
+    // Las dos que apagan el audio. `false` explicito: `undefined` NO vale.
+    expect(opciones.microphonePermission).toBe(false);
+    expect(opciones.recordAudioAndroid).toBe(false);
   });
 });
 
@@ -350,10 +388,27 @@ describe('la identidad nativa es RINDA', () => {
     expect(base.scheme).toMatch(/^[a-z][a-z0-9.+-]*$/);
   });
 
-  it('la version y los numeros de build son los de una primera interna', () => {
+  /*
+   * ┌──────────────────────────────────────────────────────────────────────┐
+   * │ EL BUILD SUBE; LA VERSION COMERCIAL, NO.                             │
+   * │                                                                      │
+   * │ Son dos numeros con dos trabajos distintos. `version` es lo que ve    │
+   * │ una persona y solo cambia cuando cambia el producto. `buildNumber` es │
+   * │ lo que distingue DOS BINARIOS de esa misma version, y Apple no        │
+   * │ acepta dos subidas con el mismo.                                      │
+   * │                                                                      │
+   * │   (1)  la primera build interna: sin camara                          │
+   * │   (2)  NATIVE-3: incorpora expo-camera, que es codigo nativo y por    │
+   * │        tanto NO llega recargando Metro — hace falta otro binario      │
+   * │                                                                      │
+   * │ Android se queda en 1 a proposito: este build es de iOS y su          │
+   * │ `versionCode` no se ha consumido todavia.                            │
+   * └──────────────────────────────────────────────────────────────────────┘
+   */
+  it('la version comercial no se mueve y el build number si', () => {
     expect(base.version).toBe('0.1.0');
     // iOS quiere una CADENA; Android, un entero.
-    expect(base.ios.buildNumber).toBe('1');
+    expect(base.ios.buildNumber).toBe('2');
     expect(base.android.versionCode).toBe(1);
   });
 });
