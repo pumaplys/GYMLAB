@@ -179,6 +179,19 @@ export async function cargarRutina(gymId: string, id: string): Promise<Routine> 
   const caso = casoActual();
   if (!esMio(caso)) return cargarRutinaReal(gymId, id);
   if (caso === 'entrenamiento-rutina-archivada') return rutina({ id, status: 'archived' });
+  /*
+   * Una rutina rota por un borrado ajeno: alguien quito «Remo con barra» de la
+   * biblioteca y la fila conserva su nombre, sus series y sus notas pero ya no
+   * apunta a nada. Es el caso que hace falta para poder MIRAR «Elegir
+   * sustituto», y no se puede provocar sin borrar un ejercicio de verdad.
+   */
+  if (caso === 'entrenamiento-rutina-huerfana') {
+    const base = rutina({ id });
+    return {
+      ...base,
+      items: base.items.map((i, n) => (n === 1 ? { ...i, exerciseId: null } : i)),
+    };
+  }
   return RUTINAS.find((r) => r.id === id) ?? rutina({ id });
 }
 

@@ -7,7 +7,7 @@ import { Boton } from '../componentes/boton';
 import { Campo } from '../componentes/campo';
 import { Icono } from '../componentes/icono';
 import { Tarjeta } from '../componentes/tarjeta';
-import { anadir, aEnvio, cambiar, itemsDesde, mensajeDe, mover, quitar } from './editor';
+import { anadir, aEnvio, cambiar, itemsDesde, mensajeDe, mover, quitar, sustituir } from './editor';
 import { filtrarEjercicios, lineaDeEjercicio } from './biblioteca';
 import type { ItemEditable } from './editor';
 import { tema } from '../tema';
@@ -46,7 +46,14 @@ export function EditorDeRutina({
   const [nombre, setNombre] = useState(rutina?.name ?? '');
   const [descripcion, setDescripcion] = useState(rutina?.description ?? '');
   const [items, setItems] = useState<ItemEditable[]>(rutina ? itemsDesde(rutina) : []);
-  const [eligiendo, setEligiendo] = useState(false);
+  /**
+   * El selector sirve para DOS cosas, y hay que saber para cual.
+   *
+   * `'nuevo'` anade una fila al final; la clave de una fila SUSTITUYE su
+   * ejercicio conservando series, repeticiones, descanso y notas. Sin esta
+   * distincion, sustituir seria anadir y la fila rota se quedaria.
+   */
+  const [eligiendo, setEligiendo] = useState<'nuevo' | string | null>(null);
   const [busqueda, setBusqueda] = useState('');
   const [errores, setErrores] = useState<string[]>([]);
 
@@ -65,9 +72,13 @@ export function EditorDeRutina({
   };
 
   const elegir = (ejercicio: Exercise) => {
-    setItems(anadir(items, ejercicio, `nuevo-${siguiente}`));
-    setSiguiente(siguiente + 1);
-    setEligiendo(false);
+    if (eligiendo === 'nuevo') {
+      setItems(anadir(items, ejercicio, `nuevo-${siguiente}`));
+      setSiguiente(siguiente + 1);
+    } else if (eligiendo !== null) {
+      setItems(sustituir(items, eligiendo, ejercicio));
+    }
+    setEligiendo(null);
     setBusqueda('');
   };
 
@@ -103,9 +114,21 @@ export function EditorDeRutina({
                   al guardar, y eso tiene que decidirlo quien edita.
                 */}
                 {item.exerciseId === null ? (
-                  <Text style={estilos.huerfano}>
-                    Ya no está en la biblioteca. Quítalo o pon otro en su sitio.
-                  </Text>
+                  <>
+                    <Text style={estilos.huerfano}>
+                      Ya no está en la biblioteca. Elige otro en su sitio y se conservan las
+                      series, las repeticiones y las notas.
+                    </Text>
+                    <Pressable
+                      onPress={() => setEligiendo(item.clave)}
+                      disabled={guardando}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Elegir sustituto de ${item.exerciseName}`}
+                      style={({ pressed }) => [estilos.sustituir, pressed && estilos.pulsado]}
+                    >
+                      <Text style={estilos.textoSustituir}>Elegir sustituto</Text>
+                    </Pressable>
+                  </>
                 ) : null}
               </View>
             </View>
@@ -182,9 +205,11 @@ export function EditorDeRutina({
         ) : null}
       </View>
 
-      {eligiendo ? (
+      {eligiendo !== null ? (
         <Tarjeta alta>
-          <Text style={estilos.tituloDelSelector}>Elige un ejercicio</Text>
+          <Text style={estilos.tituloDelSelector}>
+            {eligiendo === 'nuevo' ? 'Elige un ejercicio' : 'Elige el sustituto'}
+          </Text>
           <Campo
             etiqueta="Buscar"
             valor={busqueda}
@@ -213,10 +238,10 @@ export function EditorDeRutina({
               <Text style={estilos.vacio}>Nada con ese texto.</Text>
             ) : null}
           </View>
-          <Boton onPress={() => setEligiendo(false)}>Cancelar</Boton>
+          <Boton onPress={() => setEligiendo(null)}>Cancelar</Boton>
         </Tarjeta>
       ) : (
-        <Boton onPress={() => setEligiendo(true)} deshabilitado={guardando}>
+        <Boton onPress={() => setEligiendo('nuevo')} deshabilitado={guardando}>
           Añadir ejercicio
         </Boton>
       )}
@@ -295,6 +320,12 @@ const estilos = StyleSheet.create({
   arriba: { transform: [{ rotate: '90deg' }] },
   abajo: { transform: [{ rotate: '-90deg' }] },
   apagado: { opacity: 0.4 },
+  sustituir: {
+    alignSelf: 'flex-start',
+    minHeight: tema.controlAltoMinimo,
+    justifyContent: 'center',
+  },
+  textoSustituir: { ...tema.texto.secundario, color: tema.color.acento },
   pulsado: { opacity: 0.6 },
   quitar: {
     minHeight: tema.controlAltoMinimo,

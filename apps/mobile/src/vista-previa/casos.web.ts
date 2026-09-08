@@ -297,6 +297,8 @@ export const CASOS: Record<string, Caso> = {
   'entrenamiento-rutina': { estado: sesionDe(DUENA, 'owner'), entrada: 'inerte' },
   'entrenamiento-rutina-archivada': { estado: sesionDe(DUENA, 'owner'), entrada: 'inerte' },
   'entrenamiento-editor': { estado: sesionDe(DUENA, 'owner'), entrada: 'inerte' },
+  /* Una rutina rota por un borrado ajeno, para poder ver «Elegir sustituto». */
+  'entrenamiento-rutina-huerfana': { estado: sesionDe(DUENA, 'owner'), entrada: 'inerte' },
   'entrenamiento-asignar': { estado: sesionDe(ENTRENADORA, 'trainer'), entrada: 'inerte' },
   'entrenamiento-socio-sin-rutinas': { estado: sesionDe(ENTRENADORA, 'trainer'), entrada: 'inerte' },
   /* El servidor dice que no: la rutina la creo otro entrenador. */

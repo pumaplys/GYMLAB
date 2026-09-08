@@ -1,7 +1,7 @@
 import type { CreateRoutineInput, Routine } from '@gymlab/contracts';
 import { createRoutineSchema } from '@gymlab/contracts';
 import { describe, expect, it } from 'vitest';
-import { anadir, aEnvio, cambiar, itemsDesde, mensajeDe, mover, quitar } from './editor';
+import { anadir, aEnvio, cambiar, itemsDesde, mensajeDe, mover, quitar, sustituir } from './editor';
 /*
  * ┌──────────────────────────────────────────────────────────────────────────┐
  * │ SE IMPORTA EL EDITOR DEL PANEL WEB, POR RUTA RELATIVA.                   │
@@ -38,7 +38,7 @@ const RUTINA: Routine = {
   items: [
     {
       id: 'i1',
-      exerciseId: 'e1',
+      exerciseId: '11111111-1111-4111-8111-111111111111',
       exerciseName: 'Press de banca',
       position: 0,
       sets: 4,
@@ -122,6 +122,54 @@ describe('mover, anadir y quitar', () => {
   it('quitar va por clave, no por indice', () => {
     const clave = items[0]!.clave;
     expect(quitar(items, clave).map((i) => i.clave)).toEqual([items[1]!.clave]);
+  });
+
+  /*
+   * ┌──────────────────────────────────────────────────────────────────────┐
+   * │ SUSTITUIR ES LA UNICA SALIDA QUE NO PIERDE TRABAJO.                  │
+   * │                                                                      │
+   * │ Cuando el gimnasio borra un ejercicio, la rutina que lo usaba deja de │
+   * │ poder guardarse: el esquema exige un `exerciseId` valido. Si la unica │
+   * │ opcion fuera «quitalo», se perderian las series, las repeticiones, el │
+   * │ descanso y las notas, que las escribio alguien.                       │
+   * │                                                                      │
+   * │ El panel web tiene «Elegir sustituto» desde siempre. Se comprobo       │
+   * │ leyendo su editor, y por eso esta capacidad no se recorto en el movil.│
+   * └──────────────────────────────────────────────────────────────────────┘
+   */
+  it('sustituir cambia el ejercicio y CONSERVA todo lo demas', () => {
+    const huerfano = items[1]!;
+    expect(huerfano.exerciseId).toBeNull();
+    const cambiados = sustituir(items, huerfano.clave, { id: 'e7', name: 'Jalón al pecho' });
+    const nuevo = cambiados[1]!;
+    expect(nuevo.exerciseId).toBe('e7');
+    expect(nuevo.exerciseName).toBe('Jalón al pecho');
+    // Lo que escribio alguien sigue ahi.
+    expect(nuevo.sets).toBe(huerfano.sets);
+    expect(nuevo.reps).toBe(huerfano.reps);
+    expect(nuevo.restSeconds).toBe(huerfano.restSeconds);
+    expect(nuevo.notes).toBe('Con cuidado');
+  });
+
+  it('sustituir no mueve la fila de sitio ni toca las demas', () => {
+    const cambiados = sustituir(items, items[1]!.clave, { id: 'e7', name: 'Otro' });
+    expect(cambiados.map((i) => i.clave)).toEqual(items.map((i) => i.clave));
+    expect(cambiados[0]).toEqual(items[0]);
+  });
+
+  /*
+   * Y la consecuencia que importa: despues de sustituir, la rutina VUELVE a
+   * poder guardarse. Sin esto, la capacidad seria un boton que no arregla nada.
+   */
+  it('despues de sustituir, la rutina ya pasa la validacion', () => {
+    const antes = aEnvio('Fuerza', '', items);
+    expect(createRoutineSchema.safeParse(antes).success).toBe(false);
+    const arreglados = sustituir(items, items[1]!.clave, {
+      id: '22222222-2222-4222-8222-222222222222',
+      name: 'Jalón al pecho',
+    });
+    const despues = aEnvio('Fuerza', '', arreglados);
+    expect(createRoutineSchema.safeParse(despues).success).toBe(true);
   });
 
   it('cambiar un campo no toca las otras filas', () => {

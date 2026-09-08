@@ -77,6 +77,33 @@ export function anadir(
   ];
 }
 
+/**
+ * Cambia el EJERCICIO de una fila conservando todo lo demas.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ ES PARA EL EJERCICIO QUE YA NO ESTA EN LA BIBLIOTECA.                    │
+ * │                                                                          │
+ * │ Cuando alguien borra un ejercicio, las rutinas que lo usaban conservan    │
+ * │ su nombre pero pierden la referencia, y esa rutina ya no se puede         │
+ * │ guardar: el esquema exige un `exerciseId` valido. La salida NO puede ser  │
+ * │ solo «quitalo», porque las series, las repeticiones, el descanso y las    │
+ * │ notas las escribio alguien y siguen siendo buenas.                        │
+ * │                                                                          │
+ * │ Asi que se sustituye: cambia a que ejercicio apunta la fila y se queda    │
+ * │ TODO lo demas. Es exactamente lo que hace el «Elegir sustituto» del       │
+ * │ panel web, y por eso no se recorta aqui.                                  │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ */
+export function sustituir(
+  items: readonly ItemEditable[],
+  clave: string,
+  ejercicio: { id: string; name: string },
+): ItemEditable[] {
+  return items.map((i) =>
+    i.clave === clave ? { ...i, exerciseId: ejercicio.id, exerciseName: ejercicio.name } : i,
+  );
+}
+
 /** Quita una fila. Por clave y no por indice: la lista se reordena. */
 export function quitar(items: readonly ItemEditable[], clave: string): ItemEditable[] {
   return items.filter((i) => i.clave !== clave);

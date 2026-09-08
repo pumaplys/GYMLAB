@@ -120,6 +120,30 @@ const CAPACIDADES: Capacidad[] = [
     metodo: 'actualizarRutina',
   },
   {
+    /*
+     * ┌──────────────────────────────────────────────────────────────────┐
+     * │ ESTA FILA FALTABA, Y LA ENCONTRO LA REVISION CONTRA LA WEB.      │
+     * │                                                                  │
+     * │ El editor del panel tiene «Elegir sustituto» para un ejercicio    │
+     * │ que el gimnasio borro de la biblioteca: cambia a que apunta la    │
+     * │ fila y conserva series, repeticiones, descanso y notas. Sin ella, │
+     * │ la unica salida seria quitar la fila y perder ese trabajo.        │
+     * │                                                                  │
+     * │ No es una accion «del editor»: es la unica forma de volver a      │
+     * │ guardar una rutina que quedo rota por un borrado ajeno.           │
+     * └──────────────────────────────────────────────────────────────────┘
+     */
+    accion: 'Sustituir un ejercicio que ya no está en la biblioteca, conservando lo escrito',
+    roles: ['owner', 'trainer'],
+    // El sustituto se elige en el editor; quien guarda es la pantalla.
+    web: ['src/app/entrenador/rutinas/editor.tsx', 'src/app/entrenador/rutinas/editar/page.tsx'],
+    movil: [
+      'src/entrenamiento/editor-de-rutina.tsx',
+      'app/(entrenamiento)/rutinas/[id]/editar.tsx',
+    ],
+    metodo: 'actualizarRutina',
+  },
+  {
     accion: 'Archivar una rutina',
     roles: ['owner', 'trainer'],
     web: ['src/app/entrenador/rutinas/ficha/page.tsx'],
