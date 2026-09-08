@@ -330,6 +330,28 @@ export const CASOS: Record<string, Caso> = {
   'mostrador-planes': { estado: sesionDe(DUENA, 'owner'), entrada: 'inerte' },
   'mostrador-planes-recepcion': { estado: sesionDe(RECEPCION, 'receptionist'), entrada: 'inerte' },
   'mostrador-sin-planes': { estado: sesionDe(DUENA, 'owner'), entrada: 'inerte' },
+
+  /*
+   * ┌──────────────────────────────────────────────────────────────────────┐
+   * │ PARITY-3. ACCESOS, PERSONAL, INVITACIONES Y ENTRENADORES.            │
+   * │                                                                      │
+   * │ Casi todo lo comparten dueño y recepcion. Lo que NO: retirar el       │
+   * │ acceso a alguien del personal, que es del dueño, y a quien se puede   │
+   * │ invitar, que lo decide `CAN_INVITE` —recepcion no crea dueños—.       │
+   * │ Los pares `-recepcion` son el control negativo de las dos cosas.      │
+   * └──────────────────────────────────────────────────────────────────────┘
+   */
+  'equipo-accesos': { estado: sesionDe(RECEPCION, 'receptionist'), entrada: 'inerte' },
+  'equipo-accesos-vacio': { estado: sesionDe(RECEPCION, 'receptionist'), entrada: 'inerte' },
+  'equipo-accesos-cargando': { estado: sesionDe(RECEPCION, 'receptionist'), entrada: 'inerte' },
+  'equipo-accesos-error': { estado: sesionDe(RECEPCION, 'receptionist'), entrada: 'inerte' },
+  'equipo-personal': { estado: sesionDe(DUENA, 'owner'), entrada: 'inerte' },
+  'equipo-personal-recepcion': { estado: sesionDe(RECEPCION, 'receptionist'), entrada: 'inerte' },
+  'equipo-sin-invitaciones': { estado: sesionDe(DUENA, 'owner'), entrada: 'inerte' },
+  'equipo-invitar-existente': { estado: sesionDe(DUENA, 'owner'), entrada: 'inerte' },
+  'equipo-error': { estado: sesionDe(DUENA, 'owner'), entrada: 'inerte' },
+  'equipo-entrenadores': { estado: sesionDe(DUENA, 'owner'), entrada: 'inerte' },
+  'equipo-socio-sin-entrenador': { estado: sesionDe(DUENA, 'owner'), entrada: 'inerte' },
 };
 
 export type { Caso, Entrada } from './tipos';
