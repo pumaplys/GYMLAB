@@ -45,7 +45,25 @@ function ficheroDeRuta(ruta: string, grupo: string): string {
   // `/asignado/<id>` -> `asignado/[id].tsx`
   const partes = ruta.replace(/^\//, '').split('/');
   const ultima = partes.pop()!;
-  return join(grupo, ...partes, `[${ultima.startsWith('[') ? ultima.slice(1, -1) : 'id'}].tsx`);
+  const nombre = `[${ultima.startsWith('[') ? ultima.slice(1, -1) : 'id'}]`;
+
+  /*
+   * ┌──────────────────────────────────────────────────────────────────────┐
+   * │ EXPO-ROUTER SIRVE UNA RUTA DINAMICA DE DOS FORMAS.                   │
+   * │                                                                      │
+   * │ `socio/[id].tsx` y `socio/[id]/index.tsx` son la misma ruta. La ficha │
+   * │ del Panel paso a la segunda en PARITY-2, cuando le colgaron editar,   │
+   * │ cuota y pagos: un fichero y una carpeta con el mismo nombre no pueden │
+   * │ convivir.                                                            │
+   * │                                                                      │
+   * │ Se prueban las dos y se devuelve la que existe. Fijar una sola habria │
+   * │ hecho fallar este test por una reorganizacion que no cambia la ruta,  │
+   * │ que es justo lo que no debe vigilar.                                  │
+   * └──────────────────────────────────────────────────────────────────────┘
+   */
+  const suelto = join(grupo, ...partes, `${nombre}.tsx`);
+  const enCarpeta = join(grupo, ...partes, nombre, 'index.tsx');
+  return existsSync(join(APP, suelto)) ? suelto : enCarpeta;
 }
 
 describe('tocar un socio en «Mis socios» lleva al detalle del ENTRENADOR', () => {
@@ -93,7 +111,7 @@ describe('tocar un socio en «Mis socios» lleva al detalle del ENTRENADOR', () 
     expect(delEntrenador).toMatch(/volverA="\/entrenador"/);
     expect(delEntrenador).toMatch(/etiquetaDeVuelta="Mis socios"/);
 
-    const delPanel = leer('(panel)', 'socio', '[id].tsx');
+    const delPanel = leer('(panel)', 'socio', '[id]', 'index.tsx');
     expect(delPanel).toMatch(/volverA="\/buscar"/);
     expect(delPanel).toMatch(/etiquetaDeVuelta="Buscar"/);
   });
@@ -132,7 +150,7 @@ describe('cada detalle pide lo suyo, y solo lo suyo', () => {
    * └──────────────────────────────────────────────────────────────────────┘
    */
   it('el del panel carga ficha, cuota y rutinas, y sigue sin cargar progreso', () => {
-    const codigo = leer('(panel)', 'socio', '[id].tsx');
+    const codigo = leer('(panel)', 'socio', '[id]', 'index.tsx');
     expect(codigo).toMatch(/cargarSocio\(/);
     expect(codigo).toMatch(/cargarCuota\(/);
     expect(codigo).toMatch(/cargarRutinasDeSocio\(/);
@@ -146,17 +164,17 @@ describe('cada detalle pide lo suyo, y solo lo suyo', () => {
    * sabe de antemano que falla.
    */
   it('el del panel solo pide las rutinas si el rol puede verlas', () => {
-    const codigo = leer('(panel)', 'socio', '[id].tsx');
+    const codigo = leer('(panel)', 'socio', '[id]', 'index.tsx');
     expect(codigo).toMatch(/puedeAsignarRutinas\(sesion\.rol\)/);
     expect(codigo).toMatch(/entrena \? cargarRutinasDeSocio\(/);
   });
 
   it('cada uno importa de SU fuente', () => {
     expect(leer('(entrenador)', 'asignado', '[id].tsx')).toMatch(/src\/entrenador\/fuente/);
-    expect(leer('(panel)', 'socio', '[id].tsx')).toMatch(/src\/panel\/fuente/);
+    expect(leer('(panel)', 'socio', '[id]', 'index.tsx')).toMatch(/src\/panel\/fuente/);
     // Cruzarlas es la otra forma de acabar viendo la pantalla equivocada.
     expect(leer('(entrenador)', 'asignado', '[id].tsx')).not.toMatch(/src\/panel\//);
-    expect(leer('(panel)', 'socio', '[id].tsx')).not.toMatch(/src\/entrenador\//);
+    expect(leer('(panel)', 'socio', '[id]', 'index.tsx')).not.toMatch(/src\/entrenador\//);
   });
 });
 
