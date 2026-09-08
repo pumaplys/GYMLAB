@@ -62,6 +62,23 @@ export const RUTAS_INTERNAS = {
   editarRutina: (id: string) => `/rutinas/${id}/editar`,
   /** Elegir que rutina se le asigna a un socio. Lleva el id del socio. */
   asignarA: (socioId: string) => `/asignar/${socioId}`,
+
+  /*
+   * PARITY-2: el mostrador. Todo cuelga del Panel, que es donde vive el
+   * personal que atiende.
+   *
+   * `alta` no se llama `/socio/nuevo` a proposito: ahi convive con
+   * `/socio/[id]` y, aunque expo-router prefiere el tramo estatico, un dia
+   * alguien renombraria `nuevo.tsx` y el alta pasaria a ser «el socio con id
+   * nuevo» sin que nada fallara. Una ruta propia no tiene esa trampa.
+   */
+  alta: '/alta',
+  editarSocio: (id: string) => `/socio/${id}/editar`,
+  cuotaDelSocio: (id: string) => `/socio/${id}/cuota`,
+  pagosDelSocio: (id: string) => `/socio/${id}/pagos`,
+  planes: '/planes',
+  planNuevo: '/planes/nuevo',
+  plan: (id: string) => `/planes/${id}`,
 } as const;
 
 /**

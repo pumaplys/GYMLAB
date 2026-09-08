@@ -54,6 +54,25 @@ export default function Panel() {
           alPulsar={() => router.push(RUTAS_INTERNAS.buscar)}
         />
 
+        {/*
+          PARITY-2. El alta y los planes los comparten dueño y recepcion —el
+          modulo de socios es `@Roles('owner', 'receptionist')`— asi que van
+          fuera del `if` de entrenamiento. Dentro de Planes, crear y editar SI
+          son del dueño, y eso lo decide esa pantalla.
+        */}
+        <FilaDeAccion
+          titulo="Nuevo socio"
+          detalle="Dar de alta a alguien en el gimnasio."
+          icono="socios"
+          alPulsar={() => router.push(RUTAS_INTERNAS.alta)}
+        />
+        <FilaDeAccion
+          titulo="Planes"
+          detalle="Los planes con los que se dan de alta las cuotas."
+          icono="pagos"
+          alPulsar={() => router.push(RUTAS_INTERNAS.planes)}
+        />
+
         {entrena ? (
           <>
             <FilaDeAccion

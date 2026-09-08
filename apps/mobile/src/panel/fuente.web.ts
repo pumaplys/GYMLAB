@@ -90,6 +90,21 @@ const CUOTAS: Record<string, Partial<DuesStatus>> = {
   },
 };
 
+/**
+ * La ficha del socio la comparten el Panel y el mostrador de PARITY-2, asi que
+ * esta fuente responde a los dos prefijos. Sin esto, un caso `mostrador-` caia
+ * a la API de verdad y la pantalla decia «no hemos podido cargar la ficha» —lo
+ * descubrio el recorrido, no una revision—.
+ */
+const MIOS = ['panel-', 'mostrador-'];
+
+function esMio(caso: string | null, ademas?: string): boolean {
+  if (caso === null || !MIOS.some((m) => caso.startsWith(m))) return false;
+  // Los casos del mostrador valen para todo lo de esta fuente; los del Panel
+  // pueden acotarse a un prefijo mas fino, como `panel-socio`.
+  return ademas === undefined || caso.startsWith(ademas) || caso.startsWith('mostrador-');
+}
+
 function casoActual(): string | null {
   if (!HABILITADA) return null;
   return new URLSearchParams(window.location.search).get('vista');
@@ -97,7 +112,7 @@ function casoActual(): string | null {
 
 export async function buscarSocios(gymId: string, consulta: string): Promise<MemberList> {
   const caso = casoActual();
-  if (!caso?.startsWith('panel-')) return buscarSociosReal(gymId, consulta);
+  if (!esMio(caso)) return buscarSociosReal(gymId, consulta);
 
   if (caso === 'panel-buscar-cargando') return new Promise<MemberList>(() => undefined);
   if (caso === 'panel-buscar-error') throw new Error('búsqueda de muestra: fallo simulado');
@@ -107,7 +122,7 @@ export async function buscarSocios(gymId: string, consulta: string): Promise<Mem
 
 export async function cargarSocio(gymId: string, memberId: string): Promise<Member> {
   const caso = casoActual();
-  if (!caso?.startsWith('panel-socio')) return cargarSocioReal(gymId, memberId);
+  if (!esMio(caso, 'panel-socio')) return cargarSocioReal(gymId, memberId);
   if (caso === 'panel-socio-error') throw new Error('ficha de muestra: fallo simulado');
   return VARIOS.find((s) => s.id === memberId) ?? VARIOS[0]!;
 }

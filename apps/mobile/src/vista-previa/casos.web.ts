@@ -305,6 +305,31 @@ export const CASOS: Record<string, Caso> = {
   'entrenamiento-archivar-ajena': { estado: sesionDe(ENTRENADORA, 'trainer'), entrada: 'inerte' },
   /* El control negativo: recepcion no entra en entrenamiento. */
   'entrenamiento-recepcion': { estado: sesionDe(RECEPCION, 'receptionist'), entrada: 'inerte' },
+
+  /*
+   * ┌──────────────────────────────────────────────────────────────────────┐
+   * │ PARITY-2. EL MOSTRADOR, Y AQUI EL ROL TAMBIEN DECIDE.                │
+   * │                                                                      │
+   * │ Socios, cuotas y cobros los comparten dueño y recepcion; exportar,    │
+   * │ eliminar, anular un pago y tocar los planes son SOLO del dueño. Por   │
+   * │ eso cada caso dice con que rol se mira: los pares `-recepcion` son el │
+   * │ control negativo de esas cuatro.                                      │
+   * └──────────────────────────────────────────────────────────────────────┘
+   */
+  'mostrador-alta': { estado: sesionDe(RECEPCION, 'receptionist'), entrada: 'inerte' },
+  'mostrador-alta-error': { estado: sesionDe(RECEPCION, 'receptionist'), entrada: 'inerte' },
+  'mostrador-ficha': { estado: sesionDe(DUENA, 'owner'), entrada: 'inerte' },
+  'mostrador-ficha-recepcion': { estado: sesionDe(RECEPCION, 'receptionist'), entrada: 'inerte' },
+  'mostrador-cuota-al-corriente': { estado: sesionDe(RECEPCION, 'receptionist'), entrada: 'inerte' },
+  'mostrador-cuota-pausada': { estado: sesionDe(RECEPCION, 'receptionist'), entrada: 'inerte' },
+  'mostrador-cuota-vencida': { estado: sesionDe(RECEPCION, 'receptionist'), entrada: 'inerte' },
+  'mostrador-sin-cuota': { estado: sesionDe(RECEPCION, 'receptionist'), entrada: 'inerte' },
+  'mostrador-pagos': { estado: sesionDe(DUENA, 'owner'), entrada: 'inerte' },
+  'mostrador-pagos-recepcion': { estado: sesionDe(RECEPCION, 'receptionist'), entrada: 'inerte' },
+  'mostrador-sin-pagos': { estado: sesionDe(DUENA, 'owner'), entrada: 'inerte' },
+  'mostrador-planes': { estado: sesionDe(DUENA, 'owner'), entrada: 'inerte' },
+  'mostrador-planes-recepcion': { estado: sesionDe(RECEPCION, 'receptionist'), entrada: 'inerte' },
+  'mostrador-sin-planes': { estado: sesionDe(DUENA, 'owner'), entrada: 'inerte' },
 };
 
 export type { Caso, Entrada } from './tipos';

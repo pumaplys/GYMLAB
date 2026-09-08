@@ -1,27 +1,31 @@
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
-import type { AssignedRoutine, DuesStatus, Member } from '@gymlab/contracts';
-import { Aviso } from '../../../src/componentes/aviso';
-import { CabeceraDeVuelta } from '../../../src/componentes/cabecera-de-vuelta';
-import { Etiqueta } from '../../../src/componentes/etiqueta';
-import { Pantalla } from '../../../src/componentes/pantalla';
-import { Tarjeta } from '../../../src/componentes/tarjeta';
-import { RutinasDelSocio } from '../../../src/entrenamiento/rutinas-del-socio';
-import { puedeAsignarRutinas } from '../../../src/entrenamiento/permisos';
-import { cargarRutinasDeSocio } from '../../../src/entrenamiento/fuente';
-import { laSesionYaNoVale, motivosDeFallo } from '../../../src/auth/politica';
-import { useSesion } from '../../../src/auth/sesion';
-import { lecturaDeCuotaParaPersonal } from '../../../src/cuota/lectura';
-import { fechaCivil } from '../../../src/formato/fecha';
+import type { AssignedRoutine, DuesStatus, Member, Role } from '@gymlab/contracts';
+import { Aviso } from '../../../../src/componentes/aviso';
+import { CabeceraDeVuelta } from '../../../../src/componentes/cabecera-de-vuelta';
+import { Etiqueta } from '../../../../src/componentes/etiqueta';
+import { Pantalla } from '../../../../src/componentes/pantalla';
+import { Tarjeta } from '../../../../src/componentes/tarjeta';
+import { RutinasDelSocio } from '../../../../src/entrenamiento/rutinas-del-socio';
+import { AccionesDeFicha } from '../../../../src/socios/acciones-de-ficha';
+import { Boton } from '../../../../src/componentes/boton';
+import { RUTAS_INTERNAS } from '../../../../src/navegacion/destinos';
+import { router } from 'expo-router';
+import { puedeAsignarRutinas } from '../../../../src/entrenamiento/permisos';
+import { cargarRutinasDeSocio } from '../../../../src/entrenamiento/fuente';
+import { laSesionYaNoVale, motivosDeFallo } from '../../../../src/auth/politica';
+import { useSesion } from '../../../../src/auth/sesion';
+import { lecturaDeCuotaParaPersonal } from '../../../../src/cuota/lectura';
+import { fechaCivil } from '../../../../src/formato/fecha';
 import {
   datosDeLaFicha,
   estaDeBaja,
   nombreCompleto,
   type EstadoDeCarga,
-} from '../../../src/panel/logica';
-import { cargarCuota, cargarSocio } from '../../../src/panel/fuente';
-import { tema } from '../../../src/tema';
+} from '../../../../src/panel/logica';
+import { cargarCuota, cargarSocio } from '../../../../src/panel/fuente';
+import { tema } from '../../../../src/tema';
 
 interface Ficha {
   socio: Member;
@@ -39,10 +43,10 @@ interface Ficha {
  * │ Las rutinas entran en PARITY-1, y solo para el dueño: recepcion comparte │
  * │ esta pantalla y no comparte ese permiso.                                 │
  * │                                                                          │
- * │ Editar, dar de baja y cobrar siguen sin estar, pero YA NO por la razon   │
- * │ que ponia aqui —«son decisiones que se toman sentado»—. Esa regla la     │
- * │ sustituyo la paridad: cada rol hace en el movil lo que hace en la web.   │
- * │ Faltan porque les toca en PARITY-2, no porque se hayan descartado.       │
+ * │ Y desde PARITY-2 ya se puede EDITAR, invitar, dar de baja y volver a dar │
+ * │ de alta; el dueño ademas exporta y elimina. La cuota y los cobros viven  │
+ * │ en sus pantallas: son cinco acciones con sus confirmaciones y esta ficha │
+ * │ tiene que seguir respondiendo «quien es» de un vistazo.                  │
  * │                                                                          │
  * │ Las NOTAS INTERNAS si son otra cosa: otro endpoint y otra decision de    │
  * │ privacidad. Se escriben sobre una persona y no se leen de pie en mitad   │
@@ -141,6 +145,7 @@ export default function SocioDelPanel() {
           ficha={carga.datos}
           gymId={gymId}
           entrena={entrena}
+          rol={sesion.tipo === 'autenticado' ? sesion.rol : 'receptionist'}
           alCambiar={() => void pedir()}
           alCaducarSesion={() => void revisar()}
         />
@@ -153,12 +158,14 @@ function Contenido({
   ficha,
   gymId,
   entrena,
+  rol,
   alCambiar,
   alCaducarSesion,
 }: {
   ficha: Ficha;
   gymId: string | null;
   entrena: boolean;
+  rol: Role;
   alCambiar: () => void;
   alCaducarSesion: () => void;
 }) {
@@ -191,6 +198,16 @@ function Contenido({
               No hemos podido consultar la cuota. Desliza hacia abajo para reintentarlo.
             </Text>
           )}
+
+          {/*
+            Desde PARITY-2 la cuota se puede TOCAR, no solo mirar: dar de alta,
+            congelar, reanudar, dar de baja y cobrar. Vive en su pantalla porque
+            son cinco acciones con sus confirmaciones, y esta ficha responde
+            «quien es y si puede entrar» de un vistazo.
+          */}
+          <Boton onPress={() => router.push(RUTAS_INTERNAS.cuotaDelSocio(socio.id))}>
+            Gestionar la cuota
+          </Boton>
         </View>
       </Tarjeta>
 
@@ -210,6 +227,19 @@ function Contenido({
           />
         </Tarjeta>
       ) : null}
+
+      <Tarjeta>
+        <View style={estilos.bloque}>
+          <Text style={estilos.rotulo}>Acciones</Text>
+          <AccionesDeFicha
+            socio={socio}
+            gymId={gymId}
+            rol={rol}
+            alCambiar={alCambiar}
+            alCaducarSesion={alCaducarSesion}
+          />
+        </View>
+      </Tarjeta>
 
       <Tarjeta>
         <View style={estilos.bloque}>

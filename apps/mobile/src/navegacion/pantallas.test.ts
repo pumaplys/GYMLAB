@@ -205,7 +205,16 @@ describe('el arbol de pantallas', () => {
    */
   it('las pantallas nuevas estan donde deben', () => {
     expect(TODAS).toContain('(panel)/buscar.tsx');
-    expect(TODAS).toContain('(panel)/socio/[id].tsx');
+    /*
+     * La ficha paso de `socio/[id].tsx` a `socio/[id]/index.tsx` en PARITY-2.
+     * La RUTA no cambia —sigue siendo `/socio/:id`— pero ahora tiene
+     * subpantallas colgando: editar, cuota y pagos. Un fichero y una carpeta
+     * con el mismo nombre no pueden convivir en expo-router.
+     */
+    expect(TODAS).toContain('(panel)/socio/[id]/index.tsx');
+    expect(TODAS).toContain('(panel)/socio/[id]/editar.tsx');
+    expect(TODAS).toContain('(panel)/socio/[id]/cuota.tsx');
+    expect(TODAS).toContain('(panel)/socio/[id]/pagos.tsx');
     expect(TODAS).toContain('(entrenador)/entrenador.tsx');
     expect(TODAS).toContain('(entrenador)/asignado/[id].tsx');
   });
@@ -289,33 +298,98 @@ describe('quien entra en cada area, rol por rol', () => {
 });
 
 /**
- * El Panel movil es de CONSULTA. Ninguna de sus pantallas escribe.
+ * Las pantallas del personal SI escriben. Lo que se vigila es por donde.
  *
  * ┌──────────────────────────────────────────────────────────────────────────┐
- * │ NO ES UNA PREFERENCIA DE ESTILO: ES EL ALCANCE DE V1.                   │
+ * │ ESTE TEST DECIA «NINGUNA ESCRIBE», Y ERA UNA REGLA MUERTA.              │
  * │                                                                          │
- * │ Dar de alta, cobrar, editar o asignar son decisiones que se toman        │
- * │ sentado. Si alguien añade un boton que llame a un `crear`, `actualizar`, │
- * │ `eliminar` o `registrar` en estas pantallas, esto lo dice.               │
+ * │ Su motivo escrito era «es el alcance de V1: dar de alta, cobrar, editar  │
+ * │ o asignar son decisiones que se toman sentado». Esa es exactamente la    │
+ * │ regla que retiro la paridad: cada rol hace en el movil lo que hace en la │
+ * │ web. Mantenerlo tal cual obligaba a borrarlo, y borrarlo dejaba sin      │
+ * │ vigilancia lo que SI sigue importando.                                   │
+ * │                                                                          │
+ * │ Lo que sigue importando son tres cosas, y las tres se comprueban abajo:  │
+ * │                                                                          │
+ * │   1. que ninguna pantalla hable con `api.*` a pelo —eso se salta el      │
+ * │      envoltorio de `fuente` y con el la vista previa—;                    │
+ * │   2. que nadie monte un POST a mano por la puerta de atras;              │
+ * │   3. que las acciones de SOLO DUEÑO no se pinten sin comprobar el rol.   │
  * └──────────────────────────────────────────────────────────────────────────┘
  */
-describe('las pantallas del personal no escriben nada', () => {
+describe('las pantallas del personal escriben, pero por donde deben', () => {
   const DEL_PERSONAL = TODAS.filter(
-    (r) => r.startsWith('(panel)/') || r.startsWith('(entrenador)/'),
+    (r) =>
+      r.startsWith('(panel)/') ||
+      r.startsWith('(entrenador)/') ||
+      r.startsWith(`${ENTRENAMIENTO}/`),
   );
 
   it('hay pantallas del personal que mirar', () => {
-    expect(DEL_PERSONAL.length).toBeGreaterThanOrEqual(6);
+    expect(DEL_PERSONAL.length).toBeGreaterThanOrEqual(15);
   });
 
-  it('ninguna llama a un metodo de escritura del cliente', () => {
+  /*
+   * Saltarse `fuente` deja esa llamada fuera de la vista previa —y con ella el
+   * estado que solo se puede ver simulando la respuesta—, y ademas mete datos
+   * de muestra en el camino del binario nativo. Es la misma regla que ya se
+   * comprueba en PARITY-0 para las pantallas de acceso.
+   */
+  it('ninguna habla con `api.*` directamente: todo pasa por su `fuente`', () => {
     for (const ruta of DEL_PERSONAL) {
       const codigo = sinComentarios(readFileSync(join(APP, ruta), 'utf8'));
-      expect(codigo, ruta).not.toMatch(
-        /\b(crear|actualizar|eliminar|registrar|asignar|retirar|dardeBaja|invitar)[A-Z]?\w*\s*\(/,
-      );
-      // Ni por la puerta de atras: nada de POST/PATCH/DELETE a mano.
+      expect(codigo, ruta).not.toMatch(/\bapi\s*\.\s*[a-z]/);
+    }
+  });
+
+  it('ni monta un POST, PATCH o DELETE a mano', () => {
+    for (const ruta of DEL_PERSONAL) {
+      const codigo = sinComentarios(readFileSync(join(APP, ruta), 'utf8'));
       expect(codigo, ruta).not.toMatch(/method:\s*'(POST|PATCH|PUT|DELETE)'/);
+    }
+  });
+
+  /*
+   * ┌──────────────────────────────────────────────────────────────────────┐
+   * │ LAS SEIS ACCIONES DE SOLO DUEÑO, Y SU COMPROBACION.                  │
+   * │                                                                      │
+   * │ Recepcion comparte area y pantallas con el dueño, asi que un boton    │
+   * │ suelto le saldria a ella tambien y devolveria 403. Cada una de estas  │
+   * │ acciones tiene que aparecer en un fichero que TAMBIEN mire el permiso.│
+   * │                                                                      │
+   * │ No comprueba que el `if` este bien puesto —eso lo hacen los recorridos│
+   * │ del navegador— pero si que nadie use la accion sin haberse acordado   │
+   * │ del permiso.                                                          │
+   * └──────────────────────────────────────────────────────────────────────┘
+   */
+  it('las acciones de solo-dueño no se usan sin comprobar el rol', () => {
+    const SOLO_DUENO: Record<string, string> = {
+      eliminarSocio: 'puedeEliminarSocio',
+      exportarDatos: 'puedeExportarDatos',
+      anularPago: 'puedeAnularPagos',
+      crearPlan: 'puedeEditarPlanes',
+      actualizarPlan: 'puedeEditarPlanes',
+      archivarPlan: 'puedeEditarPlanes',
+    };
+    const ficheros = [
+      ...DEL_PERSONAL.map((r) => join(APP, r)),
+      // Los componentes compartidos cuentan igual: ahi vive parte de la ficha.
+      ...['acciones-de-ficha.tsx'].map((f) => join(APP, '..', 'src', 'socios', f)),
+    ];
+    for (const fichero of ficheros) {
+      const codigo = sinComentarios(readFileSync(fichero, 'utf8'));
+      for (const [accion, permiso] of Object.entries(SOLO_DUENO)) {
+        if (!new RegExp(`\\b${accion}\\s*\\(`).test(codigo)) continue;
+        /*
+         * Se exige la LLAMADA, no la mención. Con `\b${permiso}\b` bastaba con
+         * que el import siguiera ahí: cambiar `puedeEliminarSocio(rol) ?` por
+         * `true ?` dejaba el guardarraíl en verde. Lo descubrió una
+         * falsificación, no una revisión.
+         */
+        expect(codigo, `${fichero} usa ${accion} sin llamar a ${permiso}`).toMatch(
+          new RegExp(`\\b${permiso}\\s*\\(`),
+        );
+      }
     }
   });
 });
