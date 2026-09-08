@@ -12,7 +12,8 @@
     "lint": "eslint .",
     "vista-previa": "node herramientas/vista-previa.mjs",
     "clean": "rimraf .expo .turbo",
-    "test": "vitest run"
+    "test": "vitest run",
+    "destructivas": "vitest run --config vitest.desarrollo.config.ts"
   },
   "dependencies": {
     "@expo/metro-runtime": "~57.0.15",

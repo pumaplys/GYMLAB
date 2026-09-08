@@ -18,6 +18,8 @@ export default [
       globals: {
         process: 'readonly',
         console: 'readonly',
+        // El gate de aislamiento lee el bytecode de Hermes en crudo.
+        Buffer: 'readonly',
       },
     },
   },
