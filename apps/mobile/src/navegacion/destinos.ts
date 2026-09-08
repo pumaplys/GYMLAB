@@ -10,6 +10,7 @@
  * └──────────────────────────────────────────────────────────────────────────┘
  */
 import type { Area, EstadoDeSesion } from '../auth/estado';
+import { puedeEntrenar } from '../entrenamiento/permisos';
 
 export const RUTAS = {
   arranque: null,
@@ -37,6 +38,30 @@ export const RUTAS_INTERNAS = {
   socioDelPanel: (id: string) => `/socio/${id}`,
   /** La ficha de un socio, vista por su entrenador. Otra ruta y otra area. */
   socioDelEntrenador: (id: string) => `/asignado/${id}`,
+
+  /*
+   * ┌──────────────────────────────────────────────────────────────────────┐
+   * │ ENTRENAMIENTO EN PLURAL, Y NO ES UN CAPRICHO DE ESTILO.              │
+   * │                                                                      │
+   * │ Los grupos de expo-router NO aparecen en la URL: `(entrenamiento)` y  │
+   * │ `(tabs)` comparten el mismo espacio de rutas. El socio ya tiene       │
+   * │ `/rutina` —su pestaña—, asi que una pantalla `(entrenamiento)/rutina` │
+   * │ chocaria con ella: el mismo camino en dos sitios, y quien gana lo     │
+   * │ decide el orden en que se leen los ficheros.                          │
+   * │                                                                      │
+   * │ `/rutinas` y `/ejercicios` no chocan con nada. El gate sigue siendo   │
+   * │ el layout del grupo, que un enlace directo no puede saltarse.         │
+   * └──────────────────────────────────────────────────────────────────────┘
+   */
+  ejercicios: '/ejercicios',
+  ejercicioNuevo: '/ejercicios/nuevo',
+  ejercicio: (id: string) => `/ejercicios/${id}`,
+  rutinas: '/rutinas',
+  rutinaNueva: '/rutinas/nueva',
+  rutinaDelPersonal: (id: string) => `/rutinas/${id}`,
+  editarRutina: (id: string) => `/rutinas/${id}/editar`,
+  /** Elegir que rutina se le asigna a un socio. Lleva el id del socio. */
+  asignarA: (socioId: string) => `/asignar/${socioId}`,
 } as const;
 
 /**
@@ -77,7 +102,9 @@ export type NombreDeIcono =
   | 'volver'
   /* Los dos de STAFF-FINAL: buscar un socio, y los socios de un entrenador. */
   | 'buscar'
-  | 'socios';
+  | 'socios'
+  /* PARITY-1: la biblioteca de ejercicios. Rutinas reutiliza `rutina`. */
+  | 'biblioteca';
 
 /**
  * A donde lleva el "Volver" de una seccion de Perfil.
@@ -194,6 +221,28 @@ export function destinoDe(estado: EstadoDeSesion): Destino {
  */
 export function puedeEntrarEnArea(estado: EstadoDeSesion, area: Area): boolean {
   return estado.tipo === 'autenticado' && estado.area === area;
+}
+
+/**
+ * El gate de entrenamiento. POR ROL, no por area.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ ES EL PRIMER SITIO DONDE AREA Y PERMISO NO COINCIDEN.                    │
+ * │                                                                          │
+ * │ Ejercicios y rutinas los comparten el DUEÑO y el ENTRENADOR, que viven   │
+ * │ en areas distintas —`panel` y `entrenador`—. Y dentro del `panel` esta   │
+ * │ tambien RECEPCION, que no puede tocarlos: la API contesta 403 a las      │
+ * │ cuatro clases del modulo.                                                │
+ * │                                                                          │
+ * │ Por eso no vale `puedeEntrarEnArea`: por area entraria recepcion y no    │
+ * │ entraria el entrenador. Se mira el rol, que es lo que mira la API.       │
+ * │                                                                          │
+ * │ Sigue siendo un layout de grupo el que lo aplica, asi que un enlace      │
+ * │ directo a `/rutinas` tampoco se lo salta.                                │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ */
+export function puedeEntrarEnEntrenamiento(estado: EstadoDeSesion): boolean {
+  return estado.tipo === 'autenticado' && puedeEntrenar(estado.rol);
 }
 
 /**

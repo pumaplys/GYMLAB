@@ -4,6 +4,7 @@ import { Boton } from '../../src/componentes/boton';
 import { FilaDeAccion } from '../../src/componentes/fila-de-accion';
 import { Pantalla } from '../../src/componentes/pantalla';
 import { useSesion } from '../../src/auth/sesion';
+import { puedeEntrenar } from '../../src/entrenamiento/permisos';
 import { RUTAS_INTERNAS } from '../../src/navegacion/destinos';
 import { tema } from '../../src/tema';
 
@@ -11,18 +12,19 @@ import { tema } from '../../src/tema';
  * La casa del personal del gimnasio.
  *
  * ┌──────────────────────────────────────────────────────────────────────────┐
- * │ DOS ACCIONES, Y LAS DOS SE HACEN DE PIE.                                │
+ * │ AQUI HABIA UN COMENTARIO QUE DECIA QUE ESTA PANTALLA NO CRECERIA.       │
  * │                                                                          │
- * │ Escanear un carne en la puerta y responder «¿quién es esta persona y     │
- * │ está al corriente?» con alguien delante. Nada mas.                       │
+ * │ Decia que el movil se quedaba con lo que se hace DE PIE —escanear un     │
+ * │ carne, mirar quien es alguien— y que todo lo demas «ya tiene sitio: el   │
+ * │ panel web». Era una decision razonable y ya no es la del producto: cada  │
+ * │ rol tiene que poder hacer en el movil lo mismo que hace en la web, con   │
+ * │ los mismos permisos. La UI se adapta a 390 px; la capacidad no se        │
+ * │ recorta por el tamaño de la pantalla.                                    │
  * │                                                                          │
- * │ No hay altas, ni cobros, ni planes, ni ajustes, ni cuadro de mando. Todo │
- * │ eso se hace sentado y ya tiene sitio: el panel web, que lo tiene         │
- * │ funcionando desde hace tiempo. Un menu con ocho destinos de los que seis │
- * │ llevan al mismo sitio que el navegador no seria un adelanto.             │
- * │                                                                          │
- * │ Lo que el web NO puede hacer es leer un QR con la camara del bolsillo ni │
- * │ acompañar a alguien por la sala. Eso es lo que hay aqui.                 │
+ * │ Lo primero que entra es ENTRENAMIENTO, y solo para el DUEÑO: recepcion   │
+ * │ comparte esta area pero no ese permiso —la API le contesta 403 a las     │
+ * │ cuatro clases del modulo—. Por eso las dos filas van tras un `if` de     │
+ * │ rol y ademas detras del gate del grupo `(entrenamiento)`.                │
  * └──────────────────────────────────────────────────────────────────────────┘
  */
 export default function Panel() {
@@ -31,6 +33,8 @@ export default function Panel() {
     estado.tipo === 'autenticado'
       ? estado.yo.memberships.find((m) => m.gymId === estado.gymId)?.gymName
       : undefined;
+  // Dueño si, recepcion no. Es el mismo reparto que hace la API.
+  const entrena = estado.tipo === 'autenticado' && puedeEntrenar(estado.rol);
 
   return (
     <Pantalla titulo="Panel" descriptor={gimnasio}>
@@ -49,6 +53,23 @@ export default function Panel() {
           icono="buscar"
           alPulsar={() => router.push(RUTAS_INTERNAS.buscar)}
         />
+
+        {entrena ? (
+          <>
+            <FilaDeAccion
+              titulo="Rutinas"
+              detalle="Crea y edita las rutinas del gimnasio."
+              icono="rutina"
+              alPulsar={() => router.push(RUTAS_INTERNAS.rutinas)}
+            />
+            <FilaDeAccion
+              titulo="Ejercicios"
+              detalle="La biblioteca con la que se montan las rutinas."
+              icono="biblioteca"
+              alPulsar={() => router.push(RUTAS_INTERNAS.ejercicios)}
+            />
+          </>
+        ) : null}
       </View>
 
       <Boton onPress={() => void salir()}>Cerrar sesión</Boton>

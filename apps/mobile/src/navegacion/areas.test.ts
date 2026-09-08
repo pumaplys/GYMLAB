@@ -186,8 +186,14 @@ describe('las tres areas estan gateadas en su layout', () => {
       'invitacion.tsx',
       '+not-found.tsx',
     ];
-    /** Carpetas cuyo `_layout.tsx` ya se ha comprobado arriba. */
-    const GATEADAS = [...Object.values(GRUPOS), 'perfil'];
+    /**
+     * Carpetas cuyo `_layout.tsx` ya se ha comprobado arriba.
+     *
+     * `(entrenamiento)` se comprueba en `pantallas.test.ts`, y aparte: su gate
+     * NO es por area —lo comparten dos areas y excluye a un rol de una de
+     * ellas— asi que no cabe en el `Record<Area, string>` de este fichero.
+     */
+    const GATEADAS = [...Object.values(GRUPOS), '(entrenamiento)', 'perfil'];
 
     const sueltas = readdirSync(APP, { withFileTypes: true })
       .filter((e) => e.isFile() && e.name.endsWith('.tsx') && !PUBLICAS.includes(e.name))

@@ -5,7 +5,7 @@ import type { Me, Role } from '@gymlab/contracts';
 import { ROLES } from '@gymlab/contracts';
 import type { Area } from '../auth/estado';
 import { AREA_DE_ROL, resolverAcceso } from '../auth/estado';
-import { puedeEntrarEnArea } from './destinos';
+import { RUTAS_DE_TABS, RUTAS_INTERNAS, puedeEntrarEnArea } from './destinos';
 
 /**
  * Quien llega a CADA pantalla de la app, incluidas las de STAFF-FINAL.
@@ -26,6 +26,34 @@ const GRUPOS: Record<Area, string> = {
   panel: '(panel)',
   entrenador: '(entrenador)',
 };
+
+/**
+ * El cuarto grupo, que NO es un area.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ ESTA APARTE DE `GRUPOS` A PROPOSITO, NO POR COMODIDAD.                  │
+ * │                                                                          │
+ * │ `GRUPOS` es un `Record<Area, string>` y esa es su gracia: un area nueva  │
+ * │ no compila hasta que tiene grupo. Entrenamiento no es un area —lo        │
+ * │ comparten dueño y entrenador, que viven en dos— asi que meterlo ahi      │
+ * │ obligaria a inventarse un area que no existe.                            │
+ * │                                                                          │
+ * │ Lo que si tiene es gate propio, y por ROL. Se comprueba abajo.           │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ */
+const ENTRENAMIENTO = '(entrenamiento)';
+
+/** Las claves de `RUTAS_INTERNAS` que viven en ese grupo. */
+const ENTRENAMIENTO_DE = new Set([
+  'ejercicios',
+  'ejercicioNuevo',
+  'ejercicio',
+  'rutinas',
+  'rutinaNueva',
+  'rutinaDelPersonal',
+  'editarRutina',
+  'asignarA',
+]);
 
 const sinComentarios = (codigo: string) =>
   codigo.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/^\s*\/\/.*$/gm, ' ');
@@ -87,12 +115,88 @@ describe('el arbol de pantallas', () => {
   });
 
   it('toda pantalla es publica a proposito o vive bajo una carpeta con gate', () => {
-    const gateadas = [...Object.values(GRUPOS), 'perfil'];
+    const gateadas = [...Object.values(GRUPOS), ENTRENAMIENTO, 'perfil'];
     const huerfanas = TODAS.filter((ruta) => {
       if (!ruta.includes('/')) return !PUBLICAS.includes(ruta);
       return !gateadas.some((carpeta) => ruta.startsWith(`${carpeta}/`));
     });
     expect(huerfanas, 'pantallas sin gate').toEqual([]);
+  });
+
+  /*
+   * ┌──────────────────────────────────────────────────────────────────────┐
+   * │ AÑADIR UNA CARPETA A `gateadas` NO PRUEBA QUE ESTE GATEADA.          │
+   * │                                                                      │
+   * │ La lista de arriba deja pasar todo lo que cuelgue de `(entrenamiento)`│
+   * │ — asi que hace falta comprobar aparte que ese grupo TIENE gate, y que │
+   * │ es el que corresponde. Sin esto, la forma de saltarse el guardarrail  │
+   * │ seria escribir el nombre de la carpeta en la lista.                   │
+   * └──────────────────────────────────────────────────────────────────────┘
+   */
+  it('el grupo de entrenamiento gatea por ROL, no por area', () => {
+    const codigo = sinComentarios(readFileSync(join(APP, ENTRENAMIENTO, '_layout.tsx'), 'utf8'));
+    expect(codigo).toContain('puedeEntrarEnEntrenamiento(estado)');
+    expect(codigo).toMatch(/Redirect href="\/"/);
+    /*
+     * Y NO por area: por area entraria recepcion —comparte area con el dueño—
+     * y se quedaria fuera el entrenador, que es justo al reves de lo que dice
+     * la API.
+     */
+    expect(codigo).not.toMatch(/puedeEntrarEnArea/);
+  });
+
+  /*
+   * ┌──────────────────────────────────────────────────────────────────────┐
+   * │ LOS GRUPOS NO APARECEN EN LA URL, ASI QUE PUEDEN CHOCAR.             │
+   * │                                                                      │
+   * │ `(entrenamiento)` y `(tabs)` comparten el mismo espacio de rutas. El  │
+   * │ socio ya tiene `/rutina` —su pestaña—, y una pantalla de              │
+   * │ entrenamiento llamada igual seria el mismo camino en dos sitios: cual │
+   * │ gana lo decidiria el orden en que se leen los ficheros, y el fallo    │
+   * │ apareceria en el telefono de alguien.                                 │
+   * │                                                                      │
+   * │ Lo descubrio una falsificacion: renombrar la constante a `/rutina` no │
+   * │ rompia NADA. Este test es lo que faltaba.                             │
+   * └──────────────────────────────────────────────────────────────────────┘
+   */
+  it('ninguna ruta de entrenamiento choca con una pestaña del socio', () => {
+    const deTabs = new Set(Object.values(RUTAS_DE_TABS).map((r) => r.split('/')[1]));
+    for (const [nombre, ruta] of Object.entries(RUTAS_INTERNAS)) {
+      const camino = typeof ruta === 'function' ? ruta('id-de-prueba') : ruta;
+      if (!ENTRENAMIENTO_DE.has(nombre)) continue;
+      const primerTramo = camino.split('/')[1];
+      expect(deTabs.has(primerTramo ?? ''), `${nombre} (${camino}) choca con una pestaña`).toBe(
+        false,
+      );
+    }
+  });
+
+  it('y cada una apunta a un fichero que existe de verdad', () => {
+    const ESPERADOS: Record<string, string> = {
+      ejercicios: 'ejercicios/index.tsx',
+      ejercicioNuevo: 'ejercicios/nuevo.tsx',
+      ejercicio: 'ejercicios/[id].tsx',
+      rutinas: 'rutinas/index.tsx',
+      rutinaNueva: 'rutinas/nueva.tsx',
+      rutinaDelPersonal: 'rutinas/[id]/index.tsx',
+      editarRutina: 'rutinas/[id]/editar.tsx',
+      asignarA: 'asignar/[socioId].tsx',
+    };
+    // Que la lista de arriba no se quede corta si manana se anade una ruta.
+    expect(new Set(Object.keys(ESPERADOS))).toEqual(ENTRENAMIENTO_DE);
+    for (const [nombre, fichero] of Object.entries(ESPERADOS)) {
+      expect(TODAS, `${nombre} -> ${fichero}`).toContain(`${ENTRENAMIENTO}/${fichero}`);
+    }
+  });
+
+  it('todas sus pantallas cuelgan del grupo, ninguna se sale', () => {
+    const dentro = TODAS.filter((r) => r.startsWith(`${ENTRENAMIENTO}/`));
+    expect(dentro.length).toBeGreaterThanOrEqual(8);
+    // Y ninguna se gatea por su cuenta: el gate es el layout del grupo.
+    for (const ruta of dentro.filter((r) => !r.endsWith('_layout.tsx'))) {
+      const codigo = sinComentarios(readFileSync(join(APP, ruta), 'utf8'));
+      expect(codigo, ruta).not.toMatch(/puedeEntrarEnEntrenamiento|puedeEntrarEnArea|<Redirect/);
+    }
   });
 
   /*

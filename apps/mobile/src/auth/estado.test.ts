@@ -40,6 +40,9 @@ describe('a que area entra cada rol', () => {
       yo: expect.anything(),
       gymId: UNO,
       area: 'socio',
+      // PARITY-1: el rol viaja ademas del area. Dentro de `panel` conviven
+      // dueño y recepcion, y no pueden lo mismo.
+      rol: 'member',
     });
   });
 
