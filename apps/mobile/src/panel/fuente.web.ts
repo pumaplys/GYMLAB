@@ -96,13 +96,18 @@ const CUOTAS: Record<string, Partial<DuesStatus>> = {
  * a la API de verdad y la pantalla decia «no hemos podido cargar la ficha» —lo
  * descubrio el recorrido, no una revision—.
  */
-const MIOS = ['panel-', 'mostrador-'];
+const MIOS = ['panel-', 'mostrador-', 'equipo-'];
 
 function esMio(caso: string | null, ademas?: string): boolean {
   if (caso === null || !MIOS.some((m) => caso.startsWith(m))) return false;
   // Los casos del mostrador valen para todo lo de esta fuente; los del Panel
   // pueden acotarse a un prefijo mas fino, como `panel-socio`.
-  return ademas === undefined || caso.startsWith(ademas) || caso.startsWith('mostrador-');
+  return (
+    ademas === undefined ||
+    caso.startsWith(ademas) ||
+    caso.startsWith('mostrador-') ||
+    caso.startsWith('equipo-')
+  );
 }
 
 function casoActual(): string | null {

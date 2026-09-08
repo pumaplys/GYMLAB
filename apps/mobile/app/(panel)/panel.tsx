@@ -73,6 +73,25 @@ export default function Panel() {
           alPulsar={() => router.push(RUTAS_INTERNAS.planes)}
         />
 
+        {/*
+          PARITY-3. Las dos las comparten dueño y recepcion —el historial es
+          `@Roles('owner','receptionist')` y la lista de personal tambien—.
+          Dentro de Personal, retirar el acceso SI es del dueño, y eso lo
+          decide esa pantalla.
+        */}
+        <FilaDeAccion
+          titulo="Accesos"
+          detalle="Quién ha pasado por la puerta y con qué resultado."
+          icono="accesos"
+          alPulsar={() => router.push(RUTAS_INTERNAS.accesos)}
+        />
+        <FilaDeAccion
+          titulo="Personal"
+          detalle="Quién trabaja en el gimnasio, y a quién se ha invitado."
+          icono="socios"
+          alPulsar={() => router.push(RUTAS_INTERNAS.personal)}
+        />
+
         {entrena ? (
           <>
             <FilaDeAccion

@@ -79,6 +79,18 @@ export const RUTAS_INTERNAS = {
   planes: '/planes',
   planNuevo: '/planes/nuevo',
   plan: (id: string) => `/planes/${id}`,
+
+  /*
+   * PARITY-3. El historial de la puerta y el personal cuelgan del Panel; los
+   * entrenadores de un socio, de su ficha.
+   *
+   * `entrenadoresDe` es GESTIONAR entrenadores —quien reparte los socios es el
+   * mostrador—, no el area del entrenador, que es `/entrenador`. Se parecen y
+   * no son lo mismo.
+   */
+  accesos: '/accesos',
+  personal: '/personal',
+  entrenadoresDe: (socioId: string) => `/socio/${socioId}/entrenadores`,
 } as const;
 
 /**

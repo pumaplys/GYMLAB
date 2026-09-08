@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
-import type { AssignedRoutine, DuesStatus, Member, Role } from '@gymlab/contracts';
+import type { AssignedRoutine, DuesStatus, Member, MemberTrainer, Role } from '@gymlab/contracts';
 import { Aviso } from '../../../../src/componentes/aviso';
 import { CabeceraDeVuelta } from '../../../../src/componentes/cabecera-de-vuelta';
 import { Etiqueta } from '../../../../src/componentes/etiqueta';
@@ -9,6 +9,8 @@ import { Pantalla } from '../../../../src/componentes/pantalla';
 import { Tarjeta } from '../../../../src/componentes/tarjeta';
 import { RutinasDelSocio } from '../../../../src/entrenamiento/rutinas-del-socio';
 import { AccionesDeFicha } from '../../../../src/socios/acciones-de-ficha';
+import { EntrenadoresDelSocio } from '../../../../src/personal/entrenadores-del-socio';
+import { cargarEntrenadoresDeSocio } from '../../../../src/personal/fuente';
 import { Boton } from '../../../../src/componentes/boton';
 import { RUTAS_INTERNAS } from '../../../../src/navegacion/destinos';
 import { router } from 'expo-router';
@@ -32,6 +34,8 @@ interface Ficha {
   cuota: DuesStatus | null;
   /** Nulo si fallo la peticion, o si este rol no puede verlas. */
   rutinas: readonly AssignedRoutine[] | null;
+  /** Nulo si fallo la peticion. Los ve todo el mostrador. */
+  entrenadores: readonly MemberTrainer[] | null;
 }
 
 /**
@@ -83,13 +87,14 @@ export default function SocioDelPanel() {
 
   const pedir = useCallback(async () => {
     if (!gymId || !id) return;
-    const [ficha, cuota, rutinas] = await Promise.allSettled([
+    const [ficha, cuota, rutinas, entrenadores] = await Promise.allSettled([
       cargarSocio(gymId, id),
       cargarCuota(gymId, id),
       entrena ? cargarRutinasDeSocio(gymId, id) : Promise.resolve(null),
+      cargarEntrenadoresDeSocio(gymId, id),
     ]);
 
-    if (laSesionYaNoVale(motivosDeFallo([ficha, cuota, rutinas]))) {
+    if (laSesionYaNoVale(motivosDeFallo([ficha, cuota, rutinas, entrenadores]))) {
       void revisar();
       return;
     }
@@ -106,6 +111,7 @@ export default function SocioDelPanel() {
         // bien: «no se pudieron cargar» y «este rol no las ve». La segunda no
         // llega a enseñarse, porque la tarjeta entera va tras `entrena`.
         rutinas: rutinas.status === 'fulfilled' ? rutinas.value : null,
+        entrenadores: entrenadores.status === 'fulfilled' ? entrenadores.value : null,
       },
     });
   }, [gymId, id, entrena, revisar]);
@@ -227,6 +233,16 @@ function Contenido({
           />
         </Tarjeta>
       ) : null}
+
+      <Tarjeta>
+        <EntrenadoresDelSocio
+          gymId={gymId}
+          socioId={socio.id}
+          entrenadores={ficha.entrenadores}
+          alCambiar={alCambiar}
+          alCaducarSesion={alCaducarSesion}
+        />
+      </Tarjeta>
 
       <Tarjeta>
         <View style={estilos.bloque}>
