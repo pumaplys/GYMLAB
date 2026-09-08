@@ -117,11 +117,38 @@ describe('cada detalle pide lo suyo, y solo lo suyo', () => {
     expect(codigo).not.toMatch(/cargarCuota|lecturaDeCuota/);
   });
 
-  it('el del panel carga ficha y cuota, y NO rutinas ni progreso', () => {
+  /*
+   * ┌──────────────────────────────────────────────────────────────────────┐
+   * │ ESTE TEST DECIA «NO RUTINAS», Y DESDE PARITY-1 SI HAY RUTINAS.       │
+   * │                                                                      │
+   * │ Lo que protegia sigue en pie y es lo importante: que la ficha del     │
+   * │ Panel no se convierta en la del entrenador por copia. Lo que cambia   │
+   * │ es que las rutinas ya no son «cosa del entrenador»: son del modulo de │
+   * │ entrenamiento, que comparten dueño y entrenador.                      │
+   * │                                                                      │
+   * │ Asi que se afina en vez de borrarse: las rutinas se cargan de SU      │
+   * │ modulo, detras del rol, y el PROGRESO sigue sin estar —ese si es del  │
+   * │ entrenador, y ademas toca consentimiento de datos de salud—.          │
+   * └──────────────────────────────────────────────────────────────────────┘
+   */
+  it('el del panel carga ficha, cuota y rutinas, y sigue sin cargar progreso', () => {
     const codigo = leer('(panel)', 'socio', '[id].tsx');
     expect(codigo).toMatch(/cargarSocio\(/);
     expect(codigo).toMatch(/cargarCuota\(/);
-    expect(codigo).not.toMatch(/cargarRutinas|cargarProgreso/);
+    expect(codigo).toMatch(/cargarRutinasDeSocio\(/);
+    expect(codigo).not.toMatch(/cargarProgreso/);
+  });
+
+  /*
+   * Y no se piden a cualquiera: recepcion comparte esta pantalla con el dueño
+   * y la API le contesta 403 en todo el modulo de entrenamiento. Sin esta
+   * condicion, cada ficha que abriera recepcion lanzaria una peticion que se
+   * sabe de antemano que falla.
+   */
+  it('el del panel solo pide las rutinas si el rol puede verlas', () => {
+    const codigo = leer('(panel)', 'socio', '[id].tsx');
+    expect(codigo).toMatch(/puedeAsignarRutinas\(sesion\.rol\)/);
+    expect(codigo).toMatch(/entrena \? cargarRutinasDeSocio\(/);
   });
 
   it('cada uno importa de SU fuente', () => {

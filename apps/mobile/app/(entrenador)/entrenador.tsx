@@ -89,6 +89,34 @@ export default function MisSocios() {
         </Aviso>
       ) : null}
 
+      {/*
+        ┌──────────────────────────────────────────────────────────────────┐
+        │ ENTRENAMIENTO VA ARRIBA, ANTES DE LA LISTA.                      │
+        │                                                                  │
+        │ Es lo que un entrenador hace SIN tener a nadie delante: preparar  │
+        │ rutinas y mantener la biblioteca. La lista de socios es para      │
+        │ cuando si hay alguien delante, y entonces se busca por su nombre. │
+        │                                                                  │
+        │ Estas dos filas no llevan condicional de rol: quien esta en esta  │
+        │ pantalla es entrenador, y el gate del grupo `(entrenamiento)` lo  │
+        │ vuelve a comprobar al entrar.                                     │
+        └──────────────────────────────────────────────────────────────────┘
+      */}
+      <View style={estilos.lista}>
+        <FilaDeAccion
+          titulo="Rutinas"
+          detalle="Crea y edita las rutinas del gimnasio."
+          icono="rutina"
+          alPulsar={() => router.push(RUTAS_INTERNAS.rutinas)}
+        />
+        <FilaDeAccion
+          titulo="Ejercicios"
+          detalle="La biblioteca con la que se montan las rutinas."
+          icono="biblioteca"
+          alPulsar={() => router.push(RUTAS_INTERNAS.ejercicios)}
+        />
+      </View>
+
       {carga.fase === 'ok' && carga.datos.length > 0 ? (
         <View style={estilos.lista}>
           <Text style={estilos.recuento}>{recuentoDeSocios(carga.datos.length)}</Text>

@@ -216,4 +216,14 @@ const DIBUJOS: Record<NombreDeIcono, ReactNode> = {
       <Path d="M16 5.2a3.5 3.5 0 0 1 0 5.6M17.5 14.6c1.9.7 3 2.6 3 4.9" />
     </>
   ),
+  /*
+   * La biblioteca de ejercicios: una mancuerna. Misma rejilla de 24 y mismo
+   * trazo de 1,5 que los demas — el disco, la barra y el otro disco.
+   */
+  biblioteca: (
+    <>
+      <Path d="M4.5 9.5v5M7.5 7.5v9M16.5 7.5v9M19.5 9.5v5" />
+      <Path d="M7.5 12h9" />
+    </>
+  ),
 };

@@ -1,12 +1,15 @@
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
-import type { DuesStatus, Member } from '@gymlab/contracts';
+import type { AssignedRoutine, DuesStatus, Member } from '@gymlab/contracts';
 import { Aviso } from '../../../src/componentes/aviso';
 import { CabeceraDeVuelta } from '../../../src/componentes/cabecera-de-vuelta';
 import { Etiqueta } from '../../../src/componentes/etiqueta';
 import { Pantalla } from '../../../src/componentes/pantalla';
 import { Tarjeta } from '../../../src/componentes/tarjeta';
+import { RutinasDelSocio } from '../../../src/entrenamiento/rutinas-del-socio';
+import { puedeAsignarRutinas } from '../../../src/entrenamiento/permisos';
+import { cargarRutinasDeSocio } from '../../../src/entrenamiento/fuente';
 import { laSesionYaNoVale, motivosDeFallo } from '../../../src/auth/politica';
 import { useSesion } from '../../../src/auth/sesion';
 import { lecturaDeCuotaParaPersonal } from '../../../src/cuota/lectura';
@@ -23,21 +26,27 @@ import { tema } from '../../../src/tema';
 interface Ficha {
   socio: Member;
   cuota: DuesStatus | null;
+  /** Nulo si fallo la peticion, o si este rol no puede verlas. */
+  rutinas: readonly AssignedRoutine[] | null;
 }
 
 /**
  * La ficha de un socio, para quien atiende.
  *
  * ┌──────────────────────────────────────────────────────────────────────────┐
- * │ RESPONDE DOS PREGUNTAS Y NO ABRE NINGUNA PUERTA MAS.                    │
+ * │ QUIEN ES, SI ESTA AL CORRIENTE, Y —SI ERES EL DUEÑO— QUE ENTRENA.       │
  * │                                                                          │
- * │ Quién es, y si está al corriente. No se puede editar, ni dar de baja,    │
- * │ ni cobrar, ni asignar un entrenador: no porque falte tiempo, sino        │
- * │ porque son decisiones que se toman sentado y con el expediente delante.  │
+ * │ Las rutinas entran en PARITY-1, y solo para el dueño: recepcion comparte │
+ * │ esta pantalla y no comparte ese permiso.                                 │
  * │                                                                          │
- * │ Tampoco salen las NOTAS INTERNAS, que son otro endpoint y otra decision  │
- * │ de privacidad: se escriben sobre una persona y no se leen de pie en      │
- * │ mitad de la sala con ella al lado.                                       │
+ * │ Editar, dar de baja y cobrar siguen sin estar, pero YA NO por la razon   │
+ * │ que ponia aqui —«son decisiones que se toman sentado»—. Esa regla la     │
+ * │ sustituyo la paridad: cada rol hace en el movil lo que hace en la web.   │
+ * │ Faltan porque les toca en PARITY-2, no porque se hayan descartado.       │
+ * │                                                                          │
+ * │ Las NOTAS INTERNAS si son otra cosa: otro endpoint y otra decision de    │
+ * │ privacidad. Se escriben sobre una persona y no se leen de pie en mitad   │
+ * │ de la sala con ella al lado.                                             │
  * └──────────────────────────────────────────────────────────────────────────┘
  *
  * ┌──────────────────────────────────────────────────────────────────────────┐
@@ -56,15 +65,27 @@ export default function SocioDelPanel() {
   const [refrescando, setRefrescando] = useState(false);
 
   const gymId = sesion.tipo === 'autenticado' ? sesion.gymId : null;
+  /*
+   * ┌────────────────────────────────────────────────────────────────────────┐
+   * │ ESTA FICHA LA COMPARTEN DUEÑO Y RECEPCION, Y NO PUEDEN LO MISMO.      │
+   * │                                                                        │
+   * │ Las rutinas son del modulo de entrenamiento, y ahi la API solo admite  │
+   * │ `owner` y `trainer`. A recepcion NO se le piden siquiera: un 403 en    │
+   * │ una de las tres peticiones no rompe la pantalla —se tratan por         │
+   * │ separado— pero seria una peticion que se sabe de antemano que falla.   │
+   * └────────────────────────────────────────────────────────────────────────┘
+   */
+  const entrena = sesion.tipo === 'autenticado' && puedeAsignarRutinas(sesion.rol);
 
   const pedir = useCallback(async () => {
     if (!gymId || !id) return;
-    const [ficha, cuota] = await Promise.allSettled([
+    const [ficha, cuota, rutinas] = await Promise.allSettled([
       cargarSocio(gymId, id),
       cargarCuota(gymId, id),
+      entrena ? cargarRutinasDeSocio(gymId, id) : Promise.resolve(null),
     ]);
 
-    if (laSesionYaNoVale(motivosDeFallo([ficha, cuota]))) {
+    if (laSesionYaNoVale(motivosDeFallo([ficha, cuota, rutinas]))) {
       void revisar();
       return;
     }
@@ -74,9 +95,16 @@ export default function SocioDelPanel() {
     }
     setCarga({
       fase: 'ok',
-      datos: { socio: ficha.value, cuota: cuota.status === 'fulfilled' ? cuota.value : null },
+      datos: {
+        socio: ficha.value,
+        cuota: cuota.status === 'fulfilled' ? cuota.value : null,
+        // `null` significa dos cosas distintas y las dos se pintan igual de
+        // bien: «no se pudieron cargar» y «este rol no las ve». La segunda no
+        // llega a enseñarse, porque la tarjeta entera va tras `entrena`.
+        rutinas: rutinas.status === 'fulfilled' ? rutinas.value : null,
+      },
     });
-  }, [gymId, id, revisar]);
+  }, [gymId, id, entrena, revisar]);
 
   useFocusEffect(
     useCallback(() => {
@@ -108,12 +136,32 @@ export default function SocioDelPanel() {
 
       {carga.fase === 'fallo' ? <Aviso tono="peligro">{carga.mensaje}</Aviso> : null}
 
-      {carga.fase === 'ok' ? <Contenido ficha={carga.datos} /> : null}
+      {carga.fase === 'ok' ? (
+        <Contenido
+          ficha={carga.datos}
+          gymId={gymId}
+          entrena={entrena}
+          alCambiar={() => void pedir()}
+          alCaducarSesion={() => void revisar()}
+        />
+      ) : null}
     </Pantalla>
   );
 }
 
-function Contenido({ ficha }: { ficha: Ficha }) {
+function Contenido({
+  ficha,
+  gymId,
+  entrena,
+  alCambiar,
+  alCaducarSesion,
+}: {
+  ficha: Ficha;
+  gymId: string | null;
+  entrena: boolean;
+  alCambiar: () => void;
+  alCaducarSesion: () => void;
+}) {
   const { socio, cuota } = ficha;
   const lectura = cuota ? lecturaDeCuotaParaPersonal(cuota) : null;
 
@@ -145,6 +193,23 @@ function Contenido({ ficha }: { ficha: Ficha }) {
           )}
         </View>
       </Tarjeta>
+
+      {entrena ? (
+        <Tarjeta>
+          <RutinasDelSocio
+            gymId={gymId}
+            socioId={socio.id}
+            rutinas={ficha.rutinas}
+            puedeAsignar
+            descripcionDe={(rutina) => ({
+              titulo: rutina.name,
+              detalle: `Desde el ${fechaCivil(rutina.assignedAt)}`,
+            })}
+            alCambiar={alCambiar}
+            alCaducarSesion={alCaducarSesion}
+          />
+        </Tarjeta>
+      ) : null}
 
       <Tarjeta>
         <View style={estilos.bloque}>

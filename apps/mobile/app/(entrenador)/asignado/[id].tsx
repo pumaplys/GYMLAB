@@ -6,6 +6,7 @@ import { Aviso } from '../../../src/componentes/aviso';
 import { CabeceraDeVuelta } from '../../../src/componentes/cabecera-de-vuelta';
 import { Pantalla } from '../../../src/componentes/pantalla';
 import { Tarjeta } from '../../../src/componentes/tarjeta';
+import { RutinasDelSocio } from '../../../src/entrenamiento/rutinas-del-socio';
 import { laSesionYaNoVale, motivosDeFallo } from '../../../src/auth/politica';
 import { useSesion } from '../../../src/auth/sesion';
 import { fechaCivil, fechaDeInstante } from '../../../src/formato/fecha';
@@ -29,16 +30,19 @@ interface Ficha {
  * Un socio mio, de un vistazo.
  *
  * ┌──────────────────────────────────────────────────────────────────────────┐
- * │ CONSULTA. NO SE PUEDE CAMBIAR NADA DESDE AQUI.                          │
+ * │ YA NO ES SOLO CONSULTA: DESDE PARITY-1 SE ASIGNAN Y SE TERMINAN RUTINAS.│
  * │                                                                          │
- * │ Ni editar la rutina, ni apuntar una medicion, ni asignar nada. Programar │
- * │ es trabajo de escritorio y el panel web lo tiene; esta pantalla es para  │
- * │ mirar de pie en la sala, con la persona delante.                        │
+ * │ Aqui ponia que programar «es trabajo de escritorio y el panel web lo     │
+ * │ tiene». Esa ya no es la regla del producto: un entrenador puede hacer en │
+ * │ el movil lo mismo que hace en la web, con los mismos permisos. Y es      │
+ * │ ademas donde tiene sentido —se asigna una rutina con la persona delante, │
+ * │ no de vuelta en el despacho—.                                            │
  * │                                                                          │
- * │ Y una consecuencia buena de que sea solo lectura: no toca el             │
- * │ CONSENTIMIENTO de datos de salud. Escribir una medicion exige que este   │
- * │ concedido; leer el historial no, y no se fuerza a nadie a aceptarlo para │
- * │ poder consultar lo que ya se le apunto.                                 │
+ * │ LO QUE SIGUE SIENDO SOLO LECTURA ES EL PROGRESO, y no por comodidad:     │
+ * │ escribir una medicion exige el CONSENTIMIENTO de datos de salud, que es  │
+ * │ otro modulo (`progress`) con sus propias reglas. Entra cuando le toque a │
+ * │ ese modulo, no de rebote aqui. Leer el historial no lo exige, asi que    │
+ * │ nadie tiene que aceptar nada para consultar lo que ya se le apunto.      │
  * └──────────────────────────────────────────────────────────────────────────┘
  *
  * Las tres peticiones se piden a la vez y se tratan por separado: si falla el
@@ -110,12 +114,29 @@ export default function SocioAsignado() {
 
       {carga.fase === 'fallo' ? <Aviso tono="peligro">{carga.mensaje}</Aviso> : null}
 
-      {carga.fase === 'ok' ? <Contenido ficha={carga.datos} /> : null}
+      {carga.fase === 'ok' ? (
+        <Contenido
+          ficha={carga.datos}
+          gymId={gymId}
+          alCambiar={() => void pedir()}
+          alCaducarSesion={() => void revisar()}
+        />
+      ) : null}
     </Pantalla>
   );
 }
 
-function Contenido({ ficha }: { ficha: Ficha }) {
+function Contenido({
+  ficha,
+  gymId,
+  alCambiar,
+  alCaducarSesion,
+}: {
+  ficha: Ficha;
+  gymId: string | null;
+  alCambiar: () => void;
+  alCaducarSesion: () => void;
+}) {
   const ultima = ficha.progreso ? ultimaMedicion(ficha.progreso) : null;
 
   return (
@@ -125,24 +146,15 @@ function Contenido({ ficha }: { ficha: Ficha }) {
       ) : null}
 
       <Tarjeta>
-        <View style={estilos.bloque}>
-          <Text style={estilos.rotulo}>Rutinas</Text>
-          {ficha.rutinas === null ? (
-            <Text style={estilos.texto}>No hemos podido cargar sus rutinas.</Text>
-          ) : ficha.rutinas.length === 0 ? (
-            <Text style={estilos.texto}>Todavía no sigue ninguna rutina.</Text>
-          ) : (
-            ficha.rutinas.map((rutina) => {
-              const linea = lineaDeRutina(rutina, fechaCivil);
-              return (
-                <View key={rutina.assignmentId} style={estilos.fila}>
-                  <Text style={estilos.titulo}>{linea.titulo}</Text>
-                  <Text style={estilos.detalle}>{linea.detalle}</Text>
-                </View>
-              );
-            })
-          )}
-        </View>
+        <RutinasDelSocio
+          gymId={gymId}
+          socioId={ficha.socio.id}
+          rutinas={ficha.rutinas}
+          puedeAsignar
+          descripcionDe={(rutina) => lineaDeRutina(rutina, fechaCivil)}
+          alCambiar={alCambiar}
+          alCaducarSesion={alCaducarSesion}
+        />
       </Tarjeta>
 
       <Tarjeta>

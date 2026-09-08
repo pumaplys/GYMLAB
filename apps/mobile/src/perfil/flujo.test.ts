@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { ApiError, NetworkError } from '@gymlab/api-client';
 import type { OwnPayment } from '@gymlab/contracts';
 import { clasificarError } from '../auth/clasificar';
-import { debeBorrarToken } from '../auth/estado';
+import { AREA_DE_ROL, debeBorrarToken } from '../auth/estado';
 import { laSesionYaNoVale } from '../auth/politica';
 import { fechaCivil, fechaDeInstante, horaDeInstante } from '../formato/fecha';
 import {
@@ -281,7 +281,10 @@ describe('el gate de las subrutas de Perfil', () => {
 
   it('solo `autenticado` Y del area de socio puede entrar', () => {
     expect(
-      puedeEntrarEnArea({ tipo: 'autenticado', yo: {} as never, gymId: 'g1', area: 'socio' }, 'socio'),
+      puedeEntrarEnArea(
+        { tipo: 'autenticado', yo: {} as never, gymId: 'g1', area: 'socio', rol: 'member' },
+        'socio',
+      ),
     ).toBe(true);
     for (const estado of noAutenticados) {
       expect(puedeEntrarEnArea(estado, 'socio'), estado.tipo).toBe(false);
@@ -293,14 +296,17 @@ describe('el gate de las subrutas de Perfil', () => {
    * del socio, y ahora hay personal con sesion perfectamente valida.
    */
   it('personal autenticado NO entra en las secciones del socio', () => {
-    for (const area of ['panel', 'entrenador'] as const) {
+    // Los TRES roles de personal, no dos areas: desde PARITY-1 el rol viaja
+    // en el estado, y `receptionist` y `owner` comparten area.
+    for (const rol of ['owner', 'receptionist', 'trainer'] as const) {
       const estado: EstadoDeSesion = {
         tipo: 'autenticado',
         yo: {} as never,
         gymId: 'g1',
-        area,
+        area: AREA_DE_ROL[rol],
+        rol,
       };
-      expect(puedeEntrarEnArea(estado, 'socio'), area).toBe(false);
+      expect(puedeEntrarEnArea(estado, 'socio'), rol).toBe(false);
     }
   });
 

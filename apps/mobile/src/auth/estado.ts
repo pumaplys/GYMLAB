@@ -47,7 +47,21 @@ export type EstadoDeSesion =
    * Hay sesion y hay gimnasio activo. `area` dice a cual de las tres
    * experiencias pertenece el rol que se tiene EN ESE gimnasio.
    */
-  | { tipo: 'autenticado'; yo: Me; gymId: string; area: Area }
+  /*
+   * ┌────────────────────────────────────────────────────────────────────────┐
+   * │ EL `rol` VA ADEMAS DEL `area`, Y NO ES REDUNDANTE.                     │
+   * │                                                                        │
+   * │ Hasta PARITY-1 el area bastaba, porque area y permisos coincidian. Ya  │
+   * │ no: `owner` y `receptionist` viven los dos en el area `panel`, y solo  │
+   * │ el dueño puede tocar ejercicios y rutinas —lo dice la API, que exige   │
+   * │ `@Roles('owner', 'trainer')` en todo el modulo de entrenamiento—.      │
+   * │                                                                        │
+   * │ El area dice DONDE vives. El rol dice QUE puedes hacer. Son la misma   │
+   * │ cosa en tres de los cuatro roles y por eso se podia derivar una del    │
+   * │ otro; en cuanto dejan de serlo, derivarla seria inventarse un permiso. │
+   * └────────────────────────────────────────────────────────────────────────┘
+   */
+  | { tipo: 'autenticado'; yo: Me; gymId: string; area: Area; rol: Role }
   /** No hay sesion, o la que habia ya no vale. */
   | { tipo: 'sinSesion' }
   /**
@@ -162,7 +176,15 @@ export function resolverAcceso(yo: Me): EstadoDeSesion {
 
   // Hay gimnasio activo: manda su rol, y solo el suyo.
   if (activa) {
-    return { tipo: 'autenticado', yo, gymId: activa.gymId, area: AREA_DE_ROL[activa.role] };
+    return {
+      tipo: 'autenticado',
+      yo,
+      gymId: activa.gymId,
+      area: AREA_DE_ROL[activa.role],
+      // El mismo rol del que sale el area, no otro leido en otra parte: dos
+      // lecturas son dos politicas, y dos politicas acaban separandose.
+      rol: activa.role,
+    };
   }
 
   // Sin gimnasio activo y sin ninguna pertenencia: esta cuenta no es de

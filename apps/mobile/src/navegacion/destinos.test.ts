@@ -34,7 +34,7 @@ const YO: Me = {
 const TODOS: Record<EstadoDeSesion['tipo'], EstadoDeSesion> = {
   cargando: { tipo: 'cargando' },
   sinSesion: { tipo: 'sinSesion' },
-  autenticado: { tipo: 'autenticado', yo: YO, gymId: GIMNASIO, area: 'socio' },
+  autenticado: { tipo: 'autenticado', yo: YO, gymId: GIMNASIO, area: 'socio', rol: 'member' },
   rolNoAdmitido: { tipo: 'rolNoAdmitido', yo: YO },
   requiereSeleccionGimnasio: {
     tipo: 'requiereSeleccionGimnasio',
