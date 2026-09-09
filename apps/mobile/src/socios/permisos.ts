@@ -49,11 +49,22 @@ export function puedeAnularPagos(rol: Role): boolean {
 }
 
 /**
- * Los planes: VER es de los dos, CAMBIARLOS es del dueño.
+ * LEER la lista de planes: los dos. ADMINISTRARLOS: el dueño.
  *
- * `PlansController` tiene `@Roles('owner')` en la clase y baja a
- * `@Roles('owner', 'receptionist')` solo en el `GET`. Tiene sentido: recepcion
- * necesita la lista para dar de alta una cuota, no para cambiar los precios.
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ SON DOS COSAS Y SE CONFUNDIERON EN PARITY-2.                            │
+ * │                                                                          │
+ * │ `PlansController` tiene `@Roles('owner')` en la clase y baja a           │
+ * │ `@Roles('owner','receptionist')` solo en el `GET`: recepcion necesita la │
+ * │ lista PARA DAR DE ALTA UNA CUOTA, y de ahi salio darle tambien la        │
+ * │ pantalla de Planes. En el panel web NO la tiene —`soloDueno: true` en    │
+ * │ `DESTINOS_PANEL`— y solo ve los planes dentro del formulario de la       │
+ * │ cuota. Lo encontro PARITY-5 comparando destino a destino.                │
+ * │                                                                          │
+ * │ Asi que la seccion es del dueño y la LECTURA se queda donde siempre      │
+ * │ hizo falta: `socio/[id]/cuota.tsx`, que llama a `cargarPlanes` sin       │
+ * │ preguntar por el rol porque el servidor ya autoriza a los dos.           │
+ * └──────────────────────────────────────────────────────────────────────────┘
  */
 export function puedeVerPlanes(rol: Role): boolean {
   return puedeAtenderMostrador(rol);

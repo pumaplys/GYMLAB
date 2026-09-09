@@ -24,9 +24,13 @@ import { tema } from '../../../src/tema';
  * │                                                                          │
  * │ `PlansController` lleva `@Roles('owner')` en la clase y baja a           │
  * │ `@Roles('owner', 'receptionist')` SOLO en el `GET`. Tiene sentido:       │
- * │ recepcion necesita la lista para dar de alta una cuota, no para cambiar  │
- * │ los precios. Por eso esta pantalla la ven los dos y los botones de       │
- * │ crear y editar solo aparecen para el dueño.                              │
+ * │ recepcion necesita la lista PARA DAR DE ALTA UNA CUOTA, no para cambiar  │
+ * │ los precios.                                                             │
+ * │                                                                          │
+ * │ De ahi salio, en PARITY-2, darle tambien esta pantalla. Era de mas: en   │
+ * │ el panel web es `soloDueno: true`, y recepcion solo ve los planes dentro │
+ * │ del formulario de la cuota. PARITY-5 lo corrigio — la fila del Panel ya  │
+ * │ no se le pinta, y quien llegue por un enlace directo lee por que.        │
  * └──────────────────────────────────────────────────────────────────────────┘
  *
  * Los archivados se quedan abajo: siguen sosteniendo suscripciones vivas, y en
@@ -58,6 +62,18 @@ export default function Planes() {
   useEffect(() => {
     void pedir();
   }, [pedir]);
+
+  if (!puedeEditar) {
+    return (
+      <Pantalla>
+        <CabeceraDeVuelta titulo="Planes" volverA="/panel" etiquetaDeVuelta="Panel" />
+        <Aviso tono="informacion">
+          Los precios los decide el propietario del gimnasio. Al dar de alta una cuota podrás elegir
+          entre los planes que haya.
+        </Aviso>
+      </Pantalla>
+    );
+  }
 
   return (
     <Pantalla alRefrescar={carga.fase === 'ok' ? () => void pedir() : undefined}>

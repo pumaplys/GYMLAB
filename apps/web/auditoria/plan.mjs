@@ -112,6 +112,25 @@ export function pantallas(fixture) {
     },
     { rol: 'owner', ruta: '/configuracion', acciones: [], contiene: ['Configuración'] },
 
+    /*
+     * PARITY-5: entrenamiento tambien es del dueño. `training.controller.ts`
+     * autoriza `owner` y `trainer`, y hasta ahora el panel le redirigia fuera
+     * porque las pantallas viven bajo `/entrenador/*`. Se auditan con su rol
+     * para que la redireccion, si vuelve, salga aqui.
+     */
+    {
+      rol: 'owner',
+      ruta: '/entrenador/rutinas',
+      acciones: ['Nueva rutina'],
+      contiene: ['Rutinas'],
+    },
+    {
+      rol: 'owner',
+      ruta: '/entrenador/ejercicios',
+      acciones: ['Nuevo ejercicio'],
+      contiene: ['Ejercicios'],
+    },
+
     // --------------------------------------------------------- RECEPCION
     { rol: 'receptionist', ruta: '/socios', acciones: ['Nuevo socio'], contiene: ['Socios'] },
     { rol: 'receptionist', ruta: '/accesos', acciones: [], contiene: ['Accesos'] },

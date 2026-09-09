@@ -71,44 +71,36 @@ function destinosDelPanelWeb(): { href: string; soloDueno: boolean }[] {
 }
 
 /**
- * Qué filas del Panel móvil están detrás de una condición, y cuáles no.
+ * Cada fila del Panel móvil con la condición que la envuelve, si la hay.
  *
- * Se recorre el JSX contando llaves: una fila cuenta como condicionada si su
- * `titulo=` cae dentro de un bloque `{algo ? (`. Es lo que de verdad decide
- * quien ve que, y no depende de como se llame la variable que lo guarda.
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ SABER QUE ESTA «DETRAS DE ALGO» NO BASTA.                               │
+ * │                                                                          │
+ * │ La primera version solo decia si una fila era condicional. Cambiando su  │
+ * │ guarda por `{true ? (…)}` —que le devuelve Planes a recepcion— el gate   │
+ * │ se quedaba VERDE. Lo que hay que afirmar es DE QUE depende cada fila.    │
+ * │                                                                          │
+ * │ Contar llaves tampoco valia: `onPress={() => …}` abre llaves a docenas.  │
+ * │ Se cuentan los `? (` y los `) : null}`, y se lee el titulo ANTES de      │
+ * │ aplicar los del propio trozo — el `? (` del bloque siguiente vive en la  │
+ * │ cola de este, y contarlo antes marcaba la fila anterior.                 │
+ * └──────────────────────────────────────────────────────────────────────────┘
  */
-function filasCondicionadasDelPanel(): string[] {
+function filasDelPanelConSuGuarda(): { titulo: string; guarda: string | null }[] {
   const codigo = leer(APP, '(panel)', 'panel.tsx');
-  /*
-   * Se corta por fila y se mira lo que hay ENTRE el final de la anterior y el
-   * principio de esta: si ahi se abre un `? (`, la fila esta condicionada.
-   *
-   * Contar llaves no valia —`onPress={() => …}` y `style={({ pressed }) => …}`
-   * abren llaves a docenas— y la primera version marcaba como condicionadas
-   * filas que no lo estan.
-   */
-  const condicionadas: string[] = [];
-  let dentro = 0;
+  const filas: { titulo: string; guarda: string | null }[] = [];
+  const abiertas: string[] = [];
 
-  // Se recorre en orden, contando los `? (` que se abren y los `) : null}` que
-  // se cierran. Dos filas dentro del MISMO bloque —Rutinas y Ejercicios— tienen
-  // que contar las dos; mirar solo lo que hay justo antes de cada fila dejaba
-  // fuera la segunda.
   for (const trozo of codigo.split(/(<FilaDeAccion)/)) {
     if (trozo === '<FilaDeAccion') continue;
-    /*
-     * PRIMERO se lee el titulo con el estado que traia, y DESPUES se aplican
-     * las aperturas y cierres del trozo: el `? (` del bloque siguiente vive en
-     * la cola de este, y contarlo antes marcaba como condicionada la fila
-     * anterior — «Personal» salia gateada y no lo esta.
-     */
     const titulo = trozo.match(/^[\s\S]{0,200}?titulo="([^"]+)"/)?.[1];
-    if (titulo && dentro > 0) condicionadas.push(titulo);
-    for (const m of trozo.matchAll(/\?\s*\(|\)\s*:\s*null\}/g)) {
-      dentro += m[0].startsWith('?') ? 1 : -1;
+    if (titulo) filas.push({ titulo, guarda: abiertas[abiertas.length - 1] ?? null });
+    for (const m of trozo.matchAll(/\{\s*(\w+)\s*\?\s*\(|\)\s*:\s*null\}/g)) {
+      if (m[1]) abiertas.push(m[1]);
+      else abiertas.pop();
     }
   }
-  return condicionadas;
+  return filas;
 }
 
 describe('el mapa de la web se lee del código, no de la memoria', () => {
@@ -121,7 +113,7 @@ describe('el mapa de la web se lee del código, no de la memoria', () => {
     expect(mapa.member).toBe('socio');
   });
 
-  it('el Panel web tiene cinco destinos, dos de ellos sólo del dueño', () => {
+  it('el Panel web tiene siete destinos, cuatro de ellos sólo del dueño', () => {
     const destinos = destinosDelPanelWeb();
     expect(destinos.map((d) => d.href)).toEqual([
       '/socios',
@@ -129,10 +121,15 @@ describe('el mapa de la web se lee del código, no de la memoria', () => {
       '/planes',
       '/accesos',
       '/configuracion',
+      // PARITY-5: entrenamiento tambien es del dueño, y le faltaba la puerta.
+      '/entrenador/rutinas',
+      '/entrenador/ejercicios',
     ]);
     expect(destinos.filter((d) => d.soloDueno).map((d) => d.href)).toEqual([
       '/planes',
       '/configuracion',
+      '/entrenador/rutinas',
+      '/entrenador/ejercicios',
     ]);
   });
 
@@ -165,26 +162,6 @@ interface Diferencia {
 }
 
 const DIFERENCIAS: Diferencia[] = [
-  {
-    que: 'Rutinas y Ejercicios',
-    web: 'sólo el entrenador (viven en el área `entrenador`; al dueño lo redirige)',
-    movil: 'entrenador y DUEÑO (filas del Panel tras `puedeEntrenar`)',
-    motivo:
-      'La API dice `@Roles("owner","trainer")` y PARITY-1 lo tomo como alcance. ' +
-      'El producto web no se lo ofrece al dueño. O se le abre en la web, o se le ' +
-      'quita del movil: es una decision de producto, no de codigo.',
-    estado: 'pendiente-de-decision',
-  },
-  {
-    que: 'Pantalla de Planes',
-    web: 'sólo el dueño (`soloDueno: true` en DESTINOS_PANEL)',
-    movil: 'dueño y RECEPCIÓN (la lista, sin crear ni editar)',
-    motivo:
-      'Recepcion lee los planes en las dos —los necesita para dar de alta una ' +
-      'cuota— pero en la web no tiene pantalla propia. Misma familia que lo ' +
-      'anterior y mucho menor: quitar la fila no le resta ninguna capacidad.',
-    estado: 'pendiente-de-decision',
-  },
   {
     que: 'Entrada manual de un código en el escáner',
     web: 'campo de texto + botón «Comprobar»',
@@ -224,29 +201,126 @@ describe('las diferencias entre el panel y el móvil están todas escritas', () 
     }
   });
 
-  /*
-   * Las dos pendientes se afirman TAL Y COMO ESTAN HOY. Si alguien toca
-   * cualquiera de los dos lados sin decidir, esto se pone rojo y obliga a
-   * releer la tabla en vez de dejar que la diferencia se cuele otra vez.
-   */
-  it('PENDIENTE: el dueño entrena en el móvil y no en la web', () => {
+  it('ninguna queda pendiente de decisión', () => {
+    // Las dos que lo estaban se cerraron: entrenamiento se abrio al dueño en la
+    // web, y Planes dejo de ser una seccion de recepcion en el movil.
+    expect(DIFERENCIAS.filter((d) => d.estado === 'pendiente-de-decision')).toEqual([]);
+  });
+});
+
+/**
+ * ── EL DUEÑO Y EL ENTRENAMIENTO ────────────────────────────────────────────
+ *
+ * Lo compartido se le abre; lo exclusivo del entrenador, no.
+ */
+describe('el dueño entrena en las dos, y no invade lo del entrenador', () => {
+  it('la web le da Rutinas y Ejercicios', () => {
+    const areas = leer(WEB, 'src', 'lib', 'areas.ts');
+    expect(areas).toMatch(/RUTAS_DE_ENTRENAMIENTO/);
+    expect(areas).toMatch(
+      /esRutaDeEntrenamiento\(ruta\) && ROLES_DE_ENTRENAMIENTO\.includes\(rol\)/,
+    );
+
+    const destinos = destinosDelPanelWeb().map((d) => d.href);
+    expect(destinos).toContain('/entrenador/rutinas');
+    expect(destinos).toContain('/entrenador/ejercicios');
+  });
+
+  it('y el móvil también, con la misma regla', () => {
     expect(leer(MOVIL, 'src', 'entrenamiento', 'permisos.ts')).toMatch(
       /rol === 'owner' \|\| rol === 'trainer'/,
     );
-    expect(leer(APP, '(panel)', 'panel.tsx')).toMatch(/puedeEntrenar\(/);
-    // Y en la web NO hay ningun destino de entrenamiento en el Panel.
-    expect(destinosDelPanelWeb().map((d) => d.href)).not.toContain('/entrenador/rutinas');
+    // Las dos filas dependen de `entrena`, que sale de `puedeEntrenar`.
+    const filas = filasDelPanelConSuGuarda();
+    expect(filas.find((f) => f.titulo === 'Rutinas')?.guarda).toBe('entrena');
+    expect(filas.find((f) => f.titulo === 'Ejercicios')?.guarda).toBe('entrena');
+    expect(leer(APP, '(panel)', 'panel.tsx')).toMatch(
+      /const entrena =[^;]*puedeEntrenar\(estado\.rol\)/,
+    );
   });
 
-  it('PENDIENTE: recepción ve Planes en el móvil y no en la web', () => {
+  /*
+   * ┌──────────────────────────────────────────────────────────────────────┐
+   * │ «MIS SOCIOS» ES DEL ENTRENADOR Y SOLO SUYA.                          │
+   * │                                                                      │
+   * │ Cuelga de `/me/trainer/*`, que es `@Roles('trainer')`: el servidor le │
+   * │ contestaria 403 al dueño. Abrirle el area entera habria sido lo facil │
+   * │ y lo equivocado.                                                     │
+   * └──────────────────────────────────────────────────────────────────────┘
+   */
+  it('«Mis socios» NO se le abre: ni la ruta ni el destino', () => {
+    const areas = leer(WEB, 'src', 'lib', 'areas.ts');
+    const compartidas = areas.match(/RUTAS_DE_ENTRENAMIENTO = \[([^\]]*)\]/)?.[1] ?? '';
+    expect(compartidas).not.toMatch(/'\/entrenador'/);
+    expect(compartidas).not.toMatch(/'\/entrenador\/socio'/);
+
+    // Ni aparece en su navegacion.
+    expect(destinosDelPanelWeb().map((d) => d.href)).not.toContain('/entrenador');
+
+    // Y en el movil, su area sigue gateada por rol de entrenador.
+    expect(leer(APP, '(entrenador)', '_layout.tsx')).toMatch(/puedeEntrarEnArea|Redirect/);
+  });
+
+  it('recepción sigue fuera de entrenamiento en las dos', () => {
+    const areas = leer(WEB, 'src', 'lib', 'areas.ts');
+    expect(areas).toMatch(/ROLES_DE_ENTRENAMIENTO[^=]*=\s*\[\s*'owner',\s*'trainer'\s*\]/);
+    // `puedeEntrenar` no la admite, y de ahi salen las filas del Panel movil.
+    expect(leer(MOVIL, 'src', 'entrenamiento', 'permisos.ts')).not.toMatch(/'receptionist'/);
+  });
+
+  it('y el dueño asigna rutinas desde la ficha del socio, en las dos', () => {
+    // Movil: la tarjeta del Panel, tras `entrena`.
+    expect(leer(APP, '(panel)', 'socio', '[id]', 'index.tsx')).toMatch(/RutinasDelSocio/);
+    // Web: la misma tarjeta del entrenador, reutilizada y acotada al dueño.
+    const ficha = leer(WEB, 'src', 'app', 'socios', 'ficha', 'page.tsx');
+    expect(ficha).toMatch(/RutinasDelSocio/);
+    expect(ficha).toMatch(/rolDeLaSesion === 'owner'/);
+  });
+});
+
+/**
+ * ── RECEPCION Y LOS PLANES ─────────────────────────────────────────────────
+ *
+ * Administrar precios es del dueño. Elegir un plan al dar de alta una cuota es
+ * del mostrador, y eso NO se toca.
+ */
+describe('recepción no administra planes, pero sigue eligiendo plan', () => {
+  it('la sección es del dueño en las dos', () => {
     expect(destinosDelPanelWeb().find((d) => d.href === '/planes')?.soloDueno).toBe(true);
+
     /*
-     * Y en el movil, Planes NO esta entre las filas condicionadas. Se mide
-     * cuales lo estan en vez de buscar un texto: envolver la fila en
-     * `{loQueSea ? (…) : null}` tiene que poner esto en rojo, y una primera
-     * version que buscaba `rol === 'owner'` no lo detectaba.
+     * Y en el movil, la fila de Planes depende de `administraPlanes` — que se
+     * declara con `puedeEditarPlanes`, y ese es del dueño. Comprobar solo que
+     * «esta detras de algo» dejaba pasar un `{true ? (…)}`.
      */
-    expect(filasCondicionadasDelPanel()).toEqual(['Configuración', 'Rutinas', 'Ejercicios']);
+    const planes = filasDelPanelConSuGuarda().find((f) => f.titulo === 'Planes');
+    expect(planes?.guarda).toBe('administraPlanes');
+    expect(leer(APP, '(panel)', 'panel.tsx')).toMatch(
+      /const administraPlanes =[^;]*puedeEditarPlanes\(estado\.rol\)/,
+    );
+    expect(leer(MOVIL, 'src', 'socios', 'permisos.ts')).toMatch(
+      /export function puedeEditarPlanes\(rol: Role\): boolean \{\s*return rol === 'owner';/,
+    );
+  });
+
+  it('y quien llegue por un enlace directo lee por qué, no la lista', () => {
+    const pantalla = leer(APP, '(panel)', 'planes', 'index.tsx');
+    expect(pantalla).toMatch(/if \(!puedeEditar\)/);
+    expect(pantalla).toMatch(/Los precios los decide el propietario/);
+  });
+
+  /*
+   * Lo que NO puede romperse al quitar la seccion: la cuota carga los planes
+   * sin preguntar por el rol, porque el `GET` es `owner` + `receptionist`.
+   */
+  it('la cuota sigue cargando los planes sin mirar el rol', () => {
+    const cuota = leer(APP, '(panel)', 'socio', '[id]', 'cuota.tsx');
+    expect(cuota).toMatch(/cargarPlanes\(gymId\)/);
+    expect(cuota).not.toMatch(/puedeEditarPlanes|administraPlanes/);
+    // Y en la web, igual: el formulario de la cuota los lista para los dos.
+    expect(leer(WEB, 'src', 'app', 'socios', 'ficha', 'cuota.tsx')).toMatch(
+      /api\s*\.\s*billing\s*\.\s*listPlans/,
+    );
   });
 });
 
