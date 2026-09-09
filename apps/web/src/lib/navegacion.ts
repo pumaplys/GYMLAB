@@ -91,6 +91,22 @@ export const DESTINOS_PANEL = [
     icono: 'configuracion',
     soloDueno: true,
   },
+  /*
+   * ┌──────────────────────────────────────────────────────────────────────┐
+   * │ ENTRENAMIENTO TAMBIEN ES DEL DUEÑO, Y LE FALTABA LA PUERTA.          │
+   * │                                                                      │
+   * │ `training.controller.ts` autoriza `owner` y `trainer` en sus cuatro   │
+   * │ clases. Las pantallas viven bajo `/entrenador/*` porque es donde se   │
+   * │ escribieron, no porque sean del area del entrenador: `areas.ts` las   │
+   * │ declara COMPARTIDAS y deja pasar a los dos roles.                     │
+   * │                                                                      │
+   * │ Van al final y no entre Socios y Personal: lo de arriba es lo que se  │
+   * │ abre cada dia en el mostrador. Y NO aparece «Mis socios», que es del  │
+   * │ entrenador y solo suya — su endpoint es `@Roles('trainer')`.          │
+   * └──────────────────────────────────────────────────────────────────────┘
+   */
+  { href: '/entrenador/rutinas', texto: 'Rutinas', icono: 'rutinas', soloDueno: true },
+  { href: '/entrenador/ejercicios', texto: 'Ejercicios', icono: 'ejercicios', soloDueno: true },
 ] as const satisfies readonly (Destino & { soloDueno: boolean })[];
 
 /**

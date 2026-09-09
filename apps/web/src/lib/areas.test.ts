@@ -1,6 +1,14 @@
 import type { Role } from '@gymlab/contracts';
 import { describe, expect, it } from 'vitest';
-import { AREA_DE_ROL, areaDeRuta, destinoSegunArea, inicioPara } from './areas';
+import {
+  AREA_DE_ROL,
+  ROLES_DE_ENTRENAMIENTO,
+  RUTAS_DE_ENTRENAMIENTO,
+  areaDeRuta,
+  destinoSegunArea,
+  esRutaDeEntrenamiento,
+  inicioPara,
+} from './areas';
 
 /**
  * A DONDE VA CADA ROL, Y QUE PASA SI ESCRIBE OTRA URL A MANO.
@@ -64,18 +72,53 @@ describe('a que area pertenece cada ruta', () => {
     expect(areaDeRuta('/socio/carne')).toBe('socio');
   });
 
-  it('rutinas y ejercicios son del area de entrenador', () => {
+  /*
+   * ┌──────────────────────────────────────────────────────────────────────┐
+   * │ ESTE TEST DECIA QUE EL DUEÑO SE QUEDABA FUERA. ERA EL FALLO, NO LA    │
+   * │ REGLA.                                                                │
+   * │                                                                       │
+   * │ `training.controller.ts` autoriza `owner` y `trainer` en sus cuatro    │
+   * │ clases, y el panel dejaba fuera al dueño solo porque las pantallas     │
+   * │ viven bajo `/entrenador/*`. El movil si se las daba: la diferencia     │
+   * │ por rol la encontro PARITY-5, y se cerro abriendolas en la web.        │
+   * │                                                                       │
+   * │ Recepcion sigue fuera —la API la rechaza— y el socio tambien.          │
+   * └──────────────────────────────────────────────────────────────────────┘
+   */
+  it('rutinas y ejercicios son de los DOS roles que autoriza la API', () => {
     for (const ruta of [
       '/entrenador/rutinas',
       '/entrenador/rutinas/ficha',
       '/entrenador/ejercicios',
+      '/entrenador/ejercicios/lo-que-venga',
     ]) {
+      // Siguen viviendo bajo `/entrenador`: lo que cambia es quien pasa.
       expect(areaDeRuta(ruta)).toBe('entrenador');
       expect(destinoSegunArea('trainer', ruta)).toBeNull();
+      expect(destinoSegunArea('owner', ruta)).toBeNull();
       expect(destinoSegunArea('member', ruta)).toBe('/socio');
-      expect(destinoSegunArea('owner', ruta)).toBe('/socios');
       expect(destinoSegunArea('receptionist', ruta)).toBe('/socios');
     }
+  });
+
+  it('y lo EXCLUSIVO del entrenador sigue siendo suyo', () => {
+    // `/me/trainer/*` es `@Roles('trainer')`: ni el dueño entra.
+    for (const ruta of ['/entrenador', '/entrenador/socio']) {
+      expect(destinoSegunArea('trainer', ruta)).toBeNull();
+      expect(destinoSegunArea('owner', ruta)).toBe('/socios');
+      expect(destinoSegunArea('receptionist', ruta)).toBe('/socios');
+      expect(destinoSegunArea('member', ruta)).toBe('/socio');
+    }
+  });
+
+  it('la lista de rutas compartidas no crece sola', () => {
+    // Añadir una ruta aqui abre una capacidad a otro rol. Que cueste una linea
+    // en un test es exactamente lo que se quiere.
+    expect([...RUTAS_DE_ENTRENAMIENTO]).toEqual(['/entrenador/rutinas', '/entrenador/ejercicios']);
+    expect([...ROLES_DE_ENTRENAMIENTO]).toEqual(['owner', 'trainer']);
+    expect(esRutaDeEntrenamiento('/entrenador')).toBe(false);
+    expect(esRutaDeEntrenamiento('/entrenador/socio')).toBe(false);
+    expect(esRutaDeEntrenamiento('/entrenador/rutinas/nueva')).toBe(true);
   });
 
   it('la ficha del socio asignado es del area de entrenador', () => {

@@ -67,6 +67,37 @@ export function inicioPara(rol: Role): string {
 }
 
 /**
+ * Entrenamiento: las rutas que NO son de un area, sino de dos.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ EL AREA NO PODIA EXPRESAR ESTO, Y POR ESO FALTABA.                       │
+ * │                                                                          │
+ * │ `AREA_DE_ROL` da un area a cada rol, y eso basta mientras cada capacidad │
+ * │ sea de un area. Ejercicios y rutinas NO lo son: el servidor las autoriza │
+ * │ a `owner` Y a `trainer` —`@Roles('owner','trainer')` en las cuatro       │
+ * │ clases de `training.controller.ts`— y viven bajo `/entrenador/*` solo    │
+ * │ porque es donde se escribieron primero.                                  │
+ * │                                                                          │
+ * │ Resultado: el dueño quedaba fuera de una capacidad que la API le da, y   │
+ * │ nadie lo veia porque el conteo de metodos salia igual —las usa el        │
+ * │ entrenador en las dos aplicaciones—. Lo encontro PARITY-5 comparando por │
+ * │ ROL en vez de por metodo.                                                │
+ * │                                                                          │
+ * │ NO se abre el area entera: «Mis socios» y la ficha del socio asignado    │
+ * │ cuelgan de `/me/trainer/*`, que es `@Roles('trainer')`. El dueño ahi no  │
+ * │ entra, y el servidor tampoco le dejaria.                                 │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ */
+export const RUTAS_DE_ENTRENAMIENTO = ['/entrenador/rutinas', '/entrenador/ejercicios'] as const;
+
+/** Los roles que el servidor autoriza en esas rutas. Ni uno mas. */
+export const ROLES_DE_ENTRENAMIENTO: readonly Role[] = ['owner', 'trainer'];
+
+export function esRutaDeEntrenamiento(ruta: string): boolean {
+  return RUTAS_DE_ENTRENAMIENTO.some((r) => ruta === r || ruta.startsWith(`${r}/`));
+}
+
+/**
  * Que hacer cuando alguien abre una ruta.
  *
  * Devuelve `null` si puede pasar, o la ruta a la que hay que mandarle. Es una
@@ -82,6 +113,13 @@ export function destinoSegunArea(rol: Role, ruta: string): string | null {
   const area = areaDeRuta(ruta);
   // Ruta sin area: no hay nada que comprobar.
   if (area === null) return null;
+  /*
+   * Entrenamiento va ANTES que el area: es de los dos roles que autoriza el
+   * servidor, no del area de ninguno. Ponerlo despues no serviria de nada —el
+   * area ya habria decidido— y ponerlo sin la lista de roles abriria estas
+   * rutas a recepcion, que la API rechaza.
+   */
+  if (esRutaDeEntrenamiento(ruta) && ROLES_DE_ENTRENAMIENTO.includes(rol)) return null;
   if (area === AREA_DE_ROL[rol]) return null;
   return inicioPara(rol);
 }

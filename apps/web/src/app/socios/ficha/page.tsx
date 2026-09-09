@@ -21,6 +21,13 @@ import { ROLES_DEL_PANEL } from '@/lib/roles';
 import { esSesionCaducada, useSesion } from '@/lib/sesion';
 import { Cuota } from './cuota';
 import { EntrenadoresDelSocio } from './entrenadores';
+/*
+ * La tarjeta de rutinas del socio vive en la ficha del entrenador y se REUTILIZA
+ * aqui tal cual: es la misma capacidad, autorizada por la API al dueño y al
+ * entrenador, y dos copias acabarian divergiendo. La ficha del entrenador y esta
+ * responden preguntas distintas, pero «que rutinas sigue» es la misma.
+ */
+import { RutinasDelSocio } from '@/app/entrenador/socio/rutinas';
 import estilos from './ficha.module.css';
 
 /**
@@ -53,7 +60,7 @@ export default function FichaPage() {
 
 function Ficha() {
   const id = useSearchParams().get('id');
-  const { gymId, revisar } = useSesion();
+  const { gymId, rol: rolDeLaSesion, revisar } = useSesion();
 
   const [socio, setSocio] = useState<Member | null>(null);
   const [cargando, setCargando] = useState(true);
@@ -99,9 +106,7 @@ function Ficha() {
   }
 
   if (cargando) {
-    return (
-      <Cargando>Cargando la ficha…</Cargando>
-    );
+    return <Cargando>Cargando la ficha…</Cargando>;
   }
 
   if (error || !socio) {
@@ -184,6 +189,17 @@ function Ficha() {
             mucho menos veces.
           */}
           <EntrenadoresDelSocio memberId={socio.id} />
+
+          {/*
+            Y las rutinas, SOLO PARA EL DUEÑO: el modulo de entrenamiento es
+            owner + trainer, y recepcion no entra —«quien decide
+            como se entrena no es quien atiende el mostrador»—. Es la misma
+            tarjeta que ve el entrenador en la ficha de su socio, y la misma
+            que el movil pinta en esta ficha desde PARITY-1.
+          */}
+          {rolDeLaSesion === 'owner' ? (
+            <RutinasDelSocio memberId={socio.id} nombre={socio.firstName} />
+          ) : null}
 
           <DatosPersonales socio={socio} />
         </div>
@@ -269,7 +285,11 @@ function DatosPersonales({ socio }: { socio: Member }) {
       </p>
 
       <div className={estilos.accionesLegales}>
-        <Boton cargando={trabajando === 'exportar'} disabled={trabajando !== null} onClick={descargar}>
+        <Boton
+          cargando={trabajando === 'exportar'}
+          disabled={trabajando !== null}
+          onClick={descargar}
+        >
           Descargar sus datos
         </Boton>
 
@@ -284,7 +304,11 @@ function DatosPersonales({ socio }: { socio: Member }) {
           // `sutil` y no `peligro`: el rojo es del boton que CONFIRMA, no del
           // que abre la pregunta. Un "Eliminar" rojo permanente en la ficha
           // pone alarma en una pantalla que se abre cien veces al dia.
-          <Boton variante="sutil" disabled={trabajando !== null} onClick={() => setConfirmando(true)}>
+          <Boton
+            variante="sutil"
+            disabled={trabajando !== null}
+            onClick={() => setConfirmando(true)}
+          >
             Eliminar
           </Boton>
         )}

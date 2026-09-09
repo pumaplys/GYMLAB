@@ -6,6 +6,7 @@ import { Pantalla } from '../../src/componentes/pantalla';
 import { useSesion } from '../../src/auth/sesion';
 import { puedeEntrenar } from '../../src/entrenamiento/permisos';
 import { puedeConfigurarLoLegal } from '../../src/legal/permisos';
+import { puedeEditarPlanes } from '../../src/socios/permisos';
 import { RUTAS_INTERNAS } from '../../src/navegacion/destinos';
 import { tema } from '../../src/tema';
 
@@ -38,6 +39,9 @@ export default function Panel() {
   const entrena = estado.tipo === 'autenticado' && puedeEntrenar(estado.rol);
   // Lo legal es solo del dueño. Recepcion no ve ni la fila.
   const configura = estado.tipo === 'autenticado' && puedeConfigurarLoLegal(estado.rol);
+  // Administrar precios es del dueño. Recepcion elige plan al dar de alta una
+  // cuota, que es otra cosa y sigue donde estaba.
+  const administraPlanes = estado.tipo === 'autenticado' && puedeEditarPlanes(estado.rol);
 
   return (
     <Pantalla titulo="Panel" descriptor={gimnasio}>
@@ -69,12 +73,14 @@ export default function Panel() {
           icono="socios"
           alPulsar={() => router.push(RUTAS_INTERNAS.alta)}
         />
-        <FilaDeAccion
-          titulo="Planes"
-          detalle="Los planes con los que se dan de alta las cuotas."
-          icono="pagos"
-          alPulsar={() => router.push(RUTAS_INTERNAS.planes)}
-        />
+        {administraPlanes ? (
+          <FilaDeAccion
+            titulo="Planes"
+            detalle="Los precios con los que se dan de alta las cuotas."
+            icono="pagos"
+            alPulsar={() => router.push(RUTAS_INTERNAS.planes)}
+          />
+        ) : null}
 
         {/*
           PARITY-3. Las dos las comparten dueño y recepcion —el historial es
