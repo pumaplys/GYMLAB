@@ -96,7 +96,7 @@ const CUOTAS: Record<string, Partial<DuesStatus>> = {
  * a la API de verdad y la pantalla decia «no hemos podido cargar la ficha» —lo
  * descubrio el recorrido, no una revision—.
  */
-const MIOS = ['panel-', 'mostrador-', 'equipo-'];
+const MIOS = ['panel-', 'mostrador-', 'equipo-', 'legal-'];
 
 function esMio(caso: string | null, ademas?: string): boolean {
   if (caso === null || !MIOS.some((m) => caso.startsWith(m))) return false;
@@ -106,7 +106,8 @@ function esMio(caso: string | null, ademas?: string): boolean {
     ademas === undefined ||
     caso.startsWith(ademas) ||
     caso.startsWith('mostrador-') ||
-    caso.startsWith('equipo-')
+    caso.startsWith('equipo-') ||
+    caso.startsWith('legal-')
   );
 }
 

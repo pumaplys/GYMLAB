@@ -352,6 +352,28 @@ export const CASOS: Record<string, Caso> = {
   'equipo-error': { estado: sesionDe(DUENA, 'owner'), entrada: 'inerte' },
   'equipo-entrenadores': { estado: sesionDe(DUENA, 'owner'), entrada: 'inerte' },
   'equipo-socio-sin-entrenador': { estado: sesionDe(DUENA, 'owner'), entrada: 'inerte' },
+
+  /*
+   * ┌──────────────────────────────────────────────────────────────────────┐
+   * │ PARITY-4. CONFIGURACION LEGAL —SOLO DUEÑO— Y REGISTRO DE MEDICIONES. │
+   * │                                                                      │
+   * │ `legal-recepcion` es el control negativo: recepcion comparte area    │
+   * │ con el dueño y NO puede tocar la identidad juridica del gimnasio.    │
+   * │                                                                      │
+   * │ Los `trainer-` nuevos son los estados del consentimiento:            │
+   * │ vigente —hay formulario—, sin aceptar y sin texto publicado.         │
+   * └──────────────────────────────────────────────────────────────────────┘
+   */
+  'legal-completa': { estado: sesionDe(DUENA, 'owner'), entrada: 'inerte' },
+  'legal-incompleta': { estado: sesionDe(DUENA, 'owner'), entrada: 'inerte' },
+  'legal-sin-version': { estado: sesionDe(DUENA, 'owner'), entrada: 'inerte' },
+  'legal-recepcion': { estado: sesionDe(RECEPCION, 'receptionist'), entrada: 'inerte' },
+  'legal-cargando': { estado: sesionDe(DUENA, 'owner'), entrada: 'inerte' },
+  'legal-error': { estado: sesionDe(DUENA, 'owner'), entrada: 'inerte' },
+  'legal-guardar-error': { estado: sesionDe(DUENA, 'owner'), entrada: 'inerte' },
+  'trainer-sin-consentimiento': { estado: ENTRENADOR, entrada: 'inerte' },
+  'trainer-sin-texto': { estado: ENTRENADOR, entrada: 'inerte' },
+  'trainer-medicion-error': { estado: ENTRENADOR, entrada: 'inerte' },
 };
 
 export type { Caso, Entrada } from './tipos';

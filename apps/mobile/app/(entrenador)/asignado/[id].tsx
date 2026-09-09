@@ -1,12 +1,18 @@
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
-import type { AssignedMember, AssignedRoutine, BodyMetric } from '@gymlab/contracts';
+import type {
+  AssignedMember,
+  AssignedRoutine,
+  BodyMetric,
+  HealthConsentStatus,
+} from '@gymlab/contracts';
 import { Aviso } from '../../../src/componentes/aviso';
 import { CabeceraDeVuelta } from '../../../src/componentes/cabecera-de-vuelta';
 import { Pantalla } from '../../../src/componentes/pantalla';
 import { Tarjeta } from '../../../src/componentes/tarjeta';
 import { RutinasDelSocio } from '../../../src/entrenamiento/rutinas-del-socio';
+import { RegistroDeMedicion } from '../../../src/progreso/registro-de-medicion';
 import { laSesionYaNoVale, motivosDeFallo } from '../../../src/auth/politica';
 import { useSesion } from '../../../src/auth/sesion';
 import { fechaCivil, fechaDeInstante } from '../../../src/formato/fecha';
@@ -17,13 +23,20 @@ import {
   valoresDeMedicion,
   type EstadoDeCarga,
 } from '../../../src/entrenador/logica';
-import { cargarMiSocio, cargarProgreso, cargarRutinas } from '../../../src/entrenador/fuente';
+import {
+  cargarConsentimiento,
+  cargarMiSocio,
+  cargarProgreso,
+  cargarRutinas,
+} from '../../../src/entrenador/fuente';
 import { tema } from '../../../src/tema';
 
 interface Ficha {
   socio: AssignedMember;
   rutinas: readonly AssignedRoutine[] | null;
   progreso: readonly BodyMetric[] | null;
+  /** `null` es «no se pudo consultar», distinto de «no lo ha aceptado». */
+  consentimiento: HealthConsentStatus | null;
 }
 
 /**
@@ -59,13 +72,14 @@ export default function SocioAsignado() {
 
   const pedir = useCallback(async () => {
     if (!gymId || !id) return;
-    const [socio, rutinas, progreso] = await Promise.allSettled([
+    const [socio, rutinas, progreso, consentimiento] = await Promise.allSettled([
       cargarMiSocio(id),
       cargarRutinas(gymId, id),
       cargarProgreso(gymId, id),
+      cargarConsentimiento(gymId, id),
     ]);
 
-    if (laSesionYaNoVale(motivosDeFallo([socio, rutinas, progreso]))) {
+    if (laSesionYaNoVale(motivosDeFallo([socio, rutinas, progreso, consentimiento]))) {
       void revisar();
       return;
     }
@@ -82,6 +96,7 @@ export default function SocioAsignado() {
         socio: socio.value,
         rutinas: rutinas.status === 'fulfilled' ? rutinas.value : null,
         progreso: progreso.status === 'fulfilled' ? progreso.value : null,
+        consentimiento: consentimiento.status === 'fulfilled' ? consentimiento.value : null,
       },
     });
   }, [gymId, id, revisar]);
@@ -178,6 +193,22 @@ function Contenido({
               </View>
             </>
           )}
+
+          {/*
+            PARITY-4. El historial se enseña SIEMPRE —tambien sin
+            consentimiento vigente, porque el servidor tampoco lo bloquea: lo
+            ya recogido legitimamente tiene que poder consultarse para atender
+            una peticion de acceso o de borrado—. Lo que aparece y desaparece
+            segun el consentimiento es el FORMULARIO.
+          */}
+          <RegistroDeMedicion
+            gymId={gymId}
+            socioId={ficha.socio.id}
+            nombre={ficha.socio.firstName}
+            consentimiento={ficha.consentimiento}
+            alRegistrar={alCambiar}
+            alCaducarSesion={alCaducarSesion}
+          />
         </View>
       </Tarjeta>
     </>

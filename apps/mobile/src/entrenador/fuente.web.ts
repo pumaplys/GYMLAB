@@ -1,9 +1,18 @@
-import type { AssignedMember, AssignedRoutine, BodyMetric } from '@gymlab/contracts';
+import type {
+  AssignedMember,
+  AssignedRoutine,
+  BodyMetric,
+  HealthConsentStatus,
+  RecordBodyMetricInput,
+} from '@gymlab/contracts';
+import { ApiError } from '@gymlab/api-client';
 import {
+  cargarConsentimientoReal,
   cargarMiSocioReal,
   cargarMisSociosReal,
   cargarProgresoReal,
   cargarRutinasReal,
+  registrarMedicionReal,
 } from './fuente-real';
 
 /**
@@ -137,4 +146,57 @@ export async function cargarProgreso(gymId: string, memberId: string): Promise<B
   const caso = casoActual();
   if (!caso?.startsWith('trainer-')) return cargarProgresoReal(gymId, memberId);
   return caso === 'trainer-socio-sin-datos' ? [] : PROGRESO;
+}
+
+/**
+ * PARITY-4. El consentimiento y el registro de mediciones.
+ *
+ * Registrar NO ocurre en la vista previa: se devuelve la medicion que
+ * devolveria el servidor y NO SE ESCRIBE NADA. Son datos de salud, y una
+ * auditoria visual no tiene por que tocarlos ni aunque fuera posible.
+ */
+const CONSENTIMIENTO: HealthConsentStatus = {
+  currentVersion: '2026-09-01-borrador',
+  accepted: true,
+  acceptedAt: '2026-05-02T09:30:00.000Z',
+  document: null,
+};
+
+export async function cargarConsentimiento(
+  gymId: string,
+  memberId: string,
+): Promise<HealthConsentStatus> {
+  const caso = casoActual();
+  if (!caso?.startsWith('trainer-')) return cargarConsentimientoReal(gymId, memberId);
+  if (caso === 'trainer-sin-texto') {
+    return { ...CONSENTIMIENTO, currentVersion: null, accepted: false, acceptedAt: null };
+  }
+  if (caso === 'trainer-sin-consentimiento') {
+    return { ...CONSENTIMIENTO, accepted: false, acceptedAt: null };
+  }
+  return CONSENTIMIENTO;
+}
+
+export async function registrarMedicion(
+  gymId: string,
+  memberId: string,
+  medicion: RecordBodyMetricInput,
+): Promise<BodyMetric> {
+  const caso = casoActual();
+  if (!caso?.startsWith('trainer-')) return registrarMedicionReal(gymId, memberId, medicion);
+  if (caso === 'trainer-medicion-error') throw new ApiError(422, 'medida fuera de rango');
+  return {
+    id: 'm9999999-9999-4999-8999-999999999999',
+    measuredAt: new Date().toISOString(),
+    weightKg: null,
+    bodyFatPercent: null,
+    chestCm: null,
+    waistCm: null,
+    hipCm: null,
+    armCm: null,
+    thighCm: null,
+    notes: null,
+    consentVersion: '2026-09-01-borrador',
+    ...medicion,
+  } as BodyMetric;
 }

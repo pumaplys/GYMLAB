@@ -91,6 +91,15 @@ export const RUTAS_INTERNAS = {
   accesos: '/accesos',
   personal: '/personal',
   entrenadoresDe: (socioId: string) => `/socio/${socioId}/entrenadores`,
+
+  /*
+   * PARITY-4. La identidad legal del gimnasio, solo del dueño.
+   *
+   * Cuelga del Panel como en la web —`/configuracion` es area `panel` alli—
+   * pero el grupo deja entrar tambien a recepcion, asi que la fila no se pinta
+   * para ella Y la pantalla comprueba el rol por dentro.
+   */
+  configuracion: '/configuracion',
 } as const;
 
 /**
