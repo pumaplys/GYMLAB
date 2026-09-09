@@ -1,4 +1,10 @@
-import type { AssignedMember, AssignedRoutine, BodyMetric } from '@gymlab/contracts';
+import type {
+  AssignedMember,
+  AssignedRoutine,
+  BodyMetric,
+  HealthConsentStatus,
+  RecordBodyMetricInput,
+} from '@gymlab/contracts';
 import { api } from '../api/cliente';
 
 /**
@@ -38,4 +44,35 @@ export async function cargarRutinasReal(
 
 export async function cargarProgresoReal(gymId: string, memberId: string): Promise<BodyMetric[]> {
   return api.progreso.historial(gymId, memberId);
+}
+
+/**
+ * PARITY-4: registrar una medición y saber si se puede.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ EL ENTRENADOR RESPETA EL CONSENTIMIENTO. NO LO CONCEDE.                  │
+ * │                                                                          │
+ * │   GET  /gyms/:g/members/:id/health-consent   owner, trainer   se LEE     │
+ * │   POST /gyms/:g/members/:id/progress         owner, trainer   se ESCRIBE │
+ * │                                                                          │
+ * │ La API tiene ademas `POST` y `DELETE` de health-consent para el personal │
+ * │ —pensados para recogerlo en el mostrador con el socio delante— y el      │
+ * │ panel web NO LOS USA a proposito: un consentimiento que otorga otro en   │
+ * │ tu nombre, sin que tu estes, no es consentimiento. Aqui tampoco se usan. │
+ * │ El socio lo concede y lo retira desde su propia pantalla de privacidad.  │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ */
+export async function cargarConsentimientoReal(
+  gymId: string,
+  memberId: string,
+): Promise<HealthConsentStatus> {
+  return api.progreso.consentimientoDeSalud(gymId, memberId);
+}
+
+export async function registrarMedicionReal(
+  gymId: string,
+  memberId: string,
+  medicion: RecordBodyMetricInput,
+): Promise<BodyMetric> {
+  return api.progreso.registrar(gymId, memberId, medicion);
 }
