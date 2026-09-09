@@ -30,3 +30,24 @@ catalog:
   #     monorepo queda con una sola version en lugar de dos.
   # Revisar cuando salga TypeScript 7.1.
   typescript: ~6.0.3
+
+# pnpm no instala paquetes recien publicados hasta que pasa un tiempo de
+# reposo: es la defensa contra una version comprometida que se retira a las
+# pocas horas. `expo install` necesita saltarselo para estas, porque
+# `expo@57.0.21` y `expo-router@57.0.20` se publicaron el 2026-09-08 y son las
+# que el SDK 57 pide hoy —sin ellas, `expo-doctor` se queda en 20/21—.
+#
+# La exencion va VERSION A VERSION, no por paquete: cubre exactamente estas y
+# ninguna futura. Igual que `allowBuilds`, esto es una decision consciente y no
+# un tramite para silenciar un aviso; cuando las versiones cumplan el reposo,
+# estas lineas pueden borrarse sin tocar nada mas.
+minimumReleaseAgeExclude:
+  - '@expo/cli@57.0.23'
+  - '@expo/metro-file-map@57.0.3'
+  - babel-preset-expo@57.0.11
+  - expo-modules-core@57.0.17
+  - expo-modules-jsi@57.1.0
+  - expo@57.0.21
+  - '@expo/ui@57.0.17'
+  - expo-glass-effect@57.0.2
+  - expo-router@57.0.20
