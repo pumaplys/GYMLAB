@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { useFocusEffect } from 'expo-router';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { router, useFocusEffect } from 'expo-router';
 import { Aviso } from '../../src/componentes/aviso';
 import { Boton } from '../../src/componentes/boton';
 import { GraficoDeProgreso, ALTO_DEL_TRAZO } from '../../src/componentes/grafico-de-progreso';
@@ -128,6 +128,8 @@ export default function Progreso() {
             Cuando tu gimnasio registre tu peso o tus medidas, aparecerán aquí.
           </Text>
         </View>
+
+        <PieDePrivacidad />
       </Pantalla>
     );
   }
@@ -147,11 +149,7 @@ export default function Progreso() {
     >
       {/* Solo aparece si hay mas de una medida que enseñar. */}
       {disponibles.length > 1 ? (
-        <SelectorDeMetrica
-          medidas={disponibles}
-          elegida={campo}
-          alElegir={setMetricaElegida}
-        />
+        <SelectorDeMetrica medidas={disponibles} elegida={campo} alElegir={setMetricaElegida} />
       ) : null}
 
       <View style={estilos.cuerpo}>
@@ -170,10 +168,20 @@ export default function Progreso() {
               accessibilityLabel={`${medida.etiqueta}: ${comoNumero(resumen.ultimo.valor)} ${medida.unidad}`}
             >
               {/* Tapados: su contenido ya esta en la etiqueta del grupo. */}
-              <Text style={estilos.valor} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" aria-hidden>
+              <Text
+                style={estilos.valor}
+                accessibilityElementsHidden
+                importantForAccessibility="no-hide-descendants"
+                aria-hidden
+              >
                 {comoNumero(resumen.ultimo.valor)}
               </Text>
-              <Text style={estilos.unidad} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" aria-hidden>
+              <Text
+                style={estilos.unidad}
+                accessibilityElementsHidden
+                importantForAccessibility="no-hide-descendants"
+                aria-hidden
+              >
                 {medida.unidad}
               </Text>
             </View>
@@ -217,10 +225,20 @@ export default function Progreso() {
                 accessibilityRole="text"
                 accessibilityLabel={`${otra.etiqueta}: ${comoNumero(valor)} ${otra.unidad}`}
               >
-                <Text style={estilos.nombreDeMedida} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" aria-hidden>
+                <Text
+                  style={estilos.nombreDeMedida}
+                  accessibilityElementsHidden
+                  importantForAccessibility="no-hide-descendants"
+                  aria-hidden
+                >
                   {otra.etiqueta}
                 </Text>
-                <Text style={estilos.valorDeMedida} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" aria-hidden>
+                <Text
+                  style={estilos.valorDeMedida}
+                  accessibilityElementsHidden
+                  importantForAccessibility="no-hide-descendants"
+                  aria-hidden
+                >
                   {comoNumero(valor)} <Text style={estilos.unidadPequena}>{otra.unidad}</Text>
                 </Text>
               </View>
@@ -254,10 +272,20 @@ export default function Progreso() {
                 accessibilityRole="text"
                 accessibilityLabel={lecturaDeFila(fila, fechaDeInstante(fila.iso))}
               >
-                <Text style={estilos.fechaDeHistorial} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" aria-hidden>
+                <Text
+                  style={estilos.fechaDeHistorial}
+                  accessibilityElementsHidden
+                  importantForAccessibility="no-hide-descendants"
+                  aria-hidden
+                >
                   {fechaDeInstante(fila.iso)}
                 </Text>
-                <Text style={estilos.medidasDeHistorial} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" aria-hidden>
+                <Text
+                  style={estilos.medidasDeHistorial}
+                  accessibilityElementsHidden
+                  importantForAccessibility="no-hide-descendants"
+                  aria-hidden
+                >
                   {fila.valores
                     .map((v) => `${v.medida.corta} ${comoNumero(v.valor)} ${v.medida.unidad}`)
                     .join(' · ')}
@@ -266,6 +294,8 @@ export default function Progreso() {
             ))}
           </View>
         ) : null}
+
+        <PieDePrivacidad />
       </View>
     </Pantalla>
   );
@@ -288,6 +318,38 @@ function Cargando() {
         <View style={estilos.huecoGrafico} />
       </View>
     </Pantalla>
+  );
+}
+
+/**
+ * Quién decide si te miden, y dónde se cambia.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ REFERENCIA DISCRETA, NO UNA SEGUNDA PANTALLA LEGAL.                     │
+ * │                                                                          │
+ * │ Es la misma linea que el panel web pone al pie de su Progreso, y por el │
+ * │ mismo motivo: quien se pregunte por que dejaron de tomarle              │
+ * │ medidas tiene aqui el camino. La gestion sigue estando en un solo sitio  │
+ * │ —Perfil > Privacidad— y aqui no se acepta ni se revoca nada.             │
+ * │                                                                          │
+ * │ Faltaba, y lo encontro la auditoria de PARITY-5: en el movil Privacidad  │
+ * │ vive en la pestaña de Perfil, asi que la capacidad estaba, pero desde    │
+ * │ esta pantalla no habia forma de llegar ni nada que lo explicara.         │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ */
+function PieDePrivacidad() {
+  return (
+    <Pressable
+      onPress={() => router.push('/perfil/privacidad')}
+      accessibilityRole="link"
+      accessibilityLabel="Privacidad: decide si tu gimnasio puede registrar estos datos"
+      style={({ pressed }) => [estilos.pie, pressed && estilos.piePulsado]}
+    >
+      <Text style={estilos.pieTexto}>
+        Tú decides si tu gimnasio puede registrar estos datos en{' '}
+        <Text style={estilos.pieEnlace}>Privacidad</Text>.
+      </Text>
+    </Pressable>
   );
 }
 
@@ -314,7 +376,6 @@ const estilos = StyleSheet.create({
   // Gris, nunca verde ni rojo: el signo es aritmetica, no un juicio.
   cambio: { ...tema.texto.cuerpo, color: tema.color.textoSecundario },
   fecha: { ...tema.texto.meta, color: tema.color.textoSecundario },
-
 
   seccion: { gap: tema.espacio.sm },
   tituloDeSeccion: {
@@ -347,6 +408,11 @@ const estilos = StyleSheet.create({
     color: tema.color.textoSecundario,
     lineHeight: 18,
   },
+
+  pie: { paddingTop: tema.espacio.lg, minHeight: tema.controlAltoMinimo, justifyContent: 'center' },
+  piePulsado: { opacity: 0.6 },
+  pieTexto: { ...tema.texto.meta, color: tema.color.textoSecundario, lineHeight: 18 },
+  pieEnlace: { color: tema.color.acento, fontWeight: '600' },
 
   vacio: { gap: tema.espacio.sm },
   vacioTitulo: { ...tema.texto.h3, color: tema.color.texto },
