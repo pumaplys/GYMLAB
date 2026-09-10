@@ -367,6 +367,17 @@ describe('lo que PARITY-5 encontró y arregló', () => {
     expect(codigo).toMatch(/invitación/);
   });
 
+  /*
+   * Y la MISMA copia caducada estaba en el pie del login, que es la primera
+   * pantalla que ve cualquiera. PARITY-5 no la vio porque ninguna prueba leia
+   * ese pie; la vio RELEASE-0 mirando el APK corriendo en el emulador.
+   */
+  it('el login tampoco le dice al personal que se vaya a la web', () => {
+    const codigo = leer(APP, 'entrar.tsx');
+    expect(codigo).not.toMatch(/Solo para socios/);
+    expect(codigo).not.toMatch(/personal usa el panel web/i);
+  });
+
   it('y el panel sigue diciendo lo mismo, que es de donde sale el texto', () => {
     const codigo = leer(WEB, 'src', 'componentes', 'ruta-privada.tsx');
     expect(codigo).toMatch(/no pertenece a ningun gimnasio/i);

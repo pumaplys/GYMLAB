@@ -106,9 +106,7 @@ export default function Entrar() {
                 continua hasta el borde. Es un carril, y cuesta 4 px de alto.
               */}
               <CarrilDeAcento />
-              <Text style={estilos.entradilla}>
-                Entra con la cuenta que te dio tu gimnasio.
-              </Text>
+              <Text style={estilos.entradilla}>Entra con la cuenta que te dio tu gimnasio.</Text>
             </View>
 
             <View style={estilos.formulario}>
@@ -185,8 +183,21 @@ export default function Entrar() {
           */}
           <View style={estilos.hueco} />
 
+          {/*
+            ┌──────────────────────────────────────────────────────────────┐
+            │ AQUI PONIA «SOLO PARA SOCIOS. EL PERSONAL USA EL PANEL WEB». │
+            │                                                              │
+            │ Era cierto antes de STAFF-1, cuando la app era solo del      │
+            │ socio. Hoy entran los cuatro roles y cada uno va a su area:   │
+            │ es la primera pantalla que ve cualquiera, y le decia al       │
+            │ personal que se fuera. Lo encontro RELEASE-0 mirando el APK   │
+            │ corriendo en el emulador — ninguna prueba leia este pie.      │
+            └──────────────────────────────────────────────────────────────┘
+          */}
           <View style={estilos.pie}>
-            <Text style={estilos.pieTexto}>Solo para socios. El personal usa el panel web.</Text>
+            <Text style={estilos.pieTexto}>
+              Entra con la cuenta de tu gimnasio. Cada quien ve lo suyo.
+            </Text>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
