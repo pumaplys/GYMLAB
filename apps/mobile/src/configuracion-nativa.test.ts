@@ -438,13 +438,23 @@ describe('la build de EAS construye los paquetes del workspace', () => {
     readFileSync(join(__dirname, '..', '..', '..', 'package.json'), 'utf8'),
   ) as { scripts: Record<string, string> };
 
+  const paquete = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf8')) as {
+    scripts: Record<string, string>;
+  };
+
   const mio = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf8')) as {
     dependencies: Record<string, string>;
     devDependencies: Record<string, string>;
   };
 
-  it('existe el hook que EAS ejecuta despues de instalar', () => {
-    expect(raiz.scripts['eas-build-post-install']).toBeTruthy();
+  it('el hook vive en el package.json DE LA APP, que es donde EAS lo busca', () => {
+    /*
+     * Ponerlo en el raiz no sirve: la primera correccion lo puso ahi, EAS
+     * ejecuto la fase POST_INSTALL_HOOK sin ninguna salida y la build volvio a
+     * fallar igual. EAS lee el package.json DEL PROYECTO.
+     */
+    expect(paquete.scripts['eas-build-post-install']).toBeTruthy();
+    expect(raiz.scripts['eas-build-post-install']).toBeUndefined();
   });
 
   it('y construye TODOS los paquetes del workspace que la app importa', () => {
@@ -457,7 +467,7 @@ describe('la build de EAS construye los paquetes del workspace', () => {
       .map(([k]) => k)
       .filter((k) => k !== '@gymlab/config');
 
-    const hook = raiz.scripts['eas-build-post-install']!;
+    const hook = paquete.scripts['eas-build-post-install']!;
     for (const paquete of delWorkspace) {
       expect(hook, `${paquete} no se construye en la build de EAS`).toContain(paquete);
     }

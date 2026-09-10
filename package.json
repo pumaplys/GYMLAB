@@ -9,7 +9,6 @@
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
-    "eas-build-post-install": "turbo run build --filter=@gymlab/contracts --filter=@gymlab/api-client",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test --concurrency=1",

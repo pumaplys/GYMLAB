@@ -6,6 +6,7 @@
   "main": "expo-router/entry",
   "scripts": {
     "dev": "expo start",
+    "eas-build-post-install": "pnpm --filter @gymlab/contracts run build && pnpm --filter @gymlab/api-client run build",
     "android": "expo start --android",
     "ios": "expo start --ios",
     "typecheck": "tsc --noEmit",
