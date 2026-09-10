@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "tech.gymlabfit.rinda",
+      "sha256_cert_fingerprints": [
+        "DB:43:1D:DB:4D:51:AC:B0:7D:4C:F4:9C:64:A7:1B:C9:B9:39:00:55:D1:35:75:13:13:7F:D7:1F:62:05:3B:62"
+      ]
+    }
+  }
+]

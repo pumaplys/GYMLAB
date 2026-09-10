@@ -38,7 +38,10 @@ const APP_ID = '956JGXGTKZ.tech.gymlabfit.rinda';
 const RUTAS = ['/reset-password', '/accept-invitation'];
 
 describe('el fichero que declara los enlaces universales', () => {
-  const contenido = readFileSync(join(PUBLICO, '.well-known', 'apple-app-site-association'), 'utf8');
+  const contenido = readFileSync(
+    join(PUBLICO, '.well-known', 'apple-app-site-association'),
+    'utf8',
+  );
   const json = JSON.parse(contenido) as {
     applinks: { details: { appIDs: string[]; components: { '/': string }[] }[] };
   };
@@ -124,7 +127,9 @@ describe('como lo sirve la API', () => {
 
     const { montarPanel } = await import('../panel.js');
     app = express();
-    montarPanel({ use: (...args: unknown[]) => app.use(...(args as [express.RequestHandler])) } as never);
+    montarPanel({
+      use: (...args: unknown[]) => app.use(...(args as [express.RequestHandler])),
+    } as never);
   });
 
   afterAll(() => {
@@ -193,37 +198,55 @@ describe('como lo sirve la API', () => {
 });
 
 /**
- * ANDROID: todavia NO se puede cerrar, y el test lo deja dicho.
+ * ANDROID: ya HAY firma real, y el fichero la declara.
  *
- * `assetlinks.json` necesita la huella SHA-256 de la firma que use la app. No
- * hay ninguna: nunca se ha construido para Android, asi que ni EAS tiene
- * almacen de claves ni existe Play Console. Inventar una huella dejaria un
- * fichero que parece hecho y que no verifica nada.
- *
- * Este test no exige que el fichero exista. Exige que, EL DIA QUE APAREZCA,
- * sea de verdad: paquete correcto y huellas con forma de SHA-256.
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ LA HUELLA SALE DEL ARTEFACTO, NO DE UN PAPEL.                           │
+ * │                                                                          │
+ * │ Se leyo con `apksigner verify --print-certs` del APK que construyo EAS   │
+ * │ en RELEASE-0 —el primero de Android que ha existido— y su almacen de     │
+ * │ claves lo genero EAS en la nube. No hay ninguna huella inventada.        │
+ * │                                                                          │
+ * │ FALTA UNA SEGUNDA: cuando la app se publique con Play App Signing,       │
+ * │ Google vuelve a firmarla con SU clave y esa huella tambien tiene que     │
+ * │ estar aqui, o los enlaces dejarian de verificarse para quien la instale  │
+ * │ desde la tienda. El array admite las dos; hoy solo existe una.           │
+ * └──────────────────────────────────────────────────────────────────────────┘
  */
-describe('assetlinks.json, cuando exista', () => {
+describe('assetlinks.json declara la firma real de Android', () => {
   const ruta = join(PUBLICO, '.well-known', 'assetlinks.json');
 
-  it('todavia no existe, y es deliberado', () => {
-    if (existsSync(ruta)) {
-      const declaraciones = JSON.parse(readFileSync(ruta, 'utf8')) as {
-        relation: string[];
-        target: { namespace: string; package_name: string; sha256_cert_fingerprints: string[] };
-      }[];
-      expect(declaraciones.length).toBeGreaterThan(0);
-      for (const d of declaraciones) {
-        expect(d.target.package_name).toBe('tech.gymlabfit.rinda');
-        expect(d.target.sha256_cert_fingerprints.length).toBeGreaterThan(0);
-        for (const huella of d.target.sha256_cert_fingerprints) {
-          // 32 bytes en hexadecimal separados por dos puntos. Un hueco sin
-          // rellenar —«AA:BB:...», «TODO»— no pasa de aqui.
-          expect(huella).toMatch(/^([0-9A-F]{2}:){31}[0-9A-F]{2}$/);
-        }
+  it('existe', () => {
+    expect(existsSync(ruta)).toBe(true);
+  });
+
+  it('declara el paquete y la relacion que Android comprueba', () => {
+    const declaraciones = JSON.parse(readFileSync(ruta, 'utf8')) as {
+      relation: string[];
+      target: { namespace: string; package_name: string; sha256_cert_fingerprints: string[] };
+    }[];
+
+    expect(declaraciones.length).toBeGreaterThan(0);
+    for (const d of declaraciones) {
+      expect(d.relation).toContain('delegate_permission/common.handle_all_urls');
+      expect(d.target.namespace).toBe('android_app');
+      expect(d.target.package_name).toBe('tech.gymlabfit.rinda');
+      expect(d.target.sha256_cert_fingerprints.length).toBeGreaterThan(0);
+      for (const huella of d.target.sha256_cert_fingerprints) {
+        // 32 bytes en hexadecimal separados por dos puntos. Un hueco sin
+        // rellenar —«AA:BB:...», «TODO»— no pasa de aqui.
+        expect(huella).toMatch(/^([0-9A-F]{2}:){31}[0-9A-F]{2}$/);
       }
-    } else {
-      expect(existsSync(ruta)).toBe(false);
     }
+  });
+
+  it('y el paquete es el mismo que declara la app', () => {
+    const app = JSON.parse(
+      readFileSync(resolve(process.cwd(), '..', 'mobile', 'app.json'), 'utf8'),
+    ) as { expo: { android: { package: string } } };
+    const declaraciones = JSON.parse(readFileSync(ruta, 'utf8')) as {
+      target: { package_name: string };
+    }[];
+    expect(declaraciones[0]!.target.package_name).toBe(app.expo.android.package);
   });
 });
