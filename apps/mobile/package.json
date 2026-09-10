@@ -19,7 +19,9 @@
     "qa-recorridos": "node herramientas/desarrollo/recorridos.mjs",
     "qa-medicion": "node herramientas/desarrollo/medicion.mjs",
     "qa-escaner": "node herramientas/desarrollo/escaner.mjs",
-    "qa-enlaces": "node herramientas/desarrollo/enlaces.mjs"
+    "qa-enlaces": "node herramientas/desarrollo/enlaces.mjs",
+    "auditar-ipa": "node herramientas/artefacto-ios.mjs",
+    "enlaces-ios": "node herramientas/enlaces-ios.mjs"
   },
   "dependencies": {
     "@expo/metro-runtime": "~57.0.15",

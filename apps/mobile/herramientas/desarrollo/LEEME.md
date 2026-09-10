@@ -49,6 +49,28 @@ manifiesto, contra una lista escrita a mano donde cada permiso lleva su motivo.
 Uno que aparezca y no esté en la lista lo pone en rojo, aunque venga de una
 dependencia.
 
+## iOS: auditar el IPA y los Universal Links
+
+```
+pnpm --filter @gymlab/mobile auditar-ipa ruta/al/app.ipa
+pnpm --filter @gymlab/mobile enlaces-ios
+```
+
+El primero abre el IPA que se distribuiría y comprueba identidad, cifrado,
+permisos, firma, perfil y **los entitlements firmados dentro del binario** —que
+es donde vive el valor real de Associated Domains, no en `app.json`—, más la
+API horneada y las fugas.
+
+El segundo recorre los cuatro eslabones del Universal Link. Tres se miden; el
+cuarto —que iOS abra la app en vez de Safari— necesita un iPhone o el simulador
+de macOS, y no se sustituye por nada.
+
+> **El perfil de App Store lleva el entitlement como comodín `<string>*</string>`,
+> no como lista.** Buscar ahí un `<array>` con el dominio da «AUSENTE» y parece
+> que falta cuando está perfectamente puesto. Lo que hay que leer es la firma
+> del ejecutable. Esa confusión costó una vuelta con el instrumento en rojo
+> sobre un IPA correcto.
+
 ## Lo que costó averiguar
 
 **Metro servía desde la raíz del monorepo y no resolvía nada.** El cliente de

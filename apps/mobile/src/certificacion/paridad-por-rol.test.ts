@@ -480,3 +480,50 @@ describe('cada pantalla del móvil está dentro de un grupo con gate', () => {
     expect(leer(APP, 'perfil', '_layout.tsx')).toMatch(/puedeEntrarEnArea|Redirect/);
   });
 });
+
+describe('iOS y Android ejecutan el mismo JavaScript', () => {
+  /*
+   * ┌──────────────────────────────────────────────────────────────────────┐
+   * │ LO QUE ESTO DEMUESTRA, Y —SOBRE TODO— LO QUE NO.                     │
+   * │                                                                      │
+   * │ DEMUESTRA que el codigo funcional en JavaScript es COMPARTIDO: no    │
+   * │ hay ninguna variante `.ios.*`, `.android.*` ni `.native.*`, y Metro  │
+   * │ resuelve esos sufijos antes que el fichero base. El dia que alguien  │
+   * │ anada `algo.ios.tsx`, las dos plataformas dejaran de correr el mismo │
+   * │ codigo en silencio. Por eso este gate existe.                        │
+   * │                                                                      │
+   * │ NO DEMUESTRA que el comportamiento NATIVO sea identico. Fuera de     │
+   * │ este alcance quedan, y no se han ejecutado en iOS:                   │
+   * │                                                                      │
+   * │   · la camara (expo-camera sobre AVFoundation, no CameraX);          │
+   * │   · SecureStore (Keychain, no EncryptedSharedPreferences);           │
+   * │   · la navegacion nativa y sus gestos;                               │
+   * │   · los dialogos de permisos del sistema;                            │
+   * │   · los Universal Links (el salto lo decide iOS, no la app);         │
+   * │   · cualquier otra diferencia del runtime nativo.                    │
+   * │                                                                      │
+   * │ Los recorridos autenticados, el escaner con camara real y la cadena  │
+   * │ de PARITY-4 se ejecutaron en un emulador de ANDROID. Lo que de ahi   │
+   * │ se traslada a iOS es la LOGICA, no la capa nativa.                   │
+   * │                                                                      │
+   * │ La unica variante que SI existe es `.web.*`, que es la vista previa  │
+   * │ del navegador y no viaja en ningun binario de tienda.                │
+   * └──────────────────────────────────────────────────────────────────────┘
+   */
+  const variantesEn = (dir: string, acc: string[] = []): string[] => {
+    for (const e of readdirSync(dir, { withFileTypes: true })) {
+      const p = join(dir, e.name);
+      if (e.isDirectory()) variantesEn(p, acc);
+      else if (/\.(ios|android|native)\.[jt]sx?$/.test(e.name)) acc.push(p);
+    }
+    return acc;
+  };
+
+  it('no hay ninguna variante .ios, .android ni .native', () => {
+    const variantes = [
+      ...variantesEn(join(MOVIL, 'src')),
+      ...variantesEn(APP),
+    ].map((p) => p.slice(MOVIL.length + 1));
+    expect(variantes, 'una variante por plataforma rompe que el código funcional sea compartido').toEqual([]);
+  });
+});
