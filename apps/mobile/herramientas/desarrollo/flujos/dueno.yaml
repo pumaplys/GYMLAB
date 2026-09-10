@@ -1,0 +1,111 @@
+appId: tech.gymlabfit.rinda
+---
+# EL DUEÑO: el Panel entero, incluido lo que PARITY-4 y PARITY-5 le dieron.
+- runFlow: entrar.yaml
+
+- assertVisible: "Panel"
+- assertVisible: "Escanear carné"
+- assertVisible: "Buscar socio"
+- assertVisible: "Nuevo socio"
+- assertVisible: "Accesos"
+- assertVisible: "Personal"
+# Solo suyas: PARITY-2 (Planes), PARITY-4 (Configuración), PARITY-1 (entrenamiento).
+- assertVisible: "Planes"
+- assertVisible: "Configuración"
+- assertVisible: "Rutinas"
+- assertVisible: "Ejercicios"
+# Y lo que NO es suyo: «Mis socios» es del entrenador.
+- assertNotVisible: "Mis socios"
+- takeScreenshot: dueno-01-panel
+
+# --- Socios: buscar y abrir una ficha -------------------------------------
+- tapOn: "Buscar socio"
+- inputText: "Lucia"
+- hideKeyboard
+- extendedWaitUntil:
+    visible: "Lucia Fernandez"
+    timeout: 20000
+- takeScreenshot: dueno-02-buscar
+- tapOn: "Lucia Fernandez"
+- extendedWaitUntil:
+    visible: "Gestionar la cuota"
+    timeout: 20000
+# La ficha del dueño: cuota, entrenadores y —desde PARITY-1— rutinas.
+- assertVisible: "Entrenadores"
+- takeScreenshot: dueno-03-ficha
+
+# --- La cuota: es donde recepcion y dueño cobran --------------------------
+- tapOn: "Gestionar la cuota"
+- extendedWaitUntil:
+    visible: "Cuota"
+    timeout: 20000
+- takeScreenshot: dueno-04-cuota
+
+# --- Los pagos: se entra DESDE la cuota, que es donde vive el boton --------
+- tapOn: "Ver los pagos"
+- extendedWaitUntil:
+    visible: "Pagos"
+    timeout: 20000
+- takeScreenshot: dueno-05-pagos
+- runFlow: al-panel.yaml
+
+# --- Planes: el dueño SI administra --------------------------------------
+- tapOn: "Planes"
+- extendedWaitUntil:
+    visible: "Nuevo plan"
+    timeout: 20000
+- takeScreenshot: dueno-06-planes
+- runFlow: al-panel.yaml
+
+# --- Personal -------------------------------------------------------------
+- tapOn: "Personal"
+- extendedWaitUntil:
+    visible: "Personal"
+    timeout: 20000
+- takeScreenshot: dueno-07-personal
+- runFlow: al-panel.yaml
+
+# --- Accesos --------------------------------------------------------------
+- tapOn: "Accesos"
+- takeScreenshot: dueno-08-accesos
+- runFlow: al-panel.yaml
+
+# --- Configuración: PARITY-4, solo del dueño -----------------------------
+- tapOn: "Configuración"
+- extendedWaitUntil:
+    visible: "Datos del responsable"
+    timeout: 20000
+# PARITY-4 dejo lo legal debajo de los datos del responsable: hay que bajar.
+- scrollUntilVisible:
+    element:
+      text: "Documento de privacidad"
+    direction: DOWN
+    timeout: 20000
+- takeScreenshot: dueno-09-configuracion
+- runFlow: al-panel.yaml
+
+# --- Entrenamiento: PARITY-1, tambien del dueño --------------------------
+- tapOn: "Ejercicios"
+- extendedWaitUntil:
+    visible: "Ejercicios"
+    timeout: 20000
+- takeScreenshot: dueno-10-ejercicios
+- runFlow: al-panel.yaml
+
+- tapOn: "Rutinas"
+- extendedWaitUntil:
+    visible: "Rutinas"
+    timeout: 20000
+- takeScreenshot: dueno-11-rutinas
+- runFlow: al-panel.yaml
+
+# «Cerrar sesión» es la ultima fila: en el emulador queda debajo del borde.
+- scrollUntilVisible:
+    element:
+      text: "Cerrar sesión"
+    direction: DOWN
+    timeout: 20000
+- tapOn: "Cerrar sesión"
+- extendedWaitUntil:
+    visible: "Hola de nuevo"
+    timeout: 20000

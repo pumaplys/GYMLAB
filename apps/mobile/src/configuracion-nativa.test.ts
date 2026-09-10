@@ -401,15 +401,19 @@ describe('la identidad nativa es RINDA', () => {
    * │        que la (2) no llevaba — por eso el sistema nunca fue a buscar  │
    * │        la AASA.                                                       │
    * │                                                                      │
-   * │ Android se queda en 1 a proposito: hasta RELEASE-0 no hubo ninguna    │
-   * │ build de Android, asi que su `versionCode` no se ha consumido.        │
+   * │ Android va por su cuenta y con su propia cuenta:                      │
+   * │                                                                      │
+   * │   (1)  la primera, de RELEASE-0                                      │
+   * │   (2)  RELEASE-1: cambia el manifiesto —seis permisos bloqueados con │
+   * │        `tools:node="remove"`— y eso es nativo, asi que no se puede   │
+   * │        reutilizar el 1: ya se subio un binario con ese numero.        │
    * └──────────────────────────────────────────────────────────────────────┘
    */
   it('la version comercial no se mueve y el build number si', () => {
     expect(base.version).toBe('0.1.0');
     // iOS quiere una CADENA; Android, un entero.
     expect(base.ios.buildNumber).toBe('3');
-    expect(base.android.versionCode).toBe(1);
+    expect(base.android.versionCode).toBe(2);
   });
 });
 

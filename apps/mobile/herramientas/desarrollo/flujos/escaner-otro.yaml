@@ -1,0 +1,7 @@
+appId: tech.gymlabfit.rinda
+---
+# «Escanear otro»: cierra el veredicto y vuelve a encender la cámara.
+- tapOn: "Escanear otro"
+- extendedWaitUntil:
+    visible: "Apunta al código del carné del socio."
+    timeout: 20000

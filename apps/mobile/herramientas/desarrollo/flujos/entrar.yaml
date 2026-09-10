@@ -1,0 +1,21 @@
+appId: tech.gymlabfit.rinda
+---
+# Entrar con una cuenta del fixture LOCAL.
+#
+# El correo y la clave llegan por `-e` desde `recorridos.mjs`, que los lee de
+# `credenciales.local.json` —gitignored— y filtra la salida para que la clave
+# no aparezca en ningun sitio.
+- runFlow: arrancar.yaml
+
+# Los dos campos se cogen por su nombre accesible —el que anuncia un lector—,
+# no por su posicion: «CORREO» en pantalla es un rotulo aparte, y apuntar
+# «debajo» de el acababa escribiendo en la tarjeta y no en la caja.
+- tapOn: "Correo"
+- inputText: ${CORREO}
+- tapOn: "Contraseña"
+- inputText: ${CLAVE}
+- hideKeyboard
+- tapOn: "Entrar"
+- extendedWaitUntil:
+    notVisible: "Hola de nuevo"
+    timeout: 30000

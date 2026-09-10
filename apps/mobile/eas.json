@@ -12,6 +12,15 @@
         "simulator": false
       }
     },
+    "qa-emulador": {
+      "extends": "development",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "http://localhost:3001/v1"
+      },
+      "android": {
+        "buildType": "apk"
+      }
+    },
     "preview": {
       "distribution": "internal",
       "environment": "preview",

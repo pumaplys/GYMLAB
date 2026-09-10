@@ -1,0 +1,82 @@
+appId: tech.gymlabfit.rinda
+---
+# RECEPCIÓN: el mostrador. Y lo que NO es suyo.
+- runFlow: entrar.yaml
+
+- assertVisible: "Panel"
+- assertVisible: "Escanear carné"
+- assertVisible: "Buscar socio"
+- assertVisible: "Nuevo socio"
+- assertVisible: "Accesos"
+- assertVisible: "Personal"
+
+# ┌──────────────────────────────────────────────────────────────────────────┐
+# │ LO QUE RECEPCIÓN NO TIENE, Y CADA UNO POR SU MOTIVO.                     │
+# │                                                                          │
+# │   Planes         PARITY-5 se lo quito: en la web es `soloDueno`.         │
+# │   Configuración  `@Roles('owner')` en la clase.                          │
+# │   Rutinas        el modulo de entrenamiento es owner + trainer.          │
+# │   Ejercicios     idem.                                                   │
+# │   Mis socios     es del entrenador.                                      │
+# └──────────────────────────────────────────────────────────────────────────┘
+- assertNotVisible: "Planes"
+- assertNotVisible: "Configuración"
+- assertNotVisible: "Rutinas"
+- assertNotVisible: "Ejercicios"
+- assertNotVisible: "Mis socios"
+- takeScreenshot: recepcion-01-panel
+
+# --- Socios: lo suyo de todos los dias -----------------------------------
+- tapOn: "Buscar socio"
+- inputText: "Lucia"
+- hideKeyboard
+- extendedWaitUntil:
+    visible: "Lucia Fernandez"
+    timeout: 20000
+- tapOn: "Lucia Fernandez"
+- extendedWaitUntil:
+    visible: "Gestionar la cuota"
+    timeout: 20000
+- takeScreenshot: recepcion-02-ficha
+
+# La ficha del dueño lleva rutinas; la de recepcion NO.
+- assertNotVisible: "Asignar rutina"
+
+# --- La cuota: AQUI si elige plan, que es la capacidad que no se toco -----
+- tapOn: "Gestionar la cuota"
+- extendedWaitUntil:
+    visible: "Cuota"
+    timeout: 20000
+- takeScreenshot: recepcion-03-cuota
+
+# El cobro es suyo tambien: los pagos se abren DESDE la cuota.
+- tapOn: "Ver los pagos"
+- extendedWaitUntil:
+    visible: "Pagos"
+    timeout: 20000
+- takeScreenshot: recepcion-03b-pagos
+- runFlow: al-panel.yaml
+
+# --- Personal: ve la lista, no retira el acceso --------------------------
+- tapOn: "Personal"
+- extendedWaitUntil:
+    visible: "Personal"
+    timeout: 20000
+- assertNotVisible: "Retirar"
+- takeScreenshot: recepcion-04-personal
+- runFlow: al-panel.yaml
+
+- tapOn: "Accesos"
+- takeScreenshot: recepcion-05-accesos
+- runFlow: al-panel.yaml
+
+# «Cerrar sesión» es la ultima fila: en el emulador queda debajo del borde.
+- scrollUntilVisible:
+    element:
+      text: "Cerrar sesión"
+    direction: DOWN
+    timeout: 20000
+- tapOn: "Cerrar sesión"
+- extendedWaitUntil:
+    visible: "Hola de nuevo"
+    timeout: 20000

@@ -14,7 +14,12 @@
     "vista-previa": "node herramientas/vista-previa.mjs",
     "clean": "rimraf .expo .turbo",
     "test": "vitest run",
-    "destructivas": "vitest run --config vitest.desarrollo.config.ts"
+    "destructivas": "vitest run --config vitest.desarrollo.config.ts",
+    "qa-metro": "node herramientas/desarrollo/metro.mjs",
+    "qa-recorridos": "node herramientas/desarrollo/recorridos.mjs",
+    "qa-medicion": "node herramientas/desarrollo/medicion.mjs",
+    "qa-escaner": "node herramientas/desarrollo/escaner.mjs",
+    "qa-enlaces": "node herramientas/desarrollo/enlaces.mjs"
   },
   "dependencies": {
     "@expo/metro-runtime": "~57.0.15",

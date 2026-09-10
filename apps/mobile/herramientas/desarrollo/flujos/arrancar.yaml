@@ -1,0 +1,53 @@
+appId: tech.gymlabfit.rinda
+---
+# ARRANCAR RINDA LIMPIA CONTRA EL METRO LOCAL.
+#
+# ┌──────────────────────────────────────────────────────────────────────────┐
+# │ POR QUE `clearState` + `openLink` Y NO `launchApp`.                      │
+# │                                                                          │
+# │ La APK de QA es una build de desarrollo: al abrirla sin mas sale el      │
+# │ lanzador de expo-dev-client, no la app. El enlace profundo le dice a que │
+# │ servidor conectarse. Y `clearState` —que es `pm clear`— borra ademas los │
+# │ permisos concedidos, que es justo lo que necesita el flujo del escaner   │
+# │ para empezar SIN camara.                                                 │
+# │                                                                          │
+# │ `localhost:8081` funciona por `adb reverse`, que `recorridos.mjs`        │
+# │ comprueba antes de arrancar nada.                                        │
+# └──────────────────────────────────────────────────────────────────────────┘
+- clearState
+- openLink: "rinda://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081"
+
+# ┌──────────────────────────────────────────────────────────────────────────┐
+# │ EL CARTEL DEL MENU DE DESARROLLO SE QUITA ANTES DE MIRAR NADA.          │
+# │                                                                          │
+# │ Sale una vez tras cada `pm clear`, en una hoja que tapa media pantalla:  │
+# │ con el delante, «Hola de nuevo» esta pintado pero Maestro no lo ve. La   │
+# │ espera larga va AQUI porque es este cartel el que aparece en cuanto      │
+# │ termina de bajar el paquete —unos 1800 modulos por el puente de adb.     │
+# │                                                                          │
+# │ Es del lanzador de desarrollo, no de RINDA: en la build de produccion no │
+# │ existe.                                                                  │
+# └──────────────────────────────────────────────────────────────────────────┘
+- extendedWaitUntil:
+    visible: "Continue"
+    timeout: 180000
+- tapOn: "Continue"
+
+# Se espera a que la hoja termine de moverse ANTES de preguntar si debajo
+# quedo el menu abierto. Sin esto la pregunta llegaba antes que el menu, la
+# rama se saltaba, y el menu aparecia despues tapando la pantalla de entrada
+# durante todo el tiempo de espera.
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# Debajo del cartel queda el menu de desarrollo abierto. Se cierra con atras,
+# y solo si esta: un `back` con el menu ya cerrado manda la app al fondo.
+- runFlow:
+    when:
+      visible: "Toggle performance monitor"
+    commands:
+      - back
+
+- extendedWaitUntil:
+    visible: "Hola de nuevo"
+    timeout: 60000
