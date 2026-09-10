@@ -66,10 +66,12 @@ verificación de dominio. Hay que disparar el intent y mirar dónde acaba.
 `-e`; toda la salida pasa por un filtro que las sustituye antes de llegar a la
 consola. Los tokens de carné tampoco: van directos al PNG.
 
-**El  del binario es nuestra propia defensa.** 
-enumera las franjas privadas en una expresión regular; Hermes la compila y ahí
-los puntos ya no van escapados, así que aparece como texto. En el JavaScript va
-como , que es justo por lo que buscarlo literal daba cero. Y el
- es la constante de reserva de  de React
+**El `192.168.` que aparece en el binario es nuestra propia defensa.**
+`esDeDesarrollo` enumera las franjas privadas en una expresión regular para
+**rechazarlas**. Hermes la compila y ahí los puntos ya no van escapados, así
+que se lee como texto plano; en el JavaScript va como `192\.168\.`, que es
+justo por lo que buscarla literal daba cero y costó verlo. Y el
+`http://localhost:8081/` es la constante de reserva de `getDevServer` de React
 Native, que viaja en toda app RN. Ninguno de los dos es una fuga: la URL
-horneada es .
+horneada es `https://gymlabfit.tech/v1`, y cualquier URL de desarrollo cae a
+esa constante.
