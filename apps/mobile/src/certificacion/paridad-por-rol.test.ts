@@ -480,3 +480,42 @@ describe('cada pantalla del móvil está dentro de un grupo con gate', () => {
     expect(leer(APP, 'perfil', '_layout.tsx')).toMatch(/puedeEntrarEnArea|Redirect/);
   });
 });
+
+describe('iOS y Android ejecutan el mismo JavaScript', () => {
+  /*
+   * ┌──────────────────────────────────────────────────────────────────────┐
+   * │ ESTO ES LO QUE HACE QUE CERTIFICAR EN ANDROID VALGA PARA iOS.        │
+   * │                                                                      │
+   * │ Los recorridos autenticados, el escaner con camara real y la cadena  │
+   * │ de PARITY-4 se ejecutaron en un emulador de ANDROID contra la API    │
+   * │ local. Que eso diga algo de iOS no es una suposicion: es cierto      │
+   * │ MIENTRAS no exista ninguna variante `.ios.*` ni `.android.*`. Metro  │
+   * │ resuelve esos sufijos antes que el fichero base, asi que el dia que  │
+   * │ alguien anada `algo.ios.tsx` las dos plataformas dejaran de correr   │
+   * │ el mismo codigo — en silencio, y la certificacion de Android dejara  │
+   * │ de cubrir iOS sin que nadie se entere.                               │
+   * │                                                                      │
+   * │ La unica variante que SI existe es `.web.*`, que es la vista previa  │
+   * │ del navegador y no viaja en ningun binario de tienda.                │
+   * │                                                                      │
+   * │ Si algun dia hace falta una variante por plataforma, no basta con    │
+   * │ anadirla aqui: hay que recorrer tambien iOS.                          │
+   * └──────────────────────────────────────────────────────────────────────┘
+   */
+  const variantesEn = (dir: string, acc: string[] = []): string[] => {
+    for (const e of readdirSync(dir, { withFileTypes: true })) {
+      const p = join(dir, e.name);
+      if (e.isDirectory()) variantesEn(p, acc);
+      else if (/\.(ios|android|native)\.[jt]sx?$/.test(e.name)) acc.push(p);
+    }
+    return acc;
+  };
+
+  it('no hay ninguna variante .ios, .android ni .native', () => {
+    const variantes = [
+      ...variantesEn(join(MOVIL, 'src')),
+      ...variantesEn(APP),
+    ].map((p) => p.slice(MOVIL.length + 1));
+    expect(variantes, 'una variante por plataforma rompe la certificación cruzada').toEqual([]);
+  });
+});
