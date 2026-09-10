@@ -30,6 +30,19 @@ habla con producción: cada uno comprueba antes de nada que la API es
 
 Las capturas de cada paso quedan en `~/.maestro/tests/<fecha>/`.
 
+## Auditar el binario que se sube
+
+```
+node herramientas/artefacto-de-produccion.mjs ruta/al/app.aab
+```
+
+Sin argumento exporta con el entorno de producción y mide eso, que es un
+**sustituto**: a Play sube un `.aab` construido por otra máquina. Con la ruta
+del AAB se miran los bytes que de verdad viajan y los permisos que declara su
+manifiesto, contra una lista escrita a mano donde cada permiso lleva su motivo.
+Uno que aparezca y no esté en la lista lo pone en rojo, aunque venga de una
+dependencia.
+
 ## Lo que costó averiguar
 
 **Metro servía desde la raíz del monorepo y no resolvía nada.** El cliente de
@@ -52,3 +65,11 @@ verificación de dominio. Hay que disparar el intent y mirar dónde acaba.
 `apps/web/auditoria/credenciales.local.json` (gitignored) y van a Maestro por
 `-e`; toda la salida pasa por un filtro que las sustituye antes de llegar a la
 consola. Los tokens de carné tampoco: van directos al PNG.
+
+**El  del binario es nuestra propia defensa.** 
+enumera las franjas privadas en una expresión regular; Hermes la compila y ahí
+los puntos ya no van escapados, así que aparece como texto. En el JavaScript va
+como , que es justo por lo que buscarlo literal daba cero. Y el
+ es la constante de reserva de  de React
+Native, que viaja en toda app RN. Ninguno de los dos es una fuga: la URL
+horneada es .
