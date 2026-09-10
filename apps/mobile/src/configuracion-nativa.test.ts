@@ -401,14 +401,19 @@ describe('la identidad nativa es RINDA', () => {
    * │   (2)  NATIVE-3: incorpora expo-camera, que es codigo nativo y por    │
    * │        tanto NO llega recargando Metro — hace falta otro binario      │
    * │                                                                      │
-   * │ Android se queda en 1 a proposito: este build es de iOS y su          │
-   * │ `versionCode` no se ha consumido todavia.                            │
+   * │   (3)  RELEASE-0: la consolidada. Trae todo lo de PARITY-1 a          │
+   * │        PARITY-5 y, sobre todo, el entitlement de Universal Links,     │
+   * │        que la (2) no llevaba — por eso el sistema nunca fue a buscar  │
+   * │        la AASA.                                                       │
+   * │                                                                      │
+   * │ Android se queda en 1 a proposito: hasta RELEASE-0 no hubo ninguna    │
+   * │ build de Android, asi que su `versionCode` no se ha consumido.        │
    * └──────────────────────────────────────────────────────────────────────┘
    */
   it('la version comercial no se mueve y el build number si', () => {
     expect(base.version).toBe('0.1.0');
     // iOS quiere una CADENA; Android, un entero.
-    expect(base.ios.buildNumber).toBe('2');
+    expect(base.ios.buildNumber).toBe('3');
     expect(base.android.versionCode).toBe(1);
   });
 });
