@@ -35,7 +35,7 @@ function radioDelDibujo(buf: Buffer): number {
   const bpp = tipoColor === 6 ? 4 : 2;
 
   const idat: Buffer[] = [];
-  for (let i = 8; i < buf.length; ) {
+  for (let i = 8; i < buf.length;) {
     const largo = buf.readUInt32BE(i);
     if (buf.toString('ascii', i + 4, i + 8) === 'IDAT') {
       idat.push(buf.subarray(i + 8, i + 8 + largo));
@@ -128,8 +128,7 @@ function configuracionCon(perfil: string | undefined) {
 
 const ats = (perfil: string | undefined) =>
   (configuracionCon(perfil).ios?.infoPlist?.NSAppTransportSecurity as
-    | Record<string, unknown>
-    | undefined) ?? null;
+    Record<string, unknown> | undefined) ?? null;
 
 describe('la excepcion de red es SOLO del perfil de desarrollo', () => {
   it('en development se permite la red local, y nada mas', () => {
@@ -149,9 +148,7 @@ describe('la excepcion de red es SOLO del perfil de desarrollo', () => {
 
   it('el fichero no nombra `NSAllowsArbitraryLoads` en ningun sitio', () => {
     const codigo = readFileSync(join(RAIZ, 'app.config.js'), 'utf8');
-    const sinComentarios = codigo
-      .replace(/\/\*[\s\S]*?\*\//g, ' ')
-      .replace(/^\s*\/\/.*$/gm, ' ');
+    const sinComentarios = codigo.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/^\s*\/\/.*$/gm, ' ');
     expect(sinComentarios).not.toMatch(/NSAllowsArbitraryLoads/);
   });
 });
@@ -314,9 +311,7 @@ describe('la app no pide permisos que no usa', () => {
    * └──────────────────────────────────────────────────────────────────────┘
    */
   it('la camara se declara con su motivo, en castellano, y sin microfono', () => {
-    const entrada = base.plugins.find(
-      (p: unknown) => Array.isArray(p) && p[0] === 'expo-camera',
-    );
+    const entrada = base.plugins.find((p: unknown) => Array.isArray(p) && p[0] === 'expo-camera');
     expect(entrada, 'expo-camera deberia llevar opciones explicitas').toBeDefined();
     const opciones = entrada[1];
 
@@ -415,5 +410,56 @@ describe('la identidad nativa es RINDA', () => {
     // iOS quiere una CADENA; Android, un entero.
     expect(base.ios.buildNumber).toBe('3');
     expect(base.android.versionCode).toBe(1);
+  });
+});
+
+/**
+ * QUE LA BUILD DE EAS ENCUENTRE LOS PAQUETES DEL WORKSPACE.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ LA PRIMERA BUILD CONSOLIDADA FALLO POR ESTO, Y NO SE HABIA VISTO NUNCA.  │
+ * │                                                                          │
+ * │ En el servidor de EAS solo corre `pnpm install`. `@gymlab/contracts` y   │
+ * │ `@gymlab/api-client` apuntan con `main` a su `dist/`, que lo produce     │
+ * │ `tsup` — y sin `pnpm build` ese `dist/` NO EXISTE. Metro fallaba con     │
+ * │ «specifies a main module field that could not be resolved».              │
+ * │                                                                          │
+ * │ No habia salido antes porque las dos builds anteriores eran de perfil    │
+ * │ `development`: con `developmentClient: true` el JavaScript NO se empaqueta│
+ * │ en el servidor, lo sirve Metro desde el ordenador. La primera vez que    │
+ * │ EAS empaqueta de verdad es esta.                                         │
+ * │                                                                          │
+ * │ Lo arregla `eas-build-post-install` en el `package.json` RAIZ, que es    │
+ * │ donde EAS lo busca en un monorepo.                                       │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ */
+describe('la build de EAS construye los paquetes del workspace', () => {
+  const raiz = JSON.parse(
+    readFileSync(join(__dirname, '..', '..', '..', 'package.json'), 'utf8'),
+  ) as { scripts: Record<string, string> };
+
+  const mio = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf8')) as {
+    dependencies: Record<string, string>;
+    devDependencies: Record<string, string>;
+  };
+
+  it('existe el hook que EAS ejecuta despues de instalar', () => {
+    expect(raiz.scripts['eas-build-post-install']).toBeTruthy();
+  });
+
+  it('y construye TODOS los paquetes del workspace que la app importa', () => {
+    /*
+     * `@gymlab/config` no entra: son ficheros de configuracion de ESLint y
+     * TypeScript, no tiene `dist` ni se importa desde el codigo de la app.
+     */
+    const delWorkspace = Object.entries({ ...mio.dependencies, ...mio.devDependencies })
+      .filter(([, v]) => v.startsWith('workspace:'))
+      .map(([k]) => k)
+      .filter((k) => k !== '@gymlab/config');
+
+    const hook = raiz.scripts['eas-build-post-install']!;
+    for (const paquete of delWorkspace) {
+      expect(hook, `${paquete} no se construye en la build de EAS`).toContain(paquete);
+    }
   });
 });
