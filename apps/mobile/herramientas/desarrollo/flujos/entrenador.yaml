@@ -1,0 +1,81 @@
+appId: tech.gymlabfit.rinda
+---
+# EL ENTRENADOR: sus socios, su entrenamiento, y el consentimiento de salud.
+- runFlow: entrar.yaml
+
+- assertVisible: "Mis socios"
+- assertVisible: "Rutinas"
+- assertVisible: "Ejercicios"
+# El area del entrenador NO es el Panel.
+- assertNotVisible: "Escanear carné"
+- assertNotVisible: "Personal"
+- assertNotVisible: "Configuración"
+- assertNotVisible: "Planes"
+- takeScreenshot: entrenador-01-inicio
+
+# --- La ficha de un socio suyo -------------------------------------------
+- tapOn:
+    text: "Lucia Fernandez"
+    optional: true
+- extendedWaitUntil:
+    visible: "Última medición"
+    timeout: 20000
+- assertVisible: "RUTINAS"
+- takeScreenshot: entrenador-02-socio
+
+# ┌──────────────────────────────────────────────────────────────────────────┐
+# │ PARITY-4: registrar una medicion. El boton solo aparece con              │
+# │ consentimiento vigente; si no, se explica QUE falta y A QUIEN le toca.   │
+# │ Las dos ramas son correctas, asi que se acepta cualquiera de las dos y   │
+# │ se deja constancia en la captura de cual salio.                          │
+# └──────────────────────────────────────────────────────────────────────────┘
+- runFlow:
+    when:
+      visible: "Registrar medición"
+    commands:
+      - tapOn: "Registrar medición"
+      - assertVisible: "PESO (KG)"
+      - assertVisible: "FECHA DE LA MEDICIÓN"
+      - takeScreenshot: entrenador-03-medicion-formulario
+      # Sin ninguna medida no se registra nada.
+      - tapOn: "Guardar medición"
+      - assertVisible:
+          text: ".*al menos una medida.*"
+      - takeScreenshot: entrenador-04-medicion-sin-medidas
+      - tapOn: "Cancelar"
+
+- runFlow:
+    when:
+      notVisible: "Registrar medición"
+    commands:
+      - assertVisible:
+          text: ".*datos de salud.*"
+      - takeScreenshot: entrenador-03-sin-consentimiento
+
+- back
+
+# --- Rutinas y ejercicios: los comparte con el dueño ---------------------
+- tapOn: "Rutinas"
+- extendedWaitUntil:
+    visible: "Rutinas"
+    timeout: 20000
+- takeScreenshot: entrenador-05-rutinas
+- back
+
+- tapOn: "Ejercicios"
+- extendedWaitUntil:
+    visible: "Ejercicios"
+    timeout: 20000
+- takeScreenshot: entrenador-06-ejercicios
+- back
+
+# «Cerrar sesión» es la ultima fila: en el emulador queda debajo del borde.
+- scrollUntilVisible:
+    element:
+      text: "Cerrar sesión"
+    direction: DOWN
+    timeout: 20000
+- tapOn: "Cerrar sesión"
+- extendedWaitUntil:
+    visible: "Hola de nuevo"
+    timeout: 20000

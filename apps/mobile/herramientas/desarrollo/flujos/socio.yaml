@@ -1,0 +1,58 @@
+appId: tech.gymlabfit.rinda
+---
+# EL SOCIO: sus cinco pestañas y las tres secciones de Perfil.
+- runFlow: entrar.yaml
+
+# --- Inicio ---------------------------------------------------------------
+- assertVisible: "Inicio"
+- assertVisible: "Perfil"
+- takeScreenshot: socio-01-inicio
+
+# --- Rutina ---------------------------------------------------------------
+- tapOn: "Rutina"
+- assertVisible: "Rutina"
+- takeScreenshot: socio-02-rutina
+
+# --- Carné ----------------------------------------------------------------
+- tapOn: "Carné"
+- takeScreenshot: socio-03-carne
+
+# --- Progreso -------------------------------------------------------------
+- tapOn: "Progreso"
+# El pie que PARITY-5 añadio: desde aqui se llega a Privacidad.
+- assertVisible:
+    text: ".*Privacidad.*"
+- takeScreenshot: socio-04-progreso
+
+# --- Perfil y sus tres secciones -----------------------------------------
+- tapOn: "Perfil"
+- assertVisible: "Pagos"
+- assertVisible: "Accesos"
+- assertVisible: "Privacidad"
+- takeScreenshot: socio-05-perfil
+
+- tapOn: "Pagos"
+- takeScreenshot: socio-06-pagos
+- back
+
+- tapOn: "Accesos"
+- takeScreenshot: socio-07-accesos
+- back
+
+- tapOn: "Privacidad"
+- assertVisible:
+    text: ".*datos de salud.*"
+- takeScreenshot: socio-08-privacidad
+- back
+
+# --- El socio NO tiene nada del personal ----------------------------------
+- assertNotVisible: "Panel"
+- assertNotVisible: "Mis socios"
+- assertNotVisible: "Socios"
+
+# --- Cerrar sesión y volver a entrar --------------------------------------
+- tapOn: "Cerrar sesión"
+- extendedWaitUntil:
+    visible: "Hola de nuevo"
+    timeout: 20000
+- takeScreenshot: socio-09-salida

@@ -1,0 +1,16 @@
+appId: tech.gymlabfit.rinda
+---
+# UN VEREDICTO, EL QUE SEA. Lo elige quien invoca el flujo.
+#
+# No hay `launchApp`: la app ya está delante del carné que le acaba de colgar
+# `carne-a-la-camara.mjs`. Este flujo solo lee lo que salió.
+#
+# `TITULO` llega anclado (`^PASA$`) desde el orquestador: «PASA» es un trozo de
+# «PASA — con aviso», y sin el ancla un WARN pasaría por un ALLOW.
+- extendedWaitUntil:
+    visible:
+      text: ${TITULO}
+    timeout: 30000
+- assertVisible:
+    text: ${MOTIVO}
+- takeScreenshot: ${CAPTURA}

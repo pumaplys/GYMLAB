@@ -1,0 +1,67 @@
+appId: tech.gymlabfit.rinda
+---
+# REGISTRAR UNA MEDICIÓN: la rama de `entrenador.yaml` que solo existe con el
+# consentimiento vigente.
+#
+# `medicion.mjs` da el permiso con la cuenta de la socia justo antes, y lo
+# retira justo después. Aquí se da por hecho que está dado.
+- runFlow: entrar.yaml
+
+- assertVisible: "Mis socios"
+- tapOn: "Lucia Fernandez"
+- extendedWaitUntil:
+    visible: "Última medición"
+    timeout: 20000
+
+- scrollUntilVisible:
+    element:
+      text: "Registrar medición"
+    direction: DOWN
+    timeout: 20000
+- tapOn: "Registrar medición"
+- assertVisible: "Peso (kg)"
+- takeScreenshot: medicion-01-formulario
+# Siete medidas, la fecha y las notas: la fecha no cabe con el peso en la
+# misma pantalla, asi que se baja a verla en vez de darla por visible.
+- scrollUntilVisible:
+    element:
+      text: "Fecha de la medición"
+    direction: DOWN
+    timeout: 20000
+
+# --- Sin ninguna medida no se guarda nada --------------------------------
+- scrollUntilVisible:
+    element:
+      text: "Guardar medición"
+    direction: DOWN
+    timeout: 20000
+- tapOn: "Guardar medición"
+# El aviso sale ARRIBA del formulario, y el boton esta abajo: hay que subir a
+# leerlo. Quien lo escribio lo puso ahi a proposito —lo que falta se dice antes
+# de los campos, no despues— y la prueba tiene que ir a buscarlo donde esta.
+- scrollUntilVisible:
+    element:
+      text: ".*al menos una medida.*"
+    direction: UP
+    timeout: 20000
+- takeScreenshot: medicion-02-sin-medidas
+
+# --- Con una medida sí ----------------------------------------------------
+- scrollUntilVisible:
+    element:
+      text: "Peso (kg)"
+    direction: UP
+    timeout: 20000
+- tapOn: "Peso (kg)"
+- inputText: "72,4"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      text: "Guardar medición"
+    direction: DOWN
+    timeout: 20000
+- tapOn: "Guardar medición"
+- extendedWaitUntil:
+    visible: "Medición registrada."
+    timeout: 25000
+- takeScreenshot: medicion-03-registrada

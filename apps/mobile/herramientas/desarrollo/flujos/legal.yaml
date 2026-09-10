@@ -1,0 +1,125 @@
+appId: tech.gymlabfit.rinda
+---
+# EL DUEÑO RELLENA LOS DATOS DEL RESPONSABLE (PARITY-4: `legal.update`).
+#
+# ┌──────────────────────────────────────────────────────────────────────────┐
+# │ ES EL PRIMER ESLABON, Y SIN EL NO HAY NINGUNO DE LOS OTROS DOS.         │
+# │                                                                          │
+# │ El documento de privacidad NO tiene boton de publicar: se publica solo,  │
+# │ la primera vez que un socio lo necesita, y solo si hay identidad del     │
+# │ responsable. Sin estos cuatro campos la socia ve «tu gimnasio no ha      │
+# │ publicado todavía su texto», no puede dar permiso, y el entrenador no    │
+# │ puede registrar nada.                                                    │
+# │                                                                          │
+# │ Se descubrio ejecutandolo: el recorrido del entrenador caia en la rama   │
+# │ «sin consentimiento» y el motivo estaba tres pantallas mas atras.        │
+# └──────────────────────────────────────────────────────────────────────────┘
+- runFlow: entrar.yaml
+
+- tapOn: "Configuración"
+- extendedWaitUntil:
+    visible: "Datos del responsable"
+    timeout: 20000
+# El estado de partida se RETRATA, no se exige: la primera vez el gimnasio
+# esta «Incompleta» y esa es la transicion interesante, pero una vez rellenado
+# ya no vuelve a estarlo y el flujo tiene que poder repetirse.
+- takeScreenshot: legal-01-estado-de-partida
+
+# Tres cosas por campo, y las tres hicieron falta:
+#
+#   se BUSCA antes de tocarlo    los cuatro no caben en una pantalla;
+#   se BORRA con cuenta (200)    `inputText` anade, no reemplaza;
+#   se cierra el teclado luego   con el abierto, los de abajo se salen.
+#
+# ┌──────────────────────────────────────────────────────────────────────────┐
+# │ ESTE FLUJO ESPERA LOS CAMPOS VACIOS, QUE ES COMO ESTA UN GIMNASIO NUEVO. │
+# │                                                                          │
+# │ Sobre un campo YA relleno no vale: al tocar el centro de la caja el      │
+# │ cursor cae a mitad del texto, `eraseText` borra hacia atras desde ahi y  │
+# │ lo nuevo se inserta en medio. Salia                                       │
+# │ «Calle de Prueba 1, 28001 Madridrid01 Madrid01 Madrid», y el email       │
+# │ mutilado hacia fallar el guardado por invalido.                          │
+# │                                                                          │
+# │ No se ha disimulado subiendo el numero de borrados: el problema es DONDE │
+# │ esta el cursor, no cuantos caracteres se borran. Para repetir la cadena  │
+# │ se vacian antes los cuatro campos en la base de DESARROLLO, que ademas   │
+# │ es el estado en el que estaban.                                          │
+# └──────────────────────────────────────────────────────────────────────────┘
+- scrollUntilVisible:
+    element:
+      text: "Razón social"
+    direction: DOWN
+    timeout: 20000
+- tapOn: "Razón social"
+- eraseText: 200
+- inputText: "ZZ Diseno S.L."
+- hideKeyboard
+
+- scrollUntilVisible:
+    element:
+      text: "Identificador fiscal"
+    direction: DOWN
+    timeout: 20000
+- tapOn: "Identificador fiscal"
+- eraseText: 200
+- inputText: "B00000000"
+- hideKeyboard
+
+- scrollUntilVisible:
+    element:
+      text: "Domicilio"
+    direction: DOWN
+    timeout: 20000
+- tapOn: "Domicilio"
+- eraseText: 200
+- inputText: "Calle de Prueba 1, 28001 Madrid"
+- hideKeyboard
+
+- scrollUntilVisible:
+    element:
+      text: "Email de privacidad"
+    direction: DOWN
+    timeout: 20000
+- tapOn: "Email de privacidad"
+- eraseText: 200
+- inputText: "privacidad@diseno.local"
+- hideKeyboard
+
+- scrollUntilVisible:
+    element:
+      text: "Guardar"
+    direction: DOWN
+    timeout: 20000
+- tapOn: "Guardar"
+
+# El bloque de abajo deja de pedir nada. Se admiten sus DOS estados buenos, y
+# no por comodidad: «listo para publicar» es el de antes de que ningun socio
+# haya abierto su pantalla de privacidad, y «publicado» el de despues. Cual de
+# los dos salga depende de si esta cadena ya se recorrio una vez.
+#
+# Lo que NO se admite es ningun otro: el rotulo «HECHO» solo aparece en esos.
+- scrollUntilVisible:
+    element:
+      text: "Documento de privacidad"
+    direction: DOWN
+    timeout: 25000
+- assertVisible:
+    text: "^HECHO$"
+- assertVisible:
+    text: ".*(Listo para publicar|Documento publicado).*"
+- takeScreenshot: legal-02-documento
+
+# Y arriba, la etiqueta pasa de «Incompleta» a «Completa».
+#
+# Anclada: «Completa» es un trozo de «Incompleta», y sin los anclajes la
+# comprobacion se pondria verde justo cuando el formulario sigue a medias.
+- scrollUntilVisible:
+    element:
+      text: "Datos del responsable"
+    direction: UP
+    timeout: 20000
+- assertVisible:
+    text: "^Completa$"
+- assertNotVisible:
+    text: "^Incompleta$"
+- takeScreenshot: legal-03-completa

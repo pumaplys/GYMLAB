@@ -20,6 +20,10 @@ export default [
         console: 'readonly',
         // El gate de aislamiento lee el bytecode de Hermes en crudo.
         Buffer: 'readonly',
+        // Los guiones de QA de Android hablan con la API local y esperan al
+        // emulador entre paso y paso. Node los trae de serie desde la 18.
+        fetch: 'readonly',
+        setTimeout: 'readonly',
       },
     },
   },

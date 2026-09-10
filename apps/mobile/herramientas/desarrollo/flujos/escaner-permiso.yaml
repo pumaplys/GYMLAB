@@ -1,0 +1,42 @@
+appId: tech.gymlabfit.rinda
+---
+# EL ESCÁNER, DESDE EL PERMISO HASTA LA CÁMARA ENCENDIDA.
+#
+# Se arranca con la cámara DENEGADA a propósito. Perder el escáner por un
+# permiso es un contratiempo; quedarse atrapado en una pantalla negra es un
+# fallo, y esa diferencia es justo lo que se comprueba aquí.
+- runFlow: arrancar.yaml
+# Los dos campos se cogen por su nombre accesible —el que anuncia un lector—,
+# no por su posicion: «CORREO» en pantalla es un rotulo aparte, y apuntar
+# «debajo» de el acababa escribiendo en la tarjeta y no en la caja.
+- tapOn: "Correo"
+- inputText: ${CORREO}
+- tapOn: "Contraseña"
+- inputText: ${CLAVE}
+- hideKeyboard
+- tapOn: "Entrar"
+- extendedWaitUntil:
+    visible: "Escanear carné"
+    timeout: 25000
+
+- tapOn: "Escanear carné"
+
+# --- Sin permiso: se explica, se ofrece salida y se ofrece pedirlo ---------
+- extendedWaitUntil:
+    visible: "Para leer carnés hace falta permiso para usar la cámara."
+    timeout: 15000
+# La barra de arriba sigue ahí: NO se queda encerrado.
+- assertVisible: "Volver al Panel"
+- assertVisible: "Permitir la cámara"
+- takeScreenshot: escaner-01-permiso-denegado
+
+# --- Se concede, y la cámara se enciende ----------------------------------
+- tapOn: "Permitir la cámara"
+- tapOn:
+    text: "(?i)while using this app|while using the app|only this time|allow"
+    optional: true
+- extendedWaitUntil:
+    visible: "Apunta al código del carné del socio."
+    timeout: 20000
+- assertNotVisible: "Para leer carnés hace falta permiso para usar la cámara."
+- takeScreenshot: escaner-02-camara-encendida

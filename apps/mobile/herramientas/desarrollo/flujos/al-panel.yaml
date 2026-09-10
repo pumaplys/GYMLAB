@@ -1,0 +1,16 @@
+appId: tech.gymlabfit.rinda
+---
+# VOLVER AL PANEL DESDE DONDE SEA.
+#
+# Contar `- back` obliga a saber de memoria cuantas pantallas hay debajo, y
+# eso se rompe en cuanto una pantalla gana o pierde un paso —por ejemplo, los
+# pagos se abren DESDE la cuota, no desde la ficha—. Ademas, un `back` de mas
+# manda la app al fondo y el resto del recorrido falla sin decir por que.
+#
+# «Escanear carné» solo existe en el Panel, asi que sirve de meta.
+- repeat:
+    while:
+      notVisible: "Escanear carné"
+    commands:
+      - back
+- assertVisible: "Escanear carné"

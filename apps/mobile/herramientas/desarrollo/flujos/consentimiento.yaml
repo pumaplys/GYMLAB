@@ -1,0 +1,60 @@
+appId: tech.gymlabfit.rinda
+---
+# EL PERMISO DE DATOS DE SALUD, DADO Y RETIRADO POR LA SOCIA.
+#
+# ┌──────────────────────────────────────────────────────────────────────────┐
+# │ LO DA ELLA, NO SE ENCHUFA EN LA BASE DE DATOS.                          │
+# │                                                                          │
+# │ Podria ponerse un INSERT en `consents` y ahorrarse este recorrido, pero  │
+# │ entonces `progreso.consentimientoDeSalud` —que es una de las cinco       │
+# │ capacidades que trajo PARITY-4— no se probaria en Android en ningun      │
+# │ sitio. Y es justo la que decide si el entrenador puede registrar una     │
+# │ medicion: es el interruptor, no un adorno.                               │
+# └──────────────────────────────────────────────────────────────────────────┘
+#
+#   ACCION=dar       la socia da su permiso
+#   ACCION=retirar   lo retira, para dejar el fixture como estaba
+- runFlow: entrar.yaml
+
+- tapOn: "Perfil"
+- extendedWaitUntil:
+    visible: "Privacidad"
+    timeout: 20000
+- tapOn: "Privacidad"
+- extendedWaitUntil:
+    visible: "Tus datos de salud"
+    timeout: 20000
+
+- runFlow:
+    when:
+      true: ${ACCION == 'dar'}
+    commands:
+      - scrollUntilVisible:
+          element:
+            text: "Doy mi permiso"
+          direction: DOWN
+          timeout: 20000
+      - tapOn: "Doy mi permiso"
+      - extendedWaitUntil:
+          visible: "Retirar mi permiso"
+          timeout: 20000
+      - takeScreenshot: consentimiento-dado
+
+- runFlow:
+    when:
+      true: ${ACCION == 'retirar'}
+    commands:
+      - scrollUntilVisible:
+          element:
+            text: "Retirar mi permiso"
+          direction: DOWN
+          timeout: 20000
+      - tapOn: "Retirar mi permiso"
+      # Se dice lo que pasa Y lo que no antes de confirmar.
+      - assertVisible:
+          text: ".*Las que ya existen se conservan.*"
+      - tapOn: "Retirar"
+      - extendedWaitUntil:
+          visible: "Doy mi permiso"
+          timeout: 20000
+      - takeScreenshot: consentimiento-retirado
