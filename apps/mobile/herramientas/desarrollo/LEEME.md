@@ -19,6 +19,12 @@ habla con producción: cada uno comprueba antes de nada que la API es
 > `dist` que `nest start --watch` está usando y la API se cae con
 > `MODULE_NOT_FOUND`. Si eso pasa, basta relanzarla.
 
+> **Maestro deja una copia de la APK en `%TEMP%` por cada ejecución.** Son
+> 261 MB cada una y no las borra. Después de una tanda de recorridos:
+> `rm "$TEMP"/tmp*.apk`. Cincuenta ejecuciones llenaron 13 GB y tumbaron Metro,
+> Docker y la API a la vez, y el síntoma —fallos raros por todas partes— no
+> apunta a la causa.
+
 ## Los guiones
 
 | Orden | Qué comprueba |
