@@ -57,8 +57,18 @@ vuelva a preguntar.
 | Antes | Decisión | Dónde está ya |
 | --- | --- | --- |
 | A7 · Buzón de derechos | `privacidad@gymlabfit.tech` | `/privacidad`, §«Tus derechos» |
-| A8 · Edad mínima | **18 años**, y el producto la impone | Contrato `birthDateSchema` + restricción `members_mayoria_de_edad` en la base |
+| A8 · Edad mínima | **Dirigida a mayores de 18** | Contrato `birthDateSchema` + restricción `members_mayoria_de_edad`. **Alcance acotado abajo** |
 | A9 · Buzón de soporte | `soporte@gymlabfit.tech` | `/soporte` |
+
+> **LO QUE +18 CUBRE Y LO QUE NO.** Con la fecha de nacimiento conocida, el
+> producto **impide** al menor en las dos capas. Pero la fecha es **opcional**,
+> el personal no la aporta y las invitaciones no la piden: **no se puede decir
+> que todas las personas usuarias estén verificadas como mayores de edad**.
+>
+> No se ha convertido RINDA en un sistema de verificación de edad, y no se va a
+> hacer ahora: no se añade fecha obligatoria al alta de cuenta ni pantallas
+> nuevas. **Cómo se redacta esa limitación en las condiciones es parte de la
+> revisión legal pendiente** (queda ligado a A2 y A3).
 
 > **Bloqueo OPERATIVO, no jurídico.** `gymlabfit.tech` tiene registros MX
 > (`mx1`/`mx2.hostinger.com`), así que el dominio recibe correo. **No está

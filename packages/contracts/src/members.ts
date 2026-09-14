@@ -87,7 +87,7 @@ const birthDateSchema = z
    */
   .refine(
     (v) => tieneEdadMinima(v),
-    `RINDA es solo para mayores de ${EDAD_MINIMA} años.`,
+    `RINDA esta dirigida a mayores de ${EDAD_MINIMA} años.`,
   );
 
 // --- Alta y edicion ------------------------------------------------------

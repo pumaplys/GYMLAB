@@ -109,9 +109,14 @@ export default function PrivacidadPage() {
       <section className={estilos.seccion}>
         <h2>Quién puede usar RINDA</h2>
         <p>
-          RINDA es <strong>sólo para mayores de 18 años</strong>. Cuando tu gimnasio registra tu
-          fecha de nacimiento, el sistema no permite crear ni editar una ficha de una persona menor
-          de esa edad.
+          RINDA está <strong>dirigida a personas mayores de 18 años</strong>.
+        </p>
+        <p>
+          Cuando tu gimnasio registra tu fecha de nacimiento, el sistema no permite crear ni editar
+          una ficha de una persona menor de esa edad. Ahora bien, esa fecha es{' '}
+          <strong>opcional</strong>: un gimnasio puede dar de alta a alguien sin ella, y entonces
+          RINDA no conoce su edad. <strong>No comprobamos la edad de todas las personas usuarias</strong>,
+          y no afirmamos lo contrario.
         </p>
       </section>
 

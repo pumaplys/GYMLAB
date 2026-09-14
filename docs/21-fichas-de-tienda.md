@@ -12,11 +12,20 @@ Lo que sí necesita decisión jurídica vive en
 
 | | |
 | --- | --- |
-| Edad mínima | **18 años**, impuesta en el contrato y en la base de datos |
+| Público | **Dirigida a mayores de 18 años** (ver el alcance exacto abajo) |
 | Privacidad | `privacidad@gymlabfit.tech` |
 | Soporte | `soporte@gymlabfit.tech` |
 | Publicidad / seguimiento | **No hay** |
 | Compras dentro de la app | **No hay** |
+
+> **ALCANCE DEL +18, DICHO CON PRECISIÓN.** RINDA está **dirigida** a mayores
+> de 18. Cuando la fecha de nacimiento se conoce, el producto **impide** dar de
+> alta o editar a una persona menor —en el contrato y en la base de datos—.
+> Pero esa fecha es **opcional**, el personal no la tiene y las invitaciones no
+> la piden: **no se puede afirmar que todas las personas usuarias estén
+> verificadas como mayores de edad**, y en ningún texto se afirma. El
+> tratamiento jurídico de esa limitación queda dentro de lo pendiente de
+> revisión legal.
 
 > **Bloqueo operativo de correo.** `gymlabfit.tech` tiene registros MX
 > (`mx1`/`mx2.hostinger.com`), así que el dominio recibe correo. **Que esos dos
@@ -58,7 +67,7 @@ está construida la aplicación.
 · Cuotas, pagos y planes del gimnasio
 · Tu progreso, sólo si tú das tu permiso — y puedes retirarlo cuando quieras
 
-RINDA es sólo para mayores de 18 años.
+RINDA está dirigida a personas mayores de 18 años.
 ```
 
 ### Notas para App Review
