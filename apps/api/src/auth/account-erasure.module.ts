@@ -3,6 +3,7 @@ import { InvitationsModule } from '../invitations/invitations.module';
 import { MembersModule } from '../members/members.module';
 import { AccountErasureController } from './account-erasure.controller';
 import { AccountErasureService } from './account-erasure.service';
+import { Reautenticacion } from './reautenticacion';
 
 /**
  * El borrado de cuenta, en su propio modulo.
@@ -24,6 +25,6 @@ import { AccountErasureService } from './account-erasure.service';
 @Module({
   imports: [MembersModule, InvitationsModule],
   controllers: [AccountErasureController],
-  providers: [AccountErasureService],
+  providers: [AccountErasureService, Reautenticacion],
 })
 export class AccountErasureModule {}

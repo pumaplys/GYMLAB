@@ -17,6 +17,7 @@ import {
   type SwitchGymInput,
   erasurePreviewSchema,
   erasureResultSchema,
+  type EraseAccountInput,
   type ErasurePreview,
   type ErasureResult,
 } from '@gymlab/contracts';
@@ -124,7 +125,7 @@ export interface AuthApi {
    * No recibe ningun identificador: la cuenta sale de la sesion. Al no existir
    * el dato, esto no puede borrar la cuenta de otra persona ni por error.
    */
-  eraseAccount(options?: RequestOptions): Promise<ErasureResult>;
+  eraseAccount(input: EraseAccountInput, options?: RequestOptions): Promise<ErasureResult>;
 }
 
 export function createAuthApi(http: Http): AuthApi {
@@ -146,8 +147,8 @@ export function createAuthApi(http: Http): AuthApi {
     erasurePreview: (options) =>
       http({ method: 'GET', path: '/me/erasure-preview', schema: erasurePreviewSchema, ...options }),
 
-    eraseAccount: (options) =>
-      http({ method: 'DELETE', path: '/me', schema: erasureResultSchema, ...options }),
+    eraseAccount: (input, options) =>
+      http({ method: 'DELETE', path: '/me', body: input, schema: erasureResultSchema, ...options }),
 
     switchGym: (input, options) =>
       http({

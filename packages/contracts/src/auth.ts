@@ -293,3 +293,29 @@ export const erasureResultSchema = z.discriminatedUnion('ok', [
   z.object({ ok: z.literal(false), bloqueos: z.array(erasureBlockerSchema) }),
 ]);
 export type ErasureResult = z.infer<typeof erasureResultSchema>;
+
+/**
+ * Lo que hay que aportar para borrar la propia cuenta.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ LA CONTRASEÑA ACTUAL, Y NINGUN IDENTIFICADOR.                           │
+ * │                                                                          │
+ * │ No lleva `userId` a proposito: la cuenta que se borra sale SIEMPRE de la │
+ * │ sesion. Al no existir el dato en el contrato, este endpoint no puede     │
+ * │ borrar la cuenta de otra persona ni por un error de programacion — la    │
+ * │ misma garantia que ya se aplico en `linkInvitation`.                     │
+ * │                                                                          │
+ * │ Y lleva la contraseña porque escribir «ELIMINAR» confirma la INTENCION   │
+ * │ pero no la IDENTIDAD: una sesion abierta en un movil prestado bastaba    │
+ * │ para borrar una identidad entera sin vuelta atras.                       │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * Sin `passwordSchema`: aqui no se esta ELIGIENDO una contraseña nueva, se
+ * esta presentando la que ya existe. Exigirle el minimo de longitud actual
+ * dejaria fuera a quien tenga una anterior a esa regla, y ademas convertiria
+ * el mensaje de validacion en una pista sobre la contraseña guardada.
+ */
+export const eraseAccountSchema = z.object({
+  password: z.string().min(1, 'Escribe tu contraseña actual.'),
+});
+export type EraseAccountInput = z.infer<typeof eraseAccountSchema>;

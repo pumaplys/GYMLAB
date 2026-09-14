@@ -43,6 +43,7 @@ type Estado =
 export default function EliminarCuentaPage() {
   const [estado, setEstado] = useState<Estado>({ fase: 'comprobando' });
   const [escrito, setEscrito] = useState('');
+  const [contrasena, setContrasena] = useState('');
   const [borrando, setBorrando] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -68,14 +69,16 @@ export default function EliminarCuentaPage() {
     setBorrando(true);
     setError(null);
     try {
-      const r = await api.auth.eraseAccount();
+      const r = await api.auth.eraseAccount({ password: contrasena });
       if (r.ok) setEstado({ fase: 'hecho' });
       else {
         setEstado({ fase: 'bloqueado', bloqueos: r.bloqueos });
         setEscrito('');
+        setContrasena('');
       }
     } catch {
-      setError('No hemos podido eliminar tu cuenta. Inténtalo de nuevo.');
+      // Un 401 aqui es «esa no es tu contraseña», que es el fallo mas probable.
+      setError('No hemos podido eliminar tu cuenta. Comprueba tu contraseña e inténtalo de nuevo.');
     } finally {
       setBorrando(false);
     }
@@ -141,6 +144,12 @@ export default function EliminarCuentaPage() {
       {estado.fase === 'puede' ? (
         <div className={estilos.acciones}>
           {error ? <Aviso tono="error">{error}</Aviso> : null}
+          {/*
+            DOS PUERTAS, Y NO SON LA MISMA. La palabra confirma la INTENCION
+            —que no ha sido un clic sin querer—; la contraseña confirma la
+            IDENTIDAD de quien está delante. La segunda la comprueba el
+            servidor: esta pantalla no decide nada.
+          */}
           <Campo
             etiqueta={`Escribe ${CONFIRMACION} para confirmar`}
             ayuda="Es la única forma de continuar."
@@ -148,11 +157,19 @@ export default function EliminarCuentaPage() {
             alCambiar={setEscrito}
             deshabilitado={borrando}
           />
+          <Campo
+            etiqueta="Tu contraseña actual"
+            tipo="password"
+            ayuda="Para comprobar que eres tú."
+            valor={contrasena}
+            alCambiar={setContrasena}
+            deshabilitado={borrando}
+          />
           <Boton
             variante="peligro"
             onClick={() => void eliminar()}
             cargando={borrando}
-            disabled={escrito.trim().toUpperCase() !== CONFIRMACION || borrando}
+            disabled={escrito.trim().toUpperCase() !== CONFIRMACION || !contrasena || borrando}
           >
             Eliminar mi cuenta
           </Boton>

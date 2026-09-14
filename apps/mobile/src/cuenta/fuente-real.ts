@@ -12,6 +12,6 @@ export function consultarBorradoReal(): Promise<ErasurePreview> {
   return api.auth.erasurePreview();
 }
 
-export function borrarCuentaReal(): Promise<ErasureResult> {
-  return api.auth.eraseAccount();
+export function borrarCuentaReal(contrasena: string): Promise<ErasureResult> {
+  return api.auth.eraseAccount({ password: contrasena });
 }

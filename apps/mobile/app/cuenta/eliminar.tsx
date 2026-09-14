@@ -47,6 +47,7 @@ export default function EliminarCuenta() {
   const { salir } = useSesion();
   const [carga, setCarga] = useState<Carga>({ fase: 'cargando' });
   const [escrito, setEscrito] = useState('');
+  const [contrasena, setContrasena] = useState('');
   const [borrando, setBorrando] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -71,7 +72,7 @@ export default function EliminarCuenta() {
     setBorrando(true);
     setError(null);
     try {
-      const r = await borrarCuenta();
+      const r = await borrarCuenta(contrasena);
       if (r.ok) {
         /*
          * La sesion del servidor ya no existe. `salir()` limpia la del
@@ -83,8 +84,10 @@ export default function EliminarCuenta() {
       }
       setCarga({ fase: 'listo', puedeBorrarse: false, bloqueos: r.bloqueos });
       setEscrito('');
+      setContrasena('');
     } catch {
-      setError('No hemos podido eliminar tu cuenta. Inténtalo de nuevo.');
+      // Un 401 aqui es «esa no es tu contraseña», que es el fallo mas probable.
+      setError('No hemos podido eliminar tu cuenta. Comprueba tu contraseña e inténtalo de nuevo.');
     } finally {
       setBorrando(false);
     }
@@ -119,6 +122,15 @@ export default function EliminarCuenta() {
       ) : carga.puedeBorrarse ? (
         <View style={estilos.bloque}>
           {error ? <Aviso tono="peligro">{error}</Aviso> : null}
+          {/*
+            DOS PUERTAS, Y NO SON LA MISMA. La palabra confirma la INTENCION
+            —que no ha sido un dedo torpe—; la contraseña confirma la IDENTIDAD
+            de quien tiene el teléfono delante. Un móvil desbloqueado y
+            prestado un momento tiene la sesión abierta, y con eso bastaba.
+
+            La segunda la comprueba el SERVIDOR: esta pantalla no decide nada,
+            y saltarse el campo llamando a la API no sirve de nada.
+          */}
           <Campo
             etiqueta={`Escribe ${CONFIRMACION} para confirmar`}
             ayuda="Es la única forma de continuar."
@@ -128,11 +140,19 @@ export default function EliminarCuenta() {
             autoCorrect={false}
             deshabilitado={borrando}
           />
+          <Campo
+            etiqueta="Tu contraseña actual"
+            ayuda="Para comprobar que eres tú."
+            valor={contrasena}
+            alCambiar={setContrasena}
+            secreto
+            deshabilitado={borrando}
+          />
           <Boton
             variante="peligro"
             onPress={() => void eliminar()}
             cargando={borrando}
-            deshabilitado={!seConfirmo(escrito) || borrando}
+            deshabilitado={!seConfirmo(escrito) || !contrasena || borrando}
           >
             Eliminar mi cuenta
           </Boton>

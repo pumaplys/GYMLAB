@@ -112,10 +112,7 @@ La intención original —conservar el rastro— se mantiene: la fila sigue ahí
 su rol y su fecha. `NULL` significa «la cuenta que invitó ya no existe», no «no
 se sabe quién invitó».
 
-**Rollback:** revertir la FK a `RESTRICT` exige que no haya ninguna fila con
-`invited_by_user_id IS NULL`; si ya se ha borrado alguna cuenta, esas filas hay
-que reasignarlas o eliminarlas antes. Por eso el camino de vuelta no es
-automático y no se ofrece como migración inversa.
+**Rollback:** no es automático. El procedimiento explícito está en §13.
 
 ## 8. Sin periodo de gracia
 
@@ -141,3 +138,121 @@ hay sesión.
 La carpeta `app/cuenta/` gatea por **sesión**, no por área: es la única así.
 Borrar la propia cuenta es un derecho de la persona, no una capacidad de su
 puesto, y los cuatro roles tienen que llegar.
+
+## 10. Las dos puertas: intención e identidad
+
+Escribir `ELIMINAR` confirma la **intención** —que no ha sido un dedo torpe—.
+**No confirma la identidad.** Un móvil desbloqueado y prestado un momento tiene
+la sesión abierta, y con eso bastaba para borrar una identidad entera.
+
+Por eso `DELETE /v1/me` exige además **la contraseña actual**, y la comprueba el
+**servidor**: la palabra es una puerta de interfaz que se salta llamando a la
+API; ésta no.
+
+### Cómo se verifica, y qué NO se hace
+
+Se usa el verificador de la propia librería, a través de `auth.$context`:
+
+```
+ctx.internalAdapter.findAccounts(userId) → la cuenta `credential`
+ctx.password.verify({ hash, password })  → el mismo verificador del login
+```
+
+- **No se compara ningún hash aquí.** Conocer el algoritmo, el formato y la
+  comparación en tiempo constante es cosa de Better Auth; escribir un `compare`
+  propio sería inventar criptografía y se separaría de la librería el día que
+  cambie de algoritmo.
+- **No se usa `signInEmail` para «probar» la contraseña**, que era la otra
+  salida evidente: abriría una sesión que nadie ha pedido y gastaría un intento
+  del limitador de login, hasta dejar a alguien sin poder borrar su cuenta por
+  haberlo intentado dos veces.
+- **Falla cerrado.** Si la cuenta no tuviera credencial de contraseña —hoy
+  imposible: el único proveedor es `credential`— no se puede borrar por esta
+  vía, en lugar de poder borrarse sin comprobar nada.
+
+La comprobación va **antes** que la de bloqueos: con la contraseña equivocada,
+la petición no llega a saber siquiera de cuántos gimnasios es dueña la cuenta.
+
+## 11. Un gimnasio nunca se queda sin dueña
+
+Dos caminos pueden quitarle el puesto a una dueña, y **cada uno tiene su
+guarda**. No es el mismo gate duplicado:
+
+| Camino | Quién lo hace | Guarda | Por qué esa |
+| --- | --- | --- | --- |
+| Retirar el acceso | **otra** persona | «nadie puede retirárselo a sí mismo» | Con ella, la última que quede no puede irse. No hace falta contar |
+| Borrar la cuenta | **una misma** | contar si queda relevo activo | La anterior no sirve: precisamente se está yendo |
+
+Y un tercer camino que **parece** peligroso y no lo es: borrar la **ficha de
+socia** de una dueña. `IdentityErasure` retira sólo la pertenencia de rol
+`member`, y sólo borra la cuenta si no le queda **ninguna** pertenencia. Está
+probado.
+
+> **Una pertenencia terminada no es un relevo.** El gate cuenta sólo dueñas con
+> `ended_at IS NULL`. Probado en las dos direcciones: con relevo vivo se puede;
+> tras retirarle el acceso, ya no.
+
+## 12. La trampa de RLS, otra vez, en el gate de bloqueos
+
+La primera versión de `bloqueos()` contaba las otras dueñas y leía el nombre del
+gimnasio **con el contexto de la sesión**. Para cualquier gimnasio que no fuera
+el activo:
+
+- la otra dueña era **invisible** —la única rama de RLS que sobrevive es
+  `user_id = yo`, y esa fila no es mía—, así que el gate anunciaba un bloqueo
+  **falso** y no dejaba borrarse a quien sí tenía relevo;
+- y `gyms` no devolvía fila, así que el nombre caía al uuid y la pantalla decía
+  «el gimnasio 7ee59ad5-… se quedaría sin dueña».
+
+Lo encontró el caso de la dueña de dos gimnasios con relevo en los dos.
+
+## 13. Rollback de la migración 0018
+
+**No es automático, y por eso hay procedimiento.**
+
+Volver a `RESTRICT` exige que **no haya ninguna fila con
+`invited_by_user_id IS NULL`**. Si ya se ha borrado alguna cuenta, esas filas
+existen y el `ALTER` fallaría.
+
+```sql
+-- 1. ¿Cuántas filas lo impiden?
+SELECT count(*) FROM invitations WHERE invited_by_user_id IS NULL;
+
+-- 2. Si son 0, el camino de vuelta es limpio:
+ALTER TABLE invitations DROP CONSTRAINT invitations_invited_by_user_id_users_id_fk;
+ALTER TABLE invitations ADD CONSTRAINT invitations_invited_by_user_id_users_id_fk
+  FOREIGN KEY (invited_by_user_id) REFERENCES users(id) ON DELETE RESTRICT;
+ALTER TABLE invitations ALTER COLUMN invited_by_user_id SET NOT NULL;
+
+-- 3. Si NO son 0, hay que decidir qué hacer con ellas ANTES: son invitaciones
+--    cuya autora ejerció su derecho de supresión. Borrarlas destruye el rastro
+--    de «quién dio acceso a quién»; reasignarlas atribuye a alguien algo que no
+--    hizo. Es una decisión de producto, no técnica.
+```
+
+**Restaurar desde copia** es la otra vía, y la preferible si ya hay cuentas
+borradas: `docs/09-copias-de-seguridad.md`. Volver atrás en el esquema **no
+devuelve** las identidades eliminadas — el borrado es irreversible por diseño.
+
+## 14. El gate de «listo para tiendas»
+
+```
+pnpm --filter @gymlab/web listo-para-tiendas
+```
+
+**Hoy está rojo, y eso es lo correcto.** Impide declararse listo para tienda, no
+desarrollar: por eso **no** va en el `pnpm test` de cada commit.
+
+Comprueba, sobre lo que de verdad se sirve y sobre la base de datos:
+
+- que `/privacidad` no se sirva marcada **BORRADOR**;
+- que no declare campos jurídicos pendientes;
+- que `/soporte` no siga en borrador;
+- que ninguna plantilla de consentimiento de salud tenga `is_draft`;
+- que el pack de revisión legal no tenga huecos.
+
+> La primera versión comparaba el booleano con `'t'` y psql lo imprime como
+> `'true'`: **daba por bueno el consentimiento sin haberlo mirado, y no se
+> quejaba**. Ahora, si el formato vuelve a cambiar, grita en vez de callarse.
+>
+> La forma de ponerlo verde es **aprobar los textos**, no inventar valores.

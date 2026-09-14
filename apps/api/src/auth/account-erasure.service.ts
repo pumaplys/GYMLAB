@@ -81,28 +81,51 @@ export class AccountErasureService {
 
     const bloqueos: { gymId: string; nombre: string }[] = [];
     for (const { gymId } of suyos) {
-      const [otro] = await tx
-        .select({ id: memberships.id })
-        .from(memberships)
-        .where(
-          and(
-            eq(memberships.gymId, gymId),
-            eq(memberships.role, 'owner'),
-            isNull(memberships.endedAt),
-            ne(memberships.userId, userId),
-          ),
-        )
-        .limit(1);
+      /*
+       * ┌──────────────────────────────────────────────────────────────────┐
+       * │ CON EL CONTEXTO DE *ESE* GIMNASIO, Y NO CON EL DE LA SESION.     │
+       * │                                                                  │
+       * │ Las dos consultas de dentro caen bajo RLS. Con el gimnasio activo│
+       * │ de la sesion puesto, en CUALQUIER OTRO gimnasio:                  │
+       * │                                                                  │
+       * │   · la otra dueña es INVISIBLE —la rama que sobrevive es          │
+       * │     `user_id = yo`, y esa fila no es mia—, asi que el gate        │
+       * │     anunciaba un bloqueo FALSO y no dejaba borrarse a quien si    │
+       * │     tenia relevo;                                                 │
+       * │   · y `gyms` no devuelve fila, asi que el nombre caia al uuid y   │
+       * │     la pantalla decia «el gimnasio 7ee59ad5-… se quedaria sin     │
+       * │     dueña», que no le dice nada a nadie.                          │
+       * │                                                                  │
+       * │ Lo encontro el caso de la dueña de dos gimnasios con relevo en    │
+       * │ los dos, que deberia poder irse y no podia.                       │
+       * └──────────────────────────────────────────────────────────────────┘
+       */
+      const bloqueo = await this.enElGimnasio(tx, gymId, userId, async () => {
+        const [otro] = await tx
+          .select({ id: memberships.id })
+          .from(memberships)
+          .where(
+            and(
+              eq(memberships.gymId, gymId),
+              eq(memberships.role, 'owner'),
+              isNull(memberships.endedAt),
+              ne(memberships.userId, userId),
+            ),
+          )
+          .limit(1);
 
-      if (otro) continue;
+        if (otro) return null;
 
-      const [gimnasio] = await tx
-        .select({ nombre: gyms.name })
-        .from(gyms)
-        .where(eq(gyms.id, gymId))
-        .limit(1);
+        const [gimnasio] = await tx
+          .select({ nombre: gyms.name })
+          .from(gyms)
+          .where(eq(gyms.id, gymId))
+          .limit(1);
 
-      bloqueos.push({ gymId, nombre: gimnasio?.nombre ?? gymId });
+        return { gymId, nombre: gimnasio?.nombre ?? gymId };
+      });
+
+      if (bloqueo) bloqueos.push(bloqueo);
     }
 
     return bloqueos;

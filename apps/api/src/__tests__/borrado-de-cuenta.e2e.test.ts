@@ -134,7 +134,7 @@ describe('bloqueo por ser el único dueño', () => {
     expect(previo.body.bloqueos[0].gymId).toBe(a.gymId);
     expect(previo.body.bloqueos[0].nombre).toBe('Gym Sola');
 
-    const borrado = await http().delete('/v1/me').set(conSesion(a.token)).expect(200);
+    const borrado = await http().delete('/v1/me').send({ password: PASSWORD }).set(conSesion(a.token)).expect(200);
     expect(borrado.body.ok).toBe(false);
 
     /*
@@ -166,7 +166,7 @@ describe('el borrado de una cuenta de personal', () => {
 
     expect(await existeUsuario(email)).toBe(true);
 
-    const borrado = await http().delete('/v1/me').set(conSesion(tokenRecepcion)).expect(200);
+    const borrado = await http().delete('/v1/me').send({ password: PASSWORD }).set(conSesion(tokenRecepcion)).expect(200);
     expect(borrado.body.ok).toBe(true);
 
     expect(await existeUsuario(email)).toBe(false);
@@ -199,7 +199,7 @@ describe('el borrado de una cuenta de personal', () => {
       .expect(201);
 
     // Ya hay dos dueños: la primera puede irse.
-    const borrado = await http().delete('/v1/me').set(conSesion(gimnasio.token)).expect(200);
+    const borrado = await http().delete('/v1/me').send({ password: PASSWORD }).set(conSesion(gimnasio.token)).expect(200);
     expect(borrado.body.ok).toBe(true);
 
     // La invitacion sigue ahi como hecho, sin su autora.
@@ -292,7 +292,7 @@ describe('una socia en DOS gimnasios se borra en los dos', () => {
       INSERT INTO access_events (gym_id, member_id, decision, reason, jti, occurred_at)
       VALUES (${fichas[0]!.gymId}::uuid, ${fichas[0]!.memberId}::uuid, 'ALLOW', 'OK', ${randomUUID()}, now())`);
 
-    const borrado = await http().delete('/v1/me').set(conSesion(tokenSocia)).expect(200);
+    const borrado = await http().delete('/v1/me').send({ password: PASSWORD }).set(conSesion(tokenSocia)).expect(200);
     expect(borrado.body.ok).toBe(true);
 
     // --- La identidad, entera y en los dos gimnasios ---------------------
@@ -351,3 +351,355 @@ async function tokensDeInvitacion(email: string, cuantos: number): Promise<strin
   ).toBeGreaterThanOrEqual(cuantos);
   return tokens;
 }
+
+describe('la puerta de identidad: reautenticación', () => {
+  it('sin sesión no se puede ni consultar ni borrar', async () => {
+    await http().get('/v1/me/erasure-preview').expect(401);
+    await http().delete('/v1/me').send({ password: PASSWORD }).expect(401);
+  });
+
+  it('con la contraseña equivocada se rechaza y no se borra nada', async () => {
+    const gimnasio = await nuevoGimnasio('Clave');
+    const { email } = await invitarYAceptar(gimnasio.token, gimnasio.gymId, 'trainer', 'entrena');
+    const sesion = await http()
+      .post('/v1/auth/accept-invitation')
+      .send({ token: await tokenDeInvitacion(email), name: 'Tina', password: PASSWORD })
+      .expect(201);
+
+    await http()
+      .delete('/v1/me')
+      .send({ password: 'esta-no-es-la-suya-1' })
+      .set(conSesion(sesion.body.token))
+      .expect(401);
+
+    // Sigue existiendo y su sesion sigue valiendo.
+    expect(await existeUsuario(email)).toBe(true);
+    await http().get('/v1/auth/me').set(conSesion(sesion.body.token)).expect(200);
+  });
+
+  it('sin contraseña el contrato lo rechaza antes de llegar al servicio', async () => {
+    const gimnasio = await nuevoGimnasio('SinClave');
+    await http().delete('/v1/me').send({}).set(conSesion(gimnasio.token)).expect(400);
+  });
+
+  /*
+   * ┌──────────────────────────────────────────────────────────────────────┐
+   * │ QUE A NO PUEDA BORRAR A B NO SE PRUEBA MANDANDO EL ID DE B.          │
+   * │                                                                      │
+   * │ El contrato NO tiene campo para un identificador: no hay nada que    │
+   * │ mandar. Lo que si se puede comprobar es la consecuencia —que tras    │
+   * │ borrarse A, B sigue entera y entrando— y que colar el id de B por el │
+   * │ cuerpo no cambia nada, porque se ignora.                             │
+   * └──────────────────────────────────────────────────────────────────────┘
+   */
+  it('una cuenta no puede borrar otra, ni colando su id en el cuerpo', async () => {
+    const gimnasio = await nuevoGimnasio('Ajena');
+    const { email: emailB } = await invitarYAceptar(
+      gimnasio.token,
+      gimnasio.gymId,
+      'receptionist',
+      'victima',
+    );
+    const sesionB = await http()
+      .post('/v1/auth/accept-invitation')
+      .send({ token: await tokenDeInvitacion(emailB), name: 'Bea', password: PASSWORD })
+      .expect(201);
+
+    const { email: emailA } = await invitarYAceptar(
+      gimnasio.token,
+      gimnasio.gymId,
+      'trainer',
+      'atacante',
+    );
+    const sesionA = await http()
+      .post('/v1/auth/accept-invitation')
+      .send({ token: await tokenDeInvitacion(emailA), name: 'Ana', password: PASSWORD })
+      .expect(201);
+
+    const idDeB = (
+      await owner.execute<{ id: string }>(sql`SELECT id FROM users WHERE email = ${emailB}`)
+    ).rows[0]!.id;
+
+    await http()
+      .delete('/v1/me')
+      .send({ password: PASSWORD, userId: idDeB, id: idDeB })
+      .set(conSesion(sesionA.body.token))
+      .expect(200);
+
+    // Se borro A, la de la sesion. B sigue entera.
+    expect(await existeUsuario(emailA)).toBe(false);
+    expect(await existeUsuario(emailB)).toBe(true);
+    await http().get('/v1/auth/me').set(conSesion(sesionB.body.token)).expect(200);
+  });
+
+  it('una sesión ya cerrada no puede ejecutarlo', async () => {
+    const gimnasio = await nuevoGimnasio('Revocada');
+    const { email } = await invitarYAceptar(gimnasio.token, gimnasio.gymId, 'trainer', 'revocada');
+    const sesion = await http()
+      .post('/v1/auth/accept-invitation')
+      .send({ token: await tokenDeInvitacion(email), name: 'Rosa', password: PASSWORD })
+      .expect(201);
+    const token = sesion.body.token as string;
+
+    await http().post('/v1/auth/logout').set(conSesion(token));
+
+    await http().delete('/v1/me').send({ password: PASSWORD }).set(conSesion(token)).expect(401);
+    expect(await existeUsuario(email)).toBe(true);
+  });
+});
+
+describe('dueña única, con más de un gimnasio de por medio', () => {
+  /** Invita a alguien como dueño de un gimnasio y acepta, creando su cuenta. */
+  async function segundaDuena(tokenQuienInvita: string, gymId: string, quien: string) {
+    const email = correo(quien);
+    await http()
+      .post(`/v1/gyms/${gymId}/invitations`)
+      .set(conSesion(tokenQuienInvita))
+      .send({ email, role: 'owner' })
+      .expect(201);
+    const r = await http()
+      .post('/v1/auth/accept-invitation')
+      .send({ token: await tokenDeInvitacion(email), name: 'Dos', password: PASSWORD })
+      .expect(201);
+    return { email, token: r.body.token as string };
+  }
+
+  it('A · socia en un gimnasio y dueña única en otro: bloqueada, y el primero intacto', async () => {
+    const a = await nuevoGimnasio('CasoA1');
+    const b = await nuevoGimnasio('CasoA2');
+    const email = correo('caso-a');
+
+    // Ficha de socia en A.
+    const alta = await http()
+      .post(`/v1/gyms/${a.gymId}/members`)
+      .set(conSesion(a.token))
+      .send({ firstName: 'Alba', lastName: 'Caso', email })
+      .expect(201);
+    await http()
+      .post(`/v1/gyms/${a.gymId}/members/${alta.body.id}/invite`)
+      .set(conSesion(a.token))
+      .expect(201);
+    const sesion = await http()
+      .post('/v1/auth/accept-invitation')
+      .send({ token: await tokenDeInvitacion(email), name: 'Alba', password: PASSWORD })
+      .expect(201);
+    const token = sesion.body.token as string;
+
+    // Y dueña UNICA en B: se le invita como dueña y la fundadora se va.
+    await http()
+      .post(`/v1/gyms/${b.gymId}/invitations`)
+      .set(conSesion(b.token))
+      .send({ email, role: 'owner' })
+      .expect(201);
+    await http()
+      .post('/v1/auth/link-invitation')
+      .set(conSesion(token))
+      .send({ token: (await tokensDeInvitacion(email, 2)).at(-1)! })
+      .expect(201);
+    await http().delete('/v1/me').send({ password: PASSWORD }).set(conSesion(b.token)).expect(200);
+
+    const previo = await http().get('/v1/me/erasure-preview').set(conSesion(token)).expect(200);
+    expect(previo.body.puedeBorrarse, 'debería bloquearla el gimnasio B').toBe(false);
+    expect(previo.body.bloqueos.map((x: { gymId: string }) => x.gymId)).toEqual([b.gymId]);
+
+    const borrado = await http()
+      .delete('/v1/me')
+      .send({ password: PASSWORD })
+      .set(conSesion(token))
+      .expect(200);
+    expect(borrado.body.ok).toBe(false);
+
+    // NADA de A se ha tocado, y la sesión sigue valiendo.
+    const fichaA = await owner.execute<{ n: number }>(
+      sql`SELECT count(*)::int AS n FROM members WHERE gym_id = ${a.gymId}::uuid AND email = ${email}`,
+    );
+    expect(fichaA.rows[0]!.n, 'la ficha del gimnasio A no se toca').toBe(1);
+    expect(await existeUsuario(email)).toBe(true);
+    await http().get('/v1/auth/me').set(conSesion(token)).expect(200);
+  });
+
+  it('B · dueña de dos gimnasios con relevo en los dos: puede borrarse', async () => {
+    const uno = await nuevoGimnasio('CasoB1');
+    const dos = await nuevoGimnasio('CasoB2');
+
+    // La dueña de `uno` pasa a serlo tambien de `dos`.
+    await http()
+      .post(`/v1/gyms/${dos.gymId}/invitations`)
+      .set(conSesion(dos.token))
+      .send({ email: correo('owner-casob1'), role: 'owner' })
+      .expect(201);
+    await http()
+      .post('/v1/auth/link-invitation')
+      .set(conSesion(uno.token))
+      .send({ token: await tokenDeInvitacion(correo('owner-casob1')) })
+      .expect(201);
+
+    // Relevo en los dos: `dos` conserva a su fundadora; `uno` necesita otra.
+    await segundaDuena(uno.token, uno.gymId, 'relevo-b');
+
+    const previo = await http().get('/v1/me/erasure-preview').set(conSesion(uno.token)).expect(200);
+    expect(
+      previo.body.puedeBorrarse,
+      previo.body.bloqueos.map((b: { nombre: string }) => b.nombre).join(),
+    ).toBe(true);
+
+    const borrado = await http()
+      .delete('/v1/me')
+      .send({ password: PASSWORD })
+      .set(conSesion(uno.token))
+      .expect(200);
+    expect(borrado.body.ok).toBe(true);
+  });
+
+  it('C · un relevo con el acceso retirado NO cuenta como segunda dueña', async () => {
+    const g = await nuevoGimnasio('CasoC');
+    const relevo = await segundaDuena(g.token, g.gymId, 'relevo-c');
+
+    // Con el relevo vivo, puede.
+    const conRelevo = await http().get('/v1/me/erasure-preview').set(conSesion(g.token)).expect(200);
+    expect(conRelevo.body.puedeBorrarse).toBe(true);
+
+    // Se le retira el acceso: la pertenencia queda TERMINADA, no borrada.
+    const idRelevo = (
+      await owner.execute<{ id: string }>(sql`SELECT id FROM users WHERE email = ${relevo.email}`)
+    ).rows[0]!.id;
+    await http().delete(`/v1/gyms/${g.gymId}/staff/${idRelevo}`).set(conSesion(g.token)).expect(200);
+
+    /*
+     * Y ahora NO puede. Es la mitad que hace que la anterior signifique algo:
+     * sin ella, un gate que contara tambien las pertenencias terminadas daria
+     * verde en los dos casos y nadie lo notaria.
+     */
+    const sinRelevo = await http().get('/v1/me/erasure-preview').set(conSesion(g.token)).expect(200);
+    expect(sinRelevo.body.puedeBorrarse, 'una pertenencia terminada no es un relevo').toBe(false);
+    expect(sinRelevo.body.bloqueos[0].gymId).toBe(g.gymId);
+  });
+
+  it('D · un solo gimnasio sin relevo bloquea el borrado GLOBAL entero', async () => {
+    const conRelevo = await nuevoGimnasio('CasoD1');
+    const sinRelevo = await nuevoGimnasio('CasoD2');
+
+    await http()
+      .post(`/v1/gyms/${sinRelevo.gymId}/invitations`)
+      .set(conSesion(sinRelevo.token))
+      .send({ email: correo('owner-casod1'), role: 'owner' })
+      .expect(201);
+    await http()
+      .post('/v1/auth/link-invitation')
+      .set(conSesion(conRelevo.token))
+      .send({ token: await tokenDeInvitacion(correo('owner-casod1')) })
+      .expect(201);
+
+    /*
+     * Y la fundadora del segundo se va, para que ahi NO quede relevo. Sin este
+     * paso el gimnasio conservaba a su fundadora como segunda dueña y el caso
+     * no probaba nada: las dos mitades tenian relevo.
+     */
+    await http()
+      .delete('/v1/me')
+      .send({ password: PASSWORD })
+      .set(conSesion(sinRelevo.token))
+      .expect(200);
+
+    // Relevo SOLO en el primero.
+    await segundaDuena(conRelevo.token, conRelevo.gymId, 'relevo-d');
+
+    const previo = await http()
+      .get('/v1/me/erasure-preview')
+      .set(conSesion(conRelevo.token))
+      .expect(200);
+    expect(previo.body.puedeBorrarse).toBe(false);
+    expect(
+      previo.body.bloqueos.map((b: { gymId: string }) => b.gymId),
+      'sólo bloquea el que no tiene relevo, pero bloquea el borrado entero',
+    ).toEqual([sinRelevo.gymId]);
+
+    const borrado = await http()
+      .delete('/v1/me')
+      .send({ password: PASSWORD })
+      .set(conSesion(conRelevo.token))
+      .expect(200);
+    expect(borrado.body.ok).toBe(false);
+    expect(await existeUsuario(correo('owner-casod1'))).toBe(true);
+  });
+});
+
+describe('un gimnasio nunca se queda sin dueña, venga de donde venga', () => {
+  /*
+   * ┌──────────────────────────────────────────────────────────────────────┐
+   * │ DOS CAMINOS PUEDEN QUITARLE EL PUESTO A UNA DUEÑA, Y CADA UNO TIENE  │
+   * │ SU GUARDA. NO ES EL MISMO GATE DUPLICADO.                            │
+   * │                                                                      │
+   * │   · retirar el acceso  — lo hace OTRA persona, y la guarda es «nadie │
+   * │     puede retirarse a si mismo». Con ella, el ultimo que quede no    │
+   * │     puede irse: no hace falta contar dueñas.                         │
+   * │                                                                      │
+   * │   · borrar la cuenta   — lo hace UNA MISMA, y ahi la guarda anterior │
+   * │     no sirve: precisamente se esta yendo. Hace falta contar si queda │
+   * │     relevo, que es lo que hace `bloqueos()`.                          │
+   * │                                                                      │
+   * │ Y hay un tercer camino que PARECE peligroso y no lo es: borrar la    │
+   * │ FICHA DE SOCIA de una dueña. Se comprueba abajo.                      │
+   * └──────────────────────────────────────────────────────────────────────┘
+   */
+  it('retirar el acceso: nadie puede retirárselo a sí mismo', async () => {
+    const g = await nuevoGimnasio('UltimaDuena');
+    const id = (
+      await owner.execute<{ id: string }>(
+        sql`SELECT id FROM users WHERE email = ${correo('owner-ultimaduena')}`,
+      )
+    ).rows[0]!.id;
+
+    await http().delete(`/v1/gyms/${g.gymId}/staff/${id}`).set(conSesion(g.token)).expect(400);
+
+    const duenas = await owner.execute<{ n: number }>(
+      sql`SELECT count(*)::int AS n FROM memberships
+          WHERE gym_id = ${g.gymId}::uuid AND role = 'owner' AND ended_at IS NULL`,
+    );
+    expect(duenas.rows[0]!.n, 'el gimnasio conserva a su dueña').toBe(1);
+  });
+
+  it('borrar la ficha de socia de una dueña no le quita el puesto', async () => {
+    /*
+     * Una dueña puede ser ademas socia de su propio gimnasio. Si borrar su
+     * ficha arrastrara la pertenencia de DUEÑA —o la cuenta entera—, el
+     * gimnasio se quedaria sin nadie sin que ninguna guarda se enterara,
+     * porque este camino no pasa por ninguna de las dos.
+     *
+     * No pasa: `IdentityErasure` retira solo la pertenencia de rol `member`,
+     * y solo borra la cuenta si no le queda NINGUNA pertenencia.
+     */
+    const g = await nuevoGimnasio('DuenaSocia');
+    const email = correo('owner-duenasocia');
+
+    const idDuena = (
+      await owner.execute<{ id: string }>(sql`SELECT id FROM users WHERE email = ${email}`)
+    ).rows[0]!.id;
+
+    // Se le da ficha de socia en su propio gimnasio y se vincula a su cuenta.
+    const alta = await http()
+      .post(`/v1/gyms/${g.gymId}/members`)
+      .set(conSesion(g.token))
+      .send({ firstName: 'Dueña', lastName: 'Socia', email: correo('ficha-duena') })
+      .expect(201);
+    await owner.execute(
+      sql`UPDATE members SET user_id = ${idDuena}::uuid WHERE id = ${alta.body.id}::uuid`,
+    );
+
+    // Y el personal borra esa ficha.
+    await http()
+      .delete(`/v1/gyms/${g.gymId}/members/${alta.body.id}`)
+      .set(conSesion(g.token))
+      .expect(200);
+
+    // La cuenta sigue, y sigue siendo dueña.
+    expect(await existeUsuario(email)).toBe(true);
+    const duenas = await owner.execute<{ n: number }>(
+      sql`SELECT count(*)::int AS n FROM memberships
+          WHERE gym_id = ${g.gymId}::uuid AND user_id = ${idDuena}::uuid
+            AND role = 'owner' AND ended_at IS NULL`,
+    );
+    expect(duenas.rows[0]!.n, 'sigue siendo dueña').toBe(1);
+    await http().get('/v1/auth/me').set(conSesion(g.token)).expect(200);
+  });
+});

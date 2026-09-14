@@ -23,6 +23,6 @@ export async function consultarBorrado(): Promise<ErasurePreview> {
   return { puedeBorrarse: false, bloqueos: BLOQUEO_DE_MUESTRA };
 }
 
-export async function borrarCuenta(): Promise<ErasureResult> {
+export async function borrarCuenta(_contrasena: string): Promise<ErasureResult> {
   return { ok: false, bloqueos: BLOQUEO_DE_MUESTRA };
 }
