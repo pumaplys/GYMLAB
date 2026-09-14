@@ -11,7 +11,8 @@
     "lint": "eslint src",
     "test": "vitest run --passWithNoTests",
     "clean": "rimraf .next out .turbo",
-    "auditar": "node auditoria/auditar.mjs"
+    "auditar": "node auditoria/auditar.mjs",
+    "listo-para-tiendas": "node herramientas/listo-para-tiendas.mjs"
   },
   "dependencies": {
     "@gymlab/api-client": "workspace:*",

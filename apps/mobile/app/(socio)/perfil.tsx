@@ -1,11 +1,12 @@
 import { useCallback, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { Aviso } from '../../src/componentes/aviso';
 import { Boton } from '../../src/componentes/boton';
 import { Icono } from '../../src/componentes/icono';
 import { Pantalla } from '../../src/componentes/pantalla';
 import { laSesionYaNoVale } from '../../src/auth/politica';
+import { POLITICA_DE_PRIVACIDAD } from '../../src/cuenta/enlaces';
 import { useSesion } from '../../src/auth/sesion';
 import { cargarFicha } from '../../src/perfil/fuente';
 import { identidadDe, type EstadoDeCarga } from '../../src/perfil/logica';
@@ -157,6 +158,24 @@ export default function Perfil() {
           detalle="Tus datos de salud"
           a="/perfil/privacidad"
         />
+        {/*
+          LAS DOS DE ABAJO NO SON LO MISMO QUE LA DE ARRIBA, y por eso no se
+          mezclan con ella. «Privacidad» son los permisos que das a TU
+          gimnasio sobre tus datos de salud. «Politica de privacidad» es el
+          documento legal de RINDA, y Apple exige que se alcance desde la app.
+        */}
+        <FilaDePerfil
+          icono="privacidad"
+          titulo="Política de privacidad"
+          detalle="Cómo trata RINDA tus datos"
+          alPulsar={() => void Linking.openURL(POLITICA_DE_PRIVACIDAD)}
+        />
+        <FilaDePerfil
+          icono="salir"
+          titulo="Eliminar mi cuenta"
+          detalle="Borra tu identidad en RINDA"
+          a="/cuenta/eliminar"
+        />
       </View>
 
       {/* Un hueco flexible: salir se queda abajo, lejos de lo que se pulsa. */}
@@ -175,17 +194,21 @@ function FilaDePerfil({
   titulo,
   detalle,
   a,
+  alPulsar,
   primera = false,
 }: {
   icono: NombreDeIcono;
   titulo: string;
   detalle: string;
-  a: '/perfil/pagos' | '/perfil/accesos' | '/perfil/privacidad';
+  /** Una pantalla de la app. Excluyente con el otro. */
+  a?: '/perfil/pagos' | '/perfil/accesos' | '/perfil/privacidad' | '/cuenta/eliminar';
+  /** O algo que no es navegar: abrir el navegador, por ejemplo. */
+  alPulsar?: () => void;
   primera?: boolean;
 }) {
   return (
     <Pressable
-      onPress={() => router.push(a)}
+      onPress={() => (alPulsar ? alPulsar() : a ? router.push(a) : undefined)}
       accessibilityRole="button"
       accessibilityLabel={titulo}
       accessibilityHint={detalle}

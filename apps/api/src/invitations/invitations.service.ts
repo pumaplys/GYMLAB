@@ -38,6 +38,16 @@ import { AUTH } from '../auth/auth.tokens';
 import { requireTransaction } from '../common/request-context';
 import { JobsService } from '../jobs/jobs.service';
 
+/**
+ * Lo que queda donde habia un correo, al borrarse la cuenta de quien lo tenia.
+ *
+ * Un texto fijo y no `NULL`: la columna es `notNull` y, sobre todo, un hueco
+ * vacio se leeria como «no habia correo», que es falso. Esto dice lo que paso.
+ * El dominio `.invalid` esta reservado por el RFC 2606 justo para esto: no
+ * existe, no se puede registrar y no le llegara nada a nadie.
+ */
+export const CORREO_DE_CUENTA_BORRADA = 'cuenta-eliminada@rinda.invalid';
+
 /** Duracion de una invitacion. Una semana es tiempo de sobra y limita la ventana. */
 const TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -495,6 +505,33 @@ export class InvitationsService implements OnModuleInit {
       acceptedAt: fila.acceptedAt?.toISOString() ?? null,
       revokedAt: fila.revokedAt?.toISOString() ?? null,
     };
+  }
+
+  /**
+   * Quita el correo de las invitaciones de una persona que se ha borrado.
+   *
+   * ┌──────────────────────────────────────────────────────────────────────┐
+   * │ UNA CLAVE AJENA NO ALCANZA ESTE DATO.                                │
+   * │                                                                      │
+   * │ `invitations.email` es texto suelto, no una relacion. Y una           │
+   * │ invitacion de PERSONAL no tiene `member_id`, asi que tampoco cae con  │
+   * │ la cascada de la ficha: al borrar la cuenta de quien la acepto, su    │
+   * │ correo se quedaba escrito ahi.                                        │
+   * │                                                                      │
+   * │ La FILA se conserva —hubo una invitacion, con este rol y esta fecha,  │
+   * │ y eso responde a «quien dio acceso a quien»—; lo que desaparece es a  │
+   * │ quien iba dirigida.                                                   │
+   * └──────────────────────────────────────────────────────────────────────┘
+   *
+   * Vive aqui y no en quien borra la cuenta porque `invitations` es tabla de
+   * este modulo (ADR-0006).
+   */
+  async anonimizarCorreo(email: string): Promise<void> {
+    const tx = requireTransaction();
+    await tx
+      .update(invitations)
+      .set({ email: CORREO_DE_CUENTA_BORRADA, updatedAt: new Date() })
+      .where(eq(invitations.email, email));
   }
 }
 

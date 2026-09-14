@@ -127,6 +127,13 @@
       "when": 1787100000000,
       "tag": "0017_rutinas_archivadas",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1787200000000,
+      "tag": "0018_borrado_de_cuenta",
+      "breakpoints": true
     }
   ]
 }

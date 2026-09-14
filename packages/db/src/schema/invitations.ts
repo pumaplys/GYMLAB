@@ -63,9 +63,25 @@ export const invitations = pgTable(
      */
     memberId: uuid('member_id'),
 
-    invitedByUserId: uuid('invited_by_user_id')
-      .notNull()
-      .references(() => users.id, { onDelete: 'restrict' }),
+    /**
+     * Quien invito. `NULL` = su cuenta ya no existe.
+     *
+     * ┌──────────────────────────────────────────────────────────────────────┐
+     * │ ERA `notNull` + `restrict`, Y ESO BLOQUEABA EL ARTICULO 17.          │
+     * │                                                                      │
+     * │ PostgreSQL rechazaba borrar la cuenta de cualquiera que hubiera      │
+     * │ invitado a alguien: es decir, de cualquier dueño o recepcion en      │
+     * │ activo. La intencion original era buena —conservar el rastro de      │
+     * │ «quien dio acceso a quien»— y se conserva: la fila sigue ahi con su  │
+     * │ correo, su rol y su fecha. Lo que ya no se conserva es la persona.   │
+     * │                                                                      │
+     * │ `NULL` significa «la cuenta que invito se borro», no «no se sabe     │
+     * │ quien invito»: mientras esa cuenta viva, el valor esta.              │
+     * └──────────────────────────────────────────────────────────────────────┘
+     */
+    invitedByUserId: uuid('invited_by_user_id').references(() => users.id, {
+      onDelete: 'set null',
+    }),
     expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
     acceptedAt: timestamp('accepted_at', { withTimezone: true }),
     revokedAt: timestamp('revoked_at', { withTimezone: true }),
