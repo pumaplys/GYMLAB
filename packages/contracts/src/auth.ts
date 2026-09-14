@@ -254,3 +254,42 @@ export const CAN_INVITE: Record<Role, readonly Role[]> = {
 export function canInvite(actor: Role, target: Role): boolean {
   return CAN_INVITE[actor].includes(target);
 }
+
+// --- Borrado de la propia cuenta (art. 17) --------------------------------
+
+/**
+ * Un gimnasio que impide completar el borrado.
+ *
+ * Lleva el NOMBRE y no solo el id: la pantalla tiene que poder decir «Gimnasio
+ * Centro se quedaria sin dueño», y un uuid no le dice nada a nadie.
+ */
+export const erasureBlockerSchema = z.object({
+  gymId: z.string().uuid(),
+  nombre: z.string(),
+});
+export type ErasureBlocker = z.infer<typeof erasureBlockerSchema>;
+
+/** Que pasaria si lo pidiera. Sin efectos. */
+export const erasurePreviewSchema = z.object({
+  puedeBorrarse: z.boolean(),
+  bloqueos: z.array(erasureBlockerSchema),
+});
+export type ErasurePreview = z.infer<typeof erasurePreviewSchema>;
+
+/**
+ * El resultado del borrado.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ UN BLOQUEO NO ES UN ERROR, Y POR ESO NO ES UN 4xx.                       │
+ * │                                                                          │
+ * │ «Todavia no puedes porque este gimnasio se quedaria sin dueño» es una    │
+ * │ respuesta legitima que la pantalla tiene que explicar con el nombre      │
+ * │ delante y un camino para resolverlo. Devolverlo como excepcion obligaria │
+ * │ a leer un mensaje de error para saber a donde llevar a la persona.       │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ */
+export const erasureResultSchema = z.discriminatedUnion('ok', [
+  z.object({ ok: z.literal(true) }),
+  z.object({ ok: z.literal(false), bloqueos: z.array(erasureBlockerSchema) }),
+]);
+export type ErasureResult = z.infer<typeof erasureResultSchema>;

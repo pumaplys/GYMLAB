@@ -480,6 +480,39 @@ export class MembersService implements OnModuleInit {
     return { ok: true };
   }
 
+  /**
+   * Borra la ficha que una CUENTA tiene en este gimnasio, si la tiene.
+   *
+   * ┌──────────────────────────────────────────────────────────────────────┐
+   * │ EXISTE PARA QUE EL BORRADO DE CUENTA NO TOQUE `members` DESDE FUERA. │
+   * │                                                                      │
+   * │ Quien elimina su identidad en RINDA tiene que perder su ficha en      │
+   * │ TODOS los gimnasios, y el servicio que orquesta eso vive en `auth`.  │
+   * │ Sin este metodo, `auth` tendria que leer y borrar `members` por su   │
+   * │ cuenta — que es exactamente lo que ADR-0006 prohibe, y lo que el gate │
+   * │ de fronteras detecto.                                                 │
+   * │                                                                      │
+   * │ Asi el borrado del articulo 17 sigue siendo UNO y sigue viviendo      │
+   * │ aqui: esto solo encuentra la ficha y llama a `erase`.                │
+   * └──────────────────────────────────────────────────────────────────────┘
+   *
+   * Devuelve `false` si no habia ficha, que es el caso normal del personal:
+   * un entrenador o una recepcionista pertenecen al gimnasio sin ser socios.
+   */
+  async eraseProfileOf(gymId: string, userId: string): Promise<boolean> {
+    const tx = requireTransaction();
+    const [fila] = await tx
+      .select({ id: members.id })
+      .from(members)
+      .where(and(eq(members.gymId, gymId), eq(members.userId, userId)))
+      .limit(1);
+
+    if (!fila) return false;
+
+    await this.erase(gymId, fila.id);
+    return true;
+  }
+
   // --- Invitacion a crear cuenta -----------------------------------------
 
   /**

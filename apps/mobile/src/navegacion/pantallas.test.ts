@@ -115,7 +115,7 @@ describe('el arbol de pantallas', () => {
   });
 
   it('toda pantalla es publica a proposito o vive bajo una carpeta con gate', () => {
-    const gateadas = [...Object.values(GRUPOS), ENTRENAMIENTO, 'perfil'];
+    const gateadas = [...Object.values(GRUPOS), ENTRENAMIENTO, 'perfil', 'cuenta'];
     const huerfanas = TODAS.filter((ruta) => {
       if (!ruta.includes('/')) return !PUBLICAS.includes(ruta);
       return !gateadas.some((carpeta) => ruta.startsWith(`${carpeta}/`));
@@ -133,6 +133,28 @@ describe('el arbol de pantallas', () => {
    * │ seria escribir el nombre de la carpeta en la lista.                   │
    * └──────────────────────────────────────────────────────────────────────┘
    */
+  /*
+   * ┌──────────────────────────────────────────────────────────────────────┐
+   * │ Y `cuenta` GATEA POR SESION, NO POR AREA. TAMBIEN A PROPOSITO.       │
+   * │                                                                      │
+   * │ Es la unica carpeta asi. Borrar la propia cuenta y leer la politica   │
+   * │ de privacidad son derechos de la PERSONA, no capacidades de su        │
+   * │ puesto: los cuatro roles tienen que llegar. Gatear por area dejaria   │
+   * │ fuera a tres de ellos, y las dos tiendas lo exigen para cualquiera    │
+   * │ que pueda crear cuenta — que en RINDA es cualquiera que acepte una    │
+   * │ invitacion.                                                           │
+   * │                                                                      │
+   * │ Se comprueba igual que el de entrenamiento, y por lo mismo: escribir  │
+   * │ el nombre de la carpeta en la lista de arriba no prueba nada.         │
+   * └──────────────────────────────────────────────────────────────────────┘
+   */
+  it('el grupo de cuenta gatea por SESIÓN, no por área', () => {
+    const codigo = sinComentarios(readFileSync(join(APP, 'cuenta', '_layout.tsx'), 'utf8'));
+    expect(codigo).toMatch(/estado\.tipo !== 'autenticado'/);
+    expect(codigo).toMatch(/Redirect href="\/"/);
+    expect(codigo).not.toMatch(/puedeEntrarEnArea/);
+  });
+
   it('el grupo de entrenamiento gatea por ROL, no por area', () => {
     const codigo = sinComentarios(readFileSync(join(APP, ENTRENAMIENTO, '_layout.tsx'), 'utf8'));
     expect(codigo).toContain('puedeEntrarEnEntrenamiento(estado)');

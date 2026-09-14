@@ -1,0 +1,73 @@
+/*
+ * Una pagina de texto largo para LEER, no un panel para operar.
+ *
+ * `--ancho-lectura` existe justo para esto y ya lo usa el resto del panel: es
+ * el ancho al que el ojo vuelve solo al principio del renglon siguiente. Mas
+ * ancho, se pierde la linea; mas estrecho, se lee a saltos.
+ */
+.pagina {
+  max-width: var(--ancho-lectura);
+  margin: 0 auto;
+  padding: var(--e6) var(--e4) var(--e7);
+  color: var(--texto-tenue);
+  font-size: var(--t-base);
+  line-height: var(--lh-holgada);
+}
+
+/*
+ * El aviso de borrador va ARRIBA DEL TITULO, no al pie.
+ *
+ * Al pie lo leeria quien ya ha terminado y ha dado el texto por bueno, que es
+ * justo tarde. Aqui es lo primero que se ve.
+ */
+.borrador {
+  border: 1px solid var(--aviso);
+  background: var(--aviso-suave);
+  color: var(--texto);
+  border-radius: var(--radio);
+  padding: var(--e3) var(--e4);
+  margin-bottom: var(--e6);
+}
+
+.titulo {
+  color: var(--texto);
+  font-size: var(--t-xl);
+  margin: 0 0 var(--e6);
+}
+
+.seccion {
+  margin-bottom: var(--e6);
+}
+
+.seccion h2 {
+  color: var(--texto);
+  font-size: var(--t-lg);
+  margin: 0 0 var(--e3);
+}
+
+.seccion p {
+  margin: 0 0 var(--e3);
+}
+
+.seccion ul {
+  margin: 0;
+  padding-left: var(--e4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+}
+
+.seccion strong {
+  color: var(--texto);
+  font-weight: 600;
+}
+
+.seccion a,
+.pie a {
+  color: var(--acento);
+}
+
+.pie {
+  margin-top: var(--e7);
+  font-size: var(--t-sm);
+}

@@ -1,4 +1,4 @@
-import { StyleSheet, View } from 'react-native';
+import { Linking, StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import { Boton } from '../../src/componentes/boton';
 import { FilaDeAccion } from '../../src/componentes/fila-de-accion';
@@ -8,6 +8,7 @@ import { puedeEntrenar } from '../../src/entrenamiento/permisos';
 import { puedeConfigurarLoLegal } from '../../src/legal/permisos';
 import { puedeEditarPlanes } from '../../src/socios/permisos';
 import { RUTAS_INTERNAS } from '../../src/navegacion/destinos';
+import { POLITICA_DE_PRIVACIDAD } from '../../src/cuenta/enlaces';
 import { tema } from '../../src/tema';
 
 /**
@@ -132,6 +133,31 @@ export default function Panel() {
             />
           </>
         ) : null}
+
+        {/*
+          LAS DOS ULTIMAS SON DE LA PERSONA, NO DEL PUESTO.
+
+          Todo lo de arriba depende del rol: quien gestiona planes, quien
+          escanea, quien entrena. Estas dos las tienen los cuatro roles porque
+          no son capacidades del mostrador — son derechos de quien tiene una
+          cuenta, y las dos tiendas los exigen alcanzables desde la app.
+
+          «Política de privacidad» tampoco es «Configuración»: aquella son los
+          datos legales DEL GIMNASIO; esta es cómo trata RINDA los datos de
+          quien la usa.
+        */}
+        <FilaDeAccion
+          titulo="Política de privacidad"
+          detalle="Cómo trata RINDA tus datos."
+          icono="privacidad"
+          alPulsar={() => void Linking.openURL(POLITICA_DE_PRIVACIDAD)}
+        />
+        <FilaDeAccion
+          titulo="Eliminar mi cuenta"
+          detalle="Borra tu identidad en RINDA, en todos los gimnasios."
+          icono="salir"
+          alPulsar={() => router.push('/cuenta/eliminar')}
+        />
       </View>
 
       <Boton onPress={() => void salir()}>Cerrar sesión</Boton>

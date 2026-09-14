@@ -1,0 +1,58 @@
+/*
+ * Texto largo antes que formulario, y a proposito.
+ *
+ * Aqui lo que hay que conseguir es que alguien ENTIENDA lo que va a pasar
+ * antes de poder hacerlo. Por eso el bloque de explicacion va primero, con
+ * ancho de lectura, y la accion aparece despues.
+ */
+.texto {
+  color: var(--texto-tenue);
+  font-size: var(--t-base);
+  line-height: var(--lh-holgada);
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+}
+
+.texto h2 {
+  color: var(--texto);
+  font-size: var(--t-lg);
+  margin: 0;
+}
+
+.texto strong {
+  color: var(--texto);
+  font-weight: 600;
+}
+
+.acciones {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+  margin-top: var(--e5);
+}
+
+.lista {
+  margin: 0;
+  padding-left: var(--e4);
+  color: var(--texto);
+}
+
+.enlace {
+  color: var(--acento);
+  text-decoration: none;
+}
+
+.enlace:hover {
+  text-decoration: underline;
+}
+
+.pie {
+  margin-top: var(--e6);
+  color: var(--texto-tenue);
+  font-size: var(--t-sm);
+}
+
+.pie a {
+  color: var(--acento);
+}

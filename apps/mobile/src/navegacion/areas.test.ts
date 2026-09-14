@@ -193,7 +193,7 @@ describe('las tres areas estan gateadas en su layout', () => {
      * NO es por area —lo comparten dos areas y excluye a un rol de una de
      * ellas— asi que no cabe en el `Record<Area, string>` de este fichero.
      */
-    const GATEADAS = [...Object.values(GRUPOS), '(entrenamiento)', 'perfil'];
+    const GATEADAS = [...Object.values(GRUPOS), '(entrenamiento)', 'perfil', 'cuenta'];
 
     const sueltas = readdirSync(APP, { withFileTypes: true })
       .filter((e) => e.isFile() && e.name.endsWith('.tsx') && !PUBLICAS.includes(e.name))

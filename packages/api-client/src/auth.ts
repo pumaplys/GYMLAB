@@ -15,6 +15,10 @@ import {
   type ResetPasswordInput,
   type SessionResponse,
   type SwitchGymInput,
+  erasurePreviewSchema,
+  erasureResultSchema,
+  type ErasurePreview,
+  type ErasureResult,
 } from '@gymlab/contracts';
 import type { Http, RequestOptions } from './http';
 
@@ -104,6 +108,23 @@ export interface AuthApi {
    * texto. Igual que arriba: separarlos diria si el enlace existio.
    */
   resetPassword(input: ResetPasswordInput, options?: RequestOptions): Promise<OkResponse>;
+
+  /**
+   * Que pasaria si pidiera borrar su cuenta. Sin efectos.
+   *
+   * La pantalla lo consulta ANTES de ofrecer el boton, para poder decir que
+   * gimnasio lo impide en vez de dejar que alguien escriba la confirmacion y
+   * se lleve un no.
+   */
+  erasurePreview(options?: RequestOptions): Promise<ErasurePreview>;
+
+  /**
+   * Borra la propia cuenta. Sin periodo de gracia y sin vuelta atras.
+   *
+   * No recibe ningun identificador: la cuenta sale de la sesion. Al no existir
+   * el dato, esto no puede borrar la cuenta de otra persona ni por error.
+   */
+  eraseAccount(options?: RequestOptions): Promise<ErasureResult>;
 }
 
 export function createAuthApi(http: Http): AuthApi {
@@ -121,6 +142,12 @@ export function createAuthApi(http: Http): AuthApi {
       http({ method: 'POST', path: '/auth/logout', schema: okResponseSchema, ...options }),
 
     me: (options) => http({ method: 'GET', path: '/auth/me', schema: meSchema, ...options }),
+
+    erasurePreview: (options) =>
+      http({ method: 'GET', path: '/me/erasure-preview', schema: erasurePreviewSchema, ...options }),
+
+    eraseAccount: (options) =>
+      http({ method: 'DELETE', path: '/me', schema: erasureResultSchema, ...options }),
 
     switchGym: (input, options) =>
       http({
