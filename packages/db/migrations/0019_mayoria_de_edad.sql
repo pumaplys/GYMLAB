@@ -1,0 +1,44 @@
+-- RINDA V1 es solo para mayores de edad, y eso se impone en el suelo.
+--
+-- ┌──────────────────────────────────────────────────────────────────────────┐
+-- │ EL CONTRATO DE ZOD YA LO VALIDA. ESTO ES LA SEGUNDA RED, NO UN DUPLICADO.│
+-- │                                                                          │
+-- │ `birthDateSchema` cubre el alta, la edicion y el perfil propio, y lo      │
+-- │ comparten API, panel y movil. Pero una semilla, un guion de migracion de │
+-- │ datos o un endpoint que alguien anada mañana escriben directamente en la │
+-- │ tabla y no pasan por ningun Zod. Aqui no hay forma de saltarselo.        │
+-- └──────────────────────────────────────────────────────────────────────────┘
+--
+-- ┌──────────────────────────────────────────────────────────────────────────┐
+-- │ `NOT VALID`, Y NO ES PEREZA.                                             │
+-- │                                                                          │
+-- │ Con `NOT VALID` PostgreSQL comprueba TODA fila nueva o modificada, pero  │
+-- │ NO recorre las que ya estan. Es lo que hace falta: si en produccion      │
+-- │ hubiera una ficha de alguien menor —dada de alta cuando la regla no      │
+-- │ existia—, un `ALTER` normal haria fallar el despliegue entero.           │
+-- │                                                                          │
+-- │ La regla entra en vigor hacia delante; lo heredado se mira aparte:       │
+-- │                                                                          │
+-- │   SELECT count(*) FROM members                                           │
+-- │    WHERE birth_date > current_date - interval '18 years';                │
+-- │                                                                          │
+-- │ y cuando ese recuento sea 0 se puede rematar con                         │
+-- │                                                                          │
+-- │   ALTER TABLE members VALIDATE CONSTRAINT members_mayoria_de_edad;       │
+-- └──────────────────────────────────────────────────────────────────────────┘
+--
+-- ┌──────────────────────────────────────────────────────────────────────────┐
+-- │ `current_date` EN UN CHECK: COMPROBADO QUE POSTGRESQL LO ADMITE Y QUE    │
+-- │ NO ENVEJECE MAL.                                                         │
+-- │                                                                          │
+-- │ Una fila valida hoy lo sigue siendo mañana: la fecha de nacimiento no    │
+-- │ cambia y el umbral `current_date - 18 years` solo avanza, asi que la     │
+-- │ condicion, una vez cierta, no puede volverse falsa. Nadie rejuvenece.    │
+-- │                                                                          │
+-- │ Se admite NULL: la fecha es opcional y un socio sin ella no queda        │
+-- │ bloqueado — el producto no sabe su edad, e inventarsela seria peor.      │
+-- └──────────────────────────────────────────────────────────────────────────┘
+ALTER TABLE "members"
+  ADD CONSTRAINT "members_mayoria_de_edad"
+  CHECK ("birth_date" IS NULL OR "birth_date" <= current_date - interval '18 years')
+  NOT VALID;

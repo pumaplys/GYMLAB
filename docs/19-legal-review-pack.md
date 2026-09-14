@@ -48,9 +48,25 @@ Cada línea sale de mirar el producto, no de suponer.
 | A4 | **Plazos de conservación** de cada categoría (ver §C) | Obligación fiscal y de seguridad |
 | A5 | **Encargados y proveedores** que intervienen de verdad: alojamiento, correo transaccional, copias de seguridad | Hay que enumerar los reales, no los que parezcan |
 | A6 | **Transferencias internacionales**, si las hay | Depende de A5 |
-| A7 | **Buzón para ejercer derechos** y plazo de respuesta | Decisión operativa |
-| A8 | **Edad mínima** para tener cuenta, y qué se hace con menores | `members.birth_date` se recoge; el producto no comprueba nada hoy |
-| A9 | **Buzón de soporte** de `/soporte` | Hoy la página dice que está pendiente, en vez de inventar una dirección |
+
+### A.3 Lo que YA se decidió (2026-09-14)
+
+Estaba en la lista de arriba y ha salido de ella. Se anota para que nadie lo
+vuelva a preguntar.
+
+| Antes | Decisión | Dónde está ya |
+| --- | --- | --- |
+| A7 · Buzón de derechos | `privacidad@gymlabfit.tech` | `/privacidad`, §«Tus derechos» |
+| A8 · Edad mínima | **18 años**, y el producto la impone | Contrato `birthDateSchema` + restricción `members_mayoria_de_edad` en la base |
+| A9 · Buzón de soporte | `soporte@gymlabfit.tech` | `/soporte` |
+
+> **Bloqueo OPERATIVO, no jurídico.** `gymlabfit.tech` tiene registros MX
+> (`mx1`/`mx2.hostinger.com`), así que el dominio recibe correo. **No está
+> confirmado que esos dos buzones concretos existan** — se crean y se comprueban
+> en el panel de Hostinger. Una dirección publicada que nadie atiende es peor
+> que no publicar ninguna.
+>
+> Esto **no** bloquea el gate de tiendas, que es jurídico. Bloquea el envío.
 
 ---
 

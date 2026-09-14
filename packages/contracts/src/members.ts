@@ -30,12 +30,47 @@ export const phoneSchema = z
   .max(30)
   .regex(/^[+0-9()\-.\s]+$/, 'Solo digitos, espacios y los signos + ( ) - .');
 
+/** La edad minima de RINDA V1. Decision de producto, no de validacion. */
+export const EDAD_MINIMA = 18;
+
+/**
+ * ¿Ha cumplido ya `EDAD_MINIMA` años en la fecha de referencia?
+ *
+ * Se compara por PARTES —año, mes, día— y no restando milisegundos. Restar
+ * pierde los años bisiestos y los cambios de hora: quien nace un 29 de febrero
+ * cumple años, y una diferencia en milisegundos lo deja a unas horas de
+ * distancia del umbral. Así, el día EXACTO del 18 cumpleaños ya vale.
+ */
+export function tieneEdadMinima(iso: string, hoy: Date = new Date()): boolean {
+  const [anio, mes, dia] = iso.split('-').map(Number) as [number, number, number];
+  const limite = new Date(
+    Date.UTC(hoy.getUTCFullYear() - EDAD_MINIMA, hoy.getUTCMonth(), hoy.getUTCDate()),
+  );
+  return Date.UTC(anio, mes - 1, dia) <= limite.getTime();
+}
+
 /**
  * Fecha de nacimiento.
  *
  * Se rechaza el futuro y cualquier cosa anterior a 1900: son errores de teclado,
- * no personas. No se impone edad minima: los gimnasios tienen socios menores y
- * decidir eso es del negocio, no de la validacion.
+ * no personas.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ Y SE RECHAZA A QUIEN NO HA CUMPLIDO 18. RINDA V1 ES PARA ADULTOS.       │
+ * │                                                                          │
+ * │ La regla vive AQUI y no en cada pantalla: este esquema lo usan el alta,  │
+ * │ la edicion y el perfil propio, y lo validan la API, el panel web y la    │
+ * │ app movil contra el MISMO contrato. Una regla repetida en tres sitios se │
+ * │ separa en tres al primer cambio.                                          │
+ * │                                                                          │
+ * │ Debajo hay una segunda red: `members.birth_date` lleva una restriccion   │
+ * │ en la base de datos. Ese es el suelo — ningun guion, ninguna semilla y   │
+ * │ ningun endpoint futuro puede saltarsela.                                  │
+ * │                                                                          │
+ * │ Lo que esto NO cubre, y no puede: la fecha es OPCIONAL. Un socio dado de │
+ * │ alta sin ella no queda bloqueado, porque el producto no sabe su edad y   │
+ * │ inventarsela seria peor. Las invitaciones tampoco la piden.               │
+ * └──────────────────────────────────────────────────────────────────────────┘
  */
 const birthDateSchema = z
   .string()
@@ -44,7 +79,16 @@ const birthDateSchema = z
     const fecha = new Date(`${v}T00:00:00Z`);
     if (Number.isNaN(fecha.getTime())) return false;
     return fecha <= new Date() && fecha >= new Date('1900-01-01T00:00:00Z');
-  }, 'Fecha no verosimil');
+  }, 'Fecha no verosimil')
+  /*
+   * En un `refine` aparte para que el mensaje sea el que toca: «no verosimil»
+   * delante de una fecha perfectamente posible confundiria a quien la escribio
+   * bien y solo es joven.
+   */
+  .refine(
+    (v) => tieneEdadMinima(v),
+    `RINDA es solo para mayores de ${EDAD_MINIMA} años.`,
+  );
 
 // --- Alta y edicion ------------------------------------------------------
 
