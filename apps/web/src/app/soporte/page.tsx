@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { CORREO_DE_SOPORTE } from '@/lib/contacto';
 import estilos from '../privacidad/privacidad.module.css';
 
 export const metadata: Metadata = {
@@ -31,7 +32,8 @@ export default function SoportePage() {
   return (
     <main className={estilos.pagina}>
       <p className={estilos.borrador} role="status">
-        <strong>Borrador.</strong> Falta el buzón de soporte definitivo; está pendiente de decidir.
+        <strong>Borrador.</strong> El buzón ya está decidido, pero este texto sigue pendiente de
+        revisión junto con la política de privacidad.
       </p>
 
       <h1 className={estilos.titulo}>Soporte</h1>
@@ -72,7 +74,8 @@ export default function SoportePage() {
         <h2>Si el problema es de la aplicación</h2>
         <p>
           Si RINDA falla —una pantalla que no carga, algo que no se guarda, el escáner que no lee—,
-          eso sí es nuestro. El canal para contarlo está pendiente de habilitar.
+          eso sí es nuestro. Escríbenos a <strong>{CORREO_DE_SOPORTE}</strong> contando qué hacías y
+          qué esperabas que pasara.
         </p>
       </section>
     </main>

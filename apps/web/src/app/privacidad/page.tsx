@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { CORREO_DE_PRIVACIDAD } from '@/lib/contacto';
 import estilos from './privacidad.module.css';
 
 export const metadata: Metadata = {
@@ -106,11 +107,26 @@ export default function PrivacidadPage() {
       </section>
 
       <section className={estilos.seccion}>
+        <h2>Quién puede usar RINDA</h2>
+        <p>
+          RINDA está <strong>dirigida a personas mayores de 18 años</strong>.
+        </p>
+        <p>
+          Cuando tu gimnasio registra tu fecha de nacimiento, el sistema no permite crear ni editar
+          una ficha de una persona menor de esa edad. Ahora bien, esa fecha es{' '}
+          <strong>opcional</strong>: un gimnasio puede dar de alta a alguien sin ella, y entonces
+          RINDA no conoce su edad. <strong>No comprobamos la edad de todas las personas usuarias</strong>,
+          y no afirmamos lo contrario.
+        </p>
+      </section>
+
+      <section className={estilos.seccion}>
         <h2>Tus derechos</h2>
         <p>
           Puedes pedir acceso a tus datos, su rectificación, su supresión, la limitación de su
-          tratamiento, oponerte a él y pedir que te los entreguemos para llevártelos. También
-          puedes reclamar ante la autoridad de control.
+          tratamiento, oponerte a él y pedir que te los entreguemos para llevártelos. Escríbenos a{' '}
+          <strong>{CORREO_DE_PRIVACIDAD}</strong>. También puedes reclamar ante la autoridad de
+          control.
         </p>
         <p>
           <strong>Puedes eliminar tu cuenta tú misma</strong>, desde la aplicación o desde{' '}
@@ -131,9 +147,10 @@ export default function PrivacidadPage() {
       <section className={estilos.seccion}>
         <h2>Lo que falta en este borrador</h2>
         <p>
-          Este texto todavía no dice quién es el responsable del tratamiento, cuánto tiempo se
-          conserva cada cosa, qué proveedores intervienen ni cuál es la base jurídica de cada
-          finalidad. Son decisiones que no puede tomar quien escribe el código.
+          Este texto todavía no dice <strong>quién es el responsable del tratamiento</strong> —la
+          sociedad está pendiente de constituir—, <strong>cuánto tiempo se conserva cada cosa</strong>,
+          qué proveedores intervienen ni cuál es <strong>la base jurídica</strong> de cada finalidad.
+          Son decisiones que no puede tomar quien escribe el código.
         </p>
       </section>
 
