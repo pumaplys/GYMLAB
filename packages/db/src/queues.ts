@@ -50,6 +50,23 @@ export type EmailQueue = (typeof EMAIL_QUEUES)[keyof typeof EMAIL_QUEUES];
  */
 export const MAINTENANCE_QUEUES = {
   retentionDiaria: 'retention.diaria',
+  /**
+   * Supresion de datos de salud, ENCOLADA AL RETIRAR EL CONSENTIMIENTO.
+   *
+   * ┌──────────────────────────────────────────────────────────────────────┐
+   * │ EXISTE PARA QUE EL BORRADO NO ESPERE A LAS 04:00.                    │
+   * │                                                                      │
+   * │ La purga diaria ya borra estos datos: esta cola no anade una segunda │
+   * │ implementacion, llama a la MISMA funcion. Lo que anade es el momento │
+   * │ — se encola dentro de la transaccion que revoca, asi que el borrado  │
+   * │ ocurre en segundos y el disparo diario queda como red de seguridad.  │
+   * │                                                                      │
+   * │ Sin esto, el SLA de 24 horas dependeria de la hora a la que alguien  │
+   * │ pulsara «retirar»: quien lo hiciera a las 04:05 esperaria casi un    │
+   * │ dia entero.                                                           │
+   * └──────────────────────────────────────────────────────────────────────┘
+   */
+  supresionDeSalud: 'retention.salud',
   /** @deprecated Sustituida por `retentionDiaria`. Solo para poder desprogramarla. */
   retentionAuthEvents: 'retention.auth-events',
 } as const;
@@ -144,6 +161,19 @@ export const POLITICAS: Readonly<Record<string, PoliticaDeCola>> = {
     retryBackoff: true,
     expireInSeconds: 10 * 60,
     retentionSeconds: 20 * 60 * 60,
+  },
+  /*
+   * Supresion de salud. Reintenta MAS veces y espera MENOS que la purga
+   * diaria, porque aqui hay una promesa de 24 horas que cumplir: un fallo
+   * transitorio no puede consumir el plazo entero. Y si aun asi no sale, el
+   * disparo de las 04:00 vuelve a intentarlo.
+   */
+  [MAINTENANCE_QUEUES.supresionDeSalud]: {
+    retryLimit: 5,
+    retryDelay: 60,
+    retryBackoff: true,
+    expireInSeconds: 10 * 60,
+    retentionSeconds: 12 * 60 * 60,
   },
 };
 

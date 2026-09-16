@@ -51,15 +51,23 @@ exactamente donde hace falta que sea fuerte.
 
 ## 3. Conservación
 
-Los plazos completos, con su motivo y quién los decide, están en la
-[política de conservación](politica-conservacion.md). En resumen: `auth_events`
-12 meses · accesos 12 meses (configurable por el gimnasio) · `audit_log` 3 años ·
-invitaciones resueltas 12 meses · pagos 6 años · datos de salud hasta retirar el
-consentimiento y entonces ≤ 30 días · constancia mínima del consentimiento 3
-años · copias de seguridad ≤ 31 días.
+Los plazos completos están en la
+[política de conservación](politica-conservacion.md), **separados en dos
+clases**, que es lo que importa aquí:
 
-**Son política de RINDA.** No todos vienen impuestos literalmente por una ley
-concreta.
+**Decide RINDA**, porque son finalidad propia: `auth_events` **90 días**.
+
+**Decide el gimnasio**, porque es el responsable y RINDA sólo es encargado — los
+plazos de abajo son la **configuración estándar del servicio, aceptada como
+instrucción documentada** en el [anexo del art. 28](acuerdo-encargo-art28.md):
+accesos 12 meses (**ya configurable por el gimnasio**, y su valor prevalece) ·
+invitaciones resueltas 12 meses · pagos 6 años · datos de salud hasta retirar el
+consentimiento y entonces **≤ 24 horas** · constancia mínima 3 años.
+
+`audit_log` 3 años, con las dos caras que explica la política. Copias de
+seguridad ≤ 31 días.
+
+**Ninguno viene impuesto literalmente por una ley concreta.**
 
 ## 4. Datos de salud
 
@@ -70,8 +78,9 @@ Peso · porcentaje de grasa · perímetros de pecho, cintura, cadera, brazo y mu
   pertenencia al gimnasio**;
 - **cada gimnasio por separado**: aceptar en uno no dice nada del otro;
 - acceden el socio, su entrenador asignado y la dirección. **Recepción no**;
-- al retirarlo: bloqueo inmediato de nuevas mediciones y notas, y **supresión de
-  las existentes en ese gimnasio en ≤ 30 días**;
+- al retirarlo: bloqueo inmediato de nuevas mediciones y notas, y la supresión de
+  las existentes **en ese gimnasio** se pone en marcha en el acto y se completa
+  en **≤ 24 horas**;
 - queda sólo la constancia del hecho —versión, fecha de aceptación, fecha de
   retirada— durante 3 años, **sin métricas ni notas y sin IP**.
 

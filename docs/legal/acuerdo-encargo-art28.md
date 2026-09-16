@@ -1,6 +1,6 @@
 # Contrato de servicio y acuerdo de encargo — modelo
 
-**Adoptado por el responsable el 2026-09-16.** Modelo reutilizable para
+**Adoptado el 2026-09-16, corregido el 2026-09-17.** Modelo reutilizable para
 cualquier gimnasio.
 
 > **Esto es un modelo redactado por el prestador, no un contrato revisado por un
@@ -156,8 +156,38 @@ del responsable. Son instrucciones documentadas:
    personal, tal y como están implementadas;
 3. la configuración que el responsable elige en la aplicación —entre otras, el
    **plazo de conservación de los accesos**, que él fija;
-4. cualquier instrucción adicional que el responsable dé por escrito y que sea
+4. **el calendario de conservación de B.6 bis**, que el responsable acepta como
+   configuración estándar del servicio;
+5. cualquier instrucción adicional que el responsable dé por escrito y que sea
    técnicamente posible.
+
+### B.6 bis · Calendario de conservación
+
+Estos plazos son la **configuración estándar del servicio**. **No son una
+decisión jurídica del encargado:** el responsable los acepta como instrucción
+documentada al firmar, y puede sustituirlos por otra instrucción escrita donde
+sea técnicamente posible.
+
+| Datos | Configuración estándar | Nota |
+| --- | --- | --- |
+| Ficha del socio y contacto | Mientras exista la ficha | El responsable la da de baja o pide su supresión |
+| Cuotas y pagos | **6 años** | Sigue los criterios habituales de conservación contable y fiscal, **que valora el responsable**. **El encargado no ejecuta ninguna supresión automática de registros económicos** |
+| Accesos | **12 meses por defecto** | **Ya es configurable por el responsable** en la aplicación; su valor prevalece sobre el estándar |
+| Invitaciones resueltas | **12 meses** | Las pendientes no se tocan |
+| Rutinas y asignaciones | Mientras exista la ficha | |
+| **Datos de salud** | Hasta que el interesado retire el consentimiento; entonces **≤ 24 horas** en base activa | Lo dispara el interesado, no el responsable. La supresión se encola en el acto |
+| Constancia mínima del consentimiento retirado | **3 años** | Versión y fechas. Sin métricas, sin notas y sin IP |
+| Registro de actividad del personal | **3 años** | Sirve a la vez a la seguridad del servicio y a la trazabilidad del responsable |
+
+**Datos propios del encargado.** Los eventos de autenticación (`auth_events`,
+con IP y agente de usuario) se conservan **90 días** y **no** forman parte de
+este encargo: son finalidad propia del prestador —seguridad de las cuentas—, que
+actúa sobre ellos como responsable. Se declaran aquí por transparencia, no como
+instrucción del cliente.
+
+**Copias de seguridad.** Lo suprimido puede persistir en copias cifradas hasta un
+**máximo aproximado de 31 días**. Si alguna vez se restaura una copia que
+contenga datos ya suprimidos, **el encargado reaplicará la supresión**.
 
 **Si el encargado considera que una instrucción infringe la normativa, lo
 comunicará y podrá suspender su ejecución.**
@@ -238,13 +268,21 @@ conservación.
 
 ## B.13 Supresión o devolución al terminar
 
-A elección del responsable, comunicada antes de la terminación:
+**La decisión es del responsable.** Terminada la prestación, **el responsable
+determina, conforme a este contrato y a la normativa que le resulte aplicable**,
+si los datos se le devuelven o se suprimen:
 
-- **devolución** de los datos en formato estructurado y de uso común; o
+- **devolución** en formato estructurado y de uso común; o
 - **supresión**.
 
-A falta de elección, el encargado **suprimirá** transcurridos **30 días
-naturales** desde la terminación efectiva, previo aviso.
+El encargado ejecuta lo que el responsable determine. **A falta de instrucción**,
+y tras avisarle, el encargado **suprimirá** transcurridos **30 días naturales**
+desde la terminación efectiva — plazo que existe para no retener indefinidamente
+datos de los que ya nadie responde, no para sustituir la decisión del
+responsable.
+
+El encargado conservará los datos únicamente mientras una obligación legal que le
+sea aplicable se lo exija, y en tal caso se lo comunicará al responsable.
 
 **La supresión no es instantánea en las copias de seguridad:** lo suprimido puede
 persistir en copias cifradas hasta un **máximo aproximado de 31 días**, tras los

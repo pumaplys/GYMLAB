@@ -32,6 +32,56 @@ function cuerpoDe(funcion: string): string {
   return RLS.slice(inicio, fin === -1 ? undefined : fin);
 }
 
+/**
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ LOS DOS PLAZOS QUE NO PUEDEN MOVERSE SOLOS.                             │
+ * │                                                                          │
+ * │ Estos dos tests fijan un numero literal, que es justo lo que el resto de │
+ * │ este fichero evita. No es un descuido: los dos ya se movieron una vez y  │
+ * │ el movimiento tenia que haberse justificado antes, no despues.           │
+ * │                                                                          │
+ * │ Si alguien necesita cambiarlos, que cambie tambien esta linea — y al     │
+ * │ hacerlo lea por que estaban asi.                                          │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ */
+describe('los plazos que no se mueven sin justificarlo', () => {
+  it('auth_events son 90 dias, NO doce meses', () => {
+    /*
+     * Subio a 12 meses el 2026-09-16, sobre la premisa equivocada de que estos
+     * eventos no se purgaban. Se purgaban, a 90 dias. Cuadruplicar la
+     * conservacion de IP y user-agent sin necesidad demostrada es lo que el
+     * art. 5.1.e no permite.
+     */
+    expect(RETENCION.authEventsDias).toBe(90);
+    expect(RETENCION.authEventsQuienDecide).toBe('rinda-responsable');
+  });
+
+  it('la supresion de salud son 24 horas, NO 30 dias', () => {
+    /*
+     * Prometer un mes para borrar datos de categoria especial que se pueden
+     * borrar en segundos no se sostiene. La retirada encola la supresion en su
+     * propia transaccion; el trabajo diario es solo la red de seguridad.
+     */
+    expect(RETENCION.saludMaximoHoras).toBe(24);
+    expect(RETENCION).not.toHaveProperty('saludMaximoDias');
+  });
+
+  it('los plazos de datos tenant NO los decide RINDA', () => {
+    /*
+     * El gimnasio es el responsable. Marcar uno de estos como decision propia
+     * seria atribuirse una base juridica sobre datos de los que no se responde.
+     */
+    for (const clave of [
+      'accessEventsQuienDecide',
+      'invitationsQuienDecide',
+      'paymentsQuienDecide',
+      'saludQuienDecide',
+    ] as const) {
+      expect(RETENCION[clave], clave).toBe('gimnasio-instruccion-documentada');
+    }
+  });
+});
+
 describe('los plazos del SQL coinciden con los declarados', () => {
   it(`audit_log: ${RETENCION.auditLogAnios} años`, () => {
     expect(cuerpoDe('app_purge_audit_log')).toContain(
@@ -100,6 +150,23 @@ describe('lo que las purgas NO pueden hacer', () => {
   });
 });
 
+describe('el SQL dice lo mismo que la politica', () => {
+  it('el comentario de auth_events en la base habla de 90 dias', () => {
+    /*
+     * El comentario vive EN LA BASE DE DATOS, y es lo que lee quien se conecta
+     * con psql sin abrir el repositorio. Si dice un plazo y la purga aplica
+     * otro, el que sobra es el comentario — y nadie lo revisa.
+     */
+    // Acotado a SU sentencia: sin el corte, el `slice` llegaba al final del
+    // fichero y encontraba «12 meses» en la purga de invitaciones — que es
+    // correcto ahi, y no tiene nada que ver con esta tabla.
+    const desde = RLS.indexOf('COMMENT ON TABLE auth_events');
+    const comentario = RLS.slice(desde, RLS.indexOf(';', desde));
+    expect(comentario).toContain(`Retencion ${RETENCION.authEventsDias} dias`);
+    expect(comentario).not.toContain('12 meses');
+  });
+});
+
 describe('las copias de seguridad', () => {
   it('el techo declarado es el mayor de las reglas del bucket', () => {
     /*
@@ -108,8 +175,12 @@ describe('las copias de seguridad', () => {
      * B2 y no este numero, la politica de privacidad promete algo falso.
      */
     expect(RETENCION.copiasMaximoDias).toBe(30 + 1);
-    // Y el plazo de salud no puede prometer menos de lo que dura una copia
-    // sin decirlo: son promesas distintas y la politica las separa.
-    expect(RETENCION.saludMaximoDias).toBeLessThanOrEqual(RETENCION.copiasMaximoDias);
+    /*
+     * La promesa de salud —24 horas— es MAS CORTA que la vida de una copia, y
+     * eso no es una contradiccion: son dos promesas distintas y la politica
+     * las separa. Lo que no puede pasar es que la de base activa se acerque a
+     * la de las copias sin decirlo.
+     */
+    expect(RETENCION.saludMaximoHoras / 24).toBeLessThan(RETENCION.copiasMaximoDias);
   });
 });

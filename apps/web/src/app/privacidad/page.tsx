@@ -144,7 +144,7 @@ export default function PrivacidadPage() {
               <td>Intentos de acceso, con IP y navegador</td>
               <td>Seguridad y prevención de abuso</td>
               <td>Interés legítimo en proteger las cuentas</td>
-              <td>12 meses</td>
+              <td>90 días</td>
             </tr>
             <tr>
               <td>Entradas al gimnasio</td>
@@ -189,10 +189,14 @@ export default function PrivacidadPage() {
           </tbody>
         </table>
         <p className={estilos.nota}>
-          Estos plazos son <strong>política de RINDA</strong>, decidida para no guardar las cosas
-          indefinidamente. No todos vienen impuestos literalmente por una ley concreta: los de pagos
-          siguen los plazos habituales de conservación contable y fiscal, que valora cada gimnasio,
-          y los demás son el criterio propio del prestador.
+          <strong>Quién decide cada plazo no es lo mismo en todas las filas.</strong> El de los
+          intentos de acceso es decisión de RINDA, porque protege el propio servicio. Los demás son
+          de datos que tu gimnasio nos encarga tratar: ahí el plazo es la{' '}
+          <strong>configuración estándar del servicio</strong>, que tu gimnasio acepta como
+          instrucción cuando firma el contrato, y él puede darnos otra —de hecho el de las entradas
+          al gimnasio ya lo configura él—. <strong>Ninguno de estos plazos viene impuesto
+          literalmente por una ley concreta</strong>; los de pagos siguen los criterios habituales
+          de conservación contable y fiscal, que valora cada gimnasio.
         </p>
       </section>
 
@@ -239,8 +243,9 @@ export default function PrivacidadPage() {
           </li>
           <li>
             <strong>Puedes retirarlo cuando quieras.</strong> Al hacerlo se bloquea de inmediato
-            cualquier medición o nota nueva, y las que haya <strong>se eliminan</strong>, como muy
-            tarde en 30 días.
+            cualquier medición o nota nueva, y el borrado de las que haya{' '}
+            <strong>se pone en marcha en ese mismo momento</strong>: se completa{' '}
+            <strong>como máximo en 24 horas</strong>.
           </li>
         </ul>
         <p>
@@ -291,6 +296,10 @@ export default function PrivacidadPage() {
           de una copia durante <strong>un máximo aproximado de 31 días</strong>, hasta que esa copia
           caduca y se destruye sola. Las copias no se consultan salvo para restaurar el servicio
           tras un incidente.
+        </p>
+        <p>
+          Y si alguna vez hubiera que <strong>restaurar</strong> una copia que contuviera datos ya
+          eliminados, <strong>la eliminación se vuelve a aplicar</strong>.
         </p>
       </section>
 

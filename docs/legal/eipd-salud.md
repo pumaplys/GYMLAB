@@ -1,6 +1,6 @@
 # Evaluación de impacto — módulo de salud y progreso
 
-**Adoptada por el responsable el 2026-09-16.** Art. 35 RGPD.
+**Adoptada el 2026-09-16, corregida el 2026-09-17.** Art. 35 RGPD.
 
 > **Ninguna autoridad de control ha aprobado esta evaluación, y no se ha
 > consultado a ninguna.** Es el análisis propio del responsable sobre un
@@ -96,7 +96,7 @@ gimnasio vea los datos de otro**.
 | Un borrador usado como si fuera definitivo | Columna `is_draft`, no un sufijo en el nombre. En producción, un borrador **no ampara nada** |
 | Recepción accediendo | Autorización por rol, con tests |
 | Fuga por copia de seguridad | Copias **cifradas con clave pública**: el servidor que las crea no puede leerlas. Caducan solas en ≤ 31 días |
-| Retirada que no borra nada | Purga diaria automática; el plazo vive en SQL, no en el código |
+| Retirada que no borra nada | La supresión se encola dentro de la transacción que revoca (patrón outbox): o pasan las dos cosas o no pasa ninguna. La purga diaria la repite como red de seguridad, y el plazo vive en SQL, no en el código |
 | Purga que borra de más | La función exige que **no exista** consentimiento vigente, y filtra por gimnasio. Tiene test que comprueba lo que **no** debe borrar |
 | Registro de auditoría reescrito | `UPDATE` y `DELETE` retirados al rol de la aplicación |
 | Datos de salud en la tabla de identidad | `users` guarda sólo credenciales; está escrito como comentario en la propia base de datos |
@@ -116,11 +116,11 @@ gimnasio vea los datos de otro**.
 
 | Momento | Qué pasa |
 | --- | --- |
-| Se retira el consentimiento | **Inmediato:** no se registra ni se modifica nada más. **Programado:** mediciones y notas de ese gimnasio se eliminan en **≤ 30 días** (en la práctica, menos de 24 horas) |
+| Se retira el consentimiento | **Inmediato:** no se registra ni se modifica nada más, y la supresión **se encola en la misma transacción** que revoca. **SLA en base activa: ≤ 24 horas**; en la práctica, segundos. El trabajo diario es la red de seguridad, no el camino normal |
 | Tras el borrado | Queda sólo versión, fecha de aceptación y fecha de retirada. **Se elimina también la IP** |
 | A los 3 años | Se elimina también esa constancia |
 | Se elimina la cuenta | Consentimientos, mediciones y notas **se eliminan**, no se anonimizan |
-| Copias de seguridad | Pueden contenerlos hasta **31 días** |
+| Copias de seguridad | Pueden contenerlos hasta **31 días**. Si alguna se restaura, la supresión se vuelve a aplicar |
 
 ## 9. Riesgos residuales — los que quedan
 
@@ -129,6 +129,12 @@ gimnasio vea los datos de otro**.
    alternativa —no tener copias, o excluir de ellas una tabla— es peor para la
    persona, que perdería sus datos ante un incidente. Están cifradas y sólo se
    consultan para restaurar.
+
+   **Y si se restaura una, la supresión hay que reaplicarla.** Para los datos de
+   salud la purga lo hace sola —vuelve a encontrar el consentimiento revocado y
+   vuelve a borrar—, pero **una cuenta eliminada por el art. 17 no deja ninguna
+   señal que dispare su propio reborrado**: ahí hay que actuar a mano. Es parte
+   del procedimiento de restauración, no una propiedad del sistema.
 
 2. **Texto libre.** Las notas del entrenador pueden contener más de lo
    necesario, y recepción podría escribir algo de salud en `member_notes`, que

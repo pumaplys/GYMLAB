@@ -343,6 +343,109 @@ function sinRellenar(texto) {
   }
 }
 
+// ─── 5b. Que los documentos NO se atribuyan plazos ajenos ────────────────────
+{
+  /*
+   * ┌──────────────────────────────────────────────────────────────────────┐
+   * │ EL GIMNASIO ES EL RESPONSABLE DE SUS DATOS. RINDA ES EL ENCARGADO.   │
+   * │                                                                      │
+   * │ Por eso los plazos de la ficha, las cuotas, los accesos, las          │
+   * │ invitaciones y la salud NO pueden redactarse como decision juridica   │
+   * │ unilateral de RINDA: son la configuracion estandar del servicio, que  │
+   * │ el gimnasio acepta como INSTRUCCION DOCUMENTADA en el anexo del       │
+   * │ art. 28.                                                              │
+   * │                                                                      │
+   * │ No es un matiz de estilo. Presentarlos como propios seria atribuirse  │
+   * │ una base juridica sobre datos de los que no se responde, y quitarle   │
+   * │ al gimnasio una facultad que es suya. Se comprueba aqui porque es el  │
+   * │ tipo de frase que se cuela al reescribir un parrafo.                  │
+   * └──────────────────────────────────────────────────────────────────────┘
+   */
+  const conservacion = leer(RAIZ, 'docs', 'legal', 'politica-conservacion.md');
+  if (conservacion) {
+    if (!/instrucci[oó]n documentada/i.test(conservacion)) {
+      anotar(
+        'la política de conservación no distingue quién decide cada plazo',
+        'los plazos de datos del gimnasio son instrucción documentada suya, no decisión de RINDA',
+      );
+    }
+
+    /*
+     * La seccion de datos tenant, acotada: se mira SOLO ahi. En la seccion de
+     * finalidades propias, «RINDA» en la columna de quien decide es correcto.
+     */
+    const desde = conservacion.indexOf('## 2. Datos tratados por cuenta del gimnasio');
+    const hasta = conservacion.indexOf('## 3.', desde + 1);
+    if (desde === -1) {
+      anotar(
+        'la política de conservación no separa los datos tratados por cuenta del gimnasio',
+        'sin esa sección no se puede comprobar quién decide cada plazo',
+      );
+    } else {
+      const seccion = conservacion.slice(desde, hasta === -1 ? undefined : hasta);
+      const culpables = seccion
+        .split('\n')
+        .filter((l) => l.startsWith('|') && /\|\s*(RINDA|El prestador)\s*\|/i.test(l));
+      if (culpables.length > 0) {
+        anotar(
+          `${culpables.length} plazo(s) de datos del gimnasio figuran como decisión de RINDA`,
+          'el responsable es el gimnasio: son configuración estándar aceptada como instrucción suya',
+        );
+      }
+    }
+  }
+
+  const contrato = leer(RAIZ, 'docs', 'legal', 'acuerdo-encargo-art28.md');
+  if (contrato) {
+    if (!/B\.6 bis/.test(contrato)) {
+      anotar(
+        'el acuerdo de encargo no recoge el calendario de conservación',
+        'los plazos tienen que constar como instrucción documentada del responsable',
+      );
+    }
+    /*
+     * Con los espacios normalizados: el texto esta ajustado a 80 columnas y la
+     * frase cae partida por un salto de linea. Buscar la cadena tal cual haria
+     * que el gate dependiera de donde ajusta el parrafo un editor, que es
+     * exactamente el tipo de falso positivo que desactiva un guardian.
+     */
+    const seguido = contrato.replace(/\s+/g, ' ');
+    if (!/el responsable determina/i.test(seguido)) {
+      anotar(
+        'el acuerdo de encargo no dice quién decide al terminar',
+        'la devolución o supresión la determina el responsable, no el encargado',
+      );
+    }
+  }
+
+  /*
+   * Y que nadie devuelva la supresion de salud a los 30 dias. Se busca en los
+   * textos que lo PROMETEN a una persona, no en los que describen las copias
+   * de seguridad — donde 30 y 31 dias son correctos.
+   */
+  const promesas = [
+    ['docs/legal/politica-privacidad.md', leer(RAIZ, 'docs', 'legal', 'politica-privacidad.md')],
+    ['docs/legal/politica-conservacion.md', conservacion],
+    ['docs/legal/eipd-salud.md', leer(RAIZ, 'docs', 'legal', 'eipd-salud.md')],
+    ['/privacidad', leer(WEB, 'src', 'app', 'privacidad', 'page.tsx')],
+  ];
+  for (const [donde, texto] of promesas) {
+    if (!texto) continue;
+    for (const linea of texto.split('\n')) {
+      const hablaDeSalud = /salud|medicion|medición|consentimiento/i.test(linea);
+      const dice30 = /(≤\s*)?30\s*d[ií]as/.test(linea);
+      const esCopia = /copia|backup|predeploy|postdeploy|semanal|bucket/i.test(linea);
+      if (hablaDeSalud && dice30 && !esCopia) {
+        anotar(
+          `${donde} vuelve a prometer 30 días para borrar datos de salud`,
+          'el SLA en base activa es de 24 horas: la retirada encola la supresión en el acto',
+        );
+        break;
+      }
+    }
+  }
+}
+
 // ─── 6. Que la política de conservación se EJECUTE ───────────────────────────
 {
   const rls = leer(RAIZ, 'packages', 'db', 'sql', '01-rls.sql');

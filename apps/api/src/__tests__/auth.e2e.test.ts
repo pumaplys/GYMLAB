@@ -1022,22 +1022,21 @@ describe('registro de auditoria', () => {
 describe('retencion de datos (RGPD art. 5.1.e)', () => {
   /*
    * ┌──────────────────────────────────────────────────────────────────────┐
-   * │ EL PLAZO CAMBIO EL 2026-09-16: DE 90 DIAS A DOCE MESES.              │
+   * │ NOVENTA DIAS. SUBIO A DOCE MESES UN DIA, Y SE REVIRTIO.              │
    * │                                                                      │
-   * │ Es la politica de conservacion adoptada por el responsable, y va en   │
-   * │ la direccion incomoda: ALARGA lo que se conserva. La justificacion    │
-   * │ esta en `RETENCION.authEventsMeses` — poder investigar un patron de   │
-   * │ ataque que se extienda en el tiempo.                                  │
+   * │ La ampliacion se escribio sobre la premisa equivocada de que estos    │
+   * │ eventos no se purgaban. Se purgaban, a 90 dias. Cuadruplicar la       │
+   * │ conservacion de IP y user-agent sin una necesidad demostrada es lo    │
+   * │ que el art. 5.1.e no permite, asi que volvio a su sitio.              │
    * │                                                                      │
-   * │ El test no fija el numero: lo lee de ahi. Asi no puede quedarse       │
-   * │ describiendo un plazo que ya no se aplica, que es exactamente lo que  │
-   * │ le paso a la version anterior de estas lineas.                        │
+   * │ El test no fija el numero: lo lee de `RETENCION.authEventsDias`, y    │
+   * │ el que impide que vuelva a subir vive en el paquete `db`.             │
    * └──────────────────────────────────────────────────────────────────────┘
    */
-  it(`la purga borra los eventos de mas de ${RETENCION.authEventsMeses} meses y respeta los recientes`, async () => {
+  it(`la purga borra los eventos de mas de ${RETENCION.authEventsDias} dias y respeta los recientes`, async () => {
     const viejo = randomUUID();
     const reciente = randomUUID();
-    const plazo = `${RETENCION.authEventsMeses} months`;
+    const plazo = `${RETENCION.authEventsDias} days`;
 
     await owner.execute(
       sql`INSERT INTO auth_events (id, email_attempted, event_type, created_at) VALUES

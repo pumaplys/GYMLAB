@@ -226,6 +226,23 @@ dentro de una copia hasta que ésa caduca. Ver
 > **Si alguna vez hay que volver a tocarlas, repítelas las cuatro.** Omitir una
 > no la deja como estaba: la borra.
 
+### Restaurar una copia reintroduce lo que se había suprimido
+
+**Parte del procedimiento de restauración, no una nota al margen.** Una copia de
+hace tres semanas contiene los datos de quien pidió que se borraran hace dos.
+
+- **Datos de salud:** la purga los vuelve a eliminar sola en la siguiente
+  pasada, porque vuelve a encontrar el consentimiento revocado. Aun así,
+  **compruébalo** tras restaurar en vez de darlo por hecho.
+- **Cuentas eliminadas por el art. 17:** aquí **no hay nada automático**. El
+  borrado no deja tras de sí ninguna señal que dispare su propio reborrado —
+  precisamente porque borra la señal. Hay que reaplicarlo a mano, con la lista
+  de supresiones atendidas desde la fecha de la copia.
+
+Está recogido como compromiso en
+[`docs/legal/politica-conservacion.md`](legal/politica-conservacion.md) §6 y en
+el texto del consentimiento de salud, así que no es opcional.
+
 ## 4. Las credenciales, fuera del repositorio
 
 Nada de esto entra en git. `.dockerignore` ya excluye `.env`, y se añadiría

@@ -21,7 +21,14 @@
 import { randomUUID } from 'node:crypto';
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { closeDatabase, createDatabase, RETENCION, sql, type Database } from '@gymlab/db';
+import {
+  closeDatabase,
+  createDatabase,
+  MAINTENANCE_QUEUES,
+  RETENCION,
+  sql,
+  type Database,
+} from '@gymlab/db';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { AppModule } from '../app.module';
@@ -39,8 +46,8 @@ const email = (quien: string) => `${quien}-${sufijo}@test.local`;
 const PASSWORD = 'contrasena-larga-1';
 const conSesion = (token: string) => ({ Authorization: `Bearer ${token}` });
 
-/** La version de LANZAMIENTO, la que siembra la migracion 0020. */
-const VERSION = '2026-09-16';
+/** La version de LANZAMIENTO vigente, la que siembra la migracion 0021. */
+const VERSION = '2026-09-17';
 
 const gimnasios: string[] = [];
 let gymA: string;
@@ -171,17 +178,25 @@ describe('la plantilla de lanzamiento', () => {
     expect(r.rows[0]!.is_draft).toBe(false);
   });
 
-  it('el borrador anterior sigue existiendo, y sigue siendo borrador', async () => {
+  it('las versiones anteriores siguen intactas: se publica otra, no se edita', async () => {
     /*
-     * No se toca: puede haber aceptaciones apuntando a el, y reescribir un
-     * texto aceptado destruye la prueba de que alguien lo acepto. Lo que hace
-     * la migracion es publicar OTRA version, no aprobar esta.
+     * ┌──────────────────────────────────────────────────────────────────┐
+     * │ LA REGLA DE ESTA BASE DE DATOS: UN TEXTO ACEPTADO NO SE EDITA.   │
+     * │                                                                  │
+     * │ El borrador sigue siendo borrador, y `2026-09-16` —que prometia  │
+     * │ 30 dias— sigue diciendo lo que decia. Corregirlas con un UPDATE  │
+     * │ habria sido mas corto y habria destruido la prueba de que        │
+     * │ alguien acepto ESE texto. Se publica otra version.                │
+     * └──────────────────────────────────────────────────────────────────┘
      */
-    const r = await owner.execute<{ is_draft: boolean }>(
-      sql`SELECT is_draft FROM consent_document_templates
-          WHERE purpose = 'health_data' AND version = '2026-09-01-borrador'`,
+    const r = await owner.execute<{ version: string; is_draft: boolean }>(
+      sql`SELECT version, is_draft FROM consent_document_templates
+          WHERE purpose = 'health_data' AND version IN ('2026-09-01-borrador', '2026-09-16')
+          ORDER BY version`,
     );
-    expect(r.rows[0]!.is_draft).toBe(true);
+    const porVersion = new Map(r.rows.map((f) => [f.version, f.is_draft]));
+    expect(porVersion.get('2026-09-01-borrador'), 'el borrador sigue siendo borrador').toBe(true);
+    expect(porVersion.get('2026-09-16'), 'la anterior sigue existiendo').toBe(false);
   });
 
   it('su texto dice lo que el producto hace de verdad', async () => {
@@ -195,7 +210,11 @@ describe('la plantilla de lanzamiento', () => {
     expect(texto).toContain('{{responsable}}');
     expect(texto).toMatch(/RECEPCION NO ACCEDE/i);
     expect(texto).toMatch(/NO CONDICIONA TU PERTENENCIA/i);
-    expect(texto).toContain('30 dias');
+    expect(texto).toContain('24 HORAS');
+    // Y NO puede volver a prometer un mes para borrar datos del art. 9.
+    expect(texto).not.toMatch(/30 dias/);
+    // Lo que pasa si se restaura una copia tiene que estar dicho.
+    expect(texto).toMatch(/RESTAURA UNA/);
   });
 });
 
@@ -210,6 +229,41 @@ describe('retirar el consentimiento de salud', () => {
 
     // Sin esperar a nada: la puerta del consentimiento ya no deja pasar.
     await medir(gymA, tokenA, socio, 71).expect(403);
+  });
+
+  it('encola la supresión EN EL ACTO, no la deja para las 04:00', async () => {
+    /*
+     * ┌──────────────────────────────────────────────────────────────────┐
+     * │ ESTE TEST ES EL QUE SOSTIENE EL SLA DE 24 HORAS.                 │
+     * │                                                                  │
+     * │ Sin el encolado, el borrado dependeria de la hora a la que        │
+     * │ alguien pulsara «retirar»: quien lo hiciera a las 04:05           │
+     * │ esperaria casi un dia entero. Y como el trabajo se encola DENTRO  │
+     * │ de la transaccion que revoca (patron outbox), o quedan las dos    │
+     * │ cosas o no queda ninguna.                                         │
+     * │                                                                  │
+     * │ En los tests no hay consumidor —`onModuleInit` no registra        │
+     * │ trabajadores con NODE_ENV=test— asi que el trabajo se queda en la │
+     * │ cola, que es justo lo que permite verlo.                          │
+     * └──────────────────────────────────────────────────────────────────┘
+     */
+    const socio = await altaSocio(gymA, tokenA, 'Encolada');
+    await aceptar(gymA, tokenA, socio).expect(200);
+
+    const cuantosTrabajos = async () => {
+      const r = await owner.execute<{ n: number }>(
+        sql`SELECT count(*)::int AS n FROM pgboss.job
+            WHERE name = ${MAINTENANCE_QUEUES.supresionDeSalud}
+              AND data->>'memberId' = ${socio}`,
+      );
+      return r.rows[0]!.n;
+    };
+
+    expect(await cuantosTrabajos(), 'aceptar no encola ninguna supresion').toBe(0);
+
+    await retirar(gymA, tokenA, socio).expect(200);
+
+    expect(await cuantosTrabajos(), 'retirar tiene que encolarla en el acto').toBe(1);
   });
 
   it('borra las mediciones Y SUS NOTAS, y deja la constancia sin IP', async () => {
@@ -334,9 +388,9 @@ describe('auth_events — 12 meses', () => {
     await owner.execute(
       sql`INSERT INTO auth_events (event_type, email_attempted, ip_address, created_at)
           VALUES ('login_failure', ${viejo}, '10.0.0.1',
-                  now() - ${`${RETENCION.authEventsMeses} months`}::interval - interval '1 day'),
+                  now() - ${`${RETENCION.authEventsDias} days`}::interval - interval '1 day'),
                  ('login_failure', ${nuevo}, '10.0.0.2',
-                  now() - ${`${RETENCION.authEventsMeses} months`}::interval + interval '1 day')`,
+                  now() - ${`${RETENCION.authEventsDias} days`}::interval + interval '1 day')`,
     );
 
     await purgas.purgar();

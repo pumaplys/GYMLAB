@@ -7,6 +7,7 @@ import {
   desc,
   eq,
   isNull,
+  MAINTENANCE_QUEUES,
   RETENCION,
   type BodyMetric as BodyMetricRow,
 } from '@gymlab/db';
@@ -17,6 +18,7 @@ import type {
   RecordBodyMetricInput,
 } from '@gymlab/contracts';
 import { requireRequestContext, requireTransaction } from '../common/request-context';
+import { JobsService } from '../jobs/jobs.service';
 import { MembersService } from '../members/members.service';
 import { TrainersService } from '../trainers/trainers.service';
 import { ConsentDocumentsService } from './consent-documents.service';
@@ -42,6 +44,7 @@ export class ProgressService {
     private readonly trainers: TrainersService,
     private readonly consentGate: ConsentGate,
     private readonly documentos: ConsentDocumentsService,
+    private readonly jobs: JobsService,
   ) {}
 
   /**
@@ -266,16 +269,25 @@ export class ProgressService {
    *     medicion ni ninguna nota de salud. No hace falta codigo nuevo: lo
    *     impide `ConsentGate`, que exige un consentimiento VIGENTE en las tres
    *     rutas de escritura y esta fila acaba de dejar de serlo;
-   *  2. PROGRAMADO — lo ya recogido EN ESTE GIMNASIO se elimina, como muy
-   *     tarde en `RETENCION.saludMaximoDias` dias. Lo hace la purga diaria
-   *     (`app_purge_health_data`), no esta transaccion.
+   *  2. ENCOLADO EN EL ACTO — la supresion de lo ya recogido EN ESTE GIMNASIO
+   *     se encola DENTRO DE ESTA MISMA TRANSACCION, asi que se ejecuta en
+   *     segundos. El trabajo diario es la red de seguridad, no el camino
+   *     normal. SLA en base activa: `RETENCION.saludMaximoHoras` horas.
    *
-   * Por que no se borra aqui mismo, que seria una linea: retirar el
-   * consentimiento es un gesto de una persona en una pantalla, y borrar sus
-   * datos de salud dentro de esa misma peticion significa que un toque
-   * accidental es irreversible al instante. Con la purga diaria, quien se
-   * equivoca y vuelve a aceptar conserva su historial — y quien no, lo pierde
-   * igual dentro del plazo prometido.
+   * ┌──────────────────────────────────────────────────────────────────────────┐
+   * │ POR QUE SE ENCOLA EN VEZ DE BORRAR AQUI MISMO.                          │
+   * │                                                                          │
+   * │ No es por ganar tiempo: es atomicidad. El encolado va en la transaccion  │
+   * │ de la peticion (patron outbox, ver `JobsService`), asi que o se revoca y │
+   * │ se encola el borrado, o no pasa ninguna de las dos cosas. Borrar aqui    │
+   * │ dentro tambien seria atomico, pero dejaria la supresion de categoria     │
+   * │ especial colgando del tiempo de respuesta de una peticion HTTP: si       │
+   * │ tarda, el socio ve un error y no sabe si se retiro o no.                 │
+   * │                                                                          │
+   * │ Y hay UNA sola implementacion del borrado —`app_purge_health_data`—,     │
+   * │ con dos disparadores. Dos implementaciones del art. 17 divergen, y la    │
+   * │ que se olvide sera la que deje datos de salud sin borrar.                │
+   * └──────────────────────────────────────────────────────────────────────────┘
    */
   async revokeHealthConsent(gymId: string, memberId: string): Promise<HealthConsentStatus> {
     const tx = requireTransaction();
@@ -305,8 +317,14 @@ export class ProgressService {
        * reclamacion, lo que se puede ensenar es esta linea: cuando se retiro y
        * en cuanto tiempo se prometio borrar. Sin metricas ni notas dentro.
        */
-      metadata: { purpose: 'health_data', supresionEnDias: RETENCION.saludMaximoDias },
+      metadata: { purpose: 'health_data', supresionEnHoras: RETENCION.saludMaximoHoras },
     });
+
+    /*
+     * La supresion, encolada en ESTA transaccion. Si el commit falla, no queda
+     * ni la revocacion ni el trabajo; si sale, salen los dos.
+     */
+    await this.jobs.enqueue(MAINTENANCE_QUEUES.supresionDeSalud, { gymId, memberId });
 
     return this.healthConsentStatus(gymId, memberId);
   }

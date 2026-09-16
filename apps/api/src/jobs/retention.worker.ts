@@ -58,6 +58,27 @@ export class RetentionWorker implements OnModuleInit {
       // No estaba programada. Es el caso normal en una base nueva.
     }
 
+    /*
+     * La supresion de salud, que NO espera al reloj.
+     *
+     * La encola la retirada del consentimiento dentro de su propia
+     * transaccion, asi que este consumidor la ve en segundos. Llama a la MISMA
+     * funcion que la purga diaria: no hay dos implementaciones del borrado de
+     * datos de salud, hay dos disparadores de una.
+     */
+    await this.boss.work(MAINTENANCE_QUEUES.supresionDeSalud, async (trabajos) => {
+      const salud = await this.purgarDatosDeSalud();
+      const referencia = trabajos
+        .map((t) => (t.data as { gymId?: string })?.gymId)
+        .filter(Boolean)
+        .join(', ');
+      this.logger.log(
+        `Supresion de salud tras retirada${referencia ? ` (gimnasios ${referencia})` : ''}: ` +
+          `${salud.mediciones} mediciones, ${salud.constanciasMinimizadas} constancias minimizadas.`,
+      );
+      return salud;
+    });
+
     // Todos los dias a las 04:00. La cola la crea `pnpm db:migrate` con el rol
     // propietario, porque crearla implica DDL.
     await this.boss.schedule(MAINTENANCE_QUEUES.retentionDiaria, '0 4 * * *');
@@ -107,12 +128,13 @@ export class RetentionWorker implements OnModuleInit {
   }
 
   /**
-   * `auth_events`, doce meses.
+   * `auth_events`, NOVENTA DIAS.
    *
-   * Es la unica purga que hace la aplicacion por si misma, porque `auth_events`
-   * no tiene RLS —un intento de login fallido no tiene gimnasio todavia— y el
-   * rol de la aplicacion si puede borrar ahi. Las demas necesitan recorrer
-   * todos los gimnasios y van por funcion SECURITY DEFINER.
+   * Es la unica purga de finalidad PROPIA de RINDA —seguridad de las cuentas,
+   * no encargo de ningun gimnasio— y la unica que hace la aplicacion por si
+   * misma: `auth_events` no tiene RLS, porque un intento de login fallido no
+   * tiene gimnasio todavia, y el rol de la aplicacion si puede borrar ahi. Las
+   * demas recorren todos los gimnasios y van por funcion SECURITY DEFINER.
    */
   async purgar(): Promise<number> {
     const resultado = await withoutTenant(this.db, (tx) =>
@@ -120,7 +142,7 @@ export class RetentionWorker implements OnModuleInit {
         sql`DELETE FROM ${authEvents}
              WHERE ctid IN (
                SELECT ctid FROM ${authEvents}
-                WHERE created_at < now() - ${`${RETENCION.authEventsMeses} months`}::interval
+                WHERE created_at < now() - ${`${RETENCION.authEventsDias} days`}::interval
                 LIMIT ${LIMITE_POR_PASADA}
              )`,
       ),
@@ -199,9 +221,10 @@ export class RetentionWorker implements OnModuleInit {
   /**
    * Datos de salud de quien retiro el consentimiento.
    *
-   * La promesa publica es «como muy tarde en 30 dias». Esto corre a diario, asi
-   * que lo normal es menos de 24 horas: el margen existe para tolerar que la
-   * purga no corra algun dia, no para gastarlo.
+   * Lo llaman DOS disparadores: la cola `retention.salud`, que encola la propia
+   * retirada dentro de su transaccion —de ahi que lo normal sea segundos—, y el
+   * trabajo diario, que es la red de seguridad. La promesa publica es un SLA de
+   * 24 horas en base activa.
    */
   async purgarDatosDeSalud(): Promise<{
     mediciones: number;

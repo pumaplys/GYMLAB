@@ -601,7 +601,7 @@ REVOKE UPDATE, DELETE ON audit_log FROM gymlab_app;
 -- intenta. Con RLS, esos registros serian invisibles justo para el dueno que
 -- quiere comprobar si le estan atacando la cuenta.
 COMMENT ON TABLE auth_events IS
-  'Eventos de autenticacion. Global y sin RLS a proposito: un login fallido no tiene gimnasio asociado. Retencion 12 meses: politica de conservacion adoptada el 2026-09-16 (RGPD art. 5.1.e).';
+  'Eventos de autenticacion. Global y sin RLS a proposito: un login fallido no tiene gimnasio asociado. Retencion 90 dias (RGPD art. 5.1.e). Finalidad propia de RINDA: seguridad y prevencion de abuso.';
 
 
 -- -----------------------------------------------------------------------------
@@ -623,9 +623,22 @@ COMMENT ON TABLE users IS
 -- -----------------------------------------------------------------------------
 -- PURGAS DE RETENCION — lo que caduca solo
 -- -----------------------------------------------------------------------------
--- Politica de conservacion adoptada por el responsable el 2026-09-16. Cada
--- plazo esta ESCRITO DENTRO de su funcion, y eso no es comodidad: es lo que
--- impide que la aplicacion elija cuanto borrar.
+-- Politica de conservacion adoptada el 2026-09-16, corregida el 2026-09-17.
+-- Cada plazo esta ESCRITO DENTRO de su funcion, y eso no es comodidad: es lo
+-- que impide que la aplicacion elija cuanto borrar.
+--
+-- ┌──────────────────────────────────────────────────────────────────────────┐
+-- │ DOS CLASES DE PLAZO, Y NO SE MEZCLAN.                                   │
+-- │                                                                          │
+-- │ `auth_events` es finalidad PROPIA de RINDA —seguridad de las cuentas— y  │
+-- │ su plazo es decision suya: 90 dias.                                      │
+-- │                                                                          │
+-- │ Lo demas son datos tratados POR CUENTA DEL GIMNASIO, que es el           │
+-- │ responsable. Estos plazos son la CONFIGURACION ESTANDAR DEL SERVICIO que │
+-- │ el gimnasio acepta como INSTRUCCION DOCUMENTADA en el anexo del art. 28, │
+-- │ no una decision juridica unilateral de RINDA. Ver                        │
+-- │ `docs/legal/politica-conservacion.md` y `src/retencion.ts`.               │
+-- └──────────────────────────────────────────────────────────────────────────┘
 --
 -- ┌──────────────────────────────────────────────────────────────────────────┐
 -- │ POR QUE SON SECURITY DEFINER, Y POR QUE NO ACEPTAN UN PLAZO.            │
@@ -719,6 +732,11 @@ GRANT EXECUTE ON FUNCTION app_purge_invitations(int) TO gymlab_app;
 -- │  2. de la constancia que queda se quita la IP, que no hace falta para    │
 -- │     demostrar que alguien acepto y luego retiro;                          │
 -- │  3. pasados 3 anos, la constancia tambien se va.                          │
+-- │                                                                          │
+-- │ CUANDO CORRE: la retirada la ENCOLA en el acto, en la misma transaccion  │
+-- │ que revoca, asi que lo normal es que esto se ejecute en segundos. El     │
+-- │ disparo diario de las 04:00 es la RED DE SEGURIDAD — el SLA tecnico en   │
+-- │ base activa es de 24 horas, no de 30 dias.                               │
 -- │                                                                          │
 -- │ LO QUE NO HACE, Y ES LA MITAD DEL DISENO: no toca los datos de OTROS     │
 -- │ gimnasios. El consentimiento es por gimnasio —el socio consiente que su  │

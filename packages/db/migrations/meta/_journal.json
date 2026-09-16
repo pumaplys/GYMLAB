@@ -148,6 +148,13 @@
       "when": 1789568175605,
       "tag": "0020_consentimiento_de_lanzamiento",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1789574339215,
+      "tag": "0021_consentimiento_supresion_24h",
+      "breakpoints": true
     }
   ]
 }

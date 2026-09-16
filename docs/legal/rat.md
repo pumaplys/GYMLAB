@@ -1,6 +1,6 @@
 # Registro de actividades de tratamiento — RINDA
 
-**Adoptado por el responsable el 2026-09-16.** Art. 30 RGPD.
+**Adoptado el 2026-09-16, corregido el 2026-09-17.** Art. 30 RGPD.
 
 > **La identidad del responsable no está escrita en este documento.** Vive en la
 > configuración de release (`NEXT_PUBLIC_PRESTADOR_*`) y se publica en el
@@ -51,7 +51,7 @@ persona, no del gimnasio.
 | **Base jurídica** | **Interés legítimo** en proteger las cuentas de las personas usuarias y el servicio |
 | **Interesados** | Quien intenta entrar, tenga cuenta o no |
 | **Categorías** | Tipo de evento, correo intentado, **IP**, agente de usuario, marca de tiempo (`auth_events`); contadores de intentos (`auth_throttle`) |
-| **Conservación** | **12 meses**, purga automática diaria |
+| **Conservación** | **90 días**, purga automática diaria |
 | **Medidas** | Tabla global sin RLS a propósito —un login fallido aún no tiene gimnasio—; la IP se toma de la cabecera sólo si hay un proxy de confianza declarado |
 
 > **Ponderación del interés legítimo, en corto.** Sin registrar los intentos
@@ -107,7 +107,7 @@ del responsable:** cada gimnasio debe llevar el suyo.
 | E2 | Cuotas, planes y pagos | Concepto, importe, fecha, método (efectivo, transferencia, tarjeta). **Sin dato bancario alguno** | 6 años |
 | E3 | Control de acceso | Entradas con marca de tiempo y decisión; tokens QR de vida muy corta | 12 meses por defecto, configurable por el gimnasio |
 | E4 | Entrenamiento | Rutinas, ejercicios, asignaciones, entrenador asignado | Mientras exista la ficha |
-| E5 | **Progreso y datos de salud** | Peso, grasa corporal, perímetros, fecha y **notas del entrenador** | Hasta retirar el consentimiento; entonces **≤ 30 días** |
+| E5 | **Progreso y datos de salud** | Peso, grasa corporal, perímetros, fecha y **notas del entrenador** | Hasta retirar el consentimiento; entonces **≤ 24 horas** |
 | E6 | Consentimientos y documentos | Versión aceptada, fechas, IP, y el texto exacto aceptado | Constancia mínima, 3 años tras la retirada |
 | E7 | Invitaciones | Correo, rol, fechas | 12 meses desde que se resuelven |
 | E8 | Registro de actividad del personal | Acción, entidad, actor, fecha | 3 años |
@@ -116,6 +116,16 @@ del responsable:** cada gimnasio debe llevar el suyo.
 E5, donde el producto **impone** el consentimiento explícito del interesado
 (art. 9.2.a) y no admite ninguna otra base: sin consentimiento vigente no entra
 ni una medición, venga la llamada de donde venga.
+
+> **Los plazos de esta tabla NO son una decisión jurídica de RINDA.** Son la
+> **configuración estándar del servicio**, que el gimnasio acepta como
+> **instrucción documentada** al firmar el anexo del art. 28, y puede sustituir
+> por otra instrucción donde la arquitectura lo permita — E3 ya es literalmente
+> suya, en `gyms.access_events_retention_months`. Ver
+> [política de conservación](politica-conservacion.md) §0.
+>
+> **E8 tiene dos caras**: sirve a la seguridad del propio servicio y a la vez
+> registra actividad del personal del gimnasio. No se rediseña ahora; se dice.
 
 ### Frontera entre las dos partes: las invitaciones
 
