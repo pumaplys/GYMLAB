@@ -11,19 +11,17 @@
  * └──────────────────────────────────────────────────────────────────────────┘
  *
  * ┌──────────────────────────────────────────────────────────────────────────┐
- * │ BLOQUEO OPERATIVO DE CORREO: NO ESTÁ CONFIRMADO QUE ESTOS BUZONES       │
- * │ EXISTAN.                                                                 │
+ * │ LOS DOS BUZONES YA EXISTEN: creados y comprobados el 2026-09-16.        │
  * │                                                                          │
- * │ Medido: `gymlabfit.tech` SÍ tiene registros MX —`mx1.hostinger.com` y    │
- * │ `mx2.hostinger.com`—, así que el dominio puede recibir correo. Pero que  │
- * │ estas dos direcciones concretas estén creadas en el panel de Hostinger   │
- * │ no se puede comprobar desde aquí, y sondear el servidor de correo para   │
- * │ averiguarlo no es algo que se deba hacer.                                │
+ * │ Eso levanta el bloqueo operativo que tenía este fichero. Conviene saber  │
+ * │ quién afirma cada mitad: `gymlabfit.tech` tiene registros MX             │
+ * │ —`mx1.hostinger.com` y `mx2.hostinger.com`—, y eso SÍ está medido desde  │
+ * │ aquí; que cada buzón entregue lo confirmó quien los creó, porque         │
+ * │ comprobarlo desde el repositorio exigiría enviar correo real.            │
  * │                                                                          │
- * │ Hasta que alguien confirme que existen y que alguien las lee, NO se      │
- * │ puede afirmar que funcionan: una dirección publicada que nadie atiende   │
- * │ es peor que no publicar ninguna, porque quien escriba se quedará         │
- * │ esperando.                                                               │
+ * │ Si alguna de las dos deja de atenderse, quítala de aquí antes que de     │
+ * │ ningún otro sitio: una dirección publicada que nadie lee es peor que no  │
+ * │ publicar ninguna, porque quien escriba se quedará esperando.             │
  * └──────────────────────────────────────────────────────────────────────────┘
  */
 export const CORREO_DE_PRIVACIDAD = 'privacidad@gymlabfit.tech';

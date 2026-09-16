@@ -226,9 +226,16 @@ export function ProgresoDelSocio({ memberId, nombre }: { memberId: string; nombr
             error={errores.fecha}
           />
 
+          {/*
+           * La ayuda no es un consejo de estilo: lo que se escriba aqui queda
+           * amparado por el consentimiento de datos de salud y se elimina con
+           * las mediciones cuando el socio lo retira. Pedirlo en el momento de
+           * teclear es lo unico que de verdad reduce lo que se recoge.
+           */}
           <Campo
             etiqueta="Notas"
             opcional
+            ayuda="Anota solo lo necesario para el seguimiento del entrenamiento; no incluyas informacion sensible que no haga falta."
             valor={borrador.notas}
             alCambiar={(v) => setBorrador((actual) => ({ ...actual, notas: v }))}
             error={errores.notas}

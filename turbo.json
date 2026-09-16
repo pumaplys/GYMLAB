@@ -11,7 +11,20 @@
       // incrusta en el paquete al construirlo. Por eso su valor por defecto es
       // la ruta relativa `/v1` â€” el mismo origen, que es el requisito de
       // despliegueâ€” y no un dominio que habria que acertar en cada entorno.
-      "env": ["NEXT_PUBLIC_API_URL"]
+      //
+      // Las tres de `NEXT_PUBLIC_PRESTADOR_*` son la identidad legal de quien
+      // presta el servicio. NO estan en el codigo a proposito: el aviso legal y
+      // la politica de privacidad las leen de aqui, asi que el nombre, el
+      // domicilio y el identificador fiscal nunca entran en el repositorio.
+      // Como el panel se exporta estatico, se incrustan AL CONSTRUIR: cambiar
+      // quien responde ante una autoridad exige volver a construir, que es la
+      // ceremonia que merece.
+      "env": [
+        "NEXT_PUBLIC_API_URL",
+        "NEXT_PUBLIC_PRESTADOR_NOMBRE",
+        "NEXT_PUBLIC_PRESTADOR_DOMICILIO",
+        "NEXT_PUBLIC_PRESTADOR_NIF"
+      ]
     },
     "dev": {
       "dependsOn": ["^build"],

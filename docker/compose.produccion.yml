@@ -20,6 +20,13 @@ services:
     build:
       context: ..
       dockerfile: Dockerfile
+      # La identidad legal del prestador, que se incrusta al construir el panel.
+      # Vive en el `.env` del despliegue, NO en el repositorio. Si falta, las
+      # paginas legales dicen que falta en vez de inventarla.
+      args:
+        NEXT_PUBLIC_PRESTADOR_NOMBRE: ${NEXT_PUBLIC_PRESTADOR_NOMBRE:-}
+        NEXT_PUBLIC_PRESTADOR_DOMICILIO: ${NEXT_PUBLIC_PRESTADOR_DOMICILIO:-}
+        NEXT_PUBLIC_PRESTADOR_NIF: ${NEXT_PUBLIC_PRESTADOR_NIF:-}
     image: gymlab:latest
     restart: unless-stopped
     depends_on:
