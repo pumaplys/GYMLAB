@@ -12,16 +12,18 @@ export const metadata: Metadata = {
  * La página de soporte, que las dos tiendas piden como URL pública.
  *
  * ┌──────────────────────────────────────────────────────────────────────────┐
- * │ NO LLEVA NINGUNA DIRECCIÓN DE CONTACTO, Y ESO ES DELIBERADO.            │
+ * │ EL BUZÓN QUE APARECE AQUÍ EXISTE DE VERDAD (creado el 2026-09-16).      │
  * │                                                                          │
- * │ Inventar un `soporte@…` que nadie lee sería peor que no ponerlo: quien   │
- * │ escribiera se quedaría esperando. El buzón real es una decisión que no   │
- * │ puede tomar quien escribe el código — está anotada en el pack de         │
- * │ revisión legal junto a los demás huecos.                                 │
+ * │ Durante un tiempo esta página no llevó ninguna dirección a propósito:    │
+ * │ publicar un `soporte@…` que nadie lee es peor que no ponerlo, porque     │
+ * │ quien escriba se queda esperando. Ahora está creado y atendido, y por    │
+ * │ eso se muestra. Sale de `lib/contacto.ts`, que es el único sitio donde   │
+ * │ se escribe.                                                              │
  * │                                                                          │
- * │ Mientras tanto la página sí resuelve lo que puede resolver sola: a quién │
+ * │ La página sigue resolviendo antes lo que puede resolver sola: a quién    │
  * │ preguntar cuando el problema es del gimnasio, y los dos caminos que no   │
- * │ necesitan a nadie —recuperar la contraseña y eliminar la cuenta.         │
+ * │ necesitan a nadie —recuperar la contraseña y eliminar la cuenta—. El     │
+ * │ correo es el último recurso, no el primero.                              │
  * └──────────────────────────────────────────────────────────────────────────┘
  *
  * Reutiliza los estilos de la política de privacidad: son la misma clase de
@@ -31,11 +33,6 @@ export const metadata: Metadata = {
 export default function SoportePage() {
   return (
     <main className={estilos.pagina}>
-      <p className={estilos.borrador} role="status">
-        <strong>Borrador.</strong> El buzón ya está decidido, pero este texto sigue pendiente de
-        revisión junto con la política de privacidad.
-      </p>
-
       <h1 className={estilos.titulo}>Soporte</h1>
 
       <section className={estilos.seccion}>
@@ -65,7 +62,8 @@ export default function SoportePage() {
           </li>
           <li>
             <strong>Quieres saber qué datos se tratan:</strong> está en la{' '}
-            <Link href="/privacidad">política de privacidad</Link>.
+            <Link href="/privacidad">política de privacidad</Link>. Quién presta el servicio, en el{' '}
+            <Link href="/aviso-legal">aviso legal</Link>.
           </li>
         </ul>
       </section>

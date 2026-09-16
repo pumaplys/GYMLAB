@@ -20,6 +20,7 @@ import {
   EMAIL_QUEUES,
   eq,
   invitations,
+  RETENCION,
   sql,
   users,
   withTenant,
@@ -1019,14 +1020,31 @@ describe('registro de auditoria', () => {
 });
 
 describe('retencion de datos (RGPD art. 5.1.e)', () => {
-  it('la purga borra los eventos de mas de 90 dias y respeta los recientes', async () => {
+  /*
+   * ┌──────────────────────────────────────────────────────────────────────┐
+   * │ EL PLAZO CAMBIO EL 2026-09-16: DE 90 DIAS A DOCE MESES.              │
+   * │                                                                      │
+   * │ Es la politica de conservacion adoptada por el responsable, y va en   │
+   * │ la direccion incomoda: ALARGA lo que se conserva. La justificacion    │
+   * │ esta en `RETENCION.authEventsMeses` — poder investigar un patron de   │
+   * │ ataque que se extienda en el tiempo.                                  │
+   * │                                                                      │
+   * │ El test no fija el numero: lo lee de ahi. Asi no puede quedarse       │
+   * │ describiendo un plazo que ya no se aplica, que es exactamente lo que  │
+   * │ le paso a la version anterior de estas lineas.                        │
+   * └──────────────────────────────────────────────────────────────────────┘
+   */
+  it(`la purga borra los eventos de mas de ${RETENCION.authEventsMeses} meses y respeta los recientes`, async () => {
     const viejo = randomUUID();
     const reciente = randomUUID();
+    const plazo = `${RETENCION.authEventsMeses} months`;
 
     await owner.execute(
       sql`INSERT INTO auth_events (id, email_attempted, event_type, created_at) VALUES
-          (${viejo}::uuid,    ${email('purga-vieja')},    'login_failure', now() - interval '91 days'),
-          (${reciente}::uuid, ${email('purga-reciente')}, 'login_failure', now() - interval '89 days')`,
+          (${viejo}::uuid,    ${email('purga-vieja')},    'login_failure',
+           now() - ${plazo}::interval - interval '2 days'),
+          (${reciente}::uuid, ${email('purga-reciente')}, 'login_failure',
+           now() - ${plazo}::interval + interval '2 days')`,
     );
 
     const borrados = await app.get(RetentionWorker).purgar();
@@ -1035,7 +1053,7 @@ describe('retencion de datos (RGPD art. 5.1.e)', () => {
     const quedan = await owner.execute<{ id: string }>(
       sql`SELECT id FROM auth_events WHERE id IN (${viejo}::uuid, ${reciente}::uuid)`,
     );
-    // El de 89 dias sobrevive; el de 91 no.
+    // El de dentro del plazo sobrevive; el de fuera, no.
     expect(quedan.rows).toHaveLength(1);
     expect(quedan.rows[0]!.id).toBe(reciente);
 

@@ -601,7 +601,7 @@ REVOKE UPDATE, DELETE ON audit_log FROM gymlab_app;
 -- intenta. Con RLS, esos registros serian invisibles justo para el dueno que
 -- quiere comprobar si le estan atacando la cuenta.
 COMMENT ON TABLE auth_events IS
-  'Eventos de autenticacion. Global y sin RLS a proposito: un login fallido no tiene gimnasio asociado. Retencion 90 dias (RGPD art. 5.1.e).';
+  'Eventos de autenticacion. Global y sin RLS a proposito: un login fallido no tiene gimnasio asociado. Retencion 12 meses: politica de conservacion adoptada el 2026-09-16 (RGPD art. 5.1.e).';
 
 
 -- -----------------------------------------------------------------------------
@@ -618,3 +618,173 @@ COMMENT ON TABLE auth_events IS
 -- ano no piense que es un olvido.
 COMMENT ON TABLE users IS
   'Identidad global. Sin RLS de tenant a proposito: el login precede al contexto de gimnasio. Solo credenciales e identificacion, nunca datos de negocio ni de salud.';
+
+
+-- -----------------------------------------------------------------------------
+-- PURGAS DE RETENCION — lo que caduca solo
+-- -----------------------------------------------------------------------------
+-- Politica de conservacion adoptada por el responsable el 2026-09-16. Cada
+-- plazo esta ESCRITO DENTRO de su funcion, y eso no es comodidad: es lo que
+-- impide que la aplicacion elija cuanto borrar.
+--
+-- ┌──────────────────────────────────────────────────────────────────────────┐
+-- │ POR QUE SON SECURITY DEFINER, Y POR QUE NO ACEPTAN UN PLAZO.            │
+-- │                                                                          │
+-- │ Una purga recorre TODOS los gimnasios, y el rol de la aplicacion no      │
+-- │ puede: la politica de cada tabla solo le deja ver el gimnasio activo, y  │
+-- │ un trabajo de fondo no tiene ninguno. Ademas `audit_log` le tiene        │
+-- │ RETIRADO el DELETE a proposito — es append-only.                         │
+-- │                                                                          │
+-- │ La salida comoda era darle al worker el rol propietario. Se descarta por │
+-- │ lo mismo de siempre: meteria en el proceso que atiende peticiones una    │
+-- │ conexion capaz de borrar cualquier cosa.                                 │
+-- │                                                                          │
+-- │ Y el PLAZO no es parametro. Si lo fuera, la aplicacion podria pedir      │
+-- │ «borra el registro de auditoria de mas de un segundo» y el caracter      │
+-- │ append-only seria decorativo. Lo unico que se parametriza es el LIMITE   │
+-- │ de filas por pasada, que solo puede hacer el trabajo MAS pequeno.        │
+-- └──────────────────────────────────────────────────────────────────────────┘
+
+
+-- audit_log — 3 anos.
+--
+-- Es el registro de quien hizo que sobre la ficha de cada socio. Se conserva
+-- para poder demostrar el propio cumplimiento; pasados tres anos deja de
+-- servir a eso y solo queda el dato personal.
+CREATE OR REPLACE FUNCTION app_purge_audit_log(p_limite int DEFAULT 50000)
+  RETURNS bigint
+  LANGUAGE plpgsql
+  SECURITY DEFINER
+  SET search_path = public
+  AS $$
+  DECLARE
+    n bigint;
+  BEGIN
+    DELETE FROM audit_log
+     WHERE ctid IN (
+       SELECT ctid FROM audit_log
+        WHERE created_at < now() - INTERVAL '3 years'
+        LIMIT p_limite
+     );
+    GET DIAGNOSTICS n = ROW_COUNT;
+    RETURN n;
+  END;
+  $$;
+
+REVOKE EXECUTE ON FUNCTION app_purge_audit_log(int) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION app_purge_audit_log(int) TO gymlab_app;
+
+
+-- invitations — 12 meses desde que dejaron de estar vivas.
+--
+-- Una invitacion guarda un CORREO de alguien que puede no haber llegado nunca
+-- a ser socio, y ese correo no tiene clave ajena a ninguna persona: no lo
+-- alcanza ningun borrado en cascada. Si no caduca aqui, no caduca.
+--
+-- Solo las RESUELTAS: aceptada, revocada o pasada de fecha. Una pendiente
+-- sigue siendo util aunque lleve meses esperando.
+CREATE OR REPLACE FUNCTION app_purge_invitations(p_limite int DEFAULT 50000)
+  RETURNS bigint
+  LANGUAGE plpgsql
+  SECURITY DEFINER
+  SET search_path = public
+  AS $$
+  DECLARE
+    n bigint;
+  BEGIN
+    DELETE FROM invitations
+     WHERE ctid IN (
+       SELECT ctid FROM invitations
+        WHERE COALESCE(accepted_at, revoked_at, expires_at) < now() - INTERVAL '12 months'
+        LIMIT p_limite
+     );
+    GET DIAGNOSTICS n = ROW_COUNT;
+    RETURN n;
+  END;
+  $$;
+
+REVOKE EXECUTE ON FUNCTION app_purge_invitations(int) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION app_purge_invitations(int) TO gymlab_app;
+
+
+-- Datos de salud tras retirar el consentimiento.
+--
+-- ┌──────────────────────────────────────────────────────────────────────────┐
+-- │ ES LA PURGA QUE MAS CUIDADO PIDE: BORRA CATEGORIA ESPECIAL (art. 9).     │
+-- │                                                                          │
+-- │ Tres pasos, y el orden importa:                                          │
+-- │                                                                          │
+-- │  1. se borran las mediciones —CON sus notas, que van en la misma fila—   │
+-- │     de quien retiro el consentimiento EN ESE GIMNASIO;                    │
+-- │  2. de la constancia que queda se quita la IP, que no hace falta para    │
+-- │     demostrar que alguien acepto y luego retiro;                          │
+-- │  3. pasados 3 anos, la constancia tambien se va.                          │
+-- │                                                                          │
+-- │ LO QUE NO HACE, Y ES LA MITAD DEL DISENO: no toca los datos de OTROS     │
+-- │ gimnasios. El consentimiento es por gimnasio —el socio consiente que su  │
+-- │ gimnasio trate su salud, no que lo haga RINDA— asi que retirarlo en uno  │
+-- │ no dice nada del otro. La condicion va siempre por (gym_id, member_id).  │
+-- │                                                                          │
+-- │ Y NO BORRA si hay un consentimiento vigente: quien retira y vuelve a     │
+-- │ aceptar antes de que corra la purga conserva su historial. Es la         │
+-- │ diferencia entre una purga y un accidente.                               │
+-- └──────────────────────────────────────────────────────────────────────────┘
+CREATE OR REPLACE FUNCTION app_purge_health_data(p_limite int DEFAULT 50000)
+  RETURNS TABLE (mediciones bigint, constancias_minimizadas bigint, constancias_borradas bigint)
+  LANGUAGE plpgsql
+  SECURITY DEFINER
+  SET search_path = public
+  AS $$
+  DECLARE
+    n_med bigint;
+    n_min bigint;
+    n_bor bigint;
+  BEGIN
+    -- 1. Las mediciones y sus notas.
+    DELETE FROM body_metrics bm
+     WHERE bm.ctid IN (
+       SELECT b.ctid
+         FROM body_metrics b
+        WHERE EXISTS (
+                SELECT 1 FROM consents c
+                 WHERE c.gym_id = b.gym_id
+                   AND c.member_id = b.member_id
+                   AND c.purpose = 'health_data'
+                   AND c.revoked_at IS NOT NULL
+              )
+          AND NOT EXISTS (
+                SELECT 1 FROM consents c
+                 WHERE c.gym_id = b.gym_id
+                   AND c.member_id = b.member_id
+                   AND c.purpose = 'health_data'
+                   AND c.revoked_at IS NULL
+              )
+        LIMIT p_limite
+     );
+    GET DIAGNOSTICS n_med = ROW_COUNT;
+
+    -- 2. La constancia se queda con lo minimo: version y fechas.
+    UPDATE consents
+       SET ip_address = NULL
+     WHERE purpose = 'health_data'
+       AND revoked_at IS NOT NULL
+       AND ip_address IS NOT NULL;
+    GET DIAGNOSTICS n_min = ROW_COUNT;
+
+    -- 3. Y pasados 3 anos, ni eso.
+    DELETE FROM consents
+     WHERE ctid IN (
+       SELECT ctid FROM consents
+        WHERE purpose = 'health_data'
+          AND revoked_at IS NOT NULL
+          AND revoked_at < now() - INTERVAL '3 years'
+        LIMIT p_limite
+     );
+    GET DIAGNOSTICS n_bor = ROW_COUNT;
+
+    RETURN QUERY SELECT n_med, n_min, n_bor;
+  END;
+  $$;
+
+REVOKE EXECUTE ON FUNCTION app_purge_health_data(int) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION app_purge_health_data(int) TO gymlab_app;

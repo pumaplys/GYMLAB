@@ -7,6 +7,7 @@ import {
   desc,
   eq,
   isNull,
+  RETENCION,
   type BodyMetric as BodyMetricRow,
 } from '@gymlab/db';
 import type {
@@ -259,9 +260,22 @@ export class ProgressService {
   /**
    * Revoca el consentimiento.
    *
-   * Es un derecho, no una casilla. A partir de aqui no se puede registrar nada
-   * mas, pero lo ya recogido sigue consultable para poder atender una peticion de
-   * acceso o de borrado.
+   * Es un derecho, no una casilla, y tiene DOS efectos:
+   *
+   *  1. INMEDIATO — a partir de aqui no se registra ni se modifica ninguna
+   *     medicion ni ninguna nota de salud. No hace falta codigo nuevo: lo
+   *     impide `ConsentGate`, que exige un consentimiento VIGENTE en las tres
+   *     rutas de escritura y esta fila acaba de dejar de serlo;
+   *  2. PROGRAMADO — lo ya recogido EN ESTE GIMNASIO se elimina, como muy
+   *     tarde en `RETENCION.saludMaximoDias` dias. Lo hace la purga diaria
+   *     (`app_purge_health_data`), no esta transaccion.
+   *
+   * Por que no se borra aqui mismo, que seria una linea: retirar el
+   * consentimiento es un gesto de una persona en una pantalla, y borrar sus
+   * datos de salud dentro de esa misma peticion significa que un toque
+   * accidental es irreversible al instante. Con la purga diaria, quien se
+   * equivoca y vuelve a aceptar conserva su historial — y quien no, lo pierde
+   * igual dentro del plazo prometido.
    */
   async revokeHealthConsent(gymId: string, memberId: string): Promise<HealthConsentStatus> {
     const tx = requireTransaction();
@@ -286,7 +300,12 @@ export class ProgressService {
       action: 'consent.revoked',
       entityType: 'member',
       entityId: memberId,
-      metadata: { purpose: 'health_data' },
+      /*
+       * El plazo queda EN EL REGISTRO, no solo en la politica. Ante una
+       * reclamacion, lo que se puede ensenar es esta linea: cuando se retiro y
+       * en cuanto tiempo se prometio borrar. Sin metricas ni notas dentro.
+       */
+      metadata: { purpose: 'health_data', supresionEnDias: RETENCION.saludMaximoDias },
     });
 
     return this.healthConsentStatus(gymId, memberId);

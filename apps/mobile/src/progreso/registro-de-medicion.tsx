@@ -181,9 +181,15 @@ export function RegistroDeMedicion({
         deshabilitado={guardando}
       />
 
+      {/*
+       * La ayuda no es un consejo de estilo: lo que se escriba aqui queda
+       * amparado por el consentimiento de datos de salud y se elimina con las
+       * mediciones cuando el socio lo retira. Pedirlo en el momento de teclear
+       * es lo unico que de verdad reduce lo que se recoge.
+       */}
       <Campo
         etiqueta="Notas"
-        ayuda="Opcional."
+        ayuda="Opcional. Anota solo lo necesario para el seguimiento del entrenamiento; no incluyas informacion sensible que no haga falta."
         valor={borrador.notas}
         alCambiar={(valor) => setBorrador((actual) => ({ ...actual, notas: valor }))}
         error={errores.notas}

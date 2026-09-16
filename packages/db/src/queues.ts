@@ -29,11 +29,28 @@ export type EmailQueue = (typeof EMAIL_QUEUES)[keyof typeof EMAIL_QUEUES];
 /**
  * Colas de mantenimiento.
  *
- * `retention.auth-events` purga los eventos de autenticacion pasados 90 dias.
- * No es limpieza opcional: `auth_events` guarda IP y user-agent, y el RGPD
- * exige limitar el plazo de conservacion (art. 5.1.e).
+ * `retention.diaria` aplica la POLITICA DE CONSERVACION entera: eventos de
+ * autenticacion, accesos, registro de auditoria, invitaciones resueltas y los
+ * datos de salud de quien retiro su consentimiento. No es limpieza opcional —
+ * conservar sin plazo es incumplir el art. 5.1.e.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ SUSTITUYE A `retention.auth-events`, QUE SE QUEDA DECLARADA APOSTA.      │
+ * │                                                                          │
+ * │ Aquella cola ya hacia mas de lo que su nombre decia —purgaba tambien los │
+ * │ accesos— y al anadirle auditoria, invitaciones y salud el nombre pasaba  │
+ * │ de impreciso a enganoso. Un nombre que miente sobre lo que borra es      │
+ * │ justo el que nadie revisa.                                               │
+ * │                                                                          │
+ * │ Se mantiene en la lista porque la fila existe en las bases ya            │
+ * │ desplegadas y `createQueue` no la borra. El worker la DESPROGRAMA al     │
+ * │ arrancar: si no, quedarian dos disparos diarios haciendo el mismo        │
+ * │ trabajo.                                                                 │
+ * └──────────────────────────────────────────────────────────────────────────┘
  */
 export const MAINTENANCE_QUEUES = {
+  retentionDiaria: 'retention.diaria',
+  /** @deprecated Sustituida por `retentionDiaria`. Solo para poder desprogramarla. */
   retentionAuthEvents: 'retention.auth-events',
 } as const;
 
@@ -114,6 +131,13 @@ export const POLITICAS: Readonly<Record<string, PoliticaDeCola>> = {
   },
   // Purga diaria. Si un dia no corre, la del dia siguiente cubre lo mismo:
   // acumular ejecuciones pendientes no aporta nada.
+  [MAINTENANCE_QUEUES.retentionDiaria]: {
+    retryLimit: 2,
+    retryDelay: 300,
+    retryBackoff: true,
+    expireInSeconds: 10 * 60,
+    retentionSeconds: 20 * 60 * 60,
+  },
   [MAINTENANCE_QUEUES.retentionAuthEvents]: {
     retryLimit: 2,
     retryDelay: 300,

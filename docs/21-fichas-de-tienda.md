@@ -5,8 +5,10 @@
 Textos, assets y respuestas a los cuestionarios, **derivados del producto
 auditado**. Nada de esto está publicado ni enviado a revisión.
 
-Lo que sí necesita decisión jurídica vive en
-[`19-legal-review-pack.md`](19-legal-review-pack.md) y **no se rellena aquí**.
+Los documentos legales adoptados viven en [`legal/`](legal/); el rastro de qué
+estaba abierto y quién lo cerró, en
+[`19-legal-review-pack.md`](19-legal-review-pack.md). **Aquí no se rellena
+ningún dato jurídico.**
 
 ## Decisiones de producto ya tomadas
 
@@ -27,10 +29,10 @@ Lo que sí necesita decisión jurídica vive en
 > tratamiento jurídico de esa limitación queda dentro de lo pendiente de
 > revisión legal.
 
-> **Bloqueo operativo de correo.** `gymlabfit.tech` tiene registros MX
-> (`mx1`/`mx2.hostinger.com`), así que el dominio recibe correo. **Que esos dos
-> buzones concretos existan no está confirmado** — se crea y se comprueba en el
-> panel de Hostinger. Hasta entonces no se puede afirmar que funcionen.
+> **Bloqueo operativo de correo: LEVANTADO (2026-09-16).** Los dos buzones
+> están creados y comprobados. Desde el repositorio sólo se mide una parte —que
+> `gymlabfit.tech` tiene registros MX (`mx1`/`mx2.hostinger.com`)—; que cada
+> buzón entregue lo confirma quien los creó.
 
 ---
 
@@ -44,7 +46,7 @@ Lo que sí necesita decisión jurídica vive en
 | **Palabras clave** (100) | `gimnasio,socio,carne,acceso,entrenador,rutina,cuota,progreso,recepcion,fitness` |
 | **URL de privacidad** | `https://gymlabfit.tech/privacidad` |
 | **URL de soporte** | `https://gymlabfit.tech/soporte` |
-| **Copyright** | pendiente — depende de la razón social (A1) |
+| **Copyright** | `2026` + el nombre del prestador, que vive en `NEXT_PUBLIC_PRESTADOR_NOMBRE` y **no en el repositorio**. Se escribe a mano en la consola: Apple pide el titular de los derechos, y el responsable inicial es persona física |
 | **Clasificación por edad** | 18+ |
 | **Export compliance** | ya resuelto en el binario: `ITSAppUsesNonExemptEncryption=false` |
 
@@ -84,10 +86,10 @@ El escáner de la puerta (permiso de cámara) sólo lee un código QR y muestra 
 la persona puede pasar. No se guarda ninguna imagen. Para probarlo hacen falta
 dos dispositivos, o abrir el carné en uno y escanearlo desde otro.
 
-La sección "Progreso" pide un permiso explícito de datos de salud. En esta
-versión el documento de consentimiento todavía no está publicado, así que la
-pantalla explica que falta y no permite registrar mediciones. Es el
-comportamiento correcto y deliberado.
+La sección "Progreso" pide un permiso explícito de datos de salud, separado de
+todo lo demás. Sin aceptarlo no se registra ninguna medición. Puede retirarse
+en cualquier momento desde la misma pantalla; al retirarlo, las mediciones se
+eliminan.
 
 Eliminar la cuenta: Perfil (o Panel) → "Eliminar mi cuenta". Pide escribir
 ELIMINAR y la contraseña actual. También está disponible sin la app en
@@ -230,9 +232,11 @@ enseñar. Las notas de revisión lo explican.
 
 ## 5. Lo que bloquea la publicación, y sólo eso
 
-1. **Datos jurídicos de la sociedad** — razón social, NIF, domicilio (A1).
-2. **Revisión legal** de la política de privacidad y del consentimiento de
-   salud, y los plazos de conservación.
+1. **Revisión legal** de la política de privacidad y del consentimiento de
+   salud, los plazos de conservación, y el papel jurídico y la base de cada
+   finalidad (A1–A6, B1–B5 del pack).
+2. **Estatus fiscal y mercantil** del responsable, y el identificador fiscal
+   cuando corresponda. Nombre y domicilio **ya están** (2026-09-16).
 3. **Consolas** de Apple y Google, y el envío.
 
 Todo lo demás de esta ficha está preparado.

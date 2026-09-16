@@ -32,7 +32,51 @@
 .titulo {
   color: var(--texto);
   font-size: var(--t-xl);
+  margin: 0 0 var(--e2);
+}
+
+.fecha {
   margin: 0 0 var(--e6);
+  font-size: var(--t-sm);
+}
+
+/*
+ * La tabla de tratamientos, que es lo unico ancho de la pagina.
+ *
+ * Envuelta en su propio desplazamiento horizontal: el cuerpo del texto NUNCA
+ * debe desplazarse de lado, y en un movil cuatro columnas no caben de ninguna
+ * manera razonable. Antes que partirla en cuatro listas —que se leen peor y se
+ * desincronizan al editarlas— se deja deslizar solo a ella.
+ */
+.tabla {
+  display: block;
+  overflow-x: auto;
+  max-width: 100%;
+  border-collapse: collapse;
+  font-size: var(--t-sm);
+  margin: 0 0 var(--e3);
+}
+
+.tabla th,
+.tabla td {
+  border: 1px solid var(--borde);
+  padding: var(--e2) var(--e3);
+  text-align: left;
+  vertical-align: top;
+  min-width: 8rem;
+}
+
+.tabla th {
+  color: var(--texto);
+  font-weight: 600;
+}
+
+.tabla strong {
+  color: var(--texto);
+}
+
+.nota {
+  font-size: var(--t-sm);
 }
 
 .seccion {
@@ -55,6 +99,19 @@
   display: flex;
   flex-direction: column;
   gap: var(--e3);
+}
+
+/*
+ * El domicilio del responsable, en `<address>` y en sus propias lineas.
+ *
+ * Es una direccion postal, no una frase: se lee como se escribe en un sobre.
+ * El navegador pone `<address>` en cursiva por defecto, y una direccion legal
+ * en cursiva parece una nota al margen en vez del dato que es.
+ */
+.domicilio {
+  font-style: normal;
+  color: var(--texto);
+  margin: 0 0 var(--e3);
 }
 
 .seccion strong {

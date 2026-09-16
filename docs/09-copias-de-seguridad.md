@@ -203,9 +203,28 @@ legibilidad no lo es.
 
 ### Retención de estos prefijos
 
-`predeploy/` y `postdeploy/` **no tienen regla de ciclo de vida todavía**. Es
-deliberado: se decidirá aparte. Mientras tanto se acumulan, y son pocos —uno por
-despliegue— pero conviene no olvidarlo.
+**Resuelto el 2026-09-16: 30 días de vida + 1 hasta borrar.** Hasta esa fecha no
+tenían ninguna regla y se acumulaban para siempre — 20 volcados completos de
+agosto de 2026, que es conservación indefinida de datos personales aunque el
+fichero pese 28 KB.
+
+Las cuatro reglas del bucket `gymlab-copias`, que se fijan **juntas** porque
+`b2 bucket update` sustituye el conjunto entero:
+
+| Prefijo | Ocultar | Borrar | Vida máxima |
+| --- | --- | --- | --- |
+| `diario/` | 8 días | +1 | 9 días |
+| `semanal/` | 29 días | +1 | 30 días |
+| `predeploy/` | 30 días | +1 | **31 días** |
+| `postdeploy/` | 30 días | +1 | **31 días** |
+
+De ese máximo de 31 días sale el techo que la política de privacidad y el
+consentimiento de salud prometen públicamente: lo eliminado puede sobrevivir
+dentro de una copia hasta que ésa caduca. Ver
+[`docs/legal/politica-conservacion.md`](legal/politica-conservacion.md).
+
+> **Si alguna vez hay que volver a tocarlas, repítelas las cuatro.** Omitir una
+> no la deja como estaba: la borra.
 
 ## 4. Las credenciales, fuera del repositorio
 

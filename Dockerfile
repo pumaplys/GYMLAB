@@ -34,6 +34,27 @@ COPY . .
 # vacia significa "llama a /v1 en tu propio origen", que es justo lo que hace
 # esta imagen. Fijar aqui un dominio ataria la imagen a un despliegue concreto.
 ENV NEXT_PUBLIC_API_URL=""
+
+# ┌──────────────────────────────────────────────────────────────────────────┐
+# │ LA IDENTIDAD LEGAL DEL PRESTADOR ENTRA COMO ARGUMENTO DE CONSTRUCCION.   │
+# │                                                                          │
+# │ No esta en el codigo y no puede estarlo: son datos personales de quien    │
+# │ presta el servicio, y el historial de git es para siempre. Entran aqui,   │
+# │ al construir, y quedan incrustados en la exportacion estatica — que es    │
+# │ justo la ceremonia que merece cambiar quien responde ante una autoridad.  │
+# │                                                                          │
+# │ VACIOS POR DEFECTO, a proposito: una imagen construida sin ellos sirve    │
+# │ perfectamente para desarrollo y sus paginas legales DICEN que falta la    │
+# │ identidad, en vez de inventar una. El gate `listo-para-tiendas` es quien  │
+# │ impide presentarse a una tienda asi.                                      │
+# └──────────────────────────────────────────────────────────────────────────┘
+ARG NEXT_PUBLIC_PRESTADOR_NOMBRE=""
+ARG NEXT_PUBLIC_PRESTADOR_DOMICILIO=""
+ARG NEXT_PUBLIC_PRESTADOR_NIF=""
+ENV NEXT_PUBLIC_PRESTADOR_NOMBRE=$NEXT_PUBLIC_PRESTADOR_NOMBRE
+ENV NEXT_PUBLIC_PRESTADOR_DOMICILIO=$NEXT_PUBLIC_PRESTADOR_DOMICILIO
+ENV NEXT_PUBLIC_PRESTADOR_NIF=$NEXT_PUBLIC_PRESTADOR_NIF
+
 RUN pnpm turbo run build
 
 # --- 2b. Dependencias de produccion ------------------------------------------

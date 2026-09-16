@@ -1,6 +1,59 @@
+import { existsSync, readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+/**
+ * Las variables del `.env` DE LA RAIZ del monorepo.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ NEXT SOLO MIRA `apps/web/.env*`, Y AQUI EL `.env` VIVE EN LA RAIZ.       │
+ * │                                                                          │
+ * │ La API ya lo resuelve con dotenv por el mismo motivo. Sin esto, la       │
+ * │ identidad del prestador estaba puesta en el `.env` y el panel seguia     │
+ * │ pintando «Sin configurar»: el gate decia que si y la pagina decia que    │
+ * │ no. Dos fuentes que se contradicen son peor que una sola incompleta.     │
+ * │                                                                          │
+ * │ Se lee a mano, sin dependencias, porque es un `CLAVE=valor` y anadir     │
+ * │ dotenv al panel solo para esto seria pagar de mas.                        │
+ * │                                                                          │
+ * │ EL ENTORNO REAL SIEMPRE GANA: lo del fichero solo rellena lo que no      │
+ * │ venga ya puesto, que es lo que permite que el Dockerfile las inyecte     │
+ * │ como argumentos de construccion sin que un `.env` olvidado las pise.     │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ */
+function delEnvDeLaRaiz(claves) {
+  const fichero = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', '.env');
+  const valores = {};
+  for (const clave of claves) valores[clave] = process.env[clave] ?? '';
+  if (!existsSync(fichero)) return valores;
+
+  for (const linea of readFileSync(fichero, 'utf8').split('\n')) {
+    const limpia = linea.trim();
+    if (!limpia || limpia.startsWith('#')) continue;
+    const corte = limpia.indexOf('=');
+    if (corte < 1) continue;
+    const clave = limpia.slice(0, corte).trim();
+    if (claves.includes(clave) && !valores[clave]) valores[clave] = limpia.slice(corte + 1).trim();
+  }
+  return valores;
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+
+  /**
+   * La identidad legal del prestador, incrustada al construir.
+   *
+   * No esta en el codigo a proposito —son datos personales de quien presta el
+   * servicio— y por eso entra por aqui. Si falta, `lib/prestador.ts` lo detecta
+   * y las paginas legales dicen que falta en vez de inventarla.
+   */
+  env: delEnvDeLaRaiz([
+    'NEXT_PUBLIC_PRESTADOR_NOMBRE',
+    'NEXT_PUBLIC_PRESTADOR_DOMICILIO',
+    'NEXT_PUBLIC_PRESTADOR_NIF',
+  ]),
 
   /**
    * EXPORTACION ESTATICA. Es lo que permite quedarse con Next.js.

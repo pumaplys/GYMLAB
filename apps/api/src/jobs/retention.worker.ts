@@ -1,27 +1,36 @@
 import { Inject, Injectable, Logger, type OnModuleInit } from '@nestjs/common';
-import { authEvents, MAINTENANCE_QUEUES, sql, withoutTenant, type Database } from '@gymlab/db';
+import {
+  authEvents,
+  LIMITE_POR_PASADA,
+  MAINTENANCE_QUEUES,
+  RETENCION,
+  sql,
+  withoutTenant,
+  type Database,
+} from '@gymlab/db';
 import type { PgBoss } from 'pg-boss' with { 'resolution-mode': 'import' };
 import { env } from '../config/env';
 import { DATABASE } from '../database/database.module';
 import { BOSS } from './jobs.tokens';
 
 /**
- * Purga de `auth_events`.
+ * La POLITICA DE CONSERVACION, ejecutandose.
  *
- * `auth_events` guarda IP y user-agent, que son datos personales. El RGPD exige
- * limitar el plazo de conservacion (art. 5.1.e): guardarlos indefinidamente sin
- * justificacion es incumplimiento, no descuido.
- *
- * 90 dias es el plazo que ya estaba escrito en el esquema y en ADR-0007; lo
- * unico que faltaba era ejecutarlo.
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ UNA POLITICA QUE NADIE EJECUTA ES UN PARRAFO, NO UNA POLITICA.           │
+ * │                                                                          │
+ * │ Escribir «los eventos se guardan doce meses» en la politica de           │
+ * │ privacidad y no borrarlos nunca es peor que no escribirlo: se ha         │
+ * │ prometido algo que no ocurre, y ademas por escrito.                      │
+ * │                                                                          │
+ * │ Cada plazo vive en su funcion SQL, no aqui. Este worker decide CUANDO se │
+ * │ ejecuta y CUANTO se hace por pasada; nunca CUANTO se conserva.           │
+ * └──────────────────────────────────────────────────────────────────────────┘
  *
  * Se apoya en el `schedule` de pg-boss, que guarda la programacion en Postgres:
  * con varias instancias, solo una ejecuta cada disparo. Un `setInterval` en el
  * proceso lo lanzaria tantas veces como instancias hubiera.
  */
-/** Coincide con lo documentado en el esquema y en ADR-0007. */
-const DIAS_DE_RETENCION = 90;
-
 @Injectable()
 export class RetentionWorker implements OnModuleInit {
   private readonly logger = new Logger(RetentionWorker.name);
@@ -32,29 +41,88 @@ export class RetentionWorker implements OnModuleInit {
   ) {}
 
   async onModuleInit(): Promise<void> {
-    // En los tests no se programa nada: la purga se comprueba llamando
-    // directamente a `purgar()`, sin depender de un reloj.
+    // En los tests no se programa nada: las purgas se comprueban llamando
+    // directamente a `purgarTodo()`, sin depender de un reloj.
     if (env.NODE_ENV === 'test') return;
+
+    /*
+     * La cola vieja, desprogramada. En una base ya desplegada sigue existiendo
+     * su horario, y sin esto habria dos disparos diarios: el nuevo, completo, y
+     * el viejo, que ya no tiene quien lo atienda y se quedaria acumulando
+     * trabajos en `created` hasta caducar. Es idempotente y no falla si no
+     * habia nada programado.
+     */
+    try {
+      await this.boss.unschedule(MAINTENANCE_QUEUES.retentionAuthEvents);
+    } catch {
+      // No estaba programada. Es el caso normal en una base nueva.
+    }
 
     // Todos los dias a las 04:00. La cola la crea `pnpm db:migrate` con el rol
     // propietario, porque crearla implica DDL.
-    await this.boss.schedule(MAINTENANCE_QUEUES.retentionAuthEvents, '0 4 * * *');
-    await this.boss.work(MAINTENANCE_QUEUES.retentionAuthEvents, async () => {
-      const borrados = await this.purgar();
-      const accesos = await this.purgarAccesos();
+    await this.boss.schedule(MAINTENANCE_QUEUES.retentionDiaria, '0 4 * * *');
+    await this.boss.work(MAINTENANCE_QUEUES.retentionDiaria, async () => {
+      const r = await this.purgarTodo();
       this.logger.log(
-        `Purgados ${borrados} eventos de autenticacion, ` +
-          `${accesos.tokens} tokens de acceso y ${accesos.eventos} eventos de acceso.`,
+        `Retencion aplicada: ${r.authEvents} eventos de autenticacion, ` +
+          `${r.accessTokens} tokens y ${r.accessEvents} accesos, ` +
+          `${r.auditLog} lineas de auditoria, ${r.invitations} invitaciones, ` +
+          `${r.mediciones} mediciones de salud, ` +
+          `${r.constanciasMinimizadas} constancias minimizadas y ` +
+          `${r.constanciasBorradas} constancias caducadas.`,
       );
+      /*
+       * Se devuelve para que quede como SALIDA del trabajo en pg-boss. Ese es
+       * el rastro de que la politica se aplico y cuanto borro — sin un solo
+       * dato personal, que es justo lo que debe tener un registro de purgas.
+       */
+      return r;
     });
   }
 
-  /** Devuelve cuantas filas de `auth_events` se han borrado. */
+  /**
+   * Aplica TODA la politica. Idempotente: si no hay nada caducado, borra cero.
+   *
+   * Se ejecuta como una sola pasada y no en transacciones separadas por tabla:
+   * son borrados independientes entre si, y que uno falle no debe impedir los
+   * demas — por eso tampoco se envuelven en una transaccion comun.
+   */
+  async purgarTodo(): Promise<ResultadoDeRetencion> {
+    const authEventsBorrados = await this.purgar();
+    const accesos = await this.purgarAccesos();
+    const auditLog = await this.purgarAuditoria();
+    const invitations = await this.purgarInvitaciones();
+    const salud = await this.purgarDatosDeSalud();
+
+    return {
+      authEvents: authEventsBorrados,
+      accessTokens: accesos.tokens,
+      accessEvents: accesos.eventos,
+      auditLog,
+      invitations,
+      mediciones: salud.mediciones,
+      constanciasMinimizadas: salud.constanciasMinimizadas,
+      constanciasBorradas: salud.constanciasBorradas,
+    };
+  }
+
+  /**
+   * `auth_events`, doce meses.
+   *
+   * Es la unica purga que hace la aplicacion por si misma, porque `auth_events`
+   * no tiene RLS —un intento de login fallido no tiene gimnasio todavia— y el
+   * rol de la aplicacion si puede borrar ahi. Las demas necesitan recorrer
+   * todos los gimnasios y van por funcion SECURITY DEFINER.
+   */
   async purgar(): Promise<number> {
     const resultado = await withoutTenant(this.db, (tx) =>
       tx.execute(
         sql`DELETE FROM ${authEvents}
-            WHERE created_at < now() - ${`${DIAS_DE_RETENCION} days`}::interval`,
+             WHERE ctid IN (
+               SELECT ctid FROM ${authEvents}
+                WHERE created_at < now() - ${`${RETENCION.authEventsMeses} months`}::interval
+                LIMIT ${LIMITE_POR_PASADA}
+             )`,
       ),
     );
 
@@ -72,26 +140,26 @@ export class RetentionWorker implements OnModuleInit {
    * Purga de tokens de acceso consumidos y eventos de acceso caducados.
    *
    * ┌──────────────────────────────────────────────────────────────────────────┐
-   * │ LA UNICA LLAMADA DEL PRODUCTO QUE SE SALTA RLS, y conviene entender por    │
-   * │ que hizo falta.                                                           │
+   * │ LAS CUATRO LLAMADAS DE ESTE FICHERO SE SALTAN RLS, y conviene entender    │
+   * │ por que hizo falta.                                                      │
    * │                                                                          │
-   * │ La retencion de `access_events` es POR GIMNASIO, asi que la purga tiene   │
-   * │ que recorrerlos todos. Con el rol de la aplicacion no puede: la politica  │
-   * │ de `gyms` solo deja ver el gimnasio activo y aquellos a los que pertenece │
-   * │ el usuario, y un trabajo de fondo no tiene ninguno de los dos. Ni         │
-   * │ siquiera puede obtener la lista.                                          │
+   * │ Una purga recorre TODOS los gimnasios. Con el rol de la aplicacion no    │
+   * │ puede: la politica de `gyms` solo deja ver el gimnasio activo y aquellos │
+   * │ a los que pertenece el usuario, y un trabajo de fondo no tiene ninguno.  │
+   * │ Ni siquiera puede obtener la lista. Y sobre `audit_log` ademas tiene el  │
+   * │ DELETE retirado, que es lo que la hace append-only.                      │
    * │                                                                          │
-   * │ La salida comoda era conectar este worker con el rol PROPIETARIO, y se    │
-   * │ descarto: meteria en el proceso que atiende peticiones una conexion capaz │
-   * │ de leer y borrar cualquier gimnasio. Un fallo ahi dejaria de estar        │
-   * │ acotado.                                                                  │
+   * │ La salida comoda era conectar este worker con el rol PROPIETARIO, y se   │
+   * │ descarto: meteria en el proceso que atiende peticiones una conexion      │
+   * │ capaz de leer y borrar cualquier gimnasio. Un fallo ahi dejaria de estar │
+   * │ acotado.                                                                 │
    * │                                                                          │
-   * │ En su lugar, `app_purge_access_data()` es SECURITY DEFINER: se ejecuta    │
-   * │ con los permisos de su propietario. La aplicacion no gana ningun          │
-   * │ privilegio general — gana EXACTAMENTE la capacidad de borrar filas        │
-   * │ caducadas, y la funcion no devuelve ni un dato personal. Esta definida y  │
-   * │ comentada en `sql/01-rls.sql`, junto a las politicas, para que se revise  │
-   * │ con ellas.                                                                │
+   * │ En su lugar, cada `app_purge_*` es SECURITY DEFINER: se ejecuta con los  │
+   * │ permisos de su propietario. La aplicacion no gana ningun privilegio      │
+   * │ general — gana EXACTAMENTE la capacidad de borrar filas caducadas, y     │
+   * │ ninguna de esas funciones devuelve un solo dato personal. Estan          │
+   * │ definidas y comentadas en `sql/01-rls.sql`, junto a las politicas, para  │
+   * │ que se revisen con ellas.                                                │
    * └──────────────────────────────────────────────────────────────────────────┘
    */
   async purgarAccesos(): Promise<{ tokens: number; eventos: number }> {
@@ -107,4 +175,63 @@ export class RetentionWorker implements OnModuleInit {
       eventos: Number(fila?.eventos_borrados ?? 0),
     };
   }
+
+  /** `audit_log`, tres anos. */
+  async purgarAuditoria(): Promise<number> {
+    const res = await withoutTenant(this.db, (tx) =>
+      tx.execute<{ app_purge_audit_log: string }>(
+        sql`SELECT app_purge_audit_log(${LIMITE_POR_PASADA})`,
+      ),
+    );
+    return Number(res.rows[0]?.app_purge_audit_log ?? 0);
+  }
+
+  /** Invitaciones resueltas, doce meses. Las pendientes no se tocan. */
+  async purgarInvitaciones(): Promise<number> {
+    const res = await withoutTenant(this.db, (tx) =>
+      tx.execute<{ app_purge_invitations: string }>(
+        sql`SELECT app_purge_invitations(${LIMITE_POR_PASADA})`,
+      ),
+    );
+    return Number(res.rows[0]?.app_purge_invitations ?? 0);
+  }
+
+  /**
+   * Datos de salud de quien retiro el consentimiento.
+   *
+   * La promesa publica es «como muy tarde en 30 dias». Esto corre a diario, asi
+   * que lo normal es menos de 24 horas: el margen existe para tolerar que la
+   * purga no corra algun dia, no para gastarlo.
+   */
+  async purgarDatosDeSalud(): Promise<{
+    mediciones: number;
+    constanciasMinimizadas: number;
+    constanciasBorradas: number;
+  }> {
+    const res = await withoutTenant(this.db, (tx) =>
+      tx.execute<{
+        mediciones: string;
+        constancias_minimizadas: string;
+        constancias_borradas: string;
+      }>(sql`SELECT * FROM app_purge_health_data(${LIMITE_POR_PASADA})`),
+    );
+
+    const fila = res.rows[0];
+    return {
+      mediciones: Number(fila?.mediciones ?? 0),
+      constanciasMinimizadas: Number(fila?.constancias_minimizadas ?? 0),
+      constanciasBorradas: Number(fila?.constancias_borradas ?? 0),
+    };
+  }
+}
+
+export interface ResultadoDeRetencion {
+  authEvents: number;
+  accessTokens: number;
+  accessEvents: number;
+  auditLog: number;
+  invitations: number;
+  mediciones: number;
+  constanciasMinimizadas: number;
+  constanciasBorradas: number;
 }
