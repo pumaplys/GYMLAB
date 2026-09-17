@@ -407,13 +407,27 @@ describe('la identidad nativa es RINDA', () => {
    * │   (2)  RELEASE-1: cambia el manifiesto —seis permisos bloqueados con │
    * │        `tools:node="remove"`— y eso es nativo, asi que no se puede   │
    * │        reutilizar el 1: ya se subio un binario con ese numero.        │
+   * │                                                                      │
+   * │   iOS (4) y Android (3) — FINAL-STORE-1, los primeros artefactos     │
+   * │        destinados a una tienda. Llevan el release legal entero        │
+   * │        —paginas publicas, consentimiento 2026-09-17, conservacion y   │
+   * │        borrado de cuenta— y los ocho paquetes de Expo alineados al    │
+   * │        parche del SDK 57. Cambia el paquete de JavaScript y cambian   │
+   * │        dependencias nativas: no se puede reutilizar el anterior.      │
+   * │                                                                      │
+   * │ NADA DE ESTO SE INCREMENTA SOLO. `eas.json` declara                   │
+   * │ `appVersionSource: "local"` y el perfil `production` NO lleva         │
+   * │ `autoIncrement`, asi que el numero que viaja al artefacto es          │
+   * │ EXACTAMENTE el de `app.json`. Por eso este test lo fija: quien        │
+   * │ construya sin subirlo se lleva un rechazo de la tienda por duplicado, │
+   * │ despues de esperar la build entera.                                    │
    * └──────────────────────────────────────────────────────────────────────┘
    */
   it('la version comercial no se mueve y el build number si', () => {
     expect(base.version).toBe('0.1.0');
     // iOS quiere una CADENA; Android, un entero.
-    expect(base.ios.buildNumber).toBe('3');
-    expect(base.android.versionCode).toBe(2);
+    expect(base.ios.buildNumber).toBe('4');
+    expect(base.android.versionCode).toBe(3);
   });
 });
 
