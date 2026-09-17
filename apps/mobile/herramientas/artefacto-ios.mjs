@@ -112,13 +112,38 @@ const info = readFileSync(join(app, 'Info.plist'), 'utf8');
 console.log('=== IDENTIDAD ===');
 anotar('bundle identifier', valorDePlist(info, 'CFBundleIdentifier') === APP,
   valorDePlist(info, 'CFBundleIdentifier'));
-anotar('version comercial 0.1.0', valorDePlist(info, 'CFBundleShortVersionString') === '0.1.0',
-  valorDePlist(info, 'CFBundleShortVersionString'));
 {
+  const esperada = JSON.parse(readFileSync(join(MOVIL, 'app.json'), 'utf8')).expo.version;
+  anotar(
+    `version comercial ${esperada}, la declarada en app.json`,
+    valorDePlist(info, 'CFBundleShortVersionString') === esperada,
+    valorDePlist(info, 'CFBundleShortVersionString'),
+  );
+}
+{
+  /*
+   * ┌──────────────────────────────────────────────────────────────────────┐
+   * │ EL NUMERO ESPERADO SALE DE `app.json`; EL REAL, DEL BINARIO.         │
+   * │                                                                      │
+   * │ Esto NO contradice la cabecera de este fichero. Lo que alli se dice   │
+   * │ es que `app.json` no puede SUSTITUIR al binario — y no lo hace: el    │
+   * │ valor que se comprueba se sigue leyendo del IPA. `app.json` aporta    │
+   * │ solo contra QUE compararlo.                                          │
+   * │                                                                      │
+   * │ Antes habia un `=== '3'` escrito a mano, del artefacto anterior. Se   │
+   * │ quedo obsoleto en cuanto subio el numero y marco en ROJO un IPA       │
+   * │ correcto: el instrumento envejecio y acuso al artefacto. Asi la       │
+   * │ comprobacion es ademas MAS fuerte — detecta las dos cosas: que el     │
+   * │ binario no recogiera el incremento, y que nadie se acordara de        │
+   * │ subirlo.                                                              │
+   * └──────────────────────────────────────────────────────────────────────┘
+   */
+  const esperado = String(
+    JSON.parse(readFileSync(join(MOVIL, 'app.json'), 'utf8')).expo.ios.buildNumber,
+  );
   const build = valorDePlist(info, 'CFBundleVersion');
-  // Apple no admite dos subidas con el mismo `CFBundleVersion`; el 3 es el de
-  // RELEASE-0 y es el primero que puede llevar el entitlement.
-  anotar('build number 3', build === '3', build);
+  // Apple no admite dos subidas con el mismo `CFBundleVersion`.
+  anotar(`build number ${esperado}, el declarado en app.json`, build === esperado, build);
 }
 
 console.log('\n=== CIFRADO ===');
