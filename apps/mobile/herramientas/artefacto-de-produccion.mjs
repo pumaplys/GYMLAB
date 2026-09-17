@@ -215,13 +215,75 @@ function comprobarPermisos(manifiesto) {
   return intrusos.length === 0 && faltan.length === 0;
 }
 
+/**
+ * Identidad y version DEL ARTEFACTO, leidas de su manifiesto protobuf.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ SE LEE EL ATRIBUTO, NO SE BUSCA UN NUMERO CERCA DE UNA PALABRA.         │
+ * │                                                                          │
+ * │ El primer intento fue un `versionCode[\s\S]{0,30}(\d)` sobre el binario  │
+ * │ y devolvio 2 para un artefacto que llevaba 3: lo que caza ahi es el      │
+ * │ marcador de tipo del `compiled_item`, no el valor. Acuso al artefacto    │
+ * │ de un fallo que no tenia.                                                │
+ * │                                                                          │
+ * │ En el protobuf de aapt2 cada atributo va como `12 <n> <nombre>` seguido  │
+ * │ de `1a <n> <valor>` — campo 2 y campo 3 de `XmlAttribute`. Eso es lo que │
+ * │ se lee aqui, y por eso devuelve el valor de verdad.                      │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ */
+function atributoDelManifiesto(manifiesto, nombre) {
+  const bytes = readFileSync(manifiesto);
+  const marca = Buffer.concat([
+    Buffer.from([0x12, nombre.length]),
+    Buffer.from(nombre, 'latin1'),
+  ]);
+  const i = bytes.indexOf(marca);
+  if (i === -1) return null;
+
+  const tras = i + marca.length;
+  // Campo 3 (`value`), codificado como cadena con su longitud.
+  if (bytes[tras] !== 0x1a) return null;
+  const largo = bytes[tras + 1];
+  return bytes.slice(tras + 2, tras + 2 + largo).toString('latin1');
+}
+
+function comprobarIdentidad(manifiesto) {
+  const app = JSON.parse(readFileSync(join(MOVIL, 'app.json'), 'utf8')).expo;
+  const esperado = {
+    package: app.android.package,
+    versionCode: String(app.android.versionCode),
+    versionName: app.version,
+  };
+
+  console.log('\nIdentidad del artefacto, contra lo declarado en app.json:');
+  let bien = true;
+  for (const [clave, quiero] of Object.entries(esperado)) {
+    /*
+     * `package` no es un atributo del elemento: en el protobuf va como el
+     * nombre del propio manifiesto, asi que se busca tal cual. Los otros dos
+     * si son atributos.
+     */
+    const real =
+      clave === 'package'
+        ? readFileSync(manifiesto, 'latin1').includes(quiero)
+          ? quiero
+          : '(no aparece)'
+        : atributoDelManifiesto(manifiesto, clave);
+    const ok = real === quiero;
+    if (!ok) bien = false;
+    console.log(`  ${ok ? 'VERDE' : 'ROJO '}  ${clave.padEnd(12)} ${real ?? '(ilegible)'}`);
+  }
+  return bien;
+}
+
 const binario = process.argv[2];
 if (binario) {
   console.log(`Midiendo el binario que se sube: ${binario}`);
   const { paquete, manifiesto } = abrirBinario(binario);
+  const identidadBien = comprobarIdentidad(manifiesto);
   const permisosBien = comprobarPermisos(manifiesto);
   comprobar([paquete]);
-  if (!permisosBien) process.exit(1);
+  if (!permisosBien || !identidadBien) process.exit(1);
 } else {
   construir();
   comprobar();
