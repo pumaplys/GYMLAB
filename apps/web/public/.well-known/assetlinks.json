@@ -5,7 +5,10 @@
       "namespace": "android_app",
       "package_name": "tech.gymlabfit.rinda",
       "sha256_cert_fingerprints": [
-        "DB:43:1D:DB:4D:51:AC:B0:7D:4C:F4:9C:64:A7:1B:C9:B9:39:00:55:D1:35:75:13:13:7F:D7:1F:62:05:3B:62"
+        "DB:43:1D:DB:4D:51:AC:B0:7D:4C:F4:9C:64:A7:1B:C9:B9:39:00:55:D1:35:75:13:13:7F:D7:1F:62:05:3B:62",
+        "A3:DB:C0:68:2E:18:41:F6:1D:C2:50:62:B1:DD:D5:FC:66:44:89:DD:CE:C8:D5:A3:FC:24:A5:25:19:0D:B5:C3",
+        "F9:2D:E1:2F:1B:23:BB:D0:2A:C9:7A:BD:C1:48:2A:CE:DC:B4:C4:42:85:02:B2:EE:B2:C8:9F:54:BF:FB:8D:C9",
+        "42:FC:09:BE:40:09:0B:18:8D:E7:5E:7C:20:EA:D8:47:1D:50:0C:54:BB:16:A8:76:B5:DA:0C:19:B2:70:D3:A5"
       ]
     }
   }
