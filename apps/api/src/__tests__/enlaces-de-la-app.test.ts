@@ -249,4 +249,69 @@ describe('assetlinks.json declara la firma real de Android', () => {
     }[];
     expect(declaraciones[0]!.target.package_name).toBe(app.expo.android.package);
   });
+
+  /**
+   * ┌──────────────────────────────────────────────────────────────────────────┐
+   * │ HAY DOS CLASES DE FIRMA, Y QUITAR CUALQUIERA ROMPE INSTALACIONES.       │
+   * │                                                                          │
+   * │ LA DE SUBIDA es la del keystore de EAS: comprobada contra el propio AAB, │
+   * │ cuyo certificado da exactamente esa huella. Firma lo que se instala      │
+   * │ FUERA de Play — una APK de distribucion interna, el artefacto a mano—.   │
+   * │                                                                          │
+   * │ LAS DE GOOGLE PLAY son con las que Play RE-FIRMA la app antes de         │
+   * │ entregarla. Un telefono que la instale de la tienda ve una de esas, no   │
+   * │ la de subida, y sin ellas Android no verifica el dominio: los enlaces    │
+   * │ abren el navegador en vez de la app, y nada lo avisa.                    │
+   * │                                                                          │
+   * │ Por eso conviven las cuatro, y por eso este test las fija UNA A UNA en   │
+   * │ vez de contarlas. Contar deja pasar el cambiazo.                          │
+   * └──────────────────────────────────────────────────────────────────────────┘
+   */
+  describe('las huellas que tienen que estar', () => {
+    const huellas = () => {
+      const declaraciones = JSON.parse(readFileSync(ruta, 'utf8')) as {
+        target: { sha256_cert_fingerprints: string[] };
+      }[];
+      return declaraciones.flatMap((d) => d.target.sha256_cert_fingerprints);
+    };
+
+    /** La del keystore de EAS, que firma lo que se instala fuera de Play. */
+    const SUBIDA =
+      'DB:43:1D:DB:4D:51:AC:B0:7D:4C:F4:9C:64:A7:1B:C9:B9:39:00:55:D1:35:75:13:13:7F:D7:1F:62:05:3B:62';
+
+    /** Las tres de Google Play App Signing, tal y como las publica la consola. */
+    const PLAY = {
+      'clave clasica actual':
+        'A3:DB:C0:68:2E:18:41:F6:1D:C2:50:62:B1:DD:D5:FC:66:44:89:DD:CE:C8:D5:A3:FC:24:A5:25:19:0D:B5:C3',
+      'clave poscuantica':
+        'F9:2D:E1:2F:1B:23:BB:D0:2A:C9:7A:BD:C1:48:2A:CE:DC:B4:C4:42:85:02:B2:EE:B2:C8:9F:54:BF:FB:8D:C9',
+      'clave anterior':
+        '42:FC:09:BE:40:09:0B:18:8D:E7:5E:7C:20:EA:D8:47:1D:50:0C:54:BB:16:A8:76:B5:DA:0C:19:B2:70:D3:A5',
+    };
+
+    it('la de subida de EAS sigue estando', () => {
+      expect(huellas()).toContain(SUBIDA);
+    });
+
+    for (const [nombre, huella] of Object.entries(PLAY)) {
+      it(`la de Google Play — ${nombre}`, () => {
+        expect(huellas()).toContain(huella);
+      });
+    }
+
+    it('no hay ninguna repetida', () => {
+      const todas = huellas();
+      expect(new Set(todas).size).toBe(todas.length);
+    });
+
+    it('y no hay ninguna de mas sin declarar aqui', () => {
+      /*
+       * La otra mitad: que no entre una huella que nadie ha justificado. Una
+       * firma de mas en este fichero autoriza a una aplicacion distinta a
+       * abrir los enlaces del dominio.
+       */
+      const conocidas = [SUBIDA, ...Object.values(PLAY)];
+      for (const huella of huellas()) expect(conocidas).toContain(huella);
+    });
+  });
 });
