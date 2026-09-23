@@ -32,5 +32,12 @@
       "distribution": "store",
       "environment": "production"
     }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "ascAppId": "6815348901"
+      }
+    }
   }
 }
